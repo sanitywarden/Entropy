@@ -1,0 +1,35 @@
+#ifndef _ENTROPY_HPP_
+#define _ENTROPY_HPP_
+
+#include "resourceManager.hpp"
+#include "windowManager.hpp"
+#include "gamestateManager.hpp"
+#include "engineSettings.hpp"
+#include "fps.hpp"
+
+namespace entropy {
+    /* Entropy is a main class which is supposed to work as a engine.
+     * All the modules that you add are supposed to be there and should be instantinated.
+     * To create a application using this engine you need to:
+     * - Create a window using Entropy::windowManager. Either fullscreen or custom size.
+     * - Create a gamestate with three overloaded functions: update(), render() and handleInput().
+     * 
+     * Currently it automatically creates a window, with settings provided in config file, if it exists. */
+    class Entropy {
+        public:
+            Entropy();
+            ~Entropy();
+            
+            entropy::resourceManager     resource;
+            entropy::gamestateManager    gamestate;
+            entropy::windowManager       window;
+            entropy::applicationSettings settings;
+            entropy::FPS                 fps;
+
+            void loop();
+
+            static void quitApplication(const int& code);
+    };
+}
+
+#endif
