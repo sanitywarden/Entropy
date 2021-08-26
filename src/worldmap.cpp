@@ -38,6 +38,8 @@ namespace iso {
         this->settings.octaves        = 4;
         this->settings.persistence    = 4;
         this->settings.bias           = 2;
+        this->settings.multiplier_noise    = 1.0f;
+        this->settings.multiplier_gradient = 2.0f;
 
         this->view_game.setCenter(sf::Vector2f(
             this->panel_size.x * this->settings.size.x / 2,

@@ -47,8 +47,9 @@ void worldGenerator::generateWorld() {
             this->m_panel.is_arctic = false;
             this->m_panel.is_coast  = false;
 
-            if(value > 0.4f) {
+            if(value > 0.1f) {
                 this->m_panel.is_terrain = true;
+                this->m_panel.noise_value += this->generateNoise(x, y);
 
                 panel_quantity++;
             }
@@ -134,6 +135,8 @@ void worldGenerator::generatePerlinNoise() {
         input[i] = (float)rand() / (float)RAND_MAX;    
     }
 
+    float biggest_noise_recorded = 1.0f;
+
     for(int x = 0; x < this->m_world_settings.size.x; x++) {
         for(int y = 0; y < this->m_world_settings.size.y; y++) {
             if(x < this->m_world_settings.margin.x || x > (this->m_world_settings.size.x - this->m_world_settings.margin.x) || y < this->m_world_settings.margin.y || y > (this->m_world_settings.size.y - this->m_world_settings.margin.y)) {
@@ -141,7 +144,6 @@ void worldGenerator::generatePerlinNoise() {
                 continue;
             }
             
-            const float multiplier = 2.0f;
             float noise = 0.0f;
             float scale = 1.0f;
             float scale_acc = 0.0f;
@@ -164,10 +166,13 @@ void worldGenerator::generatePerlinNoise() {
                 scale = float(scale / this->m_world_settings.bias);
             }
             
-            float noise_value = (noise / scale_acc) * multiplier;
+            float noise_value = (noise / scale_acc) * this->m_world_settings.multiplier_noise;
             
+            if(noise_value > biggest_noise_recorded) biggest_noise_recorded = noise_value;
+
+            noise_value *= biggest_noise_recorded;
             if(noise_value > 1.0f) noise_value = 1.0f;
-            
+
             this->m_noise[y * this->m_world_settings.size.x + x] = noise_value;
         }
     }
@@ -181,10 +186,10 @@ float worldGenerator::generateNoise(int& x, int& y) {
 
 void worldGenerator::generateCircularGradient() {
     sf::Vector2i centre = sf::Vector2i(
-            this->m_world_settings.size.x / 2,
-            this->m_world_settings.size.y / 2
-        );
-        
+        this->m_world_settings.size.x / 2,
+        this->m_world_settings.size.y / 2
+    );
+
     for(int x = 0; x < this->m_world_settings.size.x; x++) {
         for(int y = 0; y < this->m_world_settings.size.y; y++) {
             if(x < this->m_world_settings.margin.x || x > (this->m_world_settings.size.x - this->m_world_settings.margin.x) || y < this->m_world_settings.margin.y || y > (this->m_world_settings.size.y - this->m_world_settings.margin.y)) {
@@ -196,9 +201,7 @@ void worldGenerator::generateCircularGradient() {
             float distance_y = (centre.y - y) * (centre.y - y);
 
             // Both width and height of the map have a impact on distance.
-            float distance = sqrt(distance_x + distance_y) / (0.5f * (this->m_world_settings.size.x + this->m_world_settings.size.y));
-
-            distance *= 2;
+            float distance = (sqrt(distance_x + distance_y) / (0.5f * (this->m_world_settings.size.x + this->m_world_settings.size.y))) * this->m_world_settings.multiplier_gradient;
 
             if(distance > 1.0f) distance = 1.0f;
 
@@ -424,18 +427,54 @@ void worldGenerator::generateRivers() {
             }
 
             if(text_direction == "START" && river_index_start == river_index_current) this->world_map[river_index_current].panel_texture = this->m_engine->resource.getTexture("panel_sea");
-            else if(text_direction == "DOWN")           this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_vertical");
-            else if(text_direction == "DOWN AND LEFT")  this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_corner_tl");
-            else if(text_direction == "DOWN AND RIGHT") this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_corner_tr");
-            else if(text_direction == "UP")             this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_vertical");
-            else if(text_direction == "RIGHT AND UP")   this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_corner_tl");
-            else if(text_direction == "RIGHT AND DOWN") this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_corner_bl");
-            else if(text_direction == "LEFT")           this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_horizontal");
-            else if(text_direction == "LEFT AND UP")    this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_corner_tr");
-            else if(text_direction == "LEFT AND DOWN")  this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_corner_br");
-            else if(text_direction == "RIGHT")          this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_horizontal");
-            else if(text_direction == "UP AND LEFT")    this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_corner_bl");
-            else if(text_direction == "UP AND RIGHT")   this->world_map[river_index_current].panel_feature_texture = &this->m_engine->resource.getTexture("panel_river_corner_br");
+            
+            else if(text_direction == "DOWN") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_vertical");
+            }
+
+            else if(text_direction == "DOWN AND LEFT") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_tl");    
+            } 
+            
+            else if(text_direction == "DOWN AND RIGHT") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_tr");
+            }
+            
+            else if(text_direction == "UP") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_vertical");
+            }
+            
+            else if(text_direction == "RIGHT AND UP") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_tl");
+            }
+            
+            else if(text_direction == "RIGHT AND DOWN") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_bl");
+            }
+            
+            else if(text_direction == "LEFT") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_horizontal");
+            }
+            
+            else if(text_direction == "LEFT AND UP") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_tr");
+            }
+            
+            else if(text_direction == "LEFT AND DOWN") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_br");
+            }
+            
+            else if(text_direction == "RIGHT") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_horizontal");
+            }
+            
+            else if(text_direction == "UP AND LEFT") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_bl");
+            }
+            
+            else if(text_direction == "UP AND RIGHT") {
+                this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_br");
+            }
 
             last_move_value     = current_move_value;
             river_index_current = current_move_direction;

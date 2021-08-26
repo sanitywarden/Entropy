@@ -6,8 +6,6 @@ namespace iso {
         this->is_coast   = false;
         this->is_terrain = false;
         this->marked     = false;
-        this->panel_feature_texture = nullptr;
-
     }
 
     Panel::~Panel() {}
@@ -27,12 +25,22 @@ namespace iso {
         panel[2].texCoords = sf::Vector2f(this->panel_size.x, this->panel_size.y);
         panel[3].texCoords = sf::Vector2f(0, this->panel_size.y);
 
-        states.texture = &this->panel_texture;
+        // Do not delete!
+        // If you do not remember what it does, uncomment, and see once again.
+        // panel[0].color = sf::Color(this->noise_value * 255, this->noise_value * 255, this->noise_value * 255);
+        // panel[1].color = sf::Color(this->noise_value * 255, this->noise_value * 255, this->noise_value * 255);
+        // panel[2].color = sf::Color(this->noise_value * 255, this->noise_value * 255, this->noise_value * 255);
+        // panel[3].color = sf::Color(this->noise_value * 255, this->noise_value * 255, this->noise_value * 255);
 
+        // Draw the panel.
+        states.texture = &this->panel_texture;
         target.draw(panel, states);
         
-        states.texture = this->panel_feature_texture;
-
-        if(states.texture != nullptr) target.draw(panel, states);
+        // And then draw all the present features.
+        // Draw the river texture.
+        if(this->feature.river.texture != nullptr) {
+            states.texture = this->feature.river.texture;
+            target.draw(panel, states);
+        }
     }
 }

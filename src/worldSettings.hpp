@@ -9,12 +9,12 @@ namespace iso {
         sf::Vector2i panel_size;
         sf::Vector2i margin;
         
-        int pole_size;
-        int river_quantity;
-        
         int octaves;     
         int persistence;
         int bias;
+    
+        float multiplier_noise;
+        float multiplier_gradient;
     };
 }
 

@@ -1,13 +1,21 @@
 #ifndef _PANEL_HPP_
 #define _PANEL_HPP_
 
+#include "panelFeature.hpp"
+
 #include <SFML/Graphics.hpp>
 
 namespace iso {
+    // Panel features reside in this struct.
+    // Features are special elements that are rare or unique to a panel, such as rivers or forests.
+    struct Feature {
+        panelFeature river;
+    };
+    
     class Panel : public sf::Drawable {
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-            
+
         public:
             Panel();
             ~Panel();
@@ -17,8 +25,8 @@ namespace iso {
             sf::Texture  panel_texture;
             sf::Color    panel_colour;
 
-            sf::Texture  *panel_feature_texture;
-            
+            Feature feature;
+
             float noise_value;
 
             bool is_terrain;
