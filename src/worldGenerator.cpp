@@ -164,10 +164,10 @@ void worldGenerator::generatePerlinNoise() {
                 scale = float(scale / this->m_world_settings.bias);
             }
             
-            // TODO: Make the noise value bigger at random.
-
-            float noise_value = noise / scale_acc * multiplier;
+            float noise_value = (noise / scale_acc) * multiplier;
+            
             if(noise_value > 1.0f) noise_value = 1.0f;
+            
             this->m_noise[y * this->m_world_settings.size.x + x] = noise_value;
         }
     }
@@ -212,7 +212,7 @@ void worldGenerator::generatePoles() {
     const float chance   = 1.0f;
     const float modifier = 0.6f;
 
-    const int pole_size = (this->m_world_settings.size.x * this->m_world_settings.size.y) / 10 / 2;
+    const int pole_size = this->m_world_settings.size.y / 10;
 
     for(int x = 0; x < this->m_world_settings.size.x; x++) {
         float pole_chance   = chance;
@@ -230,9 +230,11 @@ void worldGenerator::generatePoles() {
         
             pole_chance *= pole_modifier;
         }
-        
-        pole_chance   = chance;
-        pole_modifier = modifier;
+    }
+
+    for(int x = 0; x < this->m_world_settings.size.x; x++) { 
+        float pole_chance   = chance;
+        float pole_modifier = modifier;
 
         for(unsigned int y = this->m_world_settings.size.y - 1; y > this->m_world_settings.size.y - 1 - pole_size; y--) {
             float random_number1 = (float)rand();
@@ -253,12 +255,14 @@ void worldGenerator::generatePoles() {
 }
 
 void worldGenerator::generateRivers() {
-    // Storage for indexes of already created rivers.
-    std::vector <int> river_origin_index(this->m_world_settings.river_quantity);
+    // This number does not mean that there will be so many rivers.
+    // This servers as the maximum possible number of rivers.
+    const int river_quantity = (this->m_world_settings.size.x + this->m_world_settings.size.y) / 10 / 2;
     
-    const int river_quantity = (this->m_world_settings.size.x * this->m_world_settings.size.y) / 10 / 2;
-
-    for(unsigned int river_number = 0; river_number < this->m_world_settings.river_quantity; river_number++) {
+    // Storage for indexes of already created rivers.
+    std::vector <int> river_origin_index(river_quantity);
+    
+    for(unsigned int river_number = 0; river_number < river_quantity; river_number++) {
         int possible_river_origin_index = rand() % this->world_map.size();
         bool place_found = false;
 
@@ -305,7 +309,7 @@ void worldGenerator::generateRivers() {
         int river_index = -1;
 
         // If all rivers are verified for a possible river origin, then the place is valid and will be new river origin.
-        if(rivers_verified == this->m_world_settings.river_quantity) {
+        if(rivers_verified == river_quantity) {
             river_index = possible_river_origin_index;
             river_origin_index[river_number] = possible_river_origin_index;
         }

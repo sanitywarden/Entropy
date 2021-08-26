@@ -15,7 +15,8 @@ namespace iso {
             sf::Vector2f panel_position;
             sf::Vector2i panel_size;    
             sf::Texture  panel_texture;
-            
+            sf::Color    panel_colour;
+
             sf::Texture  *panel_feature_texture;
             
             float noise_value;

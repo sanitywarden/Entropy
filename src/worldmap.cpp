@@ -29,14 +29,15 @@ namespace iso {
         this->max_zoom_in  = 0; 
         this->max_zoom_out = 3;
 
-        this->settings.margin.x       = 5;
-        this->settings.margin.y       = 5;
-        this->settings.panel_size     = this->panel_size;
         this->settings.size.x         = 40;
         this->settings.size.y         = 40;
-        this->settings.octaves        = 16;
+        this->settings.margin.x       = this->settings.size.x / 10;
+        this->settings.margin.y       = this->settings.size.y / 10;
+        this->settings.panel_size.x   = this->panel_size.x;
+        this->settings.panel_size.y   = this->panel_size.y;
+        this->settings.octaves        = 4;
         this->settings.persistence    = 4;
-        this->settings.bias           = 16;
+        this->settings.bias           = 2;
 
         this->view_game.setCenter(sf::Vector2f(
             this->panel_size.x * this->settings.size.x / 2,

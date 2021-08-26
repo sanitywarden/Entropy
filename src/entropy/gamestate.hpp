@@ -6,7 +6,7 @@
 namespace entropy {
     // Base class for gamestates.
     // Gamestates represent possible states that the application can be in.
-    // To create a new gamestate, inherit from this class, and override update(), render() and handleInput().
+    // To create a new gamestate, inherit from this class, and override at least update(), render() and handleInput().
     class Gamestate {
         public:
             entropy::Entropy* engine;
@@ -24,14 +24,14 @@ namespace entropy {
             ~Gamestate();
 
             // Main game loop functions.
-            // Every gamestate has to override them in order to work properly.
+            // Every gamestate has to override these functions.
 
             virtual void update() { return; }
             virtual void render() { return; }
+
+            // Additional functions that might be helpful to keep gamestates interface clear.
+
             virtual void handleInput()   { return; }
-
-            // Additional functions that might be helpful to keep gamestates interface similar.
-
             virtual void initialise()    { return; }
             virtual void loadResources() { return; }
             virtual void updateMousePosition() { return; }
