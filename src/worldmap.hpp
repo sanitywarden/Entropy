@@ -14,13 +14,14 @@
 namespace iso {
     class Worldmap : public entropy::Gamestate {
         private:
-            Panel panel;
-            WorldSettings settings;
+            Panel          panel;
+            WorldSettings  settings;
             worldGenerator world;
 
-            sf::Vector2i panel_size;
-
+            bool mouse_pressed;
+            bool mouse_moved;
             bool mouse_drag;
+
             bool mouse_wheel_up;
             bool move_camera;
             bool zoom_camera;
@@ -33,13 +34,17 @@ namespace iso {
             int max_zoom_out;
 
         private:
+            void handleInput()         override;
             void initialise()          override;
             void loadResources()       override;
             void updateMousePosition() override;
-            void moveCamera()   override;
-            void zoomCamera()   override;
-            void updateCamera() override;
+            void moveCamera()          override;
+            void zoomCamera()          override;
+            void updateCamera()        override;
 
+            void selectPanel();
+            void unselectPanel();
+            void updateSelectedPanel();
             void highlightPanel();
 
             void renderWorld();
@@ -50,9 +55,9 @@ namespace iso {
             Worldmap(entropy::Entropy* engine);
             ~Worldmap();
             
-            void update()      override;
-            void render()      override;
-            void handleInput() override;
+            void update() override;
+            void render() override;
+            
     };
 }
 
