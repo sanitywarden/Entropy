@@ -26,6 +26,8 @@ void Worldmap::initialise() {
     this->move_camera    = false;
     this->zoom_camera    = false;
 
+    this->selected_panel_index = -1;
+
     this->zoom = 0;
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
@@ -185,6 +187,12 @@ void Worldmap::drawInterface() {
     str += "Mouse moved: " + std::to_string(this->mouse_moved) + "\n";
     str += "Mouse dragged: " + std::to_string(this->mouse_drag) + "\n";
 
+    if(this->selected_panel_index != -1) {
+        str += "\n";
+        str += "Selected panel information:\n";
+        str += "Panel index: " + std::to_string(this->selected_panel_index) + "\n";
+    }
+
     auto window_size = this->engine->window.getWindowSize();
 
     text.setPosition(window_size.x / 2, window_size.y / 2);
@@ -230,7 +238,9 @@ void Worldmap::handleInput() {
 
                 if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
                     this->position_pressed = this->mouse_position_window;
+                    
                     this->selectPanel();
+                    this->unselectPanel();
                 }
 
                 break;
@@ -248,6 +258,10 @@ void Worldmap::handleInput() {
                 if(!this->mouse_drag) break;
 
                 this->position_released = this->mouse_position_window;
+
+                // Avoid accidental drags.
+                // This also helps to record button presses (without the intention of dragging the screen).
+                if(this->mouse_drag && std::abs(this->position_pressed.x - this->position_released.x) > 10 && std::abs(this->position_pressed.y - this->position_released.y) > 10) this->move_camera = true;
 
                 break;
             }
@@ -271,9 +285,6 @@ void Worldmap::handleInput() {
         this->mouse_drag = false;
         this->mouse_moved = false;
     }
-
-    // Avoid accidental drags.
-    if(this->mouse_drag && std::abs(this->position_pressed.x - this->position_released.x) > 10 && std::abs(this->position_pressed.y - this->position_released.y) > 10) this->move_camera = true;
 }
 
 void Worldmap::renderWorld() {
@@ -283,13 +294,29 @@ void Worldmap::renderWorld() {
 }
 
 void Worldmap::selectPanel() {
-    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag) {
-        std::cout << "Pressing.\n";
+    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->selected_panel_index == -1) {
+        sf::Vector2i panel_grid_position = sf::Vector2i(
+            this->mouse_position_window.x / this->settings.panel_size.x,
+            this->mouse_position_window.y / this->settings.panel_size.y
+        );
+
+        int index = panel_grid_position.y * this->settings.size.x + panel_grid_position.x;
+
+        this->selected_panel_index = index;
     }
 }
 
 void Worldmap::unselectPanel() {
+    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->selected_panel_index != -1) {
+        sf::Vector2i panel_grid_position = sf::Vector2i(
+            this->mouse_position_window.x / this->settings.panel_size.x,
+            this->mouse_position_window.y / this->settings.panel_size.y
+        );
 
+        int index = panel_grid_position.y * this->settings.size.x + panel_grid_position.x;
+
+        if(this->selected_panel_index != index) this->selected_panel_index = -1;
+    }
 }
 
 void Worldmap::updateSelectedPanel() {

@@ -18,6 +18,8 @@ namespace iso {
             WorldSettings  settings;
             worldGenerator world;
 
+            int selected_panel_index;
+
             bool mouse_pressed;
             bool mouse_moved;
             bool mouse_drag;
