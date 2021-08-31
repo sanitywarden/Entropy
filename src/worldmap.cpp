@@ -27,22 +27,31 @@ void Worldmap::initialise() {
     this->zoom_camera    = false;
 
     this->selected_panel_index = -1;
+    this->draw_debug = true;
 
     this->zoom = 0;
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
 
-    this->settings.size.x         = 40;
-    this->settings.size.y         = 40;
+    this->widget_text.setFont(this->engine->resource.getFont("garamond"));
+    this->widget_text.setFillColor(sf::Color::Black);
+    this->widget_text.setCharacterSize(16);
+
+    this->debug_text.setFont(this->engine->resource.getFont("garamond"));
+    this->debug_text.setFillColor(sf::Color::Black);
+    this->debug_text.setCharacterSize(16);
+
+    this->settings.size.x         = 80;
+    this->settings.size.y         = 80;
     this->settings.margin.x       = this->settings.size.x / 10;
     this->settings.margin.y       = this->settings.size.y / 10;
     this->settings.panel_size.x   = 64;
     this->settings.panel_size.y   = 32;
-    this->settings.octaves        = 4;
+    this->settings.octaves        = 16;
     this->settings.persistence    = 4;
-    this->settings.bias           = 2;
-    this->settings.multiplier_noise    = 1.0f;
-    this->settings.multiplier_gradient = 2.0f;
+    this->settings.bias           = 4;
+    this->settings.multiplier_noise    = 1.25f; // Magic number.
+    this->settings.multiplier_gradient = 2.0f; // Magic number.
 
     this->view_game.setCenter(sf::Vector2f(
         this->settings.panel_size.x * this->settings.size.x / 2,
@@ -50,14 +59,17 @@ void Worldmap::initialise() {
     ));
 
     this->view_game.setSize(sf::Vector2f(
-        this->settings.panel_size.x * this->settings.size.x / 15,
-        this->settings.panel_size.y * this->settings.size.y / 15
+        this->settings.panel_size.x * this->settings.size.x / (this->settings.size.x / 4),
+        this->settings.panel_size.y * this->settings.size.y / (this->settings.size.y / 4)
     ));
 
     auto window_size = this->engine->window.getWindowSize();
 
     this->view_interface.setSize(window_size);
-    this->view_interface.setCenter(window_size.x, window_size.y);
+    this->view_interface.setCenter(window_size.x / 2, window_size.y / 2);
+
+    this->createDebugTab();
+    this->createPanelTab();
 }
 
 void Worldmap::loadResources() {
@@ -78,6 +90,7 @@ void Worldmap::loadResources() {
     this->engine->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_vertical",   sf::IntRect(128, 64, 64, 32));
 
     this->engine->resource.loadFont("./res/font/proggy.ttf", "proggy");
+    this->engine->resource.loadFont("./res/font/garamond.ttf", "garamond");
 }
 
 void Worldmap::updateMousePosition() {
@@ -167,47 +180,13 @@ void Worldmap::updateCamera() {
     }
 }
 
-void Worldmap::drawInterface() {
-    sf::Text text;
-    
-    std::string str = "FPS: " + std::to_string(this->engine->fps.get()) + "\n";
-    
-    sf::Vector2i grid_position = sf::Vector2i(
-        this->mouse_position_window.x / this->settings.panel_size.x,
-        this->mouse_position_window.y / this->settings.panel_size.y
-    );
-
-    int index = grid_position.y * this->settings.size.x + grid_position.x;
-
-    str += "Index: "   + std::to_string(index) + "\n";  
-    str += "Noise: "   + std::to_string(this->world.world_map[index].noise_value) + "\n";
-    str += "Terrain: " + std::to_string(this->world.world_map[index].is_terrain) + "\n";
-    str += "Coast: "   + std::to_string(this->world.world_map[index].is_coast) + "\n";
-    str += "Button pressed: " + std::to_string(this->mouse_pressed) + "\n";
-    str += "Mouse moved: " + std::to_string(this->mouse_moved) + "\n";
-    str += "Mouse dragged: " + std::to_string(this->mouse_drag) + "\n";
-
-    if(this->selected_panel_index != -1) {
-        str += "\n";
-        str += "Selected panel information:\n";
-        str += "Panel index: " + std::to_string(this->selected_panel_index) + "\n";
-    }
-
-    auto window_size = this->engine->window.getWindowSize();
-
-    text.setPosition(window_size.x / 2, window_size.y / 2);
-    text.setFillColor(sf::Color::Black);
-    text.setCharacterSize(14);
-    text.setFont(this->engine->resource.getFont("proggy"));
-    text.setString(str);
-
-    this->engine->window.getWindow()->draw(text);
-}
-
 void Worldmap::update() {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
+    this->updateDebugTab();
+    this->updatePanelTab();
+    this->updateSelectedPanel();
 }
 
 void Worldmap::render() {
@@ -216,10 +195,12 @@ void Worldmap::render() {
 
     this->renderWorld();
     this->highlightPanel();
+    this->drawSelectedPanel();
 
     this->engine->window.getWindow()->setView(this->view_interface);
 
-    this->drawInterface();
+    this->renderDebugTab();
+    this->renderPanelTab(); 
 
     this->engine->window.getWindow()->setView(this->view_game);
     this->engine->window.display();
@@ -238,9 +219,15 @@ void Worldmap::handleInput() {
 
                 if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
                     this->position_pressed = this->mouse_position_window;
-                    
+
                     this->selectPanel();
                     this->unselectPanel();
+                }
+
+                if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+                    if(this->selected_panel_index != -1) {
+                        this->selected_panel_index = -1;
+                    }
                 }
 
                 break;
@@ -250,6 +237,26 @@ void Worldmap::handleInput() {
                 this->mouse_pressed = false;
 
                 break;
+            }
+
+            case sf::Event::KeyPressed: {
+                const int modifier = 1;
+
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) this->draw_debug = !this->draw_debug;
+            
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
+                    this->view_game.move(0, -this->settings.panel_size.y * modifier);
+
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
+                    this->view_game.move(-this->settings.panel_size.x * modifier, 0);
+
+                if(this->view_game.getCenter().y + (this->settings.panel_size.y * modifier) <= (this->settings.size.y * this->settings.panel_size.y) - this->view_game.getSize().y / 2)
+                    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
+                        this->view_game.move(0, this->settings.panel_size.y * modifier);
+
+                if(this->view_game.getCenter().x + (this->settings.panel_size.x * modifier) <= (this->settings.size.x * this->settings.panel_size.x) - this->view_game.getSize().x / 2)
+                    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
+                        this->view_game.move(this->settings.panel_size.x * modifier, 0);
             }
 
             case sf::Event::MouseMoved: {
@@ -294,7 +301,7 @@ void Worldmap::renderWorld() {
 }
 
 void Worldmap::selectPanel() {
-    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->selected_panel_index == -1) {
+    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / this->settings.panel_size.x,
             this->mouse_position_window.y / this->settings.panel_size.y
@@ -319,8 +326,31 @@ void Worldmap::unselectPanel() {
     }
 }
 
-void Worldmap::updateSelectedPanel() {
+void Worldmap::drawSelectedPanel() {
+    if(this->selected_panel_index != -1) {
+        auto panel_position = this->world.world_map[this->selected_panel_index].panel_position;
 
+        sf::VertexArray selection_indicator(sf::Quads, 4);
+
+        selection_indicator[0].position = panel_position;
+        selection_indicator[1].position = panel_position + sf::Vector2f(this->settings.panel_size.x, 0);
+        selection_indicator[2].position = panel_position + sf::Vector2f(this->settings.panel_size.x, this->settings.panel_size.y);
+        selection_indicator[3].position = panel_position + sf::Vector2f(0, this->settings.panel_size.y);
+    
+        selection_indicator[0].texCoords = sf::Vector2f(0, 0);
+        selection_indicator[1].texCoords = sf::Vector2f(this->settings.panel_size.x, 0);
+        selection_indicator[2].texCoords = sf::Vector2f(this->settings.panel_size.x, this->settings.panel_size.y);
+        selection_indicator[3].texCoords = sf::Vector2f(0, this->settings.panel_size.y);
+
+        sf::RenderStates states;
+        states.texture = &this->engine->resource.getTexture("panel_highlight");
+
+        this->engine->window.getWindow()->draw(selection_indicator, states);
+    }
+}
+
+void Worldmap::updateSelectedPanel() {
+    
 }
 
 void Worldmap::highlightPanel() {
@@ -350,4 +380,78 @@ void Worldmap::highlightPanel() {
     states.texture = &this->engine->resource.getTexture("panel_highlight");
 
     this->engine->window.getWindow()->draw(highlight, states);
+}
+
+void Worldmap::createDebugTab() {
+
+}
+
+void Worldmap::updateDebugTab() {
+    std::string widget_string;
+
+    auto grid_position = sf::Vector2i(
+        (int)this->mouse_position_window.x / this->settings.panel_size.x,
+        (int)this->mouse_position_window.y / this->settings.panel_size.y
+    );
+
+    int index = grid_position.y * this->settings.size.x + grid_position.x;
+
+    widget_string += std::to_string(this->engine->fps.get()) + " FPS" + "\n";
+
+    widget_string += "Latitude: " + std::to_string(this->world.world_map[index].latitude) + "\n"; 
+
+    std::string terrain = (this->world.world_map[index].is_terrain) ? "True" : "False";
+    widget_string += "Terrain: " + terrain + "\n";
+
+    std::string arctic = (this->world.world_map[index].is_arctic) ? "True" : "False";
+    widget_string += "Arctic:  " + arctic + "\n";
+
+    std::string river = (this->world.world_map[index].is_river) ? "True" : "False";
+    widget_string += "River:   " + river + "\n";
+
+    this->debug_text.setString(widget_string);
+    this->debug_text.setPosition(0, 0);
+}
+
+void Worldmap::renderDebugTab() {
+    if(this->draw_debug) {
+        this->engine->window.getWindow()->draw(this->debug_text);
+    }
+}
+
+void Worldmap::createPanelTab() {
+
+}
+
+void Worldmap::updatePanelTab() {
+    std::string widget_string;
+
+    const int index = this->selected_panel_index;
+
+    if(index == -1 || index < 0 || index > this->settings.size.x * this->settings.size.y - 1)
+        return;
+
+    widget_string += "Selected panel data:\n";
+    widget_string += "Index: " + std::to_string(index) + "\n";
+    
+    widget_string += "Noise: " + std::to_string(this->world.world_map[index].noise_value) + "\n";
+    widget_string += "Temperature: " + std::to_string(this->world.world_map[index].temperature) + "\n";
+
+    std::string terrain = (this->world.world_map[index].is_terrain) ? "True" : "False";
+    widget_string += "Terrain: " + terrain + "\n";
+
+    std::string arctic = (this->world.world_map[index].is_arctic) ? "True" : "False";
+    widget_string += "Arctic:  " + arctic + "\n";
+
+    std::string river = (this->world.world_map[index].is_river) ? "True" : "False";
+    widget_string += "River:   " + river + "\n";
+
+    this->widget_text.setString(widget_string);
+    this->widget_text.setPosition(0, 100);
+}
+
+void Worldmap::renderPanelTab() {
+    if(this->draw_debug && this->selected_panel_index != -1) {
+        this->engine->window.getWindow()->draw(this->widget_text);
+    }
 }

@@ -27,11 +27,11 @@ namespace iso {
         private:
             void generateWorld();
 
-            float generateNoise(int&, int&);
             void generatePerlinNoise();
             void generateCircularGradient();
             void generatePoles();
             void generateRivers();
+            void generateLatititude(int& x, int& y);
 
         public:
             worldGenerator();

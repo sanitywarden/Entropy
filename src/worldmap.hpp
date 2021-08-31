@@ -35,6 +35,11 @@ namespace iso {
             int max_zoom_in;
             int max_zoom_out;
 
+            sf::Text debug_text;
+            sf::Text widget_text;
+
+            bool draw_debug;
+
         private:
             void handleInput()         override;
             void initialise()          override;
@@ -47,11 +52,18 @@ namespace iso {
             void selectPanel();
             void unselectPanel();
             void updateSelectedPanel();
+            void drawSelectedPanel();
             void highlightPanel();
 
             void renderWorld();
 
-            void drawInterface();
+            void createDebugTab();
+            void updateDebugTab();
+            void renderDebugTab();
+
+            void createPanelTab();
+            void updatePanelTab();
+            void renderPanelTab();
 
         public:
             Worldmap(entropy::Entropy* engine);

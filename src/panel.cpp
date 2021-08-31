@@ -2,10 +2,12 @@
 
 namespace iso {
     Panel::Panel() {
+        this->is_river   = false;
         this->is_arctic  = false;
         this->is_coast   = false;
         this->is_terrain = false;
         this->marked     = false;
+        this->latitude = 0.0f;
     }
 
     Panel::~Panel() {}

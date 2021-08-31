@@ -28,7 +28,10 @@ namespace iso {
             Feature feature;
 
             float noise_value;
+            int   temperature;
+            float latitude;
 
+            bool is_river;
             bool is_terrain;
             bool is_arctic;
             bool is_coast;

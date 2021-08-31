@@ -38,6 +38,10 @@ void worldGenerator::generateWorld() {
 
     std::cout << this->m_log_prefix << ": Generating terrain.\n";
 
+    for(int i = 0; i < this->world_map.size(); i++) {
+        this->world_map[i] = iso::Panel();
+    }
+
     for(int x = 0; x < this->m_world_settings.size.x; x++) {
         for(int y = 0; y < this->m_world_settings.size.y; y++) {                
             float noise    = this->m_noise[y * this->m_world_settings.size.x + x]; 
@@ -47,10 +51,8 @@ void worldGenerator::generateWorld() {
             this->m_panel.is_arctic = false;
             this->m_panel.is_coast  = false;
 
-            if(value > 0.1f) {
+            if(value > 0.3) {
                 this->m_panel.is_terrain = true;
-                this->m_panel.noise_value += this->generateNoise(x, y);
-
                 panel_quantity++;
             }
 
@@ -60,6 +62,8 @@ void worldGenerator::generateWorld() {
 
             if(value < 0.0f) value = 0.0f;
             if(value > 1.0f) value = 1.0f;
+
+            this->generateLatititude(x, y);
 
             this->m_panel.noise_value = value;
             this->m_panel.panel_position = sf::Vector2f(x * this->m_world_settings.panel_size.x, y * this->m_world_settings.panel_size.y); 
@@ -85,11 +89,11 @@ void worldGenerator::generateWorld() {
     
     this->generatePoles();
 
+    // Find and mark coast tiles.
     for(int x = 0; x < this->m_world_settings.size.x; x++) {
         for(int y = 0; y < this->m_world_settings.size.y; y++) {
             int index_current = y * this->m_world_settings.size.x + x;
             
-
             if(this->world_map[index_current].is_terrain) {
                 int index_up    = index_current - this->m_world_settings.size.x;             
                 int index_down  = index_current + this->m_world_settings.size.x;
@@ -178,12 +182,6 @@ void worldGenerator::generatePerlinNoise() {
     }
 }
 
-float worldGenerator::generateNoise(int& x, int& y) {
-    float v1 = (float)x / (float)y;
-    float v2 = (float)rand() / (float)RAND_MAX;
-    return (v2 * v1) / 2;
-}
-
 void worldGenerator::generateCircularGradient() {
     sf::Vector2i centre = sf::Vector2i(
         this->m_world_settings.size.x / 2,
@@ -201,12 +199,12 @@ void worldGenerator::generateCircularGradient() {
             float distance_y = (centre.y - y) * (centre.y - y);
 
             // Both width and height of the map have a impact on distance.
-            float distance = (sqrt(distance_x + distance_y) / (0.5f * (this->m_world_settings.size.x + this->m_world_settings.size.y))) * this->m_world_settings.multiplier_gradient;
+            float distance = (sqrt(distance_x + distance_y) / (0.5f * (this->m_world_settings.size.x + this->m_world_settings.size.y)));
 
             if(distance > 1.0f) distance = 1.0f;
 
             // Distance is bigger when further away from the centre of the gradient.
-            this->m_gradient[y * this->m_world_settings.size.x + x] = distance;
+            this->m_gradient[y * this->m_world_settings.size.x + x] = distance * this->m_world_settings.multiplier_gradient;
         }
     }
 }
@@ -426,6 +424,8 @@ void worldGenerator::generateRivers() {
                 }
             }
 
+            this->world_map[river_index_current].is_river = true;
+
             if(text_direction == "START" && river_index_start == river_index_current) this->world_map[river_index_current].panel_texture = this->m_engine->resource.getTexture("panel_sea");
             
             else if(text_direction == "DOWN") {
@@ -485,5 +485,18 @@ void worldGenerator::generateRivers() {
                 coast_found = true;
             }
         }
+    }
+}
+
+void worldGenerator::generateLatititude(int& x, int& y) {
+    // Latitude for the upper half.
+    if(y < this->m_world_settings.size.y / 2)
+        this->m_panel.latitude = float(y + 1) / float(this->m_world_settings.size.y / 2);
+
+    // Latitude for the bottom half.
+    else {
+        int i = y - this->m_world_settings.size.y / 2;
+        int reversed_height = y - 2 * i;
+        this->m_panel.latitude = float(reversed_height) / float(this->m_world_settings.size.y / 2);
     }
 }
