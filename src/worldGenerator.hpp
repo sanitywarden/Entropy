@@ -23,15 +23,17 @@ namespace iso {
 
             std::vector <float> m_noise;
             std::vector <float> m_gradient;
-
         private:
             void generateWorld();
 
-            void generatePerlinNoise();
+            void generateNoiseMap();
             void generateCircularGradient();
             void generatePoles();
             void generateRivers();
-            void generateLatititude(int& x, int& y);
+            void generateLatititude();
+            void generateTemperature();
+            void generateMoistureMap();
+            void assignBiome();
 
         public:
             worldGenerator();

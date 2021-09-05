@@ -41,17 +41,23 @@ void Worldmap::initialise() {
     this->debug_text.setFillColor(sf::Color::Black);
     this->debug_text.setCharacterSize(16);
 
-    this->settings.size.x         = 80;
-    this->settings.size.y         = 80;
+    this->settings.size.x         = 40;
+    this->settings.size.y         = 40;
     this->settings.margin.x       = this->settings.size.x / 10;
     this->settings.margin.y       = this->settings.size.y / 10;
     this->settings.panel_size.x   = 64;
     this->settings.panel_size.y   = 32;
-    this->settings.octaves        = 16;
-    this->settings.persistence    = 4;
-    this->settings.bias           = 4;
+    this->settings.noise_octaves        = 16;
+    this->settings.noise_persistence    = 4;
+    this->settings.noise_bias           = 4;
+    this->settings.moisture_octaves     = 8;
+    this->settings.moisture_persistence = 8;
+    this->settings.moisture_bias        = 4;
+    this->settings.river_quantity = (this->settings.size.x + this->settings.size.y) / 2 / 10;
+    this->settings.pole_size      = this->settings.size.y / 10;
     this->settings.multiplier_noise    = 1.25f; // Magic number.
-    this->settings.multiplier_gradient = 2.0f; // Magic number.
+    this->settings.multiplier_gradient = 2.00f; // Magic number.
+    this->settings.multiplier_moisture = 1.00f; // Magic number.
 
     this->view_game.setCenter(sf::Vector2f(
         this->settings.panel_size.x * this->settings.size.x / 2,
@@ -398,7 +404,10 @@ void Worldmap::updateDebugTab() {
 
     widget_string += std::to_string(this->engine->fps.get()) + " FPS" + "\n";
 
-    widget_string += "Latitude: " + std::to_string(this->world.world_map[index].latitude) + "\n"; 
+    widget_string += "Noise: "       + std::to_string(this->world.world_map[index].noise_value) + "\n";
+    widget_string += "Latitude: "    + std::to_string(this->world.world_map[index].latitude)    + "\n"; 
+    widget_string += "Moisture: "    + std::to_string(this->world.world_map[index].moisture)    + "\n";
+    widget_string += "Temperature: " + std::to_string(this->world.world_map[index].temperature) + "\n";
 
     std::string terrain = (this->world.world_map[index].is_terrain) ? "True" : "False";
     widget_string += "Terrain: " + terrain + "\n";
@@ -430,21 +439,6 @@ void Worldmap::updatePanelTab() {
 
     if(index == -1 || index < 0 || index > this->settings.size.x * this->settings.size.y - 1)
         return;
-
-    widget_string += "Selected panel data:\n";
-    widget_string += "Index: " + std::to_string(index) + "\n";
-    
-    widget_string += "Noise: " + std::to_string(this->world.world_map[index].noise_value) + "\n";
-    widget_string += "Temperature: " + std::to_string(this->world.world_map[index].temperature) + "\n";
-
-    std::string terrain = (this->world.world_map[index].is_terrain) ? "True" : "False";
-    widget_string += "Terrain: " + terrain + "\n";
-
-    std::string arctic = (this->world.world_map[index].is_arctic) ? "True" : "False";
-    widget_string += "Arctic:  " + arctic + "\n";
-
-    std::string river = (this->world.world_map[index].is_river) ? "True" : "False";
-    widget_string += "River:   " + river + "\n";
 
     this->widget_text.setString(widget_string);
     this->widget_text.setPosition(0, 100);

@@ -33,7 +33,7 @@ void worldGenerator::generateWorld() {
 
     std::cout << this->m_log_prefix << ": Generating noise.\n";
 
-    this->generatePerlinNoise();
+    this->generateNoiseMap();
     this->generateCircularGradient();
 
     std::cout << this->m_log_prefix << ": Generating terrain.\n";
@@ -51,7 +51,7 @@ void worldGenerator::generateWorld() {
             this->m_panel.is_arctic = false;
             this->m_panel.is_coast  = false;
 
-            if(value > 0.3) {
+            if(value > 0.3f) {
                 this->m_panel.is_terrain = true;
                 panel_quantity++;
             }
@@ -63,25 +63,13 @@ void worldGenerator::generateWorld() {
             if(value < 0.0f) value = 0.0f;
             if(value > 1.0f) value = 1.0f;
 
-            this->generateLatititude(x, y);
+            int index = y * this->m_world_settings.size.x + x;
 
             this->m_panel.noise_value = value;
             this->m_panel.panel_position = sf::Vector2f(x * this->m_world_settings.panel_size.x, y * this->m_world_settings.panel_size.y); 
             this->m_panel.panel_size = this->m_world_settings.panel_size;
 
-            int index = y * this->m_world_settings.size.x + x;
-
             this->world_map[index] = this->m_panel;
-        }
-    }
-
-    for(size_t i = 0; i < this->world_map.size(); i++) {
-        if(this->world_map[i].is_terrain && !this->world_map[i].is_arctic) {
-            this->world_map[i].panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
-        }
-
-        if(!this->world_map[i].is_terrain && !this->world_map[i].is_arctic) {
-            this->world_map[i].panel_texture = this->m_engine->resource.getTexture("panel_ocean");
         }
     }
 
@@ -126,13 +114,18 @@ void worldGenerator::generateWorld() {
     std::cout << this->m_log_prefix << ": Generating river(s).\n";
     
     this->generateRivers();
+    this->generateLatititude();
+    this->generateTemperature();
+    this->generateMoistureMap();
+
+    this->assignBiome();
 
     std::cout << this->m_log_prefix << ": World generated.\n";
     std::cout << this->m_log_prefix << ": Terrain is " << panel_quantity  << " panels out of total " << this->m_world_settings.size.x * this->m_world_settings.size.y << " panels" << " (" << int(float(panel_quantity / float(this->m_world_settings.size.x * this->m_world_settings.size.y)) * 100) << "%)." << "\n";
     std::cout << this->m_log_prefix << ": " << this->m_world_settings.size.x * this->m_world_settings.size.y << " panels generated in " << clock.getElapsedTime().asSeconds() << " seconds.\n";
 }
 
-void worldGenerator::generatePerlinNoise() {
+void worldGenerator::generateNoiseMap() {
     std::vector <float> input(this->m_world_settings.size.x * this->m_world_settings.size.y);
 
     for(int i = 0; i < this->m_world_settings.size.x * this->m_world_settings.size.y; i++) {
@@ -152,22 +145,22 @@ void worldGenerator::generatePerlinNoise() {
             float scale = 1.0f;
             float scale_acc = 0.0f;
 
-            for(unsigned int o = 0; o < this->m_world_settings.octaves; o++) {
-                int sampleX1 = (x / this->m_world_settings.persistence) * this->m_world_settings.persistence;
-                int sampleY1 = (y / this->m_world_settings.persistence) * this->m_world_settings.persistence;
+            for(unsigned int o = 0; o < this->m_world_settings.noise_octaves; o++) {
+                int sampleX1 = (x / this->m_world_settings.noise_persistence) * this->m_world_settings.noise_persistence;
+                int sampleY1 = (y / this->m_world_settings.noise_persistence) * this->m_world_settings.noise_persistence;
 
-                int sampleX2 = (sampleX1 + this->m_world_settings.persistence) % this->m_world_settings.size.x;					
-                int sampleY2 = (sampleY1 + this->m_world_settings.persistence) % this->m_world_settings.size.x;
+                int sampleX2 = (sampleX1 + this->m_world_settings.noise_persistence) % this->m_world_settings.size.x;					
+                int sampleY2 = (sampleY1 + this->m_world_settings.noise_persistence) % this->m_world_settings.size.x;
 
-                float blendX = (float)(x - sampleX1) / (float)this->m_world_settings.persistence;
-                float blendY = (float)(y - sampleY1) / (float)this->m_world_settings.persistence;
+                float blendX = (float)(x - sampleX1) / (float)this->m_world_settings.noise_persistence;
+                float blendY = (float)(y - sampleY1) / (float)this->m_world_settings.noise_persistence;
 
                 float sampleT = (1.0f - blendX) * input[sampleY1 * this->m_world_settings.size.x + sampleX1] + blendX * input[sampleY1 * this->m_world_settings.size.x + sampleX2];
                 float sampleB = (1.0f - blendX) * input[sampleY2 * this->m_world_settings.size.x + sampleX1] + blendX * input[sampleY2 * this->m_world_settings.size.x + sampleX2];
 
                 scale_acc += scale;
                 noise += (blendY * (sampleB - sampleT) + sampleT) * scale;
-                scale = float(scale / this->m_world_settings.bias);
+                scale = float(scale / this->m_world_settings.noise_bias);
             }
             
             float noise_value = (noise / scale_acc) * this->m_world_settings.multiplier_noise;
@@ -213,20 +206,17 @@ void worldGenerator::generatePoles() {
     const float chance   = 1.0f;
     const float modifier = 0.6f;
 
-    const int pole_size = this->m_world_settings.size.y / 10;
-
     for(int x = 0; x < this->m_world_settings.size.x; x++) {
         float pole_chance   = chance;
         float pole_modifier = modifier;
 
-        for(unsigned int y = 0; y < pole_size; y++) {
+        for(unsigned int y = 0; y < this->m_world_settings.pole_size; y++) {
             float random_number1 = (float)rand();
             float random_number2 = (float)RAND_MAX * pole_chance;
 
             if(random_number1 < random_number2) {
                 this->world_map[y * this->m_world_settings.size.x + x].is_terrain = true;
                 this->world_map[y * this->m_world_settings.size.x + x].is_arctic = true;
-                this->world_map[y * this->m_world_settings.size.x + x].panel_texture = this->m_engine->resource.getTexture("panel_arctic");
             }   
         
             pole_chance *= pole_modifier;
@@ -237,14 +227,13 @@ void worldGenerator::generatePoles() {
         float pole_chance   = chance;
         float pole_modifier = modifier;
 
-        for(unsigned int y = this->m_world_settings.size.y - 1; y > this->m_world_settings.size.y - 1 - pole_size; y--) {
+        for(unsigned int y = this->m_world_settings.size.y - 1; y > this->m_world_settings.size.y - 1 - this->m_world_settings.pole_size; y--) {
             float random_number1 = (float)rand();
             float random_number2 = (float)RAND_MAX * pole_chance;
 
             if(random_number1 < random_number2) {
                 this->world_map[y * this->m_world_settings.size.x + x].is_terrain = true;
                 this->world_map[y * this->m_world_settings.size.x + x].is_arctic = true;
-                this->world_map[y * this->m_world_settings.size.x + x].panel_texture = this->m_engine->resource.getTexture("panel_arctic");
             }
 
             pole_chance *= pole_modifier;
@@ -256,14 +245,13 @@ void worldGenerator::generatePoles() {
 }
 
 void worldGenerator::generateRivers() {
-    // This number does not mean that there will be so many rivers.
-    // This servers as the maximum possible number of rivers.
-    const int river_quantity = (this->m_world_settings.size.x + this->m_world_settings.size.y) / 10 / 2;
-    
+    // Number of rivers is a maximum amount of rivers.
+    // It does not mean that there will be the specified amount.
+
     // Storage for indexes of already created rivers.
-    std::vector <int> river_origin_index(river_quantity);
+    std::vector <int> river_origin_index(this->m_world_settings.river_quantity);
     
-    for(unsigned int river_number = 0; river_number < river_quantity; river_number++) {
+    for(unsigned int river_number = 0; river_number < this->m_world_settings.river_quantity; river_number++) {
         int possible_river_origin_index = rand() % this->world_map.size();
         bool place_found = false;
 
@@ -310,7 +298,7 @@ void worldGenerator::generateRivers() {
         int river_index = -1;
 
         // If all rivers are verified for a possible river origin, then the place is valid and will be new river origin.
-        if(rivers_verified == river_quantity) {
+        if(rivers_verified == this->m_world_settings.river_quantity) {
             river_index = possible_river_origin_index;
             river_origin_index[river_number] = possible_river_origin_index;
         }
@@ -426,7 +414,7 @@ void worldGenerator::generateRivers() {
 
             this->world_map[river_index_current].is_river = true;
 
-            if(text_direction == "START" && river_index_start == river_index_current) this->world_map[river_index_current].panel_texture = this->m_engine->resource.getTexture("panel_sea");
+            if(text_direction == "START" && river_index_start == river_index_current) this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_sea");
             
             else if(text_direction == "DOWN") {
                 this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_vertical");
@@ -488,15 +476,159 @@ void worldGenerator::generateRivers() {
     }
 }
 
-void worldGenerator::generateLatititude(int& x, int& y) {
-    // Latitude for the upper half.
-    if(y < this->m_world_settings.size.y / 2)
-        this->m_panel.latitude = float(y + 1) / float(this->m_world_settings.size.y / 2);
+void worldGenerator::generateLatititude() {
+    // There definately is code that does not require the if statement, but it is how it is.
 
-    // Latitude for the bottom half.
-    else {
-        int i = y - this->m_world_settings.size.y / 2;
-        int reversed_height = y - 2 * i;
-        this->m_panel.latitude = float(reversed_height) / float(this->m_world_settings.size.y / 2);
+    for(int x = 0; x < this->m_world_settings.size.x; x++) {
+        for(int y = 0; y < this->m_world_settings.size.y; y++) {            
+            // Latitude for the upper half.
+            if(y < this->m_world_settings.size.y / 2)
+                this->world_map[y * this->m_world_settings.size.x + x].latitude = float(y + 1) / float(this->m_world_settings.size.y / 2);
+
+            // Latitude for the bottom half.
+            else {
+                int i = y - this->m_world_settings.size.y / 2;
+                int reversed_height = y - 2 * i;
+                this->world_map[y * this->m_world_settings.size.x + x].latitude = float(reversed_height) / float(this->m_world_settings.size.y / 2);
+            }
+        }
+    }
+}
+
+void worldGenerator::generateTemperature() {
+    for(int x = 0; x < this->m_world_settings.size.x; x++) {
+        for(int y = 0; y < this->m_world_settings.size.y; y++) {            
+            const int panel_index = y * this->m_world_settings.size.x + x;
+
+            auto& panel = this->world_map[panel_index];
+
+            // Panel temperature zone classification.
+            const bool PANEL_ARCTIC = (y < this->m_world_settings.pole_size || y > this->m_world_settings.size.y - this->m_world_settings.pole_size - 1) ? true : false;
+            const bool PANEL_NEAR_POLE = ((y < this->m_world_settings.pole_size + this->m_world_settings.margin.y + 0.1f * (float)this->m_world_settings.size.y && y >= this->m_world_settings.pole_size) || (y >= this->m_world_settings.size.y - (this->m_world_settings.pole_size + this->m_world_settings.margin.y + 0.1f * (float)this->m_world_settings.size.y) && y < this->m_world_settings.size.y - this->m_world_settings.pole_size)) ? true : false;
+            const bool PANEL_NEAR_EQUATOR = (y > this->m_world_settings.size.y / 2 - 1 - this->m_world_settings.margin.y && y <= this->m_world_settings.size.y / 2 + 1 + this->m_world_settings.margin.y) ? true : false;
+
+            if(PANEL_ARCTIC) {
+                panel.temperature = 0.05f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+            }
+
+            else if(PANEL_NEAR_POLE) {
+                panel.temperature = 0.1f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+            }
+            
+            else if(PANEL_NEAR_EQUATOR) {
+                panel.temperature = -0.1f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+            }
+
+            else {
+                panel.temperature = 0.4f + ((float)rand() / (float)RAND_MAX / 2) * ((1.0f - panel.noise_value) * panel.latitude);
+            }
+
+            if(panel.temperature > 1.0f) panel.temperature = 1.0f;
+        }
+    }
+}
+
+void worldGenerator::generateMoistureMap() {
+    std::vector <float> input(this->m_world_settings.size.x * this->m_world_settings.size.y);
+    for(int i = 0; i < this->m_world_settings.size.x * this->m_world_settings.size.y; i++) {
+        input[i] = (float)rand() / (float)RAND_MAX;
+    }
+    
+    float biggest_noise_recorded = 1.0f;
+
+    for(int x = 0; x < this->m_world_settings.size.x; x++) {
+        for(int y = 0; y < this->m_world_settings.size.y; y++) {
+            int index = y * this->m_world_settings.size.x + x;
+
+            if(!this->world_map[index].is_terrain)
+                this->world_map[index].moisture = 1.0f;
+
+            else if(this->world_map[index].is_arctic)
+                this->world_map[index].moisture = 0.0f;
+
+            else if(this->world_map[index].is_terrain && !this->world_map[index].is_arctic) {
+                float noise = 0.0f;
+                float scale = 1.0f;
+                float scale_acc = 0.0f;
+
+                for(unsigned int o = 0; o < this->m_world_settings.moisture_octaves; o++) {
+                    int sampleX1 = (x / this->m_world_settings.moisture_persistence) * this->m_world_settings.moisture_persistence;
+                    int sampleY1 = (y / this->m_world_settings.moisture_persistence) * this->m_world_settings.moisture_persistence;
+
+                    int sampleX2 = (sampleX1 + this->m_world_settings.moisture_persistence) % this->m_world_settings.size.x;					
+                    int sampleY2 = (sampleY1 + this->m_world_settings.moisture_persistence) % this->m_world_settings.size.x;
+
+                    float blendX = (float)(x - sampleX1) / (float)this->m_world_settings.moisture_persistence;
+                    float blendY = (float)(y - sampleY1) / (float)this->m_world_settings.moisture_persistence;
+
+                    float sampleT = (1.0f - blendX) * input[sampleY1 * this->m_world_settings.size.x + sampleX1] + blendX * input[sampleY1 * this->m_world_settings.size.x + sampleX2];
+                    float sampleB = (1.0f - blendX) * input[sampleY2 * this->m_world_settings.size.x + sampleX1] + blendX * input[sampleY2 * this->m_world_settings.size.x + sampleX2];
+
+                    scale_acc += scale;
+                    noise += (blendY * (sampleB - sampleT) + sampleT) * scale;
+                    scale = float(scale / this->m_world_settings.moisture_bias);
+                }
+                
+                float noise_value = (noise / scale_acc) * this->m_world_settings.multiplier_moisture;
+                
+                if(noise_value > biggest_noise_recorded) biggest_noise_recorded = noise_value;
+
+                noise_value *= biggest_noise_recorded;
+            
+                if(this->world_map[index].noise_value > 0.85f) {
+                    noise_value *= this->world_map[index].latitude * (1.0f - this->world_map[index].noise_value);
+                }
+
+                if(this->world_map[index].latitude < 0.50f) {
+                    noise_value *= this->world_map[index].latitude * noise_value;
+                    noise_value += 0.2f + (0.2f * noise_value);
+                }
+
+                else noise_value += 0.2f * this->world_map[index].moisture;
+
+                if(noise_value > 1.0f) noise_value = 1.0f;
+
+                this->world_map[y * this->m_world_settings.size.x + x].moisture = noise_value;
+            }
+        }
+    }
+}
+
+void worldGenerator::assignBiome() {
+    for(int i = 0; i < this->m_world_settings.size.x * this->m_world_settings.size.y; i++) {
+        auto& panel = this->world_map[i];
+
+        if(!panel.is_terrain)    panel.panel_texture = this->m_engine->resource.getTexture("panel_ocean");
+        else if(panel.is_arctic) panel.panel_texture = this->m_engine->resource.getTexture("panel_arctic");
+    
+        // Implement some sort of biome classification algorithm.
+        // Improve moisture algorithm.
+            // Make the moisture dependant on latitude.
+            // Mountain have lower moisture than plains and lowlands.
+
+        else if(panel.temperature < 0.2f) {
+            if(panel.moisture > 0.5f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_arctic"); 
+            else if(panel.moisture > 0.33f) panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
+            else                            panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra"); 
+        } 
+
+        else if(panel.temperature < 0.45f && panel.latitude < 0.5f) {    
+            if(panel.moisture > 0.66f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
+            else if(panel.moisture > 0.33f)  panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");    
+            else if(panel.moisture > 0.16f)  panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");    
+            else                             panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
+        }
+
+        else if(panel.temperature < 0.7f) {
+            if(panel.moisture > 0.9f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical"); 
+            else                            panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");     
+        }
+
+        else {
+            if(panel.moisture > 0.27f)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical");
+            else if(panel.moisture > 0.13f) panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");    
+            // else if moisture > 0.16f -> savannah
+            else                            panel.panel_texture = this->m_engine->resource.getTexture("panel_desert");         
+        } 
     }
 }

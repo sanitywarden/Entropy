@@ -29,7 +29,7 @@ void entropy::Entropy::loop() {
     }
 }
 
-static void entropy::Entropy::quitApplication(const int& code) {
+static void entropy::Entropy::quitApplication(int code) {
     std::cout << "[Entropy Engine]: Application quit with code " << code << ".\n";
 
     switch(code) {

@@ -28,7 +28,8 @@ namespace iso {
             Feature feature;
 
             float noise_value;
-            int   temperature;
+            float moisture;
+            float temperature;
             float latitude;
 
             bool is_river;

@@ -7,7 +7,10 @@ namespace iso {
         this->is_coast   = false;
         this->is_terrain = false;
         this->marked     = false;
-        this->latitude = 0.0f;
+        this->noise_value = 0.0f;
+        this->latitude    = 0.0f;
+        this->moisture    = 0.0f;
+        this->temperature = 0.0f;
     }
 
     Panel::~Panel() {}
@@ -28,11 +31,13 @@ namespace iso {
         panel[3].texCoords = sf::Vector2f(0, this->panel_size.y);
 
         // Do not delete!
-        // If you do not remember what it does, uncomment, and see once again.
-        // panel[0].color = sf::Color(this->noise_value * 255, this->noise_value * 255, this->noise_value * 255);
-        // panel[1].color = sf::Color(this->noise_value * 255, this->noise_value * 255, this->noise_value * 255);
-        // panel[2].color = sf::Color(this->noise_value * 255, this->noise_value * 255, this->noise_value * 255);
-        // panel[3].color = sf::Color(this->noise_value * 255, this->noise_value * 255, this->noise_value * 255);
+        // If you do not remember what it does, uncomment, and see once again.        
+        
+        // auto value = this->moisture;
+        // panel[0].color = sf::Color(0, 0, value * 255);
+        // panel[1].color = sf::Color(0, 0, value * 255);
+        // panel[2].color = sf::Color(0, 0, value * 255);
+        // panel[3].color = sf::Color(0, 0, value * 255);
 
         // Draw the panel.
         states.texture = &this->panel_texture;
