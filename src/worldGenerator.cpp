@@ -16,6 +16,7 @@ worldGenerator::worldGenerator(WorldSettings& settings, entropy::Entropy* engine
     this->m_noise.resize(world_size);
     this->m_gradient.resize(world_size);
     this->world_map.resize(world_size);
+    this->region_map.resize(world_size);
 
     this->generateWorld();
 }
@@ -26,7 +27,6 @@ worldGenerator::~worldGenerator() {
 
 void worldGenerator::generateWorld() {
     std::cout << this->m_log_prefix << ": Generating world.\n";
-    std::cout << this->m_log_prefix << ": World size: " << this->m_world_settings.size.x << "x" << this->m_world_settings.size.y << ".\n";
     
     sf::Clock clock;
     unsigned int panel_quantity = 0;
@@ -265,7 +265,7 @@ void worldGenerator::generateRivers() {
         }
 
         // Area (Panels) that should be scanned in each geographical direction from the possible river origin position. 
-        const int area_around_origin = (this->m_world_settings.size.x + this->m_world_settings.size.y) / 2 / 10;
+        const int area_around_origin = (this->m_world_settings.size.x + this->m_world_settings.size.y) / 2 / 15;
 
         unsigned int rivers_verified = 0;
         
@@ -576,10 +576,10 @@ void worldGenerator::generateMoistureMap() {
                 noise_value *= biggest_noise_recorded;
             
                 if(this->world_map[index].noise_value > 0.85f) {
-                    noise_value *= this->world_map[index].latitude * (1.0f - this->world_map[index].noise_value);
+                    noise_value *= 0.1f + this->world_map[index].latitude * this->world_map[index].latitude * (1.0f - this->world_map[index].noise_value);
                 }
 
-                if(this->world_map[index].latitude < 0.50f) {
+                if(this->world_map[index].latitude < 0.55f) {
                     noise_value *= this->world_map[index].latitude * noise_value;
                     noise_value += 0.2f + (0.2f * noise_value);
                 }
@@ -601,34 +601,27 @@ void worldGenerator::assignBiome() {
         if(!panel.is_terrain)    panel.panel_texture = this->m_engine->resource.getTexture("panel_ocean");
         else if(panel.is_arctic) panel.panel_texture = this->m_engine->resource.getTexture("panel_arctic");
     
-        // Implement some sort of biome classification algorithm.
-        // Improve moisture algorithm.
-            // Make the moisture dependant on latitude.
-            // Mountain have lower moisture than plains and lowlands.
-
-        else if(panel.temperature < 0.2f) {
-            if(panel.moisture > 0.5f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_arctic"); 
-            else if(panel.moisture > 0.33f) panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
-            else                            panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra"); 
-        } 
-
         else if(panel.temperature < 0.45f && panel.latitude < 0.5f) {    
-            if(panel.moisture > 0.66f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
-            else if(panel.moisture > 0.33f)  panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");    
-            else if(panel.moisture > 0.16f)  panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");    
+            if(panel.moisture > 0.23f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
             else                             panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
         }
 
+        else if(panel.temperature < 0.55f && panel.latitude < 0.55f) {
+            int tiletype = rand() % 10;
+
+            if(tiletype > 5)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
+            else if(tiletype > 2) panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
+            else                  panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
+        }
+
         else if(panel.temperature < 0.7f) {
-            if(panel.moisture > 0.9f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical"); 
-            else                            panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");     
+            panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm"); 
         }
 
         else {
-            if(panel.moisture > 0.27f)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical");
-            else if(panel.moisture > 0.13f) panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");    
-            // else if moisture > 0.16f -> savannah
-            else                            panel.panel_texture = this->m_engine->resource.getTexture("panel_desert");         
+            if(panel.moisture > 0.51f)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical");
+            else if(panel.moisture > 0.13f) panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_subtropical");    
+            else                            panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
         } 
     }
 }

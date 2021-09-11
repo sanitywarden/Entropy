@@ -13,14 +13,13 @@ entropy::Entropy::Entropy() {
 
 entropy::Entropy::~Entropy() {}
 
-void entropy::Entropy::loop() {
-    entropy::Gamestate* gamestate = &this->gamestate.getGamestate();
-    
+void entropy::Entropy::loop() {    
     this->fps = entropy::FPS();
 
     while(true) {
         fps.update();
-
+        entropy::Gamestate* gamestate = &this->gamestate.getGamestate();
+    
         if(gamestate != nullptr) {
             gamestate->handleInput();
             gamestate->update();

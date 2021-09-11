@@ -16,6 +16,7 @@ namespace entropy {
 
             sf::Vector2i mouse_position_desktop;
             sf::Vector2f mouse_position_window;
+            sf::Vector2f mouse_position_interface;
 
             sf::View view_game;
             sf::View view_interface;

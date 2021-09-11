@@ -20,6 +20,9 @@ namespace iso {
             Panel();
             ~Panel();
 
+            // TODO: Add region property with data related to the region (height, moisture, temperature) placed in there.
+            // The rest of the data, such as the panel position and texture should stay here.
+
             sf::Vector2f panel_position;
             sf::Vector2i panel_size;    
             sf::Texture  panel_texture;

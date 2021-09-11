@@ -4,6 +4,7 @@
 #include "panel.hpp"
 #include "worldSettings.hpp"
 #include "entropy/entropy.hpp"
+#include "region.hpp"
 
 #include <SFML/System/Vector2.hpp>
 #include <SFML/System/Clock.hpp>
@@ -40,7 +41,8 @@ namespace iso {
             worldGenerator(WorldSettings& settings, entropy::Entropy* engine);
             ~worldGenerator();
 
-            std::vector <Panel> world_map;
+            std::vector <Panel>  world_map;  // Collection of all the panels on the worldmap.
+            std::vector <Region> region_map; // Collection of all the region data classes used by Regionmap gamestate.
     };
 }
 

@@ -2,9 +2,12 @@
 #define _WORLDMAP_HPP_
 
 #include "entropy/gamestate.hpp"
+#include "entropy/entropy.hpp"
 #include "panel.hpp"
 #include "worldSettings.hpp"
 #include "worldGenerator.hpp"
+#include "regionmap.hpp"
+#include "gui/button.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -17,8 +20,11 @@ namespace iso {
             Panel          panel;
             WorldSettings  settings;
             worldGenerator world;
+            Regionmap      region_gamestate;
 
             int selected_panel_index;
+
+            std::vector <gui::Button> m_buttons;
 
             bool mouse_pressed;
             bool mouse_moved;

@@ -17,6 +17,13 @@ void entropy::gamestateManager::removeGamestate(const std::string& id) {
     this->m_gamestates.erase(id);
 }
 
+bool entropy::gamestateManager::checkGamestateExists(const std::string& id) {
+    if(this->m_gamestates.count(id) > 0) 
+        return true;
+    
+    return false;
+}
+
 void entropy::gamestateManager::setGamestate(const std::string& id) {
     this->m_current_gamestate = this->m_gamestates[id];
 }
