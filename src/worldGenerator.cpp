@@ -6,10 +6,11 @@ worldGenerator::worldGenerator() {
 
 }
 
-worldGenerator::worldGenerator(WorldSettings& settings, entropy::Entropy* engine) {
-    this->m_world_settings = settings;
-    this->m_engine = engine;
-    this->m_log_prefix = "[World Generation]";
+worldGenerator::worldGenerator(WorldSettings& world_settings, RegionSettings& region_settings, entropy::Entropy* engine) {
+    this->m_world_settings  = world_settings;
+    this->m_region_settings = region_settings;
+    this->m_engine          = engine;
+    this->m_log_prefix      = "[World Generation]";
 
     auto world_size = this->m_world_settings.size.x * this->m_world_settings.size.y;
 
@@ -17,8 +18,6 @@ worldGenerator::worldGenerator(WorldSettings& settings, entropy::Entropy* engine
     this->m_gradient.resize(world_size);
     this->world_map.resize(world_size);
     this->region_map.resize(world_size);
-
-    this->generateWorld();
 }
 
 worldGenerator::~worldGenerator() {
@@ -65,7 +64,7 @@ void worldGenerator::generateWorld() {
 
             int index = y * this->m_world_settings.size.x + x;
 
-            this->m_panel.noise_value = value;
+            this->m_panel.region.height = value;
             this->m_panel.panel_position = sf::Vector2f(x * this->m_world_settings.panel_size.x, y * this->m_world_settings.panel_size.y); 
             this->m_panel.panel_size = this->m_world_settings.panel_size;
 
@@ -333,7 +332,7 @@ void worldGenerator::generateRivers() {
             int current_move_direction = values[0];
 
             for(int i = 0; i < 4; i++) {
-                if(!this->world_map[values[i]].marked && this->world_map[current_move_direction].noise_value > this->world_map[values[i]].noise_value) current_move_direction = values[i];
+                if(!this->world_map[values[i]].marked && this->world_map[current_move_direction].region.height > this->world_map[values[i]].region.height) current_move_direction = values[i];
             }
 
             const int current_move_value = current_move_direction - river_index_current;
@@ -483,13 +482,13 @@ void worldGenerator::generateLatititude() {
         for(int y = 0; y < this->m_world_settings.size.y; y++) {            
             // Latitude for the upper half.
             if(y < this->m_world_settings.size.y / 2)
-                this->world_map[y * this->m_world_settings.size.x + x].latitude = float(y + 1) / float(this->m_world_settings.size.y / 2);
+                this->world_map[y * this->m_world_settings.size.x + x].region.latitude = float(y + 1) / float(this->m_world_settings.size.y / 2);
 
             // Latitude for the bottom half.
             else {
                 int i = y - this->m_world_settings.size.y / 2;
                 int reversed_height = y - 2 * i;
-                this->world_map[y * this->m_world_settings.size.x + x].latitude = float(reversed_height) / float(this->m_world_settings.size.y / 2);
+                this->world_map[y * this->m_world_settings.size.x + x].region.latitude = float(reversed_height) / float(this->m_world_settings.size.y / 2);
             }
         }
     }
@@ -508,22 +507,22 @@ void worldGenerator::generateTemperature() {
             const bool PANEL_NEAR_EQUATOR = (y > this->m_world_settings.size.y / 2 - 1 - this->m_world_settings.margin.y && y <= this->m_world_settings.size.y / 2 + 1 + this->m_world_settings.margin.y) ? true : false;
 
             if(PANEL_ARCTIC) {
-                panel.temperature = 0.05f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+                panel.region.temperature = 0.05f + panel.region.latitude * panel.region.latitude + 1.0f / (float)(rand() % 10 + 5);
             }
 
             else if(PANEL_NEAR_POLE) {
-                panel.temperature = 0.1f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+                panel.region.temperature = 0.1f + panel.region.latitude * panel.region.latitude + 1.0f / (float)(rand() % 10 + 5);
             }
             
             else if(PANEL_NEAR_EQUATOR) {
-                panel.temperature = -0.1f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+                panel.region.temperature = -0.1f + panel.region.latitude * panel.region.latitude + 1.0f / (float)(rand() % 10 + 5);
             }
 
             else {
-                panel.temperature = 0.4f + ((float)rand() / (float)RAND_MAX / 2) * ((1.0f - panel.noise_value) * panel.latitude);
+                panel.region.temperature = 0.4f + ((float)rand() / (float)RAND_MAX / 2) * ((1.0f - panel.region.height) * panel.region.latitude);
             }
 
-            if(panel.temperature > 1.0f) panel.temperature = 1.0f;
+            if(panel.region.temperature > 1.0f) panel.region.temperature = 1.0f;
         }
     }
 }
@@ -541,10 +540,10 @@ void worldGenerator::generateMoistureMap() {
             int index = y * this->m_world_settings.size.x + x;
 
             if(!this->world_map[index].is_terrain)
-                this->world_map[index].moisture = 1.0f;
+                this->world_map[index].region.moisture = 1.0f;
 
             else if(this->world_map[index].is_arctic)
-                this->world_map[index].moisture = 0.0f;
+                this->world_map[index].region.moisture = 0.0f;
 
             else if(this->world_map[index].is_terrain && !this->world_map[index].is_arctic) {
                 float noise = 0.0f;
@@ -575,20 +574,20 @@ void worldGenerator::generateMoistureMap() {
 
                 noise_value *= biggest_noise_recorded;
             
-                if(this->world_map[index].noise_value > 0.85f) {
-                    noise_value *= 0.1f + this->world_map[index].latitude * this->world_map[index].latitude * (1.0f - this->world_map[index].noise_value);
+                if(this->world_map[index].region.height > 0.85f) {
+                    noise_value *= 0.1f + this->world_map[index].region.latitude * this->world_map[index].region.latitude * (1.0f - this->world_map[index].region.height);
                 }
 
-                if(this->world_map[index].latitude < 0.55f) {
-                    noise_value *= this->world_map[index].latitude * noise_value;
+                if(this->world_map[index].region.latitude < 0.55f) {
+                    noise_value *= this->world_map[index].region.latitude * noise_value;
                     noise_value += 0.2f + (0.2f * noise_value);
                 }
 
-                else noise_value += 0.2f * this->world_map[index].moisture;
+                else noise_value += 0.2f * this->world_map[index].region.moisture;
 
                 if(noise_value > 1.0f) noise_value = 1.0f;
 
-                this->world_map[y * this->m_world_settings.size.x + x].moisture = noise_value;
+                this->world_map[y * this->m_world_settings.size.x + x].region.moisture = noise_value;
             }
         }
     }
@@ -601,12 +600,12 @@ void worldGenerator::assignBiome() {
         if(!panel.is_terrain)    panel.panel_texture = this->m_engine->resource.getTexture("panel_ocean");
         else if(panel.is_arctic) panel.panel_texture = this->m_engine->resource.getTexture("panel_arctic");
     
-        else if(panel.temperature < 0.45f && panel.latitude < 0.5f) {    
-            if(panel.moisture > 0.23f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
-            else                             panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
+        else if(panel.region.temperature < 0.45f && panel.region.latitude < 0.5f) {    
+            if(panel.region.moisture > 0.23f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
+            else                                    panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
         }
 
-        else if(panel.temperature < 0.55f && panel.latitude < 0.55f) {
+        else if(panel.region.temperature < 0.55f && panel.region.latitude < 0.55f) {
             int tiletype = rand() % 10;
 
             if(tiletype > 5)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
@@ -614,14 +613,38 @@ void worldGenerator::assignBiome() {
             else                  panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
         }
 
-        else if(panel.temperature < 0.7f) {
+        else if(panel.region.temperature < 0.7f) {
             panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm"); 
         }
 
         else {
-            if(panel.moisture > 0.51f)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical");
-            else if(panel.moisture > 0.13f) panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_subtropical");    
-            else                            panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
+            if(panel.region.moisture > 0.51f)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical");
+            else if(panel.region.moisture > 0.13f) panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_subtropical");    
+            else                                   panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
         } 
     }
+}
+
+void worldGenerator::generateRegion(Region& region_data, int index) {
+    for(int y = 0; y < region_data.map_size.y; y++) {
+        for(int x = 0; x < region_data.map_size.x; x++) {
+            auto tile_position = sf::Vector2i(
+                (this->m_region_settings.tile_offset.x * this->m_region_settings.tile_size.x) + (x - y) * this->m_region_settings.tile_size.x / 2,
+                (this->m_region_settings.tile_offset.y * this->m_region_settings.tile_size.y) + (x + y) * this->m_region_settings.tile_size.y / 2
+            );
+
+            auto world_position = sf::Vector2f(
+                this->m_engine->window.getWindow()->mapPixelToCoords(tile_position).x,
+                this->m_engine->window.getWindow()->mapPixelToCoords(tile_position).y
+            );
+
+            this->m_tile.tile_size     = this->m_region_settings.tile_size;
+            this->m_tile.tile_position = tile_position;
+            this->m_tile.tile_texture  = this->m_engine->resource.getTexture("tile_grass_warm");
+
+            region_data.map.push_back(this->m_tile);
+        }
+    }
+
+    this->region_map[index] = region_data;
 }

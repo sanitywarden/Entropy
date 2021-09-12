@@ -6,11 +6,10 @@ Regionmap::Regionmap() {
 
 }
 
-Regionmap::Regionmap(entropy::Entropy* engine, worldGenerator* world, int region_index) {
+Regionmap::Regionmap(entropy::Entropy* engine, worldGenerator* world) {
     this->engine   = engine;
+    this->world    = world;
     this->state_id = "Regionmap";
-
-    this->m_region = world->region_map[region_index];
 
     this->initialise();
     this->loadResources();
@@ -29,21 +28,23 @@ void Regionmap::initialise() {
 }
 
 void Regionmap::loadResources() {
-
+    this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_warm", sf::IntRect(0, 0, 64, 32));
 }
 
 void Regionmap::update() {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
-
-    this->engine->window.getWindow()->setView(this->view_game);
-
-    this->engine->window.getWindow()->setView(this->view_interface);
 }
 
 void Regionmap::render() {
     this->engine->window.getWindow()->clear(sf::Color(100, 100, 100));    
+
+    this->engine->window.getWindow()->setView(this->view_game);
+
+    this->renderRegion();
+
+    this->engine->window.getWindow()->setView(this->view_interface);
 
     this->engine->window.getWindow()->display();
 }
@@ -80,4 +81,14 @@ void Regionmap::zoomCamera() {
 
 void Regionmap::updateCamera() {
 
+}
+
+void Regionmap::renderRegion() {
+    for(auto& tile : this->m_region.map) {
+        this->engine->window.getWindow()->draw(tile);
+    }
+}
+
+void Regionmap::setCurrentRegion(int region_index) {
+    this->m_region = this->world->region_map[region_index];
 }

@@ -23,6 +23,12 @@ namespace iso {
         float multiplier_gradient;
         float multiplier_moisture;
     };
+
+    struct RegionSettings {
+        sf::Vector2i size;
+        sf::Vector2i tile_size;
+        sf::Vector2i tile_offset;
+    };
 }
 
 #endif

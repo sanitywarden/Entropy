@@ -2,6 +2,7 @@
 #define _PANEL_HPP_
 
 #include "panelFeature.hpp"
+#include "region.hpp"
 
 #include <SFML/Graphics.hpp>
 
@@ -29,11 +30,7 @@ namespace iso {
             sf::Color    panel_colour;
 
             Feature feature;
-
-            float noise_value;
-            float moisture;
-            float temperature;
-            float latitude;
+            Region  region;
 
             bool is_river;
             bool is_terrain;

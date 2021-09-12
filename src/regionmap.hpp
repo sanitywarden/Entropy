@@ -12,6 +12,7 @@ namespace iso {
     // Gamestate class responsible for management of a single region.
     class Regionmap : public entropy::Gamestate {
         private:
+            worldGenerator* world;
             Region m_region;
 
         private:
@@ -23,15 +24,19 @@ namespace iso {
             void zoomCamera()          override;
             void updateCamera()        override;
 
+            void renderRegion();
+
         public: 
             /* Regionmap's constructor is triggered every time the user visits a region. 
                This is because you somehow need to update the information about the state of the world, and the region the user visits. */
             Regionmap();
-            Regionmap(entropy::Entropy* engine, iso::worldGenerator* world, int region_index);
+            Regionmap(entropy::Entropy* engine, iso::worldGenerator* world);
             ~Regionmap();
 
             void update() override;
             void render() override;
+
+            void setCurrentRegion(int region_index);
     }; 
 }
 

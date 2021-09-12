@@ -7,10 +7,10 @@ namespace iso {
         this->is_coast   = false;
         this->is_terrain = false;
         this->marked     = false;
-        this->noise_value = 0.0f;
-        this->latitude    = 0.0f;
-        this->moisture    = 0.0f;
-        this->temperature = 0.0f;
+        this->region.height      = 0.0f;
+        this->region.latitude    = 0.0f;
+        this->region.moisture    = 0.0f;
+        this->region.temperature = 0.0f;
     }
 
     Panel::~Panel() {}

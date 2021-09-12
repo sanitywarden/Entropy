@@ -1,9 +1,11 @@
 #include "button.hpp"
+#include <iostream>
 
 using namespace gui;
 
 Button::Button() {
-    this->m_transparent  = false;
+    this->m_transparent = false;
+    this->m_button_text.setString("");
     this->colour = sf::Color(127, 127, 127);
 }
 
@@ -19,7 +21,7 @@ sf::Text& Button::getTextComponent() {
     return this->m_button_text;
 }
 
-void Button::setTransparent(bool& transparency) {
+void Button::setTransparent(const bool& transparency) {
     this->m_transparent = transparency;
 }
 
@@ -40,12 +42,15 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     this->m_button_shape[2].position = first_corner + sf::Vector2f(this->widget_size.x, this->widget_size.y);
     this->m_button_shape[3].position = first_corner + sf::Vector2f(0.f, this->widget_size.y);
 
-    this->m_button_shape[0].color = this->colour;
-    this->m_button_shape[1].color = this->colour;
-    this->m_button_shape[2].color = this->colour;
-    this->m_button_shape[3].color = this->colour;
+    auto colour = (this->m_transparent) ? sf::Color(this->colour.r, this->colour.g, this->colour.b, 0) : sf::Color(this->colour.r, this->colour.g, this->colour.b, 255);
+
+    this->m_button_shape[0].color = colour;
+    this->m_button_shape[1].color = colour;
+    this->m_button_shape[2].color = colour;
+    this->m_button_shape[3].color = colour;
 
     target.draw(this->m_button_shape, states);
+    target.draw(this->m_button_text);
 }
 
 bool Button::containsPoint(const sf::Vector2f& point) {
@@ -62,4 +67,29 @@ void Button::onMouseButtonPress(std::function<void()> callback) {
 
 void Button::onMouseButtonRelease(std::function<void()> callback) {
     callback();
+}
+
+void Button::alignTextComponent(const TextAlignment& alignment) {
+    // if(alignment == TextAlignment::DEFAULT)
+    //     return;
+    
+    // else if(alignment == TextAlignment::CENTRED) {
+    //     this->m_button_text.setPosition(
+    //         this->widget_position.x + this->widget_size.x / 2 - this->m_button_text.getGlobalBounds().width / 2,
+    //         this->widget_position.y + this->widget_size.y / 2
+    //     );
+
+    //     this->m_button_text.setOrigin(
+    //         this->m_button_text.getGlobalBounds().left + (float)this->m_button_text.getGlobalBounds().width  / 2.0f,
+    //         this->m_button_text.getGlobalBounds().top  + (float)this->m_button_text.getGlobalBounds().height / 2.0f
+    //     );
+    // }
+
+    // else if(alignment == TextAlignment::ALIGNED_LEFT) {
+
+    // }
+
+    // else if(alignment == TextAlignment::ALIGNED_RIGHT) {
+
+    // }
 }

@@ -10,7 +10,8 @@ namespace gui {
     enum class TextAlignment {
         ALIGNED_LEFT,
         ALIGNED_RIGHT,
-        CENTRED
+        CENTRED,
+        DEFAULT
     };
 
     class Button : public AbstractWidget {
@@ -29,12 +30,11 @@ namespace gui {
             Button();
             ~Button();
 
+            void alignTextComponent(const TextAlignment& alignment = TextAlignment::DEFAULT);
             void setTextComponent(sf::Text&);
             sf::Text& getTextComponent();
 
-            // void alignTextComponent(TextAlignment);
-
-            void setTransparent(bool&);
+            void setTransparent(const bool& transparency);
             bool& isTransparent();
 
             bool containsPoint(const sf::Vector2f&)          override;

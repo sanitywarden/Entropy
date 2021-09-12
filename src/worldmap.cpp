@@ -11,7 +11,10 @@ Worldmap::Worldmap(entropy::Entropy* engine) {
     this->initialise();
     this->loadResources();   
 
-    this->world = worldGenerator(this->settings, this->engine);
+    this->world = worldGenerator(this->world_settings, this->region_settings, this->engine);
+    this->world.generateWorld();
+
+    this->region_gamestate = Regionmap(this->engine, &this->world);
 }        
 
 Worldmap::~Worldmap() {
@@ -41,32 +44,39 @@ void Worldmap::initialise() {
     this->debug_text.setFillColor(sf::Color::Black);
     this->debug_text.setCharacterSize(16);
 
-    this->settings.size.x         = 100;
-    this->settings.size.y         = 100;
-    this->settings.margin.x       = this->settings.size.x / 10;
-    this->settings.margin.y       = this->settings.size.y / 10;
-    this->settings.panel_size.x   = 64;
-    this->settings.panel_size.y   = 32;
-    this->settings.noise_octaves        = 16;
-    this->settings.noise_persistence    = 4;
-    this->settings.noise_bias           = 4;
-    this->settings.moisture_octaves     = 8;
-    this->settings.moisture_persistence = 8;
-    this->settings.moisture_bias        = 4;
-    this->settings.river_quantity       = (this->settings.size.x * this->settings.size.y) / ((this->settings.size.x * this->settings.size.y) / ((this->settings.margin.x + this->settings.margin.y) / 2));
-    this->settings.pole_size            = this->settings.size.y / 10;
-    this->settings.multiplier_noise     = 1.25f; // Magic number to make the world look as good as possible.
-    this->settings.multiplier_gradient  = 2.00f; // Magic number to make the world look as good as possible.
-    this->settings.multiplier_moisture  = 0.90f; // Magic number to make the world look as good as possible.
+    this->world_settings.size.x               = 100;
+    this->world_settings.size.y               = 100;
+    this->world_settings.margin.x             = this->world_settings.size.x / 10;
+    this->world_settings.margin.y             = this->world_settings.size.y / 10;
+    this->world_settings.panel_size.x         = 64;
+    this->world_settings.panel_size.y         = 32;
+    this->world_settings.noise_octaves        = 16;
+    this->world_settings.noise_persistence    = 4;
+    this->world_settings.noise_bias           = 4;
+    this->world_settings.moisture_octaves     = 8;
+    this->world_settings.moisture_persistence = 8;
+    this->world_settings.moisture_bias        = 4;
+    this->world_settings.river_quantity       = (this->world_settings.size.x * this->world_settings.size.y) / ((this->world_settings.size.x * this->world_settings.size.y) / ((this->world_settings.margin.x + this->world_settings.margin.y) / 2));
+    this->world_settings.pole_size            = this->world_settings.size.y / 10;
+    this->world_settings.multiplier_noise     = 1.25f; // Magic number to make the world look as good as possible.
+    this->world_settings.multiplier_gradient  = 2.00f; // Magic number to make the world look as good as possible.
+    this->world_settings.multiplier_moisture  = 0.90f; // Magic number to make the world look as good as possible.
+
+    this->region_settings.size.x        = 40;
+    this->region_settings.size.y        = 40;
+    this->region_settings.tile_offset.x = 0;
+    this->region_settings.tile_offset.y = 0;
+    this->region_settings.tile_size.x   = 64;
+    this->region_settings.tile_size.y   = 32;
 
     this->view_game.setCenter(sf::Vector2f(
-        this->settings.panel_size.x * this->settings.size.x / 2,
-        this->settings.panel_size.y * this->settings.size.y / 2
+        this->world_settings.panel_size.x * this->world_settings.size.x / 2,
+        this->world_settings.panel_size.y * this->world_settings.size.y / 2
     ));
 
     this->view_game.setSize(sf::Vector2f(
-        this->settings.panel_size.x * this->settings.size.x / (this->settings.size.x / 4),
-        this->settings.panel_size.y * this->settings.size.y / (this->settings.size.y / 4)
+        this->world_settings.panel_size.x * this->world_settings.size.x / (this->world_settings.size.x / 4),
+        this->world_settings.panel_size.y * this->world_settings.size.y / (this->world_settings.size.y / 4)
     ));
 
     auto window_size = this->engine->window.getWindowSize();
@@ -112,8 +122,8 @@ void Worldmap::updateMousePosition() {
 
 void Worldmap::moveCamera() {
     auto distance = sf::Vector2f(
-        (this->position_pressed.x - this->position_released.x) / this->settings.panel_size.x / 2,       
-        (this->position_pressed.y - this->position_released.y) / this->settings.panel_size.y / 2
+        (this->position_pressed.x - this->position_released.x) / this->world_settings.panel_size.x / 2,       
+        (this->position_pressed.y - this->position_released.y) / this->world_settings.panel_size.y / 2
     );
 
     // Multipliers for faster camera movement. 
@@ -122,11 +132,11 @@ void Worldmap::moveCamera() {
 
     // Check the horizontal and vertical bounds of the screen.
     // This makes sure that you can not move past the world map.
-    if(this->view_game.getCenter().x + (distance.x * x_multiplier) < (this->settings.size.x * this->settings.panel_size.x) - this->view_game.getSize().x / 2.f && this->view_game.getCenter().x + (distance.x * x_multiplier) > 0.f + this->view_game.getSize().x / 2.f) {
+    if(this->view_game.getCenter().x + (distance.x * x_multiplier) < (this->world_settings.size.x * this->world_settings.panel_size.x) - this->view_game.getSize().x / 2.f && this->view_game.getCenter().x + (distance.x * x_multiplier) > 0.f + this->view_game.getSize().x / 2.f) {
         this->view_game.move(x_multiplier * distance.x, 0.f);
     }
 
-    if(this->view_game.getCenter().y + (distance.y * y_multiplier) < (this->settings.size.y * this->settings.panel_size.y) - this->view_game.getSize().y / 2.f && this->view_game.getCenter().y + (distance.y * y_multiplier) > 0.f + this->view_game.getSize().y / 2.f) {
+    if(this->view_game.getCenter().y + (distance.y * y_multiplier) < (this->world_settings.size.y * this->world_settings.panel_size.y) - this->view_game.getSize().y / 2.f && this->view_game.getCenter().y + (distance.y * y_multiplier) > 0.f + this->view_game.getSize().y / 2.f) {
         this->view_game.move(0.f, y_multiplier * distance.y);
     }
 
@@ -178,14 +188,14 @@ void Worldmap::updateCamera() {
     }
 
     // Check if the camera is postioned badly on the right of the screen.
-    if(this->view_game.getCenter().x + this->view_game.getSize().x / 2 > this->settings.panel_size.x * this->settings.size.x) {
+    if(this->view_game.getCenter().x + this->view_game.getSize().x / 2 > this->world_settings.panel_size.x * this->world_settings.size.x) {
         float offset_x = -(this->view_game.getCenter().x + this->view_game.getSize().x / 2);
 
         this->view_game.move(offset_x, 0.f);
     } 
     
     // Check if the camera is positioned badly on the bottom of the screen.
-    if(this->view_game.getCenter().y + this->view_game.getSize().y / 2 > this->settings.panel_size.y * this->settings.size.y) {
+    if(this->view_game.getCenter().y + this->view_game.getSize().y / 2 > this->world_settings.panel_size.y * this->world_settings.size.y) {
         float offset_y = -(this->view_game.getCenter().y + this->view_game.getSize().y / 2);
 
         this->view_game.move(0.f, offset_y);
@@ -255,21 +265,21 @@ void Worldmap::handleInput() {
                 const float modifier = 2.0f;
 
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) this->draw_debug = !this->draw_debug;
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))    this->world = worldGenerator(this->settings, this->engine);
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))    this->world.generateWorld();
 
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
-                    this->view_game.move(0, -this->settings.panel_size.y * modifier);
+                    this->view_game.move(0, -this->world_settings.panel_size.y * modifier);
 
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-                    this->view_game.move(-this->settings.panel_size.x * modifier, 0);
+                    this->view_game.move(-this->world_settings.panel_size.x * modifier, 0);
 
-                if(this->view_game.getCenter().y + (this->settings.panel_size.y * modifier) <= (this->settings.size.y * this->settings.panel_size.y) - this->view_game.getSize().y / 2)
+                if(this->view_game.getCenter().y + (this->world_settings.panel_size.y * modifier) <= (this->world_settings.size.y * this->world_settings.panel_size.y) - this->view_game.getSize().y / 2)
                     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
-                        this->view_game.move(0, this->settings.panel_size.y * modifier);
+                        this->view_game.move(0, this->world_settings.panel_size.y * modifier);
 
-                if(this->view_game.getCenter().x + (this->settings.panel_size.x * modifier) <= (this->settings.size.x * this->settings.panel_size.x) - this->view_game.getSize().x / 2)
+                if(this->view_game.getCenter().x + (this->world_settings.panel_size.x * modifier) <= (this->world_settings.size.x * this->world_settings.panel_size.x) - this->view_game.getSize().x / 2)
                     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-                        this->view_game.move(this->settings.panel_size.x * modifier, 0);
+                        this->view_game.move(this->world_settings.panel_size.x * modifier, 0);
             }
 
             case sf::Event::MouseMoved: {
@@ -316,11 +326,11 @@ void Worldmap::renderWorld() {
 void Worldmap::selectPanel() {
     if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
-            this->mouse_position_window.x / this->settings.panel_size.x,
-            this->mouse_position_window.y / this->settings.panel_size.y
+            this->mouse_position_window.x / this->world_settings.panel_size.x,
+            this->mouse_position_window.y / this->world_settings.panel_size.y
         );
 
-        const int index = panel_grid_position.y * this->settings.size.x + panel_grid_position.x;
+        const int index = panel_grid_position.y * this->world_settings.size.x + panel_grid_position.x;
 
         this->selected_panel_index = index;
     }
@@ -329,11 +339,11 @@ void Worldmap::selectPanel() {
 void Worldmap::unselectPanel() {
     if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->selected_panel_index != -1) {
         auto panel_grid_position = sf::Vector2i(
-            this->mouse_position_window.x / this->settings.panel_size.x,
-            this->mouse_position_window.y / this->settings.panel_size.y
+            this->mouse_position_window.x / this->world_settings.panel_size.x,
+            this->mouse_position_window.y / this->world_settings.panel_size.y
         );
 
-        const int index = panel_grid_position.y * this->settings.size.x + panel_grid_position.x;
+        const int index = panel_grid_position.y * this->world_settings.size.x + panel_grid_position.x;
 
         if(this->selected_panel_index != index) 
             this->selected_panel_index = -1.0;
@@ -347,14 +357,14 @@ void Worldmap::drawSelectedPanel() {
         sf::VertexArray selection_indicator(sf::Quads, 4);
 
         selection_indicator[0].position = panel_position;
-        selection_indicator[1].position = panel_position + sf::Vector2f(this->settings.panel_size.x, 0);
-        selection_indicator[2].position = panel_position + sf::Vector2f(this->settings.panel_size.x, this->settings.panel_size.y);
-        selection_indicator[3].position = panel_position + sf::Vector2f(0, this->settings.panel_size.y);
+        selection_indicator[1].position = panel_position + sf::Vector2f(this->world_settings.panel_size.x, 0);
+        selection_indicator[2].position = panel_position + sf::Vector2f(this->world_settings.panel_size.x, this->world_settings.panel_size.y);
+        selection_indicator[3].position = panel_position + sf::Vector2f(0, this->world_settings.panel_size.y);
     
         selection_indicator[0].texCoords = sf::Vector2f(0, 0);
-        selection_indicator[1].texCoords = sf::Vector2f(this->settings.panel_size.x, 0);
-        selection_indicator[2].texCoords = sf::Vector2f(this->settings.panel_size.x, this->settings.panel_size.y);
-        selection_indicator[3].texCoords = sf::Vector2f(0, this->settings.panel_size.y);
+        selection_indicator[1].texCoords = sf::Vector2f(this->world_settings.panel_size.x, 0);
+        selection_indicator[2].texCoords = sf::Vector2f(this->world_settings.panel_size.x, this->world_settings.panel_size.y);
+        selection_indicator[3].texCoords = sf::Vector2f(0, this->world_settings.panel_size.y);
 
         sf::RenderStates states;
         states.texture = &this->engine->resource.getTexture("panel_highlight");
@@ -369,26 +379,26 @@ void Worldmap::updateSelectedPanel() {
 
 void Worldmap::highlightPanel() {
     auto grid_position = sf::Vector2i(
-        this->mouse_position_window.x / this->settings.panel_size.x,
-        this->mouse_position_window.y / this->settings.panel_size.y
+        this->mouse_position_window.x / this->world_settings.panel_size.x,
+        this->mouse_position_window.y / this->world_settings.panel_size.y
     );
 
     auto position = sf::Vector2f(
-        grid_position.x * this->settings.panel_size.x,
-        grid_position.y * this->settings.panel_size.y
+        grid_position.x * this->world_settings.panel_size.x,
+        grid_position.y * this->world_settings.panel_size.y
     );
 
     sf::VertexArray highlight(sf::Quads, 4);
 
     highlight[0].position = position;
-    highlight[1].position = position + sf::Vector2f(this->settings.panel_size.x, 0);
-    highlight[2].position = position + sf::Vector2f(this->settings.panel_size.x, this->settings.panel_size.y);
-    highlight[3].position = position + sf::Vector2f(0, this->settings.panel_size.y);
+    highlight[1].position = position + sf::Vector2f(this->world_settings.panel_size.x, 0);
+    highlight[2].position = position + sf::Vector2f(this->world_settings.panel_size.x, this->world_settings.panel_size.y);
+    highlight[3].position = position + sf::Vector2f(0, this->world_settings.panel_size.y);
 
     highlight[0].texCoords = sf::Vector2f(0, 0);
-    highlight[1].texCoords = sf::Vector2f(this->settings.panel_size.x, 0);
-    highlight[2].texCoords = sf::Vector2f(this->settings.panel_size.x, this->settings.panel_size.y);
-    highlight[3].texCoords = sf::Vector2f(0, this->settings.panel_size.y);
+    highlight[1].texCoords = sf::Vector2f(this->world_settings.panel_size.x, 0);
+    highlight[2].texCoords = sf::Vector2f(this->world_settings.panel_size.x, this->world_settings.panel_size.y);
+    highlight[3].texCoords = sf::Vector2f(0, this->world_settings.panel_size.y);
 
     sf::RenderStates states;
     states.texture = &this->engine->resource.getTexture("panel_highlight");
@@ -404,18 +414,18 @@ void Worldmap::updateDebugTab() {
     std::string widget_string;
 
     auto grid_position = sf::Vector2i(
-        this->mouse_position_window.x / this->settings.panel_size.x,
-        this->mouse_position_window.y / this->settings.panel_size.y
+        this->mouse_position_window.x / this->world_settings.panel_size.x,
+        this->mouse_position_window.y / this->world_settings.panel_size.y
     );
 
-    const int index = grid_position.y * this->settings.panel_size.x + grid_position.x;
+    const int index = grid_position.y * this->world_settings.panel_size.x + grid_position.x;
 
     widget_string += std::to_string(this->engine->fps.get()) + " FPS\n";
 
-    widget_string += "Noise: "       + std::to_string(this->world.world_map[index].noise_value) + "\n";
-    widget_string += "Latitude: "    + std::to_string(this->world.world_map[index].latitude)    + "\n"; 
-    widget_string += "Moisture: "    + std::to_string(this->world.world_map[index].moisture)    + "\n";
-    widget_string += "Temperature: " + std::to_string(this->world.world_map[index].temperature) + "\n";
+    widget_string += "Noise: "       + std::to_string(this->world.world_map[index].region.height)      + "\n";
+    widget_string += "Latitude: "    + std::to_string(this->world.world_map[index].region.latitude)    + "\n"; 
+    widget_string += "Moisture: "    + std::to_string(this->world.world_map[index].region.moisture)    + "\n";
+    widget_string += "Temperature: " + std::to_string(this->world.world_map[index].region.temperature) + "\n";
 
     std::string terrain = (this->world.world_map[index].is_terrain) ? "True" : "False";
     widget_string += "Terrain: " + terrain + "\n";
@@ -438,10 +448,18 @@ void Worldmap::renderDebugTab() {
 
 void Worldmap::createPanelTab() {
     gui::Button button;
-    button.widget_size     = sf::Vector2f(100, 100);
+    button.widget_size     = sf::Vector2f(80, 50);
     button.widget_position = sf::Vector2f(0, this->engine->window.getWindowSize().y - button.widget_size.y);
     button.colour          = sf::Color(50, 80, 130);
     
+    sf::Text text;
+    text.setString("Press me!");
+    text.setPosition(0, this->engine->window.getWindowSize().y - button.widget_size.y);
+    text.setCharacterSize(14);
+    text.setFillColor(sf::Color::Black);
+    text.setFont(this->engine->resource.getFont("garamond"));
+    button.setTextComponent(text);
+
     this->m_buttons.resize(1);
     this->m_buttons[0] = button;
 }
@@ -451,7 +469,7 @@ void Worldmap::updatePanelTab() {
 
     const int index = this->selected_panel_index; 
 
-    if(index == -1 || index < 0 || index > this->settings.size.x * this->settings.size.y - 1)
+    if(index == -1 || index < 0 || index > this->world_settings.size.x * this->world_settings.size.y - 1)
         return;
 
     widget_string += "Selected panel: " + std::to_string(index) + "\n";
@@ -460,10 +478,12 @@ void Worldmap::updatePanelTab() {
     
     // If this is true it means that the user wants to view the region.
     if(button.containsPoint(this->mouse_position_interface) && this->mouse_pressed) {
-        this->world.region_map[index] = Region(BiomeType::GRASSLAND_WARM, 0.5f, 0.5f, 0.5f, 0.5f); 
+        auto region = Region(BiomeType::GRASSLAND_WARM, 0.5f, 0.5f, 0.5f, 0.5f, this->region_settings.size); 
 
-        this->region_gamestate = Regionmap(this->engine, &this->world, index);
-        this->engine->gamestate.addGamestate("regionmap", this->region_gamestate);
+        this->mouse_pressed = false;
+
+        this->world.generateRegion(region, index);
+        this->region_gamestate.setCurrentRegion(index);
 
         this->engine->gamestate.setGamestate("regionmap");
     }

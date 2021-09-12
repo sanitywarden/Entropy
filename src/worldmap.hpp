@@ -18,7 +18,8 @@ namespace iso {
     class Worldmap : public entropy::Gamestate {
         private:
             Panel          panel;
-            WorldSettings  settings;
+            WorldSettings  world_settings;
+            RegionSettings region_settings;
             worldGenerator world;
             Regionmap      region_gamestate;
 
