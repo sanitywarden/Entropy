@@ -2,7 +2,6 @@
 
 namespace iso {
     Panel::Panel() {
-        this->is_river   = false;
         this->is_arctic  = false;
         this->is_coast   = false;
         this->is_terrain = false;
@@ -47,6 +46,11 @@ namespace iso {
         // Draw the river texture.
         if(this->feature.river.texture != nullptr) {
             states.texture = this->feature.river.texture;
+            target.draw(panel, states);
+        }
+    
+        if(this->feature.forest.texture != nullptr) {
+            states.texture = this->feature.forest.texture;
             target.draw(panel, states);
         }
     }

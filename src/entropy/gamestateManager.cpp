@@ -29,6 +29,6 @@ void entropy::gamestateManager::setGamestate(const std::string& id) {
 }
 
 // Return current gamestate.
-entropy::Gamestate& entropy::gamestateManager::getGamestate() {
-    return *this->m_current_gamestate;
+entropy::Gamestate* entropy::gamestateManager::getGamestate() {
+    return this->m_current_gamestate;
 }

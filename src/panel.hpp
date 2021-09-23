@@ -11,6 +11,7 @@ namespace iso {
     // Features are special elements that are rare or unique to a panel, such as rivers or forests.
     struct Feature {
         panelFeature river;
+        panelFeature forest;
     };
     
     class Panel : public sf::Drawable {
@@ -32,7 +33,6 @@ namespace iso {
             Feature feature;
             Region  region;
 
-            bool is_river;
             bool is_terrain;
             bool is_arctic;
             bool is_coast;

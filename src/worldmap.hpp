@@ -4,13 +4,16 @@
 #include "entropy/gamestate.hpp"
 #include "entropy/entropy.hpp"
 #include "panel.hpp"
-#include "worldSettings.hpp"
+#include "generationSettings.hpp"
 #include "worldGenerator.hpp"
 #include "regionmap.hpp"
+#include "gui/abstractWidget.hpp"
 #include "gui/button.hpp"
+#include "gui/widget.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <map>
 #include <iostream>
 #include <cmath>
 
@@ -25,7 +28,7 @@ namespace iso {
 
             int selected_panel_index;
 
-            std::vector <gui::Button> m_buttons;
+            std::map <std::string, gui::AbstractWidget*> m_interface;
 
             bool mouse_pressed;
             bool mouse_moved;
@@ -43,7 +46,6 @@ namespace iso {
             int max_zoom_out;
 
             sf::Text debug_text;
-            sf::Text widget_text;
 
             bool draw_debug;
 
@@ -64,13 +66,9 @@ namespace iso {
 
             void renderWorld();
 
-            void createDebugTab();
-            void updateDebugTab();
-            void renderDebugTab();
-
-            void createPanelTab();
-            void updatePanelTab();
-            void renderPanelTab();
+            void createInterface();
+            void updateInterface();
+            void renderInterface();
 
         public:
             Worldmap(entropy::Entropy* engine);

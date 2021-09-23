@@ -411,8 +411,6 @@ void worldGenerator::generateRivers() {
                 }
             }
 
-            this->world_map[river_index_current].is_river = true;
-
             if(text_direction == "START" && river_index_start == river_index_current) this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_sea");
             
             else if(text_direction == "DOWN") {
@@ -462,6 +460,7 @@ void worldGenerator::generateRivers() {
             else if(text_direction == "UP AND RIGHT") {
                 this->world_map[river_index_current].feature.river.texture = &this->m_engine->resource.getTexture("panel_river_corner_br");
             }
+
 
             last_move_value     = current_move_value;
             river_index_current = current_move_direction;
@@ -597,54 +596,144 @@ void worldGenerator::assignBiome() {
     for(int i = 0; i < this->m_world_settings.size.x * this->m_world_settings.size.y; i++) {
         auto& panel = this->world_map[i];
 
-        if(!panel.is_terrain)    panel.panel_texture = this->m_engine->resource.getTexture("panel_ocean");
-        else if(panel.is_arctic) panel.panel_texture = this->m_engine->resource.getTexture("panel_arctic");
+        if(!panel.is_terrain) {
+            panel.panel_texture = this->m_engine->resource.getTexture("panel_ocean");
+            panel.region.biome = BIOME_OCEAN;
+        } 
+        
+        else if(panel.is_arctic) {
+            panel.panel_texture = this->m_engine->resource.getTexture("panel_arctic");
+            panel.region.biome = BIOME_ARCTIC;
+        } 
     
         else if(panel.region.temperature < 0.45f && panel.region.latitude < 0.5f) {    
-            if(panel.region.moisture > 0.23f)       panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
-            else                                    panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
+            if(panel.region.moisture > 0.23f) {
+                panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
+                panel.region.biome = BIOME_CONTINENTAL;
+            }       
+            
+            else {
+                panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
+                panel.region.biome = BIOME_TUNDRA;
+            } 
         }
 
         else if(panel.region.temperature < 0.55f && panel.region.latitude < 0.55f) {
             int tiletype = rand() % 10;
 
-            if(tiletype > 5)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
-            else if(tiletype > 2) panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
-            else                  panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
+            if(tiletype > 5) {
+                panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
+                panel.region.biome = BIOME_TEMPERATE;
+            }   
+
+            else if(tiletype > 2) {
+                panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_cold");
+                panel.region.biome = BIOME_CONTINENTAL;
+            }
+            
+            else {
+                panel.panel_texture = this->m_engine->resource.getTexture("panel_tundra");
+                panel.region.biome = BIOME_TUNDRA;
+            } 
         }
 
         else if(panel.region.temperature < 0.7f) {
             panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm"); 
+            panel.region.biome = BIOME_TEMPERATE;
         }
 
         else {
-            if(panel.region.moisture > 0.51f)      panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical");
-            else if(panel.region.moisture > 0.13f) panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_subtropical");    
-            else                                   panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
+            if(panel.region.moisture > 0.51f) {
+                panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_tropical");
+                panel.region.biome = BIOME_TROPICAL;
+            }
+
+            else if(panel.region.moisture > 0.13f) {
+                panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_subtropical");    
+                panel.region.biome = BIOME_SUBTROPICAL;
+            }
+
+            else {
+                panel.panel_texture = this->m_engine->resource.getTexture("panel_grass_warm");
+                panel.region.biome = BIOME_TEMPERATE;
+            } 
         } 
     }
 }
 
-void worldGenerator::generateRegion(Region& region_data, int index) {
-    for(int y = 0; y < region_data.map_size.y; y++) {
-        for(int x = 0; x < region_data.map_size.x; x++) {
-            auto tile_position = sf::Vector2i(
-                (this->m_region_settings.tile_offset.x * this->m_region_settings.tile_size.x) + (x - y) * this->m_region_settings.tile_size.x / 2,
-                (this->m_region_settings.tile_offset.y * this->m_region_settings.tile_size.y) + (x + y) * this->m_region_settings.tile_size.y / 2
-            );
+// Seems pretty slow?
+// 1 tile per ~1ms
+void worldGenerator::generateRegion(int index) {
+    sf::Clock clock;
 
-            auto world_position = sf::Vector2f(
-                this->m_engine->window.getWindow()->mapPixelToCoords(tile_position).x,
-                this->m_engine->window.getWindow()->mapPixelToCoords(tile_position).y
-            );
+    Biome biome       = this->world_map[index].region.biome;
+    float height      = this->world_map[index].region.height;
+    float moisture    = this->world_map[index].region.moisture;
+    float temperature = this->world_map[index].region.temperature;
+    float latitude    = this->world_map[index].region.latitude;
+    
+    Region region = Region(biome, height, moisture, temperature, latitude); 
 
-            this->m_tile.tile_size     = this->m_region_settings.tile_size;
-            this->m_tile.tile_position = tile_position;
-            this->m_tile.tile_texture  = this->m_engine->resource.getTexture("tile_grass_warm");
+    this->m_tile.tile_texture = this->getBiomeTileTexture(region.biome);
+    this->m_tile.tile_size    = this->m_region_settings.tile_size;
 
-            region_data.map.push_back(this->m_tile);
+    for(int y = 0; y < this->m_region_settings.size.y; y++) {
+        for(int x = 0; x < this->m_region_settings.size.x; x++) {
+            auto screen_position = this->tilePositionScreen(x, y);
+            this->m_tile.tile_position = screen_position;
+            region.map.push_back(this->m_tile);
         }
     }
 
-    this->region_map[index] = region_data;
+    this->region_map[index] = region;
+
+    std::cout << "[World Generation][Region]: Region " << index << " generated in " << clock.getElapsedTime().asSeconds() << " seconds.\n";
+}
+
+const WorldSettings& worldGenerator::getWorldSettings() {
+    return this->m_world_settings;
+}
+
+const RegionSettings& worldGenerator::getRegionSettings() {
+    return this->m_region_settings;
+}
+
+const sf::Texture& worldGenerator::getBiomeTileTexture(Biome biome) {
+    if(biome.biome_name == "Continental")
+        return this->m_engine->resource.getTexture("tile_grass_cold");
+
+    else if(biome.biome_name == "Temperate")    
+        return this->m_engine->resource.getTexture("tile_grass_warm");
+        
+    else if(biome.biome_name == "Tropical")
+        return this->m_engine->resource.getTexture("tile_grass_tropical");
+
+    else if(biome.biome_name == "Subtropical")
+        return this->m_engine->resource.getTexture("tile_grass_subtropical");
+
+    else if(biome.biome_name == "Ocean")
+        return this->m_engine->resource.getTexture("tile_ocean");
+
+    else if(biome.biome_name == "Sea")
+        return this->m_engine->resource.getTexture("tile_sea");
+
+    else if(biome.biome_name == "Tundra")
+        return this->m_engine->resource.getTexture("tile_tundra");
+
+    else if(biome.biome_name == "Arctic")
+        return this->m_engine->resource.getTexture("tile_arctic");
+
+    else if(biome.biome_name == "Desert")
+        return this->m_engine->resource.getTexture("tile_desert");
+}
+
+sf::Vector2i worldGenerator::tilePositionScreen(int x, int y) {
+    return sf::Vector2i(
+        (this->m_region_settings.tile_offset.x * this->m_region_settings.tile_size.x) + (x - y) * (this->m_region_settings.tile_size.x / 2),
+        (this->m_region_settings.tile_offset.y * this->m_region_settings.tile_size.y) + (x + y) * (this->m_region_settings.tile_size.y / 2)
+    );
+}
+
+sf::Vector2i worldGenerator::tilePositionScreen(sf::Vector2i tile_position) {
+    return this->tilePositionScreen(tile_position.x, tile_position.y);
 }

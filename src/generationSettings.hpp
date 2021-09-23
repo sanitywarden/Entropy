@@ -25,9 +25,9 @@ namespace iso {
     };
 
     struct RegionSettings {
-        sf::Vector2i size;
-        sf::Vector2i tile_size;
-        sf::Vector2i tile_offset;
+        sf::Vector2i size;        // Size of the region.
+        sf::Vector2i tile_size;   // Size of the tile.
+        sf::Vector2i tile_offset; // Coordinates of the origin of the isometric world.
     };
 }
 

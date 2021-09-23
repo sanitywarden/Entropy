@@ -22,7 +22,7 @@ namespace entropy {
             void removeGamestate(const std::string& id);
             bool checkGamestateExists(const std::string& id);
             void setGamestate(const std::string& id);
-            Gamestate& getGamestate();
+            Gamestate* getGamestate();
     };
 }
 

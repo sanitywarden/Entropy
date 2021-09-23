@@ -12,6 +12,6 @@ int main() {
 
     game_engine.loop();
 
-    entropy::Entropy::quitApplication(0);
+    entropy::Entropy::quitApplication(0, false);
 }
 

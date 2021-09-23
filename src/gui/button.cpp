@@ -4,61 +4,59 @@
 using namespace gui;
 
 Button::Button() {
-    this->m_transparent = false;
     this->m_button_text.setString("");
-    this->colour = sf::Color(127, 127, 127);
 }
 
 Button::~Button() {
     
 } 
 
-void Button::setTextComponent(sf::Text& text_component) {
+void Button::setTextComponent(sf::Text text_component) {
     this->m_button_text = text_component;
 }
 
-sf::Text& Button::getTextComponent() {
+sf::Text Button::getTextComponent() {
     return this->m_button_text;
 }
 
-void Button::setTransparent(const bool& transparency) {
-    this->m_transparent = transparency;
-}
-
-bool& Button::isTransparent() {
-    return this->m_transparent;
-}
-
 void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    auto position = this->widgetPosition(); 
+    auto size     = this->widgetSize();
+    auto scale    = this->widgetScale();
+    auto colour   = this->isTransparent() ? sf::Color(0, 0, 0, 255) : this->widgetColour();
+
     auto first_corner = sf::Vector2f(
-        this->widget_position.x,
-        this->widget_position.y
+        position.x,
+        position.y
     ); 
 
-    this->m_button_shape = sf::VertexArray(sf::Quads, 4);
+    sf::VertexArray button(sf::Quads, 4);
 
-    this->m_button_shape[0].position = first_corner;
-    this->m_button_shape[1].position = first_corner + sf::Vector2f(this->widget_size.x, 0.f);
-    this->m_button_shape[2].position = first_corner + sf::Vector2f(this->widget_size.x, this->widget_size.y);
-    this->m_button_shape[3].position = first_corner + sf::Vector2f(0.f, this->widget_size.y);
+    button[0].position = first_corner;
+    button[1].position = first_corner + sf::Vector2f(size.x * scale.x, 0.f);
+    button[2].position = first_corner + sf::Vector2f(size.x * scale.x, size.y * scale.y);
+    button[3].position = first_corner + sf::Vector2f(0.f, size.y * scale.y);
 
-    auto colour = (this->m_transparent) ? sf::Color(this->colour.r, this->colour.g, this->colour.b, 0) : sf::Color(this->colour.r, this->colour.g, this->colour.b, 255);
+    button[0].color = colour;
+    button[1].color = colour;
+    button[2].color = colour;
+    button[3].color = colour;
 
-    this->m_button_shape[0].color = colour;
-    this->m_button_shape[1].color = colour;
-    this->m_button_shape[2].color = colour;
-    this->m_button_shape[3].color = colour;
-
-    target.draw(this->m_button_shape, states);
+    target.draw(button, states);
     target.draw(this->m_button_text);
 }
 
-bool Button::containsPoint(const sf::Vector2f& point) {
-    auto top_left = this->widget_position;
-    auto bottom_right = this->widget_position + this->widget_size;
+bool Button::containsPoint(sf::Vector2f point) {
+    auto top_left     = this->widgetPosition();
+    auto bottom_right = this->widgetPosition() + sf::Vector2f(this->widgetSize().x * this->widgetScale().x, this->widgetSize().y * this->widgetScale().y);
     
-    if(point.x >= top_left.x && point.y >= top_left.y && point.x <= bottom_right.x && point.y <= bottom_right.y) return true;
+    if(point.x >= top_left.x && point.y >= top_left.y && point.x <= bottom_right.x && point.y <= bottom_right.y) 
+        return true;
     return false;
+}
+
+void Button::update() {
+    
 }
 
 void Button::onMouseButtonPress(std::function<void()> callback) {
@@ -69,7 +67,7 @@ void Button::onMouseButtonRelease(std::function<void()> callback) {
     callback();
 }
 
-void Button::alignTextComponent(const TextAlignment& alignment) {
+void Button::alignTextComponent(TextAlignment alignment) {
     // if(alignment == TextAlignment::DEFAULT)
     //     return;
     

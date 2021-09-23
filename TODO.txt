@@ -1,0 +1,5 @@
+Make sure that virtaul functions from different classes have matching return type, or that they return '{}'
+Create a separate class for a scene UI so that the cluttered and messy code is separated from the game logic itself, and provide public methods update() and render() to include in the level loop.
+When generating a region provide a set of tiles based on the biome, which will be used when generating the terrain.
+Implement a base class for tile features used in world generation, then create a function that will return a texture based on the feature. This will help in uncluttering the code.
+Separate file for with constant definitions of texture names - const std::string TILE_GRASSLAND_WARM "tile_grass_warm"  

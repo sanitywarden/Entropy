@@ -3,14 +3,16 @@
 
 namespace iso {
     enum class BiomeType {
-        BIOMELESS,
+        BIOMELESS = 0,
         GRASSLAND_COLD,
         GRASSLAND_WARM,
         JUNGLE_SUBTROPICAL,
         JUNGLE_TROPICAL,
         DESERT,
         TUNDRA,
-        ARCTIC
+        ARCTIC,
+        OCEAN,
+        SEA
     };
 }
 

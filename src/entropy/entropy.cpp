@@ -18,7 +18,7 @@ void entropy::Entropy::loop() {
 
     while(true) {
         fps.update();
-        entropy::Gamestate* gamestate = &this->gamestate.getGamestate();
+        auto gamestate = this->gamestate.getGamestate();
     
         if(gamestate != nullptr) {
             gamestate->handleInput();
@@ -28,7 +28,7 @@ void entropy::Entropy::loop() {
     }
 }
 
-static void entropy::Entropy::quitApplication(int code) {
+void entropy::Entropy::quitApplication(int code, bool close_console) {
     std::cout << "[Entropy Engine]: Application quit with code " << code << ".\n";
 
     switch(code) {
@@ -45,5 +45,6 @@ static void entropy::Entropy::quitApplication(int code) {
             break;
     }
 
-    exit(code);
+    if(close_console)
+        exit(code);
 }

@@ -2,9 +2,10 @@
 #define _WORLD_GENERATOR_HPP_
 
 #include "panel.hpp"
-#include "worldSettings.hpp"
+#include "generationSettings.hpp"
 #include "entropy/entropy.hpp"
 #include "region.hpp"
+#include "biome.hpp"
 
 #include <SFML/System.hpp>
 #include <vector>
@@ -35,16 +36,24 @@ namespace iso {
             void generateMoistureMap();
             void assignBiome();
 
+            const sf::Texture& getBiomeTileTexture(Biome biome); 
+
         public:
             worldGenerator();
             worldGenerator(WorldSettings& world_settings, RegionSettings& region_settings, entropy::Entropy* engine);
             ~worldGenerator();
+        
+            void generateWorld();
+            void generateRegion(int index);
+    
+            const WorldSettings&  getWorldSettings();
+            const RegionSettings& getRegionSettings();
+      
+            sf::Vector2i tilePositionScreen(int x, int y);
+            sf::Vector2i tilePositionScreen(sf::Vector2i);
 
             std::vector <Panel>  world_map;  // Collection of all the panels on the worldmap.
             std::vector <Region> region_map; // Collection of all the region data classes used by Regionmap gamestate.
-
-            void generateWorld();
-            void generateRegion(Region& region_data, int index);
     };
 }
 

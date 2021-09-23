@@ -10,11 +10,13 @@ Worldmap::Worldmap(entropy::Entropy* engine) {
 
     this->initialise();
     this->loadResources();   
+    this->createInterface();
 
     this->world = worldGenerator(this->world_settings, this->region_settings, this->engine);
     this->world.generateWorld();
 
     this->region_gamestate = Regionmap(this->engine, &this->world);
+    this->engine->gamestate.addGamestate("regionmap", this->region_gamestate);
 }        
 
 Worldmap::~Worldmap() {
@@ -36,13 +38,10 @@ void Worldmap::initialise() {
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
 
-    this->widget_text.setFont(this->engine->resource.getFont("garamond"));
-    this->widget_text.setFillColor(sf::Color::Black);
-    this->widget_text.setCharacterSize(16);
-
     this->debug_text.setFont(this->engine->resource.getFont("garamond"));
     this->debug_text.setFillColor(sf::Color::Black);
     this->debug_text.setCharacterSize(16);
+    this->debug_text.setPosition(0, 0);
 
     this->world_settings.size.x               = 100;
     this->world_settings.size.y               = 100;
@@ -62,9 +61,9 @@ void Worldmap::initialise() {
     this->world_settings.multiplier_gradient  = 2.00f; // Magic number to make the world look as good as possible.
     this->world_settings.multiplier_moisture  = 0.90f; // Magic number to make the world look as good as possible.
 
-    this->region_settings.size.x        = 40;
-    this->region_settings.size.y        = 40;
-    this->region_settings.tile_offset.x = 0;
+    this->region_settings.size.x        = 50;
+    this->region_settings.size.y        = 50;
+    this->region_settings.tile_offset.x = 100;
     this->region_settings.tile_offset.y = 0;
     this->region_settings.tile_size.x   = 64;
     this->region_settings.tile_size.y   = 32;
@@ -83,9 +82,6 @@ void Worldmap::initialise() {
 
     this->view_interface.setSize(window_size);
     this->view_interface.setCenter(window_size.x / 2, window_size.y / 2);
-
-    this->createDebugTab();
-    this->createPanelTab();
 }
 
 void Worldmap::loadResources() {
@@ -107,7 +103,7 @@ void Worldmap::loadResources() {
     this->engine->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_horizontal", sf::IntRect(128, 32, 64, 32));
     this->engine->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_vertical",   sf::IntRect(128, 64, 64, 32));
 
-    this->engine->resource.loadFont("./res/font/proggy.ttf", "proggy");
+    this->engine->resource.loadFont("./res/font/proggy.ttf",   "proggy");
     this->engine->resource.loadFont("./res/font/garamond.ttf", "garamond");
 }
 
@@ -127,8 +123,8 @@ void Worldmap::moveCamera() {
     );
 
     // Multipliers for faster camera movement. 
-    float x_multiplier = 3.0f;
-    float y_multiplier = 3.0f;    
+    float x_multiplier = 6.0f;
+    float y_multiplier = 6.0f;    
 
     // Check the horizontal and vertical bounds of the screen.
     // This makes sure that you can not move past the world map.
@@ -159,19 +155,17 @@ void Worldmap::zoomCamera() {
 
             this->view_game.zoom(2.f);
         }
+    
+        this->zoom_camera = false;
     } 
 }
 
 void Worldmap::updateCamera() {
-    if(this->move_camera) {
+    if(this->move_camera) 
         this->moveCamera();
-        this->move_camera   = false;
-    }
 
-    if(this->zoom_camera) {
+    if(this->zoom_camera) 
         this->zoomCamera();
-        this->zoom_camera = false;
-    }
 
     // Check if the camera is postioned badly on the top of the screen.
     if(this->view_game.getCenter().y - this->view_game.getSize().y / 2 < 0) {
@@ -206,8 +200,7 @@ void Worldmap::update() {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
-    this->updateDebugTab();
-    this->updatePanelTab();
+    this->updateInterface();
     this->updateSelectedPanel();
 }
 
@@ -221,8 +214,7 @@ void Worldmap::render() {
 
     this->engine->window.getWindow()->setView(this->view_interface);
 
-    this->renderDebugTab();
-    this->renderPanelTab(); 
+    this->renderInterface();
 
     this->engine->window.getWindow()->setView(this->view_game);
     this->engine->window.display();
@@ -241,9 +233,6 @@ void Worldmap::handleInput() {
 
                 if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
                     this->position_pressed = this->mouse_position_window;
-
-                    this->selectPanel();
-                    this->unselectPanel();
                 }
 
                 if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
@@ -331,28 +320,26 @@ void Worldmap::selectPanel() {
         );
 
         const int index = panel_grid_position.y * this->world_settings.size.x + panel_grid_position.x;
-
         this->selected_panel_index = index;
     }
 }
 
 void Worldmap::unselectPanel() {
     if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->selected_panel_index != -1) {
-        auto panel_grid_position = sf::Vector2i(
+        sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / this->world_settings.panel_size.x,
             this->mouse_position_window.y / this->world_settings.panel_size.y
         );
 
         const int index = panel_grid_position.y * this->world_settings.size.x + panel_grid_position.x;
-
         if(this->selected_panel_index != index) 
-            this->selected_panel_index = -1.0;
+            this->selected_panel_index = -1;
     }
 }
 
 void Worldmap::drawSelectedPanel() {
-    if(this->selected_panel_index != -1) {
-        auto panel_position = this->world.world_map[this->selected_panel_index].panel_position;
+    if(this->selected_panel_index != -1 && this->selected_panel_index < 0 && this->selected_panel_index > this->world_settings.size.x * this->world_settings.size.y) {
+        sf::Vector2f panel_position = this->world.world_map[this->selected_panel_index].panel_position;
 
         sf::VertexArray selection_indicator(sf::Quads, 4);
 
@@ -374,26 +361,31 @@ void Worldmap::drawSelectedPanel() {
 }
 
 void Worldmap::updateSelectedPanel() {
-
+    if(this->event.type == sf::Event::MouseButtonPressed) {
+        if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+            this->selectPanel();
+            this->unselectPanel();
+        }
+    }
 }
 
 void Worldmap::highlightPanel() {
-    auto grid_position = sf::Vector2i(
+    auto panel_grid_position = sf::Vector2i(
         this->mouse_position_window.x / this->world_settings.panel_size.x,
         this->mouse_position_window.y / this->world_settings.panel_size.y
     );
 
-    auto position = sf::Vector2f(
-        grid_position.x * this->world_settings.panel_size.x,
-        grid_position.y * this->world_settings.panel_size.y
+    auto highlight_position = sf::Vector2f(
+        panel_grid_position.x * this->world_settings.panel_size.x,
+        panel_grid_position.y * this->world_settings.panel_size.y
     );
 
     sf::VertexArray highlight(sf::Quads, 4);
 
-    highlight[0].position = position;
-    highlight[1].position = position + sf::Vector2f(this->world_settings.panel_size.x, 0);
-    highlight[2].position = position + sf::Vector2f(this->world_settings.panel_size.x, this->world_settings.panel_size.y);
-    highlight[3].position = position + sf::Vector2f(0, this->world_settings.panel_size.y);
+    highlight[0].position = highlight_position;
+    highlight[1].position = highlight_position + sf::Vector2f(this->world_settings.panel_size.x, 0);
+    highlight[2].position = highlight_position + sf::Vector2f(this->world_settings.panel_size.x, this->world_settings.panel_size.y);
+    highlight[3].position = highlight_position + sf::Vector2f(0, this->world_settings.panel_size.y);
 
     highlight[0].texCoords = sf::Vector2f(0, 0);
     highlight[1].texCoords = sf::Vector2f(this->world_settings.panel_size.x, 0);
@@ -406,95 +398,68 @@ void Worldmap::highlightPanel() {
     this->engine->window.getWindow()->draw(highlight, states);
 }
 
-void Worldmap::createDebugTab() {
+void Worldmap::createInterface() {
+    static gui::Button button1;
+    button1.setWidgetSize(sf::Vector2f(80, 50));
+    button1.setWidgetPosition(sf::Vector2f(10, 15));
+    button1.setWidgetColour(sf::Color(50, 80, 130));
+    button1.setWidgetID("button_enter_region");
 
+    static gui::Button button2;
+    button2.setWidgetSize(sf::Vector2f(80, 50));
+    button2.setWidgetPosition(sf::Vector2f(10, 75));
+    button2.setWidgetColour(sf::Color(50, 80, 130));
+    button2.setWidgetID("button_temporary");
+
+    static gui::Widget widget1;
+    widget1.setWidgetSize(sf::Vector2f(100, 180));
+    widget1.setWidgetPosition(sf::Vector2f(0, this->engine->window.getWindowSize().y - widget1.widgetSize().y));
+    widget1.setWidgetColour(sf::Color(50, 50, 50));
+    
+    widget1.attachComponent(&button1, button1.getWidgetID());
+    widget1.attachComponent(&button2, button2.getWidgetID());
+
+    this->m_interface.insert({ "widget", &widget1 });
 }
 
-void Worldmap::updateDebugTab() {
-    std::string widget_string;
-
-    auto grid_position = sf::Vector2i(
-        this->mouse_position_window.x / this->world_settings.panel_size.x,
-        this->mouse_position_window.y / this->world_settings.panel_size.y
+void Worldmap::updateInterface() {
+    std::string debug_text;
+    
+    auto panel_grid_position = sf::Vector2i(
+        this->mouse_position_window.x / this->world.getWorldSettings().panel_size.x,
+        this->mouse_position_window.y / this->world.getWorldSettings().panel_size.y
     );
 
-    const int index = grid_position.y * this->world_settings.panel_size.x + grid_position.x;
+    const int panel_index = panel_grid_position.y * this->world.getWorldSettings().panel_size.x + panel_grid_position.x;
 
-    widget_string += std::to_string(this->engine->fps.get()) + " FPS\n";
+    debug_text += "FPS: "         + std::to_string(this->engine->fps.get())                               + "\n";
+    debug_text += "Index: "       + std::to_string(panel_index)                                           + "\n";
 
-    widget_string += "Noise: "       + std::to_string(this->world.world_map[index].region.height)      + "\n";
-    widget_string += "Latitude: "    + std::to_string(this->world.world_map[index].region.latitude)    + "\n"; 
-    widget_string += "Moisture: "    + std::to_string(this->world.world_map[index].region.moisture)    + "\n";
-    widget_string += "Temperature: " + std::to_string(this->world.world_map[index].region.temperature) + "\n";
 
-    std::string terrain = (this->world.world_map[index].is_terrain) ? "True" : "False";
-    widget_string += "Terrain: " + terrain + "\n";
+    if(this->selected_panel_index != -1)
+        debug_text += "\nSelected index: " + std::to_string(this->selected_panel_index) + "\n";
 
-    std::string arctic = (this->world.world_map[index].is_arctic) ? "True" : "False";
-    widget_string += "Arctic:  " + arctic + "\n";
+    this->debug_text.setString(debug_text);
 
-    std::string river = (this->world.world_map[index].is_river) ? "True" : "False";
-    widget_string += "River:   " + river + "\n";
+    auto* widget  = (gui::Widget*)this->m_interface["widget"];
+    auto* button1 = (gui::Button*)(&widget->getComponentByName("button_enter_region"));
+    auto* button2 = (gui::Button*)(&widget->getComponentByName("button_temporary"));
 
-    this->debug_text.setString(widget_string);
-    this->debug_text.setPosition(0, 0);
-}
-
-void Worldmap::renderDebugTab() {
-    if(this->draw_debug) {
-        this->engine->window.getWindow()->draw(this->debug_text);
-    }
-}
-
-void Worldmap::createPanelTab() {
-    gui::Button button;
-    button.widget_size     = sf::Vector2f(80, 50);
-    button.widget_position = sf::Vector2f(0, this->engine->window.getWindowSize().y - button.widget_size.y);
-    button.colour          = sf::Color(50, 80, 130);
-    
-    sf::Text text;
-    text.setString("Press me!");
-    text.setPosition(0, this->engine->window.getWindowSize().y - button.widget_size.y);
-    text.setCharacterSize(14);
-    text.setFillColor(sf::Color::Black);
-    text.setFont(this->engine->resource.getFont("garamond"));
-    button.setTextComponent(text);
-
-    this->m_buttons.resize(1);
-    this->m_buttons[0] = button;
-}
-
-void Worldmap::updatePanelTab() {
-    std::string widget_string;
-
-    const int index = this->selected_panel_index; 
-
-    if(index == -1 || index < 0 || index > this->world_settings.size.x * this->world_settings.size.y - 1)
-        return;
-
-    widget_string += "Selected panel: " + std::to_string(index) + "\n";
-
-    auto& button = this->m_buttons[0];
-    
-    // If this is true it means that the user wants to view the region.
-    if(button.containsPoint(this->mouse_position_interface) && this->mouse_pressed) {
-        auto region = Region(BiomeType::GRASSLAND_WARM, 0.5f, 0.5f, 0.5f, 0.5f, this->region_settings.size); 
-
-        this->mouse_pressed = false;
-
-        this->world.generateRegion(region, index);
-        this->region_gamestate.setCurrentRegion(index);
+    if(button1->containsPoint(this->mouse_position_interface) && this->mouse_pressed) {        
+        this->world.generateRegion(this->selected_panel_index);
+        this->region_gamestate.setCurrentRegion(this->selected_panel_index);
 
         this->engine->gamestate.setGamestate("regionmap");
     }
 
-    this->widget_text.setString(widget_string);
-    this->widget_text.setPosition(0, 200);
+    // Rest of the updates.
 }
 
-void Worldmap::renderPanelTab() {
-    if(this->draw_debug && this->selected_panel_index != -1) {
-        this->engine->window.getWindow()->draw(this->widget_text);
-        this->engine->window.getWindow()->draw(this->m_buttons[0]);
+void Worldmap::renderInterface() {
+    this->engine->window.getWindow()->draw(this->debug_text);
+    
+    if(this->selected_panel_index != -1 && this->draw_debug) {
+        gui::Widget* widget = (gui::Widget*)this->m_interface["widget"];
+        this->engine->window.getWindow()->draw(*widget);
     }
 }

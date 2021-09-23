@@ -28,7 +28,7 @@ namespace entropy {
 
             void loop();
 
-            static void quitApplication(int code);
+            static void quitApplication(int code, bool close_console = true);
     };
 }
 
