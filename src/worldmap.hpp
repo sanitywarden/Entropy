@@ -3,13 +3,13 @@
 
 #include "entropy/gamestate.hpp"
 #include "entropy/entropy.hpp"
-#include "panel.hpp"
 #include "generationSettings.hpp"
 #include "worldGenerator.hpp"
 #include "regionmap.hpp"
 #include "gui/abstractWidget.hpp"
 #include "gui/button.hpp"
 #include "gui/widget.hpp"
+#include "gui/text.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -20,13 +20,14 @@
 namespace iso {
     class Worldmap : public entropy::Gamestate {
         private:
-            Panel          panel;
+            Region         region;
             WorldSettings  world_settings;
             RegionSettings region_settings;
             worldGenerator world;
             Regionmap      region_gamestate;
 
             int selected_panel_index;
+            bool can_select_panel;
 
             std::map <std::string, gui::AbstractWidget*> m_interface;
 
@@ -48,6 +49,7 @@ namespace iso {
             sf::Text debug_text;
 
             bool draw_debug;
+            bool draw_action_panel;
 
         private:
             void handleInput()         override;

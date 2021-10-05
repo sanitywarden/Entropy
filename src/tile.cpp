@@ -11,24 +11,21 @@ Tile::~Tile() {
 }
 
 void Tile::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    sf::VertexArray tile(sf::Quads, 4);
+    sf::VertexArray tile(sf::Quads, 4);    
 
-    auto tile_position = sf::Vector2f(
-        this->tile_position.x,
-        this->tile_position.y
-    );
-
-    tile[0].position = tile_position;
-    tile[1].position = tile_position + sf::Vector2f(this->tile_size.x, 0);
-    tile[2].position = tile_position + sf::Vector2f(this->tile_size.x, this->tile_size.y);
-    tile[3].position = tile_position + sf::Vector2f(0, this->tile_size.y);
+    tile[0].position = this->position;
+    tile[1].position = this->position + sf::Vector2f(this->size.x, 0);
+    tile[2].position = this->position + sf::Vector2f(this->size.x, this->size.y);
+    tile[3].position = this->position + sf::Vector2f(0, this->size.y);
 
     tile[0].texCoords = sf::Vector2f(0, 0);
-    tile[1].texCoords = sf::Vector2f(this->tile_size.x, 0); 
-    tile[2].texCoords = sf::Vector2f(this->tile_size.x, this->tile_size.y); 
-    tile[3].texCoords = sf::Vector2f(0, this->tile_size.y);
+    tile[1].texCoords = sf::Vector2f(this->size.x, 0); 
+    tile[2].texCoords = sf::Vector2f(this->size.x, this->size.y); 
+    tile[3].texCoords = sf::Vector2f(0, this->size.y);
 
-    states.texture = &this->tile_texture;
-
+    states.texture = &this->texture;
     target.draw(tile, states); 
+
+    if(this->tree.exists()) 
+        target.draw(this->tree);
 }

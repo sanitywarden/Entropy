@@ -21,6 +21,9 @@ namespace entropy {
 
             sf::RenderWindow* getWindow();
             sf::Vector2f getWindowSize();
+            bool open();
+
+            void setTitle(std::string title);
 
             void clear(const sf::Color&);
             void display();

@@ -31,7 +31,7 @@ void Regionmap::initialise() {
 
     this->selected_panel_index = -1;
 
-    this->zoom = 1;
+    this->zoom = 2;
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
     
@@ -55,6 +55,15 @@ void Regionmap::loadResources() {
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                sf::IntRect(512, 0, 64, 32 ));
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_highlight",          sf::IntRect(0, 288, 64, 32 ));
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction", sf::IntRect(64, 288, 64, 32));
+    this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",     sf::IntRect(0, 0, 64, 64   ));
+    this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",     sf::IntRect(64, 0, 64, 64  ));
+    this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",     sf::IntRect(128, 0, 64, 64 ));
+    this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1", sf::IntRect(256, 0, 64, 64 ));
+    // this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold2",     sf::IntRect(192, 0, 64, 32));
+    // this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1", sf::IntRect(256, 0, 64, 32));
+    // this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical2", sf::IntRect(328, 0, 64, 32));
+
+    this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_warm_big", sf::IntRect(0, 32, 64, 64));
 }
 
 void Regionmap::update() {
@@ -155,7 +164,7 @@ void Regionmap::updateMousePosition() {
 }
 
 void Regionmap::moveCamera() {
-    auto division = this->world->getRegionSettings().tile_size.x + this->world->getRegionSettings().tile_size.y;
+    auto division = this->world->region_settings.tile_size.x + this->world->region_settings.tile_size.y;
     auto distance = sf::Vector2f(
         (this->position_pressed.x - this->position_released.x) / division,       
         (this->position_pressed.y - this->position_released.y) / division
@@ -211,20 +220,20 @@ void Regionmap::updateCamera() {
 
 void Regionmap::renderRegion() {
     if(this->m_region != nullptr) {
-        for(auto& tile : this->m_region->map) {
+        for(const Tile& tile : this->m_region->map) {
             this->engine->window.getWindow()->draw(tile);
         }
     }
 }
 
 void Regionmap::setCurrentRegion(int region_index) {
-    this->m_region = &this->world->region_map[region_index];
+    this->m_region = &this->world->world_map[region_index];
 
     // Here you can setup what to do when entering a region.
-
+    // For example, centre the camera.
     auto first_tile_position = sf::Vector2f(
-        this->m_region->map[0].tile_position.x + this->world->getRegionSettings().tile_size.x / 2,
-        this->m_region->map[0].tile_position.y
+        this->m_region->map[0].position.x + this->world->region_settings.tile_size.x / 2,
+        this->m_region->map[0].position.y
     );
 
     this->view_game.setCenter(first_tile_position);
@@ -247,8 +256,8 @@ void Regionmap::drawSelectedTile() {
 }
 
 void Regionmap::higlightTile() {
-    auto tile_size   = this->world->getRegionSettings().tile_size;
-    auto tile_offset = this->world->getRegionSettings().tile_offset;
+    auto tile_size   = this->world->region_settings.tile_size;
+    auto tile_offset = this->world->region_settings.tile_offset;
 
     auto tile_grid_position = sf::Vector2i(
         this->mouse_position_window.x / tile_size.x,
@@ -261,8 +270,8 @@ void Regionmap::higlightTile() {
     );
 
     auto pixel = sf::Vector2i(
-        (int)this->mouse_position_window.x % tile_size.x,
-        (int)this->mouse_position_window.y % tile_size.y
+        (int)this->mouse_position_window.x % (int)tile_size.x,
+        (int)this->mouse_position_window.y % (int)tile_size.y
     );  
 
     auto pixel_colour = this->getTilePixelColour(pixel);
@@ -303,7 +312,7 @@ std::string Regionmap::getTilePixelColour(sf::Vector2i pixel) {
     if(pixel.x < 0 || pixel.y < 0) 
         return "Other";
 
-    if(pixel.x > this->world->getRegionSettings().tile_size.x - 1 || pixel.y > this->world->getRegionSettings().tile_size.y - 1) 
+    if(pixel.x > this->world->region_settings.tile_size.x - 1 || pixel.y > this->world->region_settings.tile_size.y - 1) 
         return "Other";
 
     auto pixel_colour = this->engine->resource.getTexture("tile_template_direction").copyToImage().getPixel(pixel.x, pixel.y);

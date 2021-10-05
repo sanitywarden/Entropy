@@ -4,28 +4,28 @@
 using namespace gui;
 
 Button::Button() {
-    this->m_button_text.setString("");
+    this->m_button_text.label().setString("");
 }
 
 Button::~Button() {
     
 } 
 
-void Button::setTextComponent(sf::Text text_component) {
+void Button::setTextComponent(Label text_component) {
     this->m_button_text = text_component;
 }
 
-sf::Text Button::getTextComponent() {
+Label& Button::textComponent() {
     return this->m_button_text;
 }
 
 void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    auto position = this->widgetPosition(); 
-    auto size     = this->widgetSize();
-    auto scale    = this->widgetScale();
-    auto colour   = this->isTransparent() ? sf::Color(0, 0, 0, 255) : this->widgetColour();
+    sf::Vector2f position = this->widgetPosition(); 
+    sf::Vector2f size     = this->widgetSize();
+    sf::Vector2f scale    = this->widgetScale();
+    sf::Color    colour   = this->isTransparent() ? sf::Color(0, 0, 0, 255) : this->widgetColour();
 
-    auto first_corner = sf::Vector2f(
+    sf::Vector2f first_corner = sf::Vector2f(
         position.x,
         position.y
     ); 
@@ -42,6 +42,8 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     button[2].color = colour;
     button[3].color = colour;
 
+    this->m_button_text.setWidgetPosition(position);
+
     target.draw(button, states);
     target.draw(this->m_button_text);
 }
@@ -55,8 +57,8 @@ bool Button::containsPoint(sf::Vector2f point) {
     return false;
 }
 
-void Button::update() {
-    
+void Button::update(std::function<void()> callback) {
+    callback();
 }
 
 void Button::onMouseButtonPress(std::function<void()> callback) {
@@ -67,7 +69,7 @@ void Button::onMouseButtonRelease(std::function<void()> callback) {
     callback();
 }
 
-void Button::alignTextComponent(TextAlignment alignment) {
+// void Button::alignTextComponent(TextAlignment alignment) {
     // if(alignment == TextAlignment::DEFAULT)
     //     return;
     
@@ -90,4 +92,4 @@ void Button::alignTextComponent(TextAlignment alignment) {
     // else if(alignment == TextAlignment::ALIGNED_RIGHT) {
 
     // }
-}
+// }

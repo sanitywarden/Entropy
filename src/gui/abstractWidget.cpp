@@ -8,6 +8,8 @@ AbstractWidget::AbstractWidget() {
     this->setWidgetScale(sf::Vector2f(1.f, 1.f));
     this->setWidgetID("NULL");
     this->setTransparent(false);
+    
+    this->m_parent = nullptr;
 }
 
 AbstractWidget::~AbstractWidget() {
@@ -60,4 +62,19 @@ void AbstractWidget::setTransparent(bool transparent) {
 
 bool AbstractWidget::isTransparent() const {
     return this->m_transparent;
+}
+
+void AbstractWidget::setParent(AbstractWidget* parent) {
+    this->m_parent = parent;
+}
+
+// Returns a parent of the GUI component (return value of AbstractWidget::attached() is true).
+// Returns a nullptr if parent does not exist (return value of AbstractWidget::attached() is false). 
+AbstractWidget* AbstractWidget::parent() const {
+    return this->m_parent;
+}
+
+// Check if the GUI component is attached to a high-level entity.
+bool AbstractWidget::attached() const {
+    return (this->m_parent) ? true : false; 
 }

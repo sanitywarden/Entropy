@@ -52,8 +52,8 @@ const gui::AbstractWidget& Widget::getComponentByName(std::string component_name
     return *this->m_attached_components.at(component_name);
 }
 
-void Widget::update() {
-
+void Widget::update(std::function<void()> callback) {
+    callback();
 }
 
 void Widget::onMouseButtonPress(std::function<void()> callback) {

@@ -26,7 +26,7 @@ namespace gui {
             void attachComponent(gui::AbstractWidget* component, std::string component_name);
             const gui::AbstractWidget& getComponentByName(std::string component_name) const;
 
-            void update()                                    override;
+            void update(std::function<void()>)               override;
             void onMouseButtonPress(std::function<void()>)   override;
             void onMouseButtonRelease(std::function<void()>) override;
             bool containsPoint(sf::Vector2f)                 override;

@@ -16,8 +16,7 @@ entropy::Entropy::~Entropy() {}
 void entropy::Entropy::loop() {    
     this->fps = entropy::FPS();
 
-    while(true) {
-        fps.update();
+    while(this->window.open()) {
         auto gamestate = this->gamestate.getGamestate();
     
         if(gamestate != nullptr) {
@@ -25,6 +24,8 @@ void entropy::Entropy::loop() {
             gamestate->update();
             gamestate->render();
         }
+
+        fps.update();
     }
 }
 
@@ -41,7 +42,7 @@ void entropy::Entropy::quitApplication(int code, bool close_console) {
             break;
         
         case 1:
-            std::cout << "[Entropy Engine]: Failed to load a resource file.\n";
+            std::cout << "[Entropy Engine]: Application exited, error occurred.\n";
             break;
     }
 

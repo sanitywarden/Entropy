@@ -2,26 +2,28 @@
 
 #include <iostream>
 
-entropy::windowManager::windowManager() {}
-entropy::windowManager::~windowManager() {}
+using namespace entropy;
 
-void entropy::windowManager::createFullscreenWindow() {
+windowManager::windowManager() {}
+windowManager::~windowManager() {}
+
+void windowManager::createFullscreenWindow() {
     std::cout << "[Entropy Engine][Window Manager]: Window created in fullscreen mode.\n";
     
     this->m_window = std::shared_ptr <sf::RenderWindow> (new sf::RenderWindow(sf::VideoMode::getFullscreenModes()[0], "", sf::Style::Fullscreen));
 }
 
-void entropy::windowManager::createWindow(const sf::Vector2f& window_size) {
+void windowManager::createWindow(const sf::Vector2f& window_size) {
     std::cout << "[Entropy Engine][Window Manager]: Window created in custom size mode.\n";
 
     this->m_window = std::shared_ptr <sf::RenderWindow> (new sf::RenderWindow(sf::VideoMode(window_size.x, window_size.y), ""));
 }
 
-sf::RenderWindow* entropy::windowManager::getWindow() {
+sf::RenderWindow* windowManager::getWindow() {
     return this->m_window.get();
 }
 
-sf::Vector2f entropy::windowManager::getWindowSize() {
+sf::Vector2f windowManager::getWindowSize() {
     auto size = sf::Vector2f(
         this->getWindow()->getSize().x,
         this->getWindow()->getSize().y
@@ -30,10 +32,18 @@ sf::Vector2f entropy::windowManager::getWindowSize() {
     return size;
 }
 
-void entropy::windowManager::clear(const sf::Color& colour) {
-    this->m_window.get()->clear(colour);
+bool windowManager::open() {
+    return this->getWindow()->isOpen();
 }
 
-void entropy::windowManager::display() {
-    this->m_window.get()->display();
+void windowManager::setTitle(std::string title) {
+    this->getWindow()->setTitle(title);
+}
+
+void windowManager::clear(const sf::Color& colour) {
+    this->getWindow()->clear(colour);
+}
+
+void windowManager::display() {
+    this->getWindow()->display();
 }

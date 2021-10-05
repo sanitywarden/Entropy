@@ -1,6 +1,8 @@
 #ifndef _TILE_HPP_
 #define _TILE_HPP_
 
+#include "entity.hpp"
+
 #include <SFML/Graphics.hpp>
 
 namespace iso {
@@ -12,9 +14,12 @@ namespace iso {
             Tile();
             ~Tile();
 
-            sf::Vector2i tile_position;
-            sf::Vector2i tile_size;
-            sf::Texture  tile_texture;
+            Entity tree;
+
+            sf::Vector2f position;
+            sf::Vector2f size;
+            sf::Texture  texture;
+            
     };
 }
 

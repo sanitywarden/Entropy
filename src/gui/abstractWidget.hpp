@@ -13,7 +13,6 @@ namespace gui {
     };
     
     // Base class for GUI elements.
-    // Notice - this class does not provide the shape of the widget. 
     class AbstractWidget : public sf::Drawable {
         private:
             std::string  m_widget_id;
@@ -22,10 +21,12 @@ namespace gui {
             sf::Vector2f m_widget_scale; 
             sf::Color    m_widget_colour;
 
+            AbstractWidget* m_parent;
+
             bool m_transparent;
 
         public:   
-
+            
         public:
             AbstractWidget();
             ~AbstractWidget();
@@ -48,7 +49,11 @@ namespace gui {
             void setTransparent(bool);
             bool isTransparent() const;
 
-            virtual void update()                                    { return; }
+            void setParent(AbstractWidget* parent);
+            AbstractWidget* parent() const;
+            bool attached() const;
+
+            virtual void update(std::function<void()>)               { return; }
             virtual void onMouseButtonPress(std::function<void()>)   { return; }
             virtual void onMouseButtonRelease(std::function<void()>) { return; }
             virtual bool containsPoint(sf::Vector2f)                 { return false; }

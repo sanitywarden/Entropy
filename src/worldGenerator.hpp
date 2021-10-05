@@ -1,7 +1,6 @@
 #ifndef _WORLD_GENERATOR_HPP_
 #define _WORLD_GENERATOR_HPP_
 
-#include "panel.hpp"
 #include "generationSettings.hpp"
 #include "entropy/entropy.hpp"
 #include "region.hpp"
@@ -15,28 +14,35 @@
 namespace iso {
     class worldGenerator {
         private:
-            WorldSettings  m_world_settings;
-            RegionSettings m_region_settings;
-            Panel m_panel;
-            Tile  m_tile;
+            Region m_region;
+            Tile   m_tile;
 
             entropy::Entropy *m_engine;
 
             std::string m_log_prefix;
 
-            std::vector <float> m_noise;
-            std::vector <float> m_gradient;
+            std::vector <float> m_noise;    
+            std::vector <float> m_gradient; 
+
         private:
             void generateNoiseMap();
             void generateCircularGradient();
             void generatePoles();
-            void generateRivers();
             void generateLatititude();
             void generateTemperature();
             void generateMoistureMap();
             void assignBiome();
+            void generateRivers();
+            void generateForests();
 
-            const sf::Texture& getBiomeTileTexture(Biome biome); 
+            void generateNoiseRegion(Region& region);
+
+            void generateNoise(noiseSettings& settings, std::vector<float>& container);
+
+            bool is_biome(int index, Biome biome);            
+
+            sf::Texture& getBiomeTileTexture(Biome biome); 
+            sf::Texture& getBiomeTileForestTexture(Biome biome);
 
         public:
             worldGenerator();
@@ -44,16 +50,21 @@ namespace iso {
             ~worldGenerator();
         
             void generateWorld();
-            void generateRegion(int index);
+            void generateRegion(int index, Region& region);
     
-            const WorldSettings&  getWorldSettings();
-            const RegionSettings& getRegionSettings();
-      
-            sf::Vector2i tilePositionScreen(int x, int y);
-            sf::Vector2i tilePositionScreen(sf::Vector2i);
+            sf::Vector2f tilePositionScreen(int x, int y);
+            sf::Vector2f tilePositionScreen(sf::Vector2i);
+            sf::Vector2f tilePositionScreen(sf::Vector2f);
 
-            std::vector <Panel>  world_map;  // Collection of all the panels on the worldmap.
-            std::vector <Region> region_map; // Collection of all the region data classes used by Regionmap gamestate.
+            WorldSettings  world_settings;
+            RegionSettings region_settings;
+
+            bool is_coast  (int index);
+            bool is_terrain(int index);
+            bool is_forest (int index);
+            bool is_arctic (int index);
+
+            std::vector <Region> world_map; 
     };
 }
 

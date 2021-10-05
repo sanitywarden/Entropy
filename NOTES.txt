@@ -1,0 +1,15 @@
+Panel-Region-Tile system:
+	Panel becomes just a Region, there is no need to separate the two.
+	Rename the class Panel to Region.
+
+Tile entity system.
+	Tiles can have unique features located on them, such as trees or valuable resources.
+	Tiles should have a separate entity property - either a vector of entities, or a singular entity - that would be drawn to the screen, when the tile itself is drawn.
+	Entity class should be easy to use, and understand.
+
+	Entity:
+		?parent*        --- pointer to the tile owning that entity.
+		texture        --- texture of the entity.
+		texture_size   --- size of the entity's texture.
+		texture_origin --- offset from the top left of the texture to the point which will be considered texture's origin.
+		

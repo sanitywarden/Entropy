@@ -52,8 +52,6 @@ namespace iso {
             std::string getTilePixelColour(sf::Vector2i);
 
         public: 
-            /* Regionmap's constructor is triggered every time the user visits a region. 
-               This is because you somehow need to update the information about the state of the world, and the region the user visits. */
             Regionmap();
             Regionmap(entropy::Entropy* engine, iso::worldGenerator* world);
             ~Regionmap();
