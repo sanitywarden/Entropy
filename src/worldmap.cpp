@@ -32,10 +32,8 @@ void Worldmap::initialise() {
     this->zoom_camera    = false;
 
     this->selected_panel_index = -1;
-    this->can_select_panel = true;
 
     this->draw_debug = true;
-    this->draw_action_panel = false;
 
     this->zoom = 0;
     this->max_zoom_in  = 0; 
@@ -65,10 +63,10 @@ void Worldmap::initialise() {
     this->world_settings.multiplier_gradient    = 2.00f; // Magic number to make the world look as good as possible.
     this->world_settings.multiplier_moisture    = 0.90f; // Magic number to make the world look as good as possible.
 
-    this->region_settings.size.x        = 50;
-    this->region_settings.size.y        = 50;
+    this->region_settings.size.x        = 100;
+    this->region_settings.size.y        = 100;
     this->region_settings.tile_offset.x = 100;
-    this->region_settings.tile_offset.y = 0;
+    this->region_settings.tile_offset.y = 100;
     this->region_settings.tile_size.x   = 64;
     this->region_settings.tile_size.y   = 32;
 
@@ -261,11 +259,7 @@ void Worldmap::handleInput() {
 
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1))   this->draw_debug = !this->draw_debug;
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))      this->world.generateWorld();
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
-                    this->draw_action_panel = !this->draw_action_panel;
-                    this->can_select_panel  = !this->draw_action_panel;
-                }
-
+                
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
                     this->view_game.move(0, -this->world_settings.panel_size.y * modifier);
 
@@ -304,15 +298,15 @@ void Worldmap::handleInput() {
                 break;
             }
         }
-    }
 
-    // Mouse button pressed is used in multiple situations.
-    // Distinguish from dragging the screen and selecting a option.
-    if(this->mouse_moved && this->mouse_pressed) this->mouse_drag = true;
+        // Mouse button pressed is used in multiple situations.
+        // Distinguish from dragging the screen and selecting a option.
+        if(this->mouse_moved && this->mouse_pressed) this->mouse_drag = true;
 
-    else {
-        this->mouse_drag = false;
-        this->mouse_moved = false;
+        else {
+            this->mouse_drag = false;
+            this->mouse_moved = false;
+        }
     }
 }
 
@@ -332,7 +326,7 @@ void Worldmap::renderWorld() {
 }
 
 void Worldmap::selectPanel() {
-    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->can_select_panel) {
+    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / this->world_settings.panel_size.x,
             this->mouse_position_window.y / this->world_settings.panel_size.y
@@ -344,7 +338,7 @@ void Worldmap::selectPanel() {
 }
 
 void Worldmap::unselectPanel() {
-    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->selected_panel_index != -1 && this->can_select_panel) {
+    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->selected_panel_index != -1) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / this->world_settings.panel_size.x,
             this->mouse_position_window.y / this->world_settings.panel_size.y
@@ -389,9 +383,6 @@ void Worldmap::updateSelectedPanel() {
 }
 
 void Worldmap::highlightPanel() {
-    if(!this->can_select_panel)
-        return;
-    
     auto panel_grid_position = sf::Vector2i(
         this->mouse_position_window.x / this->world_settings.panel_size.x,
         this->mouse_position_window.y / this->world_settings.panel_size.y
@@ -426,44 +417,24 @@ void Worldmap::createInterface() {
     button1.setWidgetPosition(sf::Vector2f(10, 15));
     button1.setWidgetColour(sf::Color(50, 80, 130));
     button1.setWidgetID("button_enter_region");
-    button1.setTextComponent(gui::Label(&button1, "Press Me!", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
+    button1.setTextComponent(gui::Label(&button1, "Visit region", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
 
     static gui::Button button2;
     button2.setWidgetSize(sf::Vector2f(80, 50));
     button2.setWidgetPosition(sf::Vector2f(10, 75));
     button2.setWidgetColour(sf::Color(50, 80, 130));
     button2.setWidgetID("button_temporary");
-    button2.setTextComponent(gui::Label(&button2, "I do not do\nanything!", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
+    button2.setTextComponent(gui::Label(&button2, "No functionality", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
 
     static gui::Widget widget1;
     widget1.setWidgetSize(sf::Vector2f(100, 180));
-    widget1.setWidgetPosition(sf::Vector2f(0, this->engine->window.getWindowSize().y - widget1.widgetSize().y));
+    widget1.setWidgetPosition(sf::Vector2f(0, 0));
     widget1.setWidgetColour(sf::Color(50, 50, 50));
     
     widget1.attachComponent(&button1, button1.getWidgetID());
     widget1.attachComponent(&button2, button2.getWidgetID());
 
     this->m_interface.insert({ "widget", &widget1 });
-
-    static gui::Button panel_button1;
-    panel_button1.setWidgetSize(sf::Vector2f(100, 40));
-    panel_button1.setWidgetPosition(sf::Vector2f(10, 15));
-    panel_button1.setWidgetColour(sf::Color(50, 80, 130));
-    panel_button1.setWidgetID("panel_button_exit");
-    panel_button1.setTextComponent(gui::Label(&panel_button1, "Exit game", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
-
-    static gui::Widget panel_widget1;
-    panel_widget1.setWidgetSize(sf::Vector2f(150, 400));
-    panel_widget1.setWidgetPosition(sf::Vector2f(
-        this->engine->window.getWindowSize().x / 2 - panel_widget1.widgetSize().x / 2,
-        this->engine->window.getWindowSize().y / 2 - panel_widget1.widgetSize().y / 2
-    ));
-
-    panel_widget1.setWidgetColour(sf::Color(50, 50, 50));
-
-    panel_widget1.attachComponent(&panel_button1, panel_button1.getWidgetID());
-
-    this->m_interface.insert({ "action_panel", &panel_widget1 });
 }
 
 void Worldmap::updateInterface() {
@@ -477,7 +448,7 @@ void Worldmap::updateInterface() {
     const int panel_index = panel_grid_position.y * this->world.world_settings.size.x + panel_grid_position.x;
     auto& panel = this->world.world_map[panel_index];
 
-    debug_text += "FPS: "   + std::to_string(this->engine->fps.get()) + "\n";
+    debug_text += "FPS: "   + std::to_string(this->engine->fps.getFPS()) + "\n";
     debug_text += "Index: " + std::to_string(panel_index) + "\n";
     debug_text += "Biome: " + panel.biome.biome_name + "\n";
 
@@ -502,13 +473,6 @@ void Worldmap::updateInterface() {
         this->engine->gamestate.setGamestate("regionmap");
     }
 
-    auto* widget2 = (gui::Widget*)this->m_interface["action_panel"];
-    gui::Button& pButton1 = *(gui::Button*)(&widget2->getComponentByName("panel_button_exit")); 
-
-    if(pButton1.containsPoint(this->mouse_position_interface) && this->mouse_pressed) {
-        this->engine->quitApplication(0);
-    }
-
     // Rest of the updates.
 }
 
@@ -517,11 +481,6 @@ void Worldmap::renderInterface() {
     
     if(this->selected_panel_index != -1 && this->draw_debug) {
         gui::Widget* widget = (gui::Widget*)this->m_interface["widget"];
-        this->engine->window.getWindow()->draw(*widget);
-    }
-
-    if(this->draw_action_panel) {
-        gui::Widget* widget = (gui::Widget*)this->m_interface["action_panel"];
         this->engine->window.getWindow()->draw(*widget);
     }
 }

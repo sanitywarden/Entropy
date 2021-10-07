@@ -23,6 +23,7 @@ namespace iso {
 
             std::vector <float> m_noise;    
             std::vector <float> m_gradient; 
+            std::vector <float> m_tree_noise;
 
         private:
             void generateNoiseMap();
@@ -35,14 +36,14 @@ namespace iso {
             void generateRivers();
             void generateForests();
 
-            void generateNoiseRegion(Region& region);
-
             void generateNoise(noiseSettings& settings, std::vector<float>& container);
 
             bool is_biome(int index, Biome biome);            
 
             sf::Texture& getBiomeTileTexture(Biome biome); 
-            sf::Texture& getBiomeTileForestTexture(Biome biome);
+
+            sf::Texture& getTreeTextureWorld (Biome biome);
+            sf::Texture& getTreeTextureRegion(Biome biome);
 
         public:
             worldGenerator();
@@ -56,6 +57,8 @@ namespace iso {
             sf::Vector2f tilePositionScreen(sf::Vector2i);
             sf::Vector2f tilePositionScreen(sf::Vector2f);
 
+            
+
             WorldSettings  world_settings;
             RegionSettings region_settings;
 
@@ -63,6 +66,7 @@ namespace iso {
             bool is_terrain(int index);
             bool is_forest (int index);
             bool is_arctic (int index);
+            bool is_river  (int index);
 
             std::vector <Region> world_map; 
     };

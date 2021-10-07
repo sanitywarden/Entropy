@@ -3,7 +3,9 @@
 using namespace iso;
 
 Tile::Tile() {
-
+    this->position = sf::Vector2f(0, 0);
+    this->size     = sf::Vector2f(0, 0);
+    this->height   = 0;
 }
 
 Tile::~Tile() {
@@ -25,6 +27,9 @@ void Tile::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     states.texture = &this->texture;
     target.draw(tile, states); 
+
+    if(this->side.exists())
+        target.draw(this->side);
 
     if(this->tree.exists()) 
         target.draw(this->tree);

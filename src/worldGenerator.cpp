@@ -17,6 +17,8 @@ worldGenerator::worldGenerator(WorldSettings& world_settings, RegionSettings& re
     this->m_noise.resize(world_size);
     this->m_gradient.resize(world_size);
     this->world_map.resize(world_size);
+
+    std::srand(std::time(0));
 }
 
 worldGenerator::~worldGenerator() {
@@ -646,7 +648,7 @@ void worldGenerator::assignBiome() {
 
             else if(panel->moisture > 0.13f) {
                 panel->texture = this->m_engine->resource.getTexture("panel_grass_subtropical");    
-                panel->biome = BIOME_SUBTROPICAL;
+                panel->biome = BIOME_MEADITERRANEAN;
             }
 
             else {
@@ -659,79 +661,28 @@ void worldGenerator::assignBiome() {
 
 void worldGenerator::generateForests() {
     std::cout << this->m_log_prefix << ": Generating forests.\n";
-    
-    // Forests should generate in small to big patches.
-    // Probably use a algorithm similar to the river generation one.
-    // The only difference would be to change it so that it is more like flood-fill, but the size is chosen at random.
-    // Forests should generate not too close to each other.
-    
-    std::vector <float> input(this->world_settings.size.x * this->world_settings.size.y);
-    for(int i = 0; i < this->world_settings.size.x * this->world_settings.size.y; i++) {
-        input[i] = (float)rand() / (float)RAND_MAX;
-    }
-    
-    float biggest_noise_recorded = 1.0f;
 
-    for(int x = 0; x < this->world_settings.size.x; x++) {
-        for(int y = 0; y < this->world_settings.size.y; y++) {
-            int index = x + y * this->world_settings.size.x;
-            auto& panel = this->world_map[index];
+    noiseSettings settings;
+    settings.octaves     = 8;
+    settings.bias        = 4;
+    settings.persistence = 4;
+    settings.multiplier  = 1.25f;
+    settings.size        = this->world_settings.size;
 
-            if(!panel._terrain)
-                panel.moisture = 1.0f;
+    this->generateNoise(settings, this->m_tree_noise);
 
-            else if(this->is_arctic(index))
-                panel.moisture = 0.0f;
+    for(int i; i < this->m_tree_noise.size(); i++) {
+        float value = this->m_tree_noise[i];
+        float noise = (float)rand() / (float)RAND_MAX;
+        float combined = value / 2 + noise / 2;
 
-            else if(panel._terrain && !this->is_arctic(index)) {
-                float noise = 0.0f;
-                float scale = 1.0f;
-                float scale_acc = 0.0f;
+        float result = (combined > 1.0f) ? 1.0f : combined;
 
-                for(unsigned int o = 0; o < this->world_settings.moisture_octaves; o++) {
-                    int sampleX1 = (x / this->world_settings.moisture_persistence) * this->world_settings.moisture_persistence;
-                    int sampleY1 = (y / this->world_settings.moisture_persistence) * this->world_settings.moisture_persistence;
+        Region& region = this->world_map[i];
 
-                    int sampleX2 = (sampleX1 + this->world_settings.moisture_persistence) % (int)this->world_settings.size.x;					
-                    int sampleY2 = (sampleY1 + this->world_settings.moisture_persistence) % (int)this->world_settings.size.x;
-
-                    float blendX = (float)(x - sampleX1) / (float)this->world_settings.moisture_persistence;
-                    float blendY = (float)(y - sampleY1) / (float)this->world_settings.moisture_persistence;
-
-                    float sampleT = (1.0f - blendX) * input[sampleY1 * this->world_settings.size.x + sampleX1] + blendX * input[sampleY1 * this->world_settings.size.x + sampleX2];
-                    float sampleB = (1.0f - blendX) * input[sampleY2 * this->world_settings.size.x + sampleX1] + blendX * input[sampleY2 * this->world_settings.size.x + sampleX2];
-
-                    scale_acc += scale;
-                    noise += (blendY * (sampleB - sampleT) + sampleT) * scale;
-                    scale = float(scale / this->world_settings.moisture_bias);
-                }
-                
-                float noise_value = (noise / scale_acc) * this->world_settings.multiplier_moisture;
-                
-                if(noise_value > biggest_noise_recorded) biggest_noise_recorded = noise_value;
-
-                noise_value *= biggest_noise_recorded;
-            
-                if(noise_value > 1.0f) noise_value = 1.0f;
-
-
-                if(noise_value > 0.5f && panel._terrain && !panel.river.exists()) {
-                    sf::Vector2f panel_position = panel.position;
-                    sf::Vector2f panel_offset   = sf::Vector2f(0, 0);
-                    sf::Vector2f panel_size     = this->world_settings.panel_size;
-
-                    if(panel.biome.biome_name == "Temperate")                                   
-                        panel.forest = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_tree_warm"));
-                    
-                    else if(panel.biome.biome_name == "Continental" || panel.biome.biome_name == "Tundra")
-                        panel.forest = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_tree_cold"));
-
-                    else if(panel.biome.biome_name == "Tropical" || panel.biome.biome_name == "Subtropical") 
-                        panel.forest = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_tree_tropical"));
-                }
-            }
-        }
-    }
+        if(result > 0.7f && !this->is_arctic(i) && !this->is_river(i) && is_terrain(i))
+            region.forest = Entity(region.position, sf::Vector2f(0, 0), region.size, &this->getTreeTextureWorld(region.biome)); 
+    }    
 }
 
 void worldGenerator::generateRegion(int index, Region& region) {
@@ -744,34 +695,40 @@ void worldGenerator::generateRegion(int index, Region& region) {
     sf::Vector2f tile_offset   = sf::Vector2f(0, 1.5f * -this->region_settings.tile_size.y ); 
     sf::Vector2f tile_size     = sf::Vector2f(this->region_settings.tile_size.x, 2 * this->region_settings.tile_size.y);
 
-    this->m_tile.texture = this->getBiomeTileTexture(region.biome);
-    this->m_tile.size    = this->region_settings.tile_size;
-
     const bool region_forest = this->is_forest(index);
     if(region_forest && !region.visited) {
         noiseSettings settings;
-        settings.size        = sf::Vector2f(50, 50);
-        settings.persistence = 16;
-        settings.octaves     = 4;
+        settings.size        = this->region_settings.size;
+        settings.octaves     = 8;
+        settings.persistence = 12;
         settings.bias        = 4;
         settings.multiplier  = 1.25f;
 
         this->generateNoise(settings, region.noise);
         region.visited = true;
     }
-    
+
     region.map.resize(this->region_settings.size.x * this->region_settings.size.y);
     for(int y = 0; y < this->region_settings.size.x; y++) {
         for(int x = 0; x < this->region_settings.size.y; x++) {
-            sf::Vector2f screen_position = this->tilePositionScreen(x, y);
-            this->m_tile.position = screen_position;
-            
             int index = x * this->region_settings.size.y + y;
+            this->m_tile = Tile();
 
-            // std::cout << region.noise.at(index) << "\n";
-
+            this->m_tile.size = this->region_settings.tile_size;
+            this->m_tile.texture = this->getBiomeTileTexture(region.biome);
+            
+            sf::Vector2f screen_position = this->tilePositionScreen(x, y);
+            this->m_tile.position        = screen_position;
+            
+            if(region_forest) {
+                int tile_height = region.noise[index] / 0.1f;
+                this->m_tile.position += sf::Vector2f(0, -tile_height * this->m_tile.size.y / 2);
+                
+                this->m_tile.side = Entity(this->m_tile.position, sf::Vector2f(0, 0.5f * this->m_tile.size.y), this->m_tile.size, &this->m_engine->resource.getTexture("tile_height"));
+            }
+            
             if(region_forest && region.noise.size() != 0 && region.noise[index] > 0.7f) {
-                this->m_tile.tree = Entity(screen_position, tile_offset, tile_size, &this->getBiomeTileForestTexture(region.biome));
+                this->m_tile.tree = Entity(this->m_tile.position, tile_offset, tile_size, &this->getTreeTextureRegion(region.biome));
             }
 
             region.map[index] = this->m_tile;
@@ -839,7 +796,7 @@ sf::Texture& worldGenerator::getBiomeTileTexture(Biome biome) {
     else if(biome.biome_name == "Tropical")
         return this->m_engine->resource.getTexture("tile_grass_tropical");
 
-    else if(biome.biome_name == "Subtropical")
+    else if(biome.biome_name == "Mediterranean")
         return this->m_engine->resource.getTexture("tile_grass_subtropical");
 
     else if(biome.biome_name == "Ocean")
@@ -858,23 +815,6 @@ sf::Texture& worldGenerator::getBiomeTileTexture(Biome biome) {
         return this->m_engine->resource.getTexture("tile_desert");
 
     else return this->m_engine->resource.getTexture("tile_biomeless");
-}
-
-sf::Texture& worldGenerator::getBiomeTileForestTexture(Biome biome) {
-    if(biome.biome_name == "Temperate") {
-        auto value = std::rand() % 2;
-
-        return (value > 0) 
-        ? this->m_engine->resource.getTexture("tile_tree_warm1")
-        : this->m_engine->resource.getTexture("tile_tree_warm2");
-    }
-
-    else if(biome.biome_name == "Continental" || biome.biome_name == "Tundra")
-        return this->m_engine->resource.getTexture("tile_tree_cold1");
-
-    else if(biome.biome_name == "Tropical" || biome.biome_name == "Subtropical")
-        return this->m_engine->resource.getTexture("tile_tree_tropical1");
-
 }
 
 sf::Vector2f worldGenerator::tilePositionScreen(int x, int y) {
@@ -927,4 +867,35 @@ bool worldGenerator::is_biome(int region_index, Biome biome) {
 
 bool worldGenerator::is_arctic(int region_index) {
     return this->is_biome(region_index, BIOME_ARCTIC);
+}
+
+bool worldGenerator::is_river(int region_index) {
+    return this->world_map[region_index].river.exists();
+}
+
+sf::Texture& worldGenerator::getTreeTextureWorld(Biome biome) {
+    if(biome.biome_name == "Temperate")
+        return this->m_engine->resource.getTexture("panel_tree_warm");
+    
+    if(biome.biome_name == "Continental" || biome.biome_name == "Tundra")
+        return this->m_engine->resource.getTexture("panel_tree_cold");
+
+    if(biome.biome_name == "Tropical" || biome.biome_name == "Mediterranean")
+        return this->m_engine->resource.getTexture("panel_tree_tropical");
+}
+
+sf::Texture& worldGenerator::getTreeTextureRegion(Biome biome) {
+    if(biome.biome_name == "Temperate") {
+        int value = std::rand() % 2;
+
+        return (value > 0) 
+        ? this->m_engine->resource.getTexture("tile_tree_warm1")
+        : this->m_engine->resource.getTexture("tile_tree_warm2");
+    }
+
+    else if(biome.biome_name == "Continental" || biome.biome_name == "Tundra")
+        return this->m_engine->resource.getTexture("tile_tree_cold1");
+
+    else if(biome.biome_name == "Tropical" || biome.biome_name == "Mediterranean")
+        return this->m_engine->resource.getTexture("tile_tree_tropical1");
 }

@@ -1,16 +1,18 @@
 #include "fps.hpp"
 
-entropy::FPS::FPS() {
+using namespace entropy;
+
+FPS::FPS() {
     this->m_frame = 0;
-    this->m_fps = 0;
+    this->m_fps   = 0;
 }
 
-entropy::FPS::~FPS() {}
+FPS::~FPS() {}
 
 // Update the FPS counter.
-void entropy::FPS::update() {
+void FPS::update() {
     if(this->m_clock.getElapsedTime().asSeconds() >= 1.f) {
-        this->m_fps = this->m_frame;
+        this->m_fps   = this->m_frame;
         this->m_frame = 0;
         this->m_clock.restart();
     }
@@ -19,6 +21,6 @@ void entropy::FPS::update() {
 }
 
 // Get FPS.
-const unsigned int& entropy::FPS::get() {
+unsigned int FPS::getFPS() {
     return this->m_fps;
 }

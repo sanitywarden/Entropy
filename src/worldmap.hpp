@@ -27,7 +27,6 @@ namespace iso {
             Regionmap      region_gamestate;
 
             int selected_panel_index;
-            bool can_select_panel;
 
             std::map <std::string, gui::AbstractWidget*> m_interface;
 
@@ -49,7 +48,6 @@ namespace iso {
             sf::Text debug_text;
 
             bool draw_debug;
-            bool draw_action_panel;
 
         private:
             void handleInput()         override;

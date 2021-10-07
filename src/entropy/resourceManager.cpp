@@ -2,41 +2,48 @@
 
 #include <iostream>
 
-entropy::resourceManager::resourceManager() {}
-entropy::resourceManager::~resourceManager() {}
+using namespace entropy;
 
-void entropy::resourceManager::loadTexture(std::string filename, std::string id, sf::IntRect area) {
+resourceManager::resourceManager() {
+
+}
+
+resourceManager::~resourceManager() {
+
+}
+
+void resourceManager::loadTexture(std::string filename, std::string id, sf::IntRect area) {
     sf::Texture texture;
     
     if(!texture.loadFromFile(filename, area)) {
-        std::cerr << "resourceManager: Could not load texture: " << filename << " with id: " << id << ".\n";
+        std::cerr << "[Entropy Engine][Resource Manager]: Could not load texture: " << filename << " with id: " << id << ".\n";
     }
 
     this->m_textures[id] = texture;
 }
 
-sf::Texture& entropy::resourceManager::getTexture(std::string id) {
+sf::Texture& resourceManager::getTexture(std::string id) {
     return this->m_textures[id];
 }
 
-const std::map <std::string, sf::Texture>& entropy::resourceManager::getTextureCollection() {
+const std::map <std::string, sf::Texture>& resourceManager::getTextureCollection() {
     return this->m_textures; 
 }
 
-void entropy::resourceManager::loadFont(std::string filename, std::string id) {
+void resourceManager::loadFont(std::string filename, std::string id) {
     sf::Font font;
 
     if(!font.loadFromFile(filename)) {
-        std::cerr << "resourceManager: Could not load font: " << filename << " with id: " << id << ".\n";
+        std::cerr << "[Entropy Engine][Resource Manager]: Could not load font: " << filename << " with id: " << id << ".\n";
     }
 
     this->m_fonts[id] = font;
 }
 
-sf::Font& entropy::resourceManager::getFont(std::string id) {
+sf::Font& resourceManager::getFont(std::string id) {
     return this->m_fonts[id];
 }
 
-const std::map <std::string, sf::Font>& entropy::resourceManager::getFontCollection() {
+const std::map <std::string, sf::Font>& resourceManager::getFontCollection() {
     return this->m_fonts;
 }

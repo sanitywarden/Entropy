@@ -15,11 +15,14 @@ namespace iso {
             ~Tile();
 
             Entity tree;
+            Entity side;
 
             sf::Vector2f position;
             sf::Vector2f size;
             sf::Texture  texture;
             
+            int height;
+
     };
 }
 

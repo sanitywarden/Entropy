@@ -55,15 +55,11 @@ void Regionmap::loadResources() {
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                sf::IntRect(512, 0, 64, 32 ));
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_highlight",          sf::IntRect(0, 288, 64, 32 ));
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction", sf::IntRect(64, 288, 64, 32));
+    this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height",             sf::IntRect(0, 32, 64, 32  ));
     this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",     sf::IntRect(0, 0, 64, 64   ));
     this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",     sf::IntRect(64, 0, 64, 64  ));
     this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",     sf::IntRect(128, 0, 64, 64 ));
     this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1", sf::IntRect(256, 0, 64, 64 ));
-    // this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold2",     sf::IntRect(192, 0, 64, 32));
-    // this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1", sf::IntRect(256, 0, 64, 32));
-    // this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical2", sf::IntRect(328, 0, 64, 32));
-
-    this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_warm_big", sf::IntRect(0, 32, 64, 64));
 }
 
 void Regionmap::update() {
@@ -81,6 +77,51 @@ void Regionmap::render() {
     this->higlightTile();
 
     this->engine->window.getWindow()->setView(this->view_interface);
+
+    sf::Text text;
+
+    auto tile_size   = this->world->region_settings.tile_size;
+    auto tile_offset = this->world->region_settings.tile_offset;
+
+    auto tile_grid_position = sf::Vector2i(
+        this->mouse_position_window.x / tile_size.x,
+        this->mouse_position_window.y / tile_size.y
+    );
+
+    auto selected = sf::Vector2i(
+        (tile_grid_position.y - tile_offset.y) + (tile_grid_position.x - tile_offset.x),
+        (tile_grid_position.y - tile_offset.y) - (tile_grid_position.x - tile_offset.x)
+    );
+
+    auto pixel = sf::Vector2i(
+        (int)this->mouse_position_window.x % (int)tile_size.x,
+        (int)this->mouse_position_window.y % (int)tile_size.y
+    );  
+
+    auto pixel_colour = this->getTilePixelColour(pixel);
+
+    if(pixel_colour == "Red")
+        selected += sf::Vector2i(-1, 0);        
+    else if(pixel_colour == "Green")
+        selected += sf::Vector2i(1, 0);
+    else if(pixel_colour == "Blue")
+        selected += sf::Vector2i(0, -1);
+    else if(pixel_colour == "Yellow")
+        selected += sf::Vector2i(0, 1);
+
+    std::string str;
+    str += "FPS: " + std::to_string(this->engine->fps.getFPS()) + "\n";
+    str += "Index: " + std::to_string(selected.x) + " / " + std::to_string(selected.y) + "\n";
+
+    text.setString(str);
+    text.setFont(this->engine->resource.getFont("garamond"));
+    text.setCharacterSize(14);
+    text.setFillColor(sf::Color::Black);
+    text.setPosition(0, 0);
+
+    
+
+    this->engine->window.getWindow()->draw(text);
 
     this->engine->window.getWindow()->display();
 }
@@ -219,9 +260,17 @@ void Regionmap::updateCamera() {
 }
 
 void Regionmap::renderRegion() {
+    sf::Vector2f camera_size   = this->view_game.getSize();
+    sf::Vector2f camera_centre = this->view_game.getCenter();
+    
+    sf::Rect camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
+
     if(this->m_region != nullptr) {
         for(const Tile& tile : this->m_region->map) {
-            this->engine->window.getWindow()->draw(tile);
+            sf::Rect region_screen_area(tile.position, tile.size);
+            
+            if(camera_screen_area.intersects(region_screen_area))
+                this->engine->window.getWindow()->draw(tile);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace entropy {
             ~FPS();
 
             void update();
-            const unsigned int& get();
+            unsigned int getFPS();
     };
 }
 

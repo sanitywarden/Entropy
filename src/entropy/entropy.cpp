@@ -3,7 +3,9 @@
 
 #include <iostream>
 
-entropy::Entropy::Entropy() {
+using namespace entropy;
+
+Entropy::Entropy() {
     if(this->settings.getUserSettings().window_fullscreen) this->window.createFullscreenWindow();
     else this->window.createWindow(this->settings.getUserSettings().window_size);
 
@@ -11,10 +13,10 @@ entropy::Entropy::Entropy() {
     std::cout << "[Entropy Engine]: Greetings from Entropy Game Engine.\n";
 }
 
-entropy::Entropy::~Entropy() {}
+Entropy::~Entropy() {}
 
-void entropy::Entropy::loop() {    
-    this->fps = entropy::FPS();
+void Entropy::loop() {    
+    this->fps = FPS();
 
     while(this->window.open()) {
         auto gamestate = this->gamestate.getGamestate();
@@ -29,7 +31,7 @@ void entropy::Entropy::loop() {
     }
 }
 
-void entropy::Entropy::quitApplication(int code, bool close_console) {
+void Entropy::quitApplication(int code, bool close_console) {
     std::cout << "[Entropy Engine]: Application quit with code " << code << ".\n";
 
     switch(code) {
