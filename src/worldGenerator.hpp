@@ -54,10 +54,10 @@ namespace iso {
             void generateRegion(int index, Region& region);
     
             sf::Vector2f tilePositionScreen(int x, int y);
-            sf::Vector2f tilePositionScreen(sf::Vector2i);
-            sf::Vector2f tilePositionScreen(sf::Vector2f);
-
+            sf::Vector2f tilePositionScreen(sf::Vector2i grid_position);
+            sf::Vector2f tilePositionScreen(sf::Vector2f grid_position);
             
+            int getTileIndex(sf::Vector2f mouse_position, Region& region);
 
             WorldSettings  world_settings;
             RegionSettings region_settings;

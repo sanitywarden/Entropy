@@ -106,6 +106,7 @@ void Worldmap::loadResources() {
     this->engine->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_cold",     sf::IntRect(0, 0, 64, 32  ));
     this->engine->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_warm",     sf::IntRect(128, 0, 64, 32));
     this->engine->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_tropical", sf::IntRect(64, 0, 64, 32 ));
+    this->engine->resource.loadTexture("./res/default.png", "default");
 
     this->engine->resource.loadFont("./res/font/proggy.ttf",   "proggy");
     this->engine->resource.loadFont("./res/font/garamond.ttf", "garamond");
@@ -424,7 +425,7 @@ void Worldmap::createInterface() {
     button2.setWidgetPosition(sf::Vector2f(10, 75));
     button2.setWidgetColour(sf::Color(50, 80, 130));
     button2.setWidgetID("button_temporary");
-    button2.setTextComponent(gui::Label(&button2, "No functionality", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
+    button2.setTextComponent(gui::Label(&button2, "No function", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
 
     static gui::Widget widget1;
     widget1.setWidgetSize(sf::Vector2f(100, 180));
@@ -467,6 +468,7 @@ void Worldmap::updateInterface() {
         this->mouse_pressed = false;
         this->mouse_drag    = false;
         
+        // You have to generate the region first, because setCurrentRegion() depends on it being generated.
         this->world.generateRegion(this->selected_panel_index, this->world.world_map[selected_panel_index]);
         this->region_gamestate.setCurrentRegion(this->selected_panel_index);
 

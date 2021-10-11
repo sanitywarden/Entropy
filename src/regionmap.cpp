@@ -30,6 +30,9 @@ void Regionmap::initialise() {
     this->zoom_camera    = false;
 
     this->selected_panel_index = -1;
+    this->index = 0;
+    this->index_min = 0;
+    this->index_max = 0;
 
     this->zoom = 2;
     this->max_zoom_in  = 0; 
@@ -66,6 +69,7 @@ void Regionmap::update() {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
+    this->updateCurrentIndex();
 }
 
 void Regionmap::render() {
@@ -78,50 +82,7 @@ void Regionmap::render() {
 
     this->engine->window.getWindow()->setView(this->view_interface);
 
-    sf::Text text;
-
-    auto tile_size   = this->world->region_settings.tile_size;
-    auto tile_offset = this->world->region_settings.tile_offset;
-
-    auto tile_grid_position = sf::Vector2i(
-        this->mouse_position_window.x / tile_size.x,
-        this->mouse_position_window.y / tile_size.y
-    );
-
-    auto selected = sf::Vector2i(
-        (tile_grid_position.y - tile_offset.y) + (tile_grid_position.x - tile_offset.x),
-        (tile_grid_position.y - tile_offset.y) - (tile_grid_position.x - tile_offset.x)
-    );
-
-    auto pixel = sf::Vector2i(
-        (int)this->mouse_position_window.x % (int)tile_size.x,
-        (int)this->mouse_position_window.y % (int)tile_size.y
-    );  
-
-    auto pixel_colour = this->getTilePixelColour(pixel);
-
-    if(pixel_colour == "Red")
-        selected += sf::Vector2i(-1, 0);        
-    else if(pixel_colour == "Green")
-        selected += sf::Vector2i(1, 0);
-    else if(pixel_colour == "Blue")
-        selected += sf::Vector2i(0, -1);
-    else if(pixel_colour == "Yellow")
-        selected += sf::Vector2i(0, 1);
-
-    std::string str;
-    str += "FPS: " + std::to_string(this->engine->fps.getFPS()) + "\n";
-    str += "Index: " + std::to_string(selected.x) + " / " + std::to_string(selected.y) + "\n";
-
-    text.setString(str);
-    text.setFont(this->engine->resource.getFont("garamond"));
-    text.setCharacterSize(14);
-    text.setFillColor(sf::Color::Black);
-    text.setPosition(0, 0);
-
-    
-
-    this->engine->window.getWindow()->draw(text);
+    this->drawDebugText();
 
     this->engine->window.getWindow()->display();
 }
@@ -165,7 +126,7 @@ void Regionmap::handleInput() {
 
                 // Avoid accidental drags.
                 // This also helps to record button presses (without the intention of dragging the screen).
-                if(this->mouse_drag && std::abs(this->position_pressed.x - this->position_released.x) > 10 && std::abs(this->position_pressed.y - this->position_released.y) > 10) this->move_camera = true;
+                if(this->mouse_drag && std::abs(this->position_pressed.x - this->position_released.x) > 5 && std::abs(this->position_pressed.y - this->position_released.y) > 5) this->move_camera = true;
 
                 break;
             }
@@ -228,6 +189,44 @@ void Regionmap::moveCamera() {
     this->move_camera = false;
 }
 
+void Regionmap::updateCurrentIndex() {
+    auto tile_size   = this->world->region_settings.tile_size;
+    auto tile_offset = this->world->region_settings.tile_offset;
+
+    auto tile_grid_position = sf::Vector2i(
+        this->mouse_position_window.x / tile_size.x,
+        this->mouse_position_window.y / tile_size.y
+    );
+
+    auto selected = sf::Vector2i(
+        (tile_grid_position.y - tile_offset.y) + (tile_grid_position.x - tile_offset.x),
+        (tile_grid_position.y - tile_offset.y) - (tile_grid_position.x - tile_offset.x)
+    );
+
+    auto pixel = sf::Vector2i(
+        (int)this->mouse_position_window.x % (int)tile_size.x,
+        (int)this->mouse_position_window.y % (int)tile_size.y
+    );  
+
+    auto pixel_colour = this->getTilePixelColour(pixel);
+
+    if(pixel_colour == "Red")
+        selected += sf::Vector2i(-1, 0);        
+    else if(pixel_colour == "Green")
+        selected += sf::Vector2i(1, 0);
+    else if(pixel_colour == "Blue")
+        selected += sf::Vector2i(0, -1);
+    else if(pixel_colour == "Yellow")
+        selected += sf::Vector2i(0, 1);
+
+    this->index = selected.x * this->world->region_settings.size.y + selected.y;
+
+    this->current_tile.grid_carthesian = tile_grid_position;
+    this->current_tile.grid_isometric  = selected;
+    this->current_tile.position        = sf::Vector2f(tile_grid_position.x * tile_size.x, tile_grid_position.y * tile_size.y);
+    this->current_tile.index           = selected.x * this->world->region_settings.size.y + selected.y;
+}
+
 void Regionmap::zoomCamera() {
     // If you scroll up   - zoom in.
     // If you scroll down - zoom out.
@@ -280,12 +279,45 @@ void Regionmap::setCurrentRegion(int region_index) {
 
     // Here you can setup what to do when entering a region.
     // For example, centre the camera.
-    auto first_tile_position = sf::Vector2f(
+    sf::Vector2f first_tile_position = sf::Vector2f(
         this->m_region->map[0].position.x + this->world->region_settings.tile_size.x / 2,
         this->m_region->map[0].position.y
     );
 
     this->view_game.setCenter(first_tile_position);
+
+    auto tile_size   = this->world->region_settings.tile_size;
+    auto tile_offset = this->world->region_settings.tile_offset;
+    auto region_size = this->world->region_settings.size;
+
+    auto& tile1 = this->m_region->map[0];
+    auto grid1 = sf::Vector2i(
+        tile1.position.x / tile_size.x,
+        tile1.position.y / tile_size.y
+    );
+
+    auto iso1 = sf::Vector2i(
+        (grid1.y - tile_offset.y) + (grid1.x - tile_offset.x),
+        (grid1.y - tile_offset.y) - (grid1.x - tile_offset.x)
+    );
+
+    int i1 = iso1.x * region_size.y + iso1.y;
+
+    auto& tile2 = this->m_region->map[region_size.x * region_size.y - 1];
+    auto grid2 = sf::Vector2i(
+        tile2.position.x / tile_size.x,
+        tile2.position.y / tile_size.y
+    );
+
+    auto iso2 = sf::Vector2i(
+        (grid2.y - tile_offset.y) + (grid2.x - tile_offset.x),
+        (grid2.y - tile_offset.y) - (grid2.x - tile_offset.x)
+    );
+
+    int i2 = iso2.x * region_size.y + iso2.y;
+
+    this->index_min = i1;
+    this->index_max = i2;
 }
 
 void Regionmap::selectTile() {
@@ -305,39 +337,15 @@ void Regionmap::drawSelectedTile() {
 }
 
 void Regionmap::higlightTile() {
+    int index = this->world->getTileIndex(this->mouse_position_window, *this->m_region);
+    if(index == -1)
+        return;
+
     auto tile_size   = this->world->region_settings.tile_size;
     auto tile_offset = this->world->region_settings.tile_offset;
+    auto region_size = this->world->region_settings.size;
 
-    auto tile_grid_position = sf::Vector2i(
-        this->mouse_position_window.x / tile_size.x,
-        this->mouse_position_window.y / tile_size.y
-    );
-
-    auto selected = sf::Vector2i(
-        (tile_grid_position.y - tile_offset.y) + (tile_grid_position.x - tile_offset.x),
-        (tile_grid_position.y - tile_offset.y) - (tile_grid_position.x - tile_offset.x)
-    );
-
-    auto pixel = sf::Vector2i(
-        (int)this->mouse_position_window.x % (int)tile_size.x,
-        (int)this->mouse_position_window.y % (int)tile_size.y
-    );  
-
-    auto pixel_colour = this->getTilePixelColour(pixel);
-
-    if(pixel_colour == "Red")
-        selected += sf::Vector2i(-1, 0);        
-    else if(pixel_colour == "Green")
-        selected += sf::Vector2i(1, 0);
-    else if(pixel_colour == "Blue")
-        selected += sf::Vector2i(0, -1);
-    else if(pixel_colour == "Yellow")
-        selected += sf::Vector2i(0, 1);
-
-    auto position_transformed = sf::Vector2f(
-        this->world->tilePositionScreen(selected.x, selected.y).x,
-        this->world->tilePositionScreen(selected.x, selected.y).y
-    );
+    sf::Vector2f position_transformed = this->m_region->map[index].position;
 
     sf::VertexArray highlight(sf::Quads, 4);
 
@@ -372,3 +380,55 @@ std::string Regionmap::getTilePixelColour(sf::Vector2i pixel) {
     else if(pixel_colour == sf::Color::Yellow) return "Yellow";
     else return "Other";
 }
+
+bool Regionmap::inMapBounds(int index) {
+    if(index >= this->index_min && index <= this->index_max)
+        return true;
+    return false;
+}
+
+void Regionmap::drawDebugText() {
+    sf::Text text;
+    std::string str;
+
+    str += "FPS: "       + std::to_string(this->engine->fps.getFPS()) + "\n";
+    str += "Index: "     + std::to_string(this->current_tile.index) + "\n";
+    str += "Isometric: " + std::to_string(this->current_tile.grid_isometric.x) + " / " + std::to_string(this->current_tile.grid_isometric.y) + "\n";
+
+    text.setString(str);
+    text.setFont(this->engine->resource.getFont("garamond"));
+    text.setCharacterSize(14);
+    text.setFillColor(sf::Color::Black);
+    text.setPosition(0, 0);
+
+    this->engine->window.getWindow()->draw(text);
+}
+
+// Flat terrain way of selecting tile:
+// auto tile_grid_position = sf::Vector2i(
+    //     this->mouse_position_window.x / tile_size.x,
+    //     this->mouse_position_window.y / tile_size.y
+    // );
+
+    // auto selected = sf::Vector2i(
+    //     (tile_grid_position.y - tile_offset.y) + (tile_grid_position.x - tile_offset.x),
+    //     (tile_grid_position.y - tile_offset.y) - (tile_grid_position.x - tile_offset.x)
+    // );
+
+    // auto pixel = sf::Vector2i(
+    //     (int)this->mouse_position_window.x % (int)tile_size.x,
+    //     (int)this->mouse_position_window.y % (int)tile_size.y
+    // );  
+
+    // auto pixel_colour = this->getTilePixelColour(pixel);
+
+    // if(pixel_colour == "Red")
+    //     selected += sf::Vector2i(-1, 0);        
+    // else if(pixel_colour == "Green")
+    //     selected += sf::Vector2i(1, 0);
+    // else if(pixel_colour == "Blue")
+    //     selected += sf::Vector2i(0, -1);
+    // else if(pixel_colour == "Yellow")
+    //     selected += sf::Vector2i(0, 1);
+
+    // int i = this->index + std::abs(this->index_min);

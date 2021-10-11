@@ -250,9 +250,9 @@ void worldGenerator::generateRivers() {
         bool place_found = false;
 
         while(!place_found) {
-            int index = rand() % this->world_map.size();
+            int index = rand() % this->world_map.size() - 1;
             
-            if(this->world_map[index]._terrain && !this->world_map[index]._coast && !this->is_arctic(index)) {
+            if(this->world_map[index]._terrain && !this->world_map[index]._coast && !this->is_arctic(index) && !this->is_forest(index)) {
                 possible_river_origin_index = index;
                 place_found = true;
             }
@@ -405,6 +405,8 @@ void worldGenerator::generateRivers() {
                         text_direction = "RIGHT AND DOWN";
                     }
                 }
+
+                else text_direction == "START";
             }
 
             Region& panel = this->world_map[river_index_current];
@@ -450,6 +452,10 @@ void worldGenerator::generateRivers() {
                     
             else if(text_direction == "UP AND RIGHT")
                 panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_br")); 
+
+            else {
+                std::cout << "[Error][River Generation]: Unexpected direction.\n";
+            } 
 
             last_move_value     = current_move_value;
             river_index_current = current_move_direction;
@@ -671,7 +677,7 @@ void worldGenerator::generateForests() {
 
     this->generateNoise(settings, this->m_tree_noise);
 
-    for(int i; i < this->m_tree_noise.size(); i++) {
+    for(int i = 0; i < this->m_tree_noise.size(); i++) {
         float value = this->m_tree_noise[i];
         float noise = (float)rand() / (float)RAND_MAX;
         float combined = value / 2 + noise / 2;
@@ -702,7 +708,7 @@ void worldGenerator::generateRegion(int index, Region& region) {
         settings.octaves     = 8;
         settings.persistence = 12;
         settings.bias        = 4;
-        settings.multiplier  = 1.25f;
+        settings.multiplier  = 1.10f;
 
         this->generateNoise(settings, region.noise);
         region.visited = true;
@@ -722,6 +728,7 @@ void worldGenerator::generateRegion(int index, Region& region) {
             
             if(region_forest) {
                 int tile_height = region.noise[index] / 0.1f;
+                this->m_tile.height = tile_height;
                 this->m_tile.position += sf::Vector2f(0, -tile_height * this->m_tile.size.y / 2);
                 
                 this->m_tile.side = Entity(this->m_tile.position, sf::Vector2f(0, 0.5f * this->m_tile.size.y), this->m_tile.size, &this->m_engine->resource.getTexture("tile_height"));
@@ -814,7 +821,7 @@ sf::Texture& worldGenerator::getBiomeTileTexture(Biome biome) {
     else if(biome.biome_name == "Desert")
         return this->m_engine->resource.getTexture("tile_desert");
 
-    else return this->m_engine->resource.getTexture("tile_biomeless");
+    else return this->m_engine->resource.getTexture("default");
 }
 
 sf::Vector2f worldGenerator::tilePositionScreen(int x, int y) {
@@ -882,6 +889,8 @@ sf::Texture& worldGenerator::getTreeTextureWorld(Biome biome) {
 
     if(biome.biome_name == "Tropical" || biome.biome_name == "Mediterranean")
         return this->m_engine->resource.getTexture("panel_tree_tropical");
+
+    else return this->m_engine->resource.getTexture("default");
 }
 
 sf::Texture& worldGenerator::getTreeTextureRegion(Biome biome) {
@@ -898,4 +907,21 @@ sf::Texture& worldGenerator::getTreeTextureRegion(Biome biome) {
 
     else if(biome.biome_name == "Tropical" || biome.biome_name == "Mediterranean")
         return this->m_engine->resource.getTexture("tile_tree_tropical1");
+
+    else return this->m_engine->resource.getTexture("default");
+}
+
+// Returns the index of a tile under mouse pointer.
+// If index is not found, returns -1.
+int worldGenerator::getTileIndex(sf::Vector2f mouse_position, Region& region) {
+    for(int i = 0; i < region.map.size(); i++) {
+        Tile& tile = region.map[i];
+
+        sf::FloatRect bounds(tile.position, tile.size);
+        
+        if(bounds.contains(mouse_position))
+            return i;
+    }
+
+    return -1;
 }
