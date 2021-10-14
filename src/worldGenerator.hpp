@@ -26,6 +26,9 @@ namespace iso {
             std::vector <float> m_tree_noise;
 
         private:
+            void generateNoise(noiseSettings& settings, std::vector<float>& container);
+            bool is_biome(int index, Biome biome);            
+
             void generateNoiseMap();
             void generateCircularGradient();
             void generatePoles();
@@ -36,9 +39,8 @@ namespace iso {
             void generateRivers();
             void generateForests();
 
-            void generateNoise(noiseSettings& settings, std::vector<float>& container);
-
-            bool is_biome(int index, Biome biome);            
+            void regionGenerateRiver(Region& region);
+            void regionGenerateForest(Region& region, bool dense = true);
 
             sf::Texture& getBiomeTileTexture(Biome biome); 
 

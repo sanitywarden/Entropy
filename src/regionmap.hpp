@@ -14,13 +14,9 @@ namespace iso {
         private:
             worldGenerator* world;
             Region* m_region;
-            TileData current_tile;
 
             int selected_panel_index;
-            int index; // Index of the tile under mouse pointer.
-
-            int index_min; // Smallest index on which tile highlight can be placed.
-            int index_max; // Biggest  index on which tile highlight can be placed.
+            int index; // Index of the tile under mouse pointer. It is not accurate. For accurate index use worldGenerator::getTileIndex();
 
             bool mouse_pressed;
             bool mouse_moved;
@@ -57,7 +53,6 @@ namespace iso {
 
             void drawDebugText();
 
-            bool inMapBounds(int index);
             std::string getTilePixelColour(sf::Vector2i);
 
         public: 

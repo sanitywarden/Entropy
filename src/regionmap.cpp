@@ -31,8 +31,6 @@ void Regionmap::initialise() {
 
     this->selected_panel_index = -1;
     this->index = 0;
-    this->index_min = 0;
-    this->index_max = 0;
 
     this->zoom = 2;
     this->max_zoom_in  = 0; 
@@ -220,11 +218,6 @@ void Regionmap::updateCurrentIndex() {
         selected += sf::Vector2i(0, 1);
 
     this->index = selected.x * this->world->region_settings.size.y + selected.y;
-
-    this->current_tile.grid_carthesian = tile_grid_position;
-    this->current_tile.grid_isometric  = selected;
-    this->current_tile.position        = sf::Vector2f(tile_grid_position.x * tile_size.x, tile_grid_position.y * tile_size.y);
-    this->current_tile.index           = selected.x * this->world->region_settings.size.y + selected.y;
 }
 
 void Regionmap::zoomCamera() {
@@ -285,39 +278,6 @@ void Regionmap::setCurrentRegion(int region_index) {
     );
 
     this->view_game.setCenter(first_tile_position);
-
-    auto tile_size   = this->world->region_settings.tile_size;
-    auto tile_offset = this->world->region_settings.tile_offset;
-    auto region_size = this->world->region_settings.size;
-
-    auto& tile1 = this->m_region->map[0];
-    auto grid1 = sf::Vector2i(
-        tile1.position.x / tile_size.x,
-        tile1.position.y / tile_size.y
-    );
-
-    auto iso1 = sf::Vector2i(
-        (grid1.y - tile_offset.y) + (grid1.x - tile_offset.x),
-        (grid1.y - tile_offset.y) - (grid1.x - tile_offset.x)
-    );
-
-    int i1 = iso1.x * region_size.y + iso1.y;
-
-    auto& tile2 = this->m_region->map[region_size.x * region_size.y - 1];
-    auto grid2 = sf::Vector2i(
-        tile2.position.x / tile_size.x,
-        tile2.position.y / tile_size.y
-    );
-
-    auto iso2 = sf::Vector2i(
-        (grid2.y - tile_offset.y) + (grid2.x - tile_offset.x),
-        (grid2.y - tile_offset.y) - (grid2.x - tile_offset.x)
-    );
-
-    int i2 = iso2.x * region_size.y + iso2.y;
-
-    this->index_min = i1;
-    this->index_max = i2;
 }
 
 void Regionmap::selectTile() {
@@ -337,7 +297,9 @@ void Regionmap::drawSelectedTile() {
 }
 
 void Regionmap::higlightTile() {
-    int index = this->world->getTileIndex(this->mouse_position_window, *this->m_region);
+    // Do not even attempt to change how this works.
+    // It's shit, it's not efficient, and it uses hacky techniques instead of math, but I can not figure it out on my own, and the web has nothing interesting to say.
+    const int index = this->world->getTileIndex(this->mouse_position_window, *this->m_region);
     if(index == -1)
         return;
 
@@ -381,19 +343,11 @@ std::string Regionmap::getTilePixelColour(sf::Vector2i pixel) {
     else return "Other";
 }
 
-bool Regionmap::inMapBounds(int index) {
-    if(index >= this->index_min && index <= this->index_max)
-        return true;
-    return false;
-}
-
 void Regionmap::drawDebugText() {
     sf::Text text;
     std::string str;
 
-    str += "FPS: "       + std::to_string(this->engine->fps.getFPS()) + "\n";
-    str += "Index: "     + std::to_string(this->current_tile.index) + "\n";
-    str += "Isometric: " + std::to_string(this->current_tile.grid_isometric.x) + " / " + std::to_string(this->current_tile.grid_isometric.y) + "\n";
+    str += "FPS: " + std::to_string(this->engine->fps.getFPS()) + "\n";
 
     text.setString(str);
     text.setFont(this->engine->resource.getFont("garamond"));
@@ -403,32 +357,3 @@ void Regionmap::drawDebugText() {
 
     this->engine->window.getWindow()->draw(text);
 }
-
-// Flat terrain way of selecting tile:
-// auto tile_grid_position = sf::Vector2i(
-    //     this->mouse_position_window.x / tile_size.x,
-    //     this->mouse_position_window.y / tile_size.y
-    // );
-
-    // auto selected = sf::Vector2i(
-    //     (tile_grid_position.y - tile_offset.y) + (tile_grid_position.x - tile_offset.x),
-    //     (tile_grid_position.y - tile_offset.y) - (tile_grid_position.x - tile_offset.x)
-    // );
-
-    // auto pixel = sf::Vector2i(
-    //     (int)this->mouse_position_window.x % (int)tile_size.x,
-    //     (int)this->mouse_position_window.y % (int)tile_size.y
-    // );  
-
-    // auto pixel_colour = this->getTilePixelColour(pixel);
-
-    // if(pixel_colour == "Red")
-    //     selected += sf::Vector2i(-1, 0);        
-    // else if(pixel_colour == "Green")
-    //     selected += sf::Vector2i(1, 0);
-    // else if(pixel_colour == "Blue")
-    //     selected += sf::Vector2i(0, -1);
-    // else if(pixel_colour == "Yellow")
-    //     selected += sf::Vector2i(0, 1);
-
-    // int i = this->index + std::abs(this->index_min);

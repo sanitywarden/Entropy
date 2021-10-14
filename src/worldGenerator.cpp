@@ -694,53 +694,52 @@ void worldGenerator::generateForests() {
 void worldGenerator::generateRegion(int index, Region& region) {
     sf::Clock clock;
 
+    noiseSettings settings_region_flat(this->region_settings.size, 16, 20, 4, 1.00f);
+    // ^ You probably do not need separate noise settings structs for different types of regions (hilly, flat, mountainous)
+    // You only need to chage the value by which you divide noise to get height.
+
     // Do this because if at least one region was visitied,
     // the m_tile property still holds value from the last region generation.
     this->m_tile = Tile();
 
-    sf::Vector2f tile_offset   = sf::Vector2f(0, 1.5f * -this->region_settings.tile_size.y ); 
-    sf::Vector2f tile_size     = sf::Vector2f(this->region_settings.tile_size.x, 2 * this->region_settings.tile_size.y);
-
-    const bool region_forest = this->is_forest(index);
-    if(region_forest && !region.visited) {
-        noiseSettings settings;
-        settings.size        = this->region_settings.size;
-        settings.octaves     = 8;
-        settings.persistence = 12;
-        settings.bias        = 4;
-        settings.multiplier  = 1.10f;
-
-        this->generateNoise(settings, region.noise);
-        region.visited = true;
+    std::vector <float> height;
+    if(!region.visited) {
+        this->generateNoise(settings_region_flat, height);
     }
 
-    region.map.resize(this->region_settings.size.x * this->region_settings.size.y);
-    for(int y = 0; y < this->region_settings.size.x; y++) {
-        for(int x = 0; x < this->region_settings.size.y; x++) {
-            int index = x * this->region_settings.size.y + y;
-            this->m_tile = Tile();
+    this->m_tile.size = this->region_settings.tile_size;
+    this->m_tile.texture = this->getBiomeTileTexture(region.biome);
 
-            this->m_tile.size = this->region_settings.tile_size;
-            this->m_tile.texture = this->getBiomeTileTexture(region.biome);
+    region.map.resize(this->region_settings.size.x * this->region_settings.size.y);
+    for(int y = 0; y < this->region_settings.size.y; y++) {
+        for(int x = 0; x < this->region_settings.size.x; x++) {
+            int index = y * this->world_settings.size.x + x;
             
             sf::Vector2f screen_position = this->tilePositionScreen(x, y);
             this->m_tile.position        = screen_position;
+
+            // Modify the value by which you divide to see more flat or more mountainous terrain. 
+            // int tile_height = height[index] / 0.1f;
+            // this->m_tile.height = tile_height;
+            // this->m_tile.position += sf::Vector2f(0, -tile_height * this->m_tile.size.y / 2);
             
-            if(region_forest) {
-                int tile_height = region.noise[index] / 0.1f;
-                this->m_tile.height = tile_height;
-                this->m_tile.position += sf::Vector2f(0, -tile_height * this->m_tile.size.y / 2);
-                
-                this->m_tile.side = Entity(this->m_tile.position, sf::Vector2f(0, 0.5f * this->m_tile.size.y), this->m_tile.size, &this->m_engine->resource.getTexture("tile_height"));
-            }
-            
-            if(region_forest && region.noise.size() != 0 && region.noise[index] > 0.7f) {
-                this->m_tile.tree = Entity(this->m_tile.position, tile_offset, tile_size, &this->getTreeTextureRegion(region.biome));
-            }
+            // this->m_tile.side = Entity(this->m_tile.position, sf::Vector2f(0, 0.5f * this->m_tile.size.y), this->m_tile.size, &this->m_engine->resource.getTexture("tile_height"));
 
             region.map[index] = this->m_tile;
         }
     }
+
+    const bool region_terrain = this->is_terrain(index);
+    if(region_terrain) {
+        const bool region_river = this->is_river(index);
+        if(region_river) this->regionGenerateRiver(region);   
+
+        const bool region_forest = this->is_forest(index);
+        if(region_forest) this->regionGenerateForest(region, true);
+        else this->regionGenerateForest(region, false);
+    }
+
+    region.visited = true;
 
     std::cout << "[World Generation][Region Generation]: Region " << index << " generated in " << clock.getElapsedTime().asSeconds() << " seconds.\n";
 }
@@ -924,4 +923,88 @@ int worldGenerator::getTileIndex(sf::Vector2f mouse_position, Region& region) {
     }
 
     return -1;
+}
+
+void worldGenerator::regionGenerateRiver(Region& region) {    
+    const float initial_chance   = 1.00f;
+    const float initial_modifier = 0.64f;
+    const int   river_size = this->region_settings.size.y / 10 / 2;
+    
+    for(int x = 0; x < this->region_settings.size.x; x++) {
+        float chance   = initial_chance;
+        float modifier = initial_modifier;
+
+        for(int y = 50; y > 50 - river_size; y--) {
+            int index = y * this->world_settings.size.x + x;
+
+            if(y == 50) {
+                region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
+                region.map[index].tiletype.set_river();
+                continue;
+            }
+
+            // Check if the tile behind the current one is a river, this helps in not having terrain tiles in the middle of the river.
+            if(region.map[index + this->region_settings.size.x].tiletype.is_river()) {
+                float random_number1 = (float)rand();
+                float random_number2 = (float)RAND_MAX * chance;
+    
+                if(random_number1 < random_number2) {
+                    region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
+                    region.map[index].tiletype.set_river();
+                }
+            }
+
+            chance *= modifier * modifier;
+        }
+    }
+
+    for(int x = 0; x < this->region_settings.size.x; x++) {
+        float chance   = initial_chance;
+        float modifier = initial_modifier;
+
+        for(int y = this->region_settings.size.y / 2 + 1; y < this->region_settings.size.y / 2 + 1 + river_size; y++) {
+            int index = y * this->world_settings.size.x + x;
+            
+            if(y == this->region_settings.size.y / 2 + 1) {
+                region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
+                region.map[index].tiletype.set_river();
+                continue;
+            }
+
+            if(region.map[index - this->region_settings.size.x].tiletype.is_river()) {
+                float random_number1 = (float)rand();
+                float random_number2 = (float)RAND_MAX * chance;
+                
+                if(random_number1 < random_number2) {
+                    region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
+                    region.map[index].tiletype.set_river();
+                }
+            }
+
+            chance *= modifier * modifier;
+        }
+    }
+}
+
+void worldGenerator::regionGenerateForest(Region& region, bool dense) {
+    noiseSettings settings;
+
+    if(dense)
+        settings = noiseSettings(this->region_settings.size, 8, 12, 4, 1.10f);
+    
+    else
+        settings = noiseSettings(this->region_settings.size, 4, 8, 4, 0.90f);
+    
+    std::string forest_type = dense ? "dense" : "sparse";
+    std::cout << "[World Generation][Region Generation]: Generating a " << forest_type << " forest.\n";
+
+    std::vector <float> noise;
+    this->generateNoise(settings, noise);
+
+    for(int i = 0; i < noise.size(); i++) {
+        auto& tile = region.map[i];
+        if(!tile.tiletype.is_river() && noise[i] > 0.7f) {
+            tile.tree = Entity(tile.position, sf::Vector2f(0, 1.5f * -this->region_settings.tile_size.y), sf::Vector2f(this->region_settings.tile_size.x, 2 * this->region_settings.tile_size.y), &this->getTreeTextureRegion(region.biome));
+        }
+    }
 }

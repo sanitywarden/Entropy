@@ -1,6 +1,8 @@
 LEGEND:
     [?] - Consider.
     [!] - Important.
+    [.] - Can wait.
 
 [!] Make sure that virtual functions from different classes have matching return type.
 [?] Create a separate class for a scene UI so that the cluttered and messy code is separated from the game logic itself, and provide public methods update() and render() to include in the level loop.
+[.] Create a utility class for Regions and Tiles which will hold information about it's parent. 

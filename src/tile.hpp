@@ -2,17 +2,12 @@
 #define _TILE_HPP_
 
 #include "entity.hpp"
+#include "tileType.hpp"
 
 #include <SFML/Graphics.hpp>
+#include <bitset>
 
-namespace iso {
-    struct TileData {
-        sf::Vector2f position;
-        sf::Vector2i grid_carthesian;
-        sf::Vector2i grid_isometric;
-        int          index;
-    };
-    
+namespace iso {    
     class Tile : public sf::Drawable {
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -27,7 +22,8 @@ namespace iso {
             sf::Vector2f position;
             sf::Vector2f size;
             sf::Texture  texture;
-            
+            TileType     tiletype;
+
             int height;
 
     };

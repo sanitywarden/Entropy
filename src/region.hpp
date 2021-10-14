@@ -42,8 +42,7 @@ namespace iso {
 
             bool visited;
 
-            std::vector <float> noise;
-            std::vector <Tile>  map;
+            std::vector <Tile> map;
 
     };  
 }

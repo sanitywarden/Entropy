@@ -5,6 +5,22 @@
 
 namespace iso {
     struct noiseSettings {
+        noiseSettings() {
+            this->size        = sf::Vector2f(0, 0);
+            this->octaves     = 0;
+            this->persistence = 0;
+            this->bias        = 0;
+            this->multiplier  = 0.0f;
+        }
+
+        noiseSettings(sf::Vector2f size, int octaves, int persistence, int bias, float multiplier) {
+            this->size        = size;
+            this->octaves     = octaves;
+            this->persistence = persistence;
+            this->bias        = bias;
+            this->multiplier  = multiplier;
+        }
+
         int   octaves;
         int   persistence;
         int   bias;
