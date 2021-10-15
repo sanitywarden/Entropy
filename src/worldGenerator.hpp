@@ -64,11 +64,7 @@ namespace iso {
             WorldSettings  world_settings;
             RegionSettings region_settings;
 
-            bool is_coast  (int index);
-            bool is_terrain(int index);
-            bool is_forest (int index);
             bool is_arctic (int index);
-            bool is_river  (int index);
 
             std::vector <Region> world_map; 
     };

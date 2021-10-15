@@ -10,7 +10,7 @@
 
 namespace iso {
     typedef std::bitset <8> bitmask;
-
+        
     // Bit representation of the type of a tile.
     // Some of these bits are mutually exclusive.
     class TileType {
@@ -24,7 +24,7 @@ namespace iso {
             bitmask& tileType();
 
             bool is_terrain();
-            bool is_water();
+            bool is_water();   // Returns true if the tile is of type river or ocean.
             bool is_river();
             bool is_ocean();
 
@@ -32,7 +32,7 @@ namespace iso {
             void set_water();
             void set_river();
             void set_ocean();
-    };  
+    };     
 }
 
 #endif

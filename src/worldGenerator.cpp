@@ -48,12 +48,12 @@ void worldGenerator::generateWorld() {
             
             float noise    = this->m_noise[index]; 
             float gradient = this->m_gradient[index];
-            float value = noise - gradient;
+            float value    = noise - gradient;
 
             if(value > this->world_settings.minimum_terrain_height) {
-                this->m_region._terrain = true;
+                this->m_region.regiontype.set_terrain();
                 panel_quantity++;
-            } else this->m_region._terrain = false;
+            } else this->m_region.regiontype.set_ocean();
 
             if(value < 0.0f) value = 0.0f;
             if(value > 1.0f) value = 1.0f;
@@ -74,27 +74,27 @@ void worldGenerator::generateWorld() {
         for(int y = 0; y < this->world_settings.size.y; y++) {
             int index = x + y * this->world_settings.size.x;
             
-            if(this->world_map[index]._terrain) {
+            if(this->world_map[index].regiontype.is_terrain()) {
                 int index_up    = index - this->world_settings.size.x;             
                 int index_down  = index + this->world_settings.size.x;
                 int index_left  = index - 1;
                 int index_right = index + 1;
 
                 if(index_up > 0)
-                    if(!this->world_map[index_up]._terrain) 
-                        this->world_map[index]._coast = true;
+                    if(!this->world_map[index_up].regiontype.is_terrain()) 
+                        this->world_map[index].regiontype.set_coast();
 
                 if(index_left > 0)
-                    if(!this->world_map[index_left]._terrain) 
-                        this->world_map[index]._coast = true;
+                    if(!this->world_map[index_left].regiontype.is_terrain()) 
+                        this->world_map[index].regiontype.set_coast();
 
                 if(index_down < this->world_settings.size.x * this->world_settings.size.y)
-                    if(!this->world_map[index_down]._terrain) 
-                        this->world_map[index]._coast = true;
+                    if(!this->world_map[index_down].regiontype.is_terrain()) 
+                        this->world_map[index].regiontype.set_coast();
 
                 if(index_right < this->world_settings.size.x * this->world_settings.size.y)
-                    if(!this->world_map[index_right]._terrain) 
-                        this->world_map[index]._coast = true;
+                    if(!this->world_map[index_right].regiontype.is_terrain()) 
+                        this->world_map[index].regiontype.set_coast();
             }
         }
     }
@@ -207,11 +207,15 @@ void worldGenerator::generatePoles() {
         float pole_modifier = modifier;
 
         for(unsigned int y = 0; y < this->world_settings.pole_size; y++) {
+            int index = y * this->world_settings.size.x + x;
+            
             float random_number1 = (float)rand();
             float random_number2 = (float)RAND_MAX * pole_chance;
 
-            if(random_number1 < random_number2)
-                this->world_map[x + y * this->world_settings.size.x].biome = BIOME_ARCTIC;                
+            if(random_number1 < random_number2) {
+                this->world_map[index].regiontype.set_terrain();
+                this->world_map[index].regiontype.set_arctic();
+            }
         
             pole_chance *= pole_modifier;
         }
@@ -222,11 +226,15 @@ void worldGenerator::generatePoles() {
         float pole_modifier = modifier;
 
         for(unsigned int y = this->world_settings.size.y - 1; y > this->world_settings.size.y - 1 - this->world_settings.pole_size; y--) {
+            int index = y * this->world_settings.size.x + x;
+
             float random_number1 = (float)rand();
             float random_number2 = (float)RAND_MAX * pole_chance;
 
-            if(random_number1 < random_number2) 
-                this->world_map[x + y * this->world_settings.size.x].biome = BIOME_ARCTIC;
+            if(random_number1 < random_number2) {
+                this->world_map[index].regiontype.set_terrain();
+                this->world_map[index].regiontype.set_arctic();
+            }
             
             pole_chance *= pole_modifier;
         }
@@ -252,7 +260,7 @@ void worldGenerator::generateRivers() {
         while(!place_found) {
             int index = rand() % this->world_map.size() - 1;
             
-            if(this->world_map[index]._terrain && !this->world_map[index]._coast && !this->is_arctic(index) && !this->is_forest(index)) {
+            if(this->world_map[index].regiontype.is_terrain() && !this->world_map[index].regiontype.is_coast() && !this->world_map[index].regiontype.is_arctic() && !this->world_map[index].regiontype.is_forest()) {
                 possible_river_origin_index = index;
                 place_found = true;
             }
@@ -333,23 +341,23 @@ void worldGenerator::generateRivers() {
 
             const int current_move_value = current_move_direction - river_index_current;
 
-            std::string text_direction = "START"; 
+            RiverDirection direction = RiverDirection::RIVER_ORIGIN;
 
             if(river_index_current != river_index_start) {
                 if(current_move_direction == index_up) {
                     // UP AND RIGHT
                     if(current_move_value + last_move_value == -this->world_settings.size.x + 1) {
-                        text_direction = "UP AND RIGHT";
+                        direction = RiverDirection::RIVER_NORTH_TO_WEST;
                     }
 
                     // UP AND LEFT
                     if(current_move_value + last_move_value == -this->world_settings.size.x - 1) {
-                        text_direction = "UP AND LEFT";
+                        direction = RiverDirection::RIVER_NORTH_TO_EAST;
                     }
 
                     // UP
                     if(current_move_value == -this->world_settings.size.x && last_move_value == -this->world_settings.size.x) {
-                        text_direction = "UP";
+                        direction = RiverDirection::RIVER_VERTICAL;
                     }
 
                 }
@@ -357,34 +365,34 @@ void worldGenerator::generateRivers() {
                 else if(current_move_direction == index_down) {
                     // DOWN AND RIGHT
                     if(current_move_value + last_move_value == this->world_settings.size.x + 1) {
-                        text_direction = "DOWN AND RIGHT";
+                        direction = RiverDirection::RIVER_SOUTH_TO_WEST;
                     }
 
                     // DOWN AND LEFT
                     if(current_move_value + last_move_value == this->world_settings.size.x - 1) {
-                        text_direction = "DOWN AND LEFT";
+                        direction = RiverDirection::RIVER_SOUTH_TO_EAST;
                     }
 
                     // DOWN
                     if(current_move_value == this->world_settings.size.x && last_move_value == this->world_settings.size.x) {
-                        text_direction = "DOWN";
+                        direction = RiverDirection::RIVER_VERTICAL;
                     }
                 }
 
                 else if(current_move_direction == index_left) {
                     // LEFT
                     if(current_move_value + last_move_value == -1 || -2) {
-                        text_direction = "LEFT";
+                        direction = RiverDirection::RIVER_HORIZONTAL;
                     }
 
                     // LEFT AND UP
                     if(current_move_value + last_move_value == -1 - this->world_settings.size.x) {
-                        text_direction = "LEFT AND UP";
+                        direction = RiverDirection::RIVER_SOUTH_TO_WEST;
                     }
 
                     // LEFT AND DOWN
                     if(current_move_value + last_move_value == -1 + this->world_settings.size.x) {
-                        text_direction = "LEFT AND DOWN";
+                        direction = RiverDirection::RIVER_NORTH_TO_WEST;
                     }
 
                 }
@@ -392,21 +400,22 @@ void worldGenerator::generateRivers() {
                 else if(current_move_direction == index_right) {
                     // RIGHT
                     if(current_move_value + last_move_value == 1 || 2) {
-                        text_direction = "RIGHT";
+                        direction = RiverDirection::RIVER_HORIZONTAL;
                     }
 
                     // RIGHT AND UP
                     if(current_move_value + last_move_value == 1 - this->world_settings.size.x) {
-                        text_direction = "RIGHT AND UP";
+                        direction = RiverDirection::RIVER_SOUTH_TO_EAST;
                     }
 
                     // RIGHT AND DOWN
                     if(current_move_value + last_move_value == 1 + this->world_settings.size.x) {
-                        text_direction = "RIGHT AND DOWN";
+                        direction = RiverDirection::RIVER_NORTH_TO_EAST;
                     }
                 }
 
-                else text_direction == "START";
+                else 
+                    direction = RiverDirection::RIVER_NONE; 
             }
 
             Region& panel = this->world_map[river_index_current];
@@ -414,57 +423,57 @@ void worldGenerator::generateRivers() {
             sf::Vector2f panel_offset   = sf::Vector2f(0, 0); 
             sf::Vector2f panel_size     = this->world_settings.panel_size; 
 
-            if(text_direction == "START" && river_index_start == river_index_current) 
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_sea")); 
-            
-            else if(text_direction == "DOWN")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_vertical")); 
-                                
-            else if(text_direction == "DOWN AND LEFT")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tl")); 
-            
-            else if(text_direction == "DOWN AND RIGHT")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tr")); 
+            switch(direction) {
+                case RiverDirection::RIVER_NONE:
+                    panel._direction = RiverDirection::RIVER_NONE;
+                    break;
+
+                case RiverDirection::RIVER_ORIGIN:
+                    panel._direction = RiverDirection::RIVER_ORIGIN;
+                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_sea")); 
+                    break;
                 
-            else if(text_direction == "UP")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_vertical")); 
+                case RiverDirection::RIVER_NORTH_TO_EAST:
+                    panel._direction = RiverDirection::RIVER_NORTH_TO_EAST;
+                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_bl")); 
+                    break;
 
-            else if(text_direction == "RIGHT AND UP")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tl")); 
-            
-            else if(text_direction == "RIGHT AND DOWN")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_bl")); 
-            
-            else if(text_direction == "LEFT")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_horizontal")); 
-            
-            else if(text_direction == "LEFT AND UP") 
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tr")); 
-            
-            else if(text_direction == "LEFT AND DOWN") 
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_br")); 
-            
-            else if(text_direction == "RIGHT")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_horizontal")); 
+                case RiverDirection::RIVER_NORTH_TO_WEST:
+                    panel._direction = RiverDirection::RIVER_NORTH_TO_WEST;
+                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_br")); 
+                    break;
 
-            else if(text_direction == "UP AND LEFT")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_bl")); 
-                    
-            else if(text_direction == "UP AND RIGHT")
-                panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_br")); 
+                case RiverDirection::RIVER_SOUTH_TO_EAST:
+                    panel._direction = RiverDirection::RIVER_SOUTH_TO_EAST;
+                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tl")); 
+                    break;
 
-            else {
-                std::cout << "[Error][River Generation]: Unexpected direction.\n";
-            } 
+                case RiverDirection::RIVER_SOUTH_TO_WEST:
+                    panel._direction = RiverDirection::RIVER_SOUTH_TO_WEST;
+                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tr")); 
+                    break;
 
-            last_move_value     = current_move_value;
+                case RiverDirection::RIVER_VERTICAL:
+                    panel._direction = RiverDirection::RIVER_VERTICAL;
+                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_vertical")); 
+                    break;
+
+                case RiverDirection::RIVER_HORIZONTAL:
+                    panel._direction = RiverDirection::RIVER_HORIZONTAL;
+                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_horizontal")); 
+                    break;
+            }
+
+            panel.regiontype.set_river();
+
+            last_move_value = current_move_value;
             river_index_current = current_move_direction;
 
             if(coast_found) {
                 break;
             } 
 
-            if(this->world_map[river_index_current]._coast) {
+            if(this->world_map[river_index_current].regiontype.is_coast()) {
                 coast_found = true;
             }
                 
@@ -541,13 +550,13 @@ void worldGenerator::generateMoistureMap() {
         for(int y = 0; y < this->world_settings.size.y; y++) {
             int index = y * this->world_settings.size.x + x;
 
-            if(!this->world_map[index]._terrain)
+            if(!this->world_map[index].regiontype.is_terrain())
                 this->world_map[index].moisture = 1.0f;
 
-            else if(this->is_arctic(index))
+            else if(this->world_map[index].regiontype.is_arctic())
                 this->world_map[index].moisture = 0.0f;
 
-            else if(this->world_map[index]._terrain && !this->is_arctic(index)) {
+            else if(this->world_map[index].regiontype.is_terrain() && !this->world_map[index].regiontype.is_arctic()) {
                 float noise = 0.0f;
                 float scale = 1.0f;
                 float scale_acc = 0.0f;
@@ -600,12 +609,12 @@ void worldGenerator::assignBiome() {
     for(int i = 0; i < this->world_settings.size.x * this->world_settings.size.y; i++) {
         auto* panel = &this->world_map[i];
 
-        if(!panel->_terrain) {
+        if(!panel->regiontype.is_terrain()) {
             panel->texture = this->m_engine->resource.getTexture("panel_ocean");
             panel->biome = BIOME_OCEAN;
         } 
         
-        else if(this->is_arctic(i)) {
+        else if(panel->regiontype.is_arctic()) {
             panel->texture = this->m_engine->resource.getTexture("panel_arctic");
             panel->biome = BIOME_ARCTIC;
         } 
@@ -686,7 +695,7 @@ void worldGenerator::generateForests() {
 
         Region& region = this->world_map[i];
 
-        if(result > 0.7f && !this->is_arctic(i) && !this->is_river(i) && is_terrain(i))
+        if(result > 0.7f && !this->world_map[i].regiontype.is_arctic() && !this->world_map[i].regiontype.is_river() && this->world_map[i].regiontype.is_terrain())
             region.forest = Entity(region.position, sf::Vector2f(0, 0), region.size, &this->getTreeTextureWorld(region.biome)); 
     }    
 }
@@ -729,12 +738,12 @@ void worldGenerator::generateRegion(int index, Region& region) {
         }
     }
 
-    const bool region_terrain = this->is_terrain(index);
+    const bool region_terrain = region.regiontype.is_terrain();
     if(region_terrain) {
-        const bool region_river = this->is_river(index);
+        const bool region_river = region.regiontype.is_river();
         if(region_river) this->regionGenerateRiver(region);   
 
-        const bool region_forest = this->is_forest(index);
+        const bool region_forest = region.regiontype.is_forest();
         if(region_forest) this->regionGenerateForest(region, true);
         else this->regionGenerateForest(region, false);
     }
@@ -838,33 +847,6 @@ sf::Vector2f worldGenerator::tilePositionScreen(sf::Vector2f tile_position) {
     return this->tilePositionScreen(sf::Vector2i(tile_position.x, tile_position.y));
 }
 
-bool worldGenerator::is_coast(int region_index) {
-    int world_width = this->world_settings.size.x;
-
-    // Is coast when:
-    // Provided index is not a water tile.
-    // At least one of the bordering regions is a water tile.
-    if(this->world_map[region_index].biome.biome_name != BIOME_OCEAN.biome_name && (
-        this->world_map[region_index - world_width].biome.biome_name == BIOME_OCEAN.biome_name ||
-        this->world_map[region_index + world_width].biome.biome_name == BIOME_OCEAN.biome_name ||
-        this->world_map[region_index - 1].biome.biome_name == BIOME_OCEAN.biome_name ||
-        this->world_map[region_index + 1].biome.biome_name == BIOME_OCEAN.biome_name
-    )) return true;
-    return false;
-}
-
-bool worldGenerator::is_terrain(int region_index) {
-    if(this->world_map[region_index].height > this->world_settings.minimum_terrain_height)
-        return true;
-    return false;
-}
-
-bool worldGenerator::is_forest(int region_index) {
-    if(this->world_map[region_index].forest.exists()) 
-        return true;
-    return false;
-}
-
 bool worldGenerator::is_biome(int region_index, Biome biome) {
     if(this->world_map[region_index].biome.biome_name == biome.biome_name)
         return true;
@@ -873,10 +855,6 @@ bool worldGenerator::is_biome(int region_index, Biome biome) {
 
 bool worldGenerator::is_arctic(int region_index) {
     return this->is_biome(region_index, BIOME_ARCTIC);
-}
-
-bool worldGenerator::is_river(int region_index) {
-    return this->world_map[region_index].river.exists();
 }
 
 sf::Texture& worldGenerator::getTreeTextureWorld(Biome biome) {
@@ -930,58 +908,86 @@ void worldGenerator::regionGenerateRiver(Region& region) {
     const float initial_modifier = 0.64f;
     const int   river_size = this->region_settings.size.y / 10 / 2;
     
-    for(int x = 0; x < this->region_settings.size.x; x++) {
-        float chance   = initial_chance;
-        float modifier = initial_modifier;
+    RiverDirection direction = region.riverDirection();
 
-        for(int y = 50; y > 50 - river_size; y--) {
-            int index = y * this->world_settings.size.x + x;
-
-            if(y == 50) {
-                region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
-                region.map[index].tiletype.set_river();
-                continue;
-            }
-
-            // Check if the tile behind the current one is a river, this helps in not having terrain tiles in the middle of the river.
-            if(region.map[index + this->region_settings.size.x].tiletype.is_river()) {
-                float random_number1 = (float)rand();
-                float random_number2 = (float)RAND_MAX * chance;
-    
-                if(random_number1 < random_number2) {
-                    region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
-                    region.map[index].tiletype.set_river();
-                }
-            }
-
-            chance *= modifier * modifier;
+    switch(direction) {
+        case RiverDirection::RIVER_NONE: {
+            break;
         }
-    }
-
-    for(int x = 0; x < this->region_settings.size.x; x++) {
-        float chance   = initial_chance;
-        float modifier = initial_modifier;
-
-        for(int y = this->region_settings.size.y / 2 + 1; y < this->region_settings.size.y / 2 + 1 + river_size; y++) {
-            int index = y * this->world_settings.size.x + x;
+        
+        case RiverDirection::RIVER_ORIGIN: {
+            std::cout << "Origin.\n";
+            break;
+        }
+    
+        case RiverDirection::RIVER_HORIZONTAL: {
+            std::cout << "Horizontal.\n";
             
-            if(y == this->region_settings.size.y / 2 + 1) {
-                region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
-                region.map[index].tiletype.set_river();
-                continue;
-            }
+            for(int x = 0; x < this->region_settings.size.x; x++) {
+                float chance   = initial_chance;
+                float modifier = initial_modifier;
 
-            if(region.map[index - this->region_settings.size.x].tiletype.is_river()) {
-                float random_number1 = (float)rand();
-                float random_number2 = (float)RAND_MAX * chance;
-                
-                if(random_number1 < random_number2) {
-                    region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
-                    region.map[index].tiletype.set_river();
+                for(int y = 50; y > 50 - river_size; y--) {
+                    int index = y * this->world_settings.size.x + x;
+
+                    if(y == 50) {
+                        region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
+                        region.map[index].tiletype.set_river();
+                        continue;
+                    }
+
+                    // Check if the tile behind the current one is a river, this helps in not having terrain tiles in the middle of the river.
+                    if(region.map[index + this->region_settings.size.x].tiletype.is_river()) {
+                        float random_number1 = (float)rand();
+                        float random_number2 = (float)RAND_MAX * chance;
+        
+                        if(random_number1 < random_number2) {
+                            region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
+                            region.map[index].tiletype.set_river();
+                        }
+                    }
+
+                    chance *= modifier * modifier;
                 }
             }
 
-            chance *= modifier * modifier;
+            for(int x = 0; x < this->region_settings.size.x; x++) {
+                float chance   = initial_chance;
+                float modifier = initial_modifier;
+
+                for(int y = this->region_settings.size.y / 2 + 1; y < this->region_settings.size.y / 2 + 1 + river_size; y++) {
+                    int index = y * this->world_settings.size.x + x;
+                    
+                    if(y == this->region_settings.size.y / 2 + 1) {
+                        region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
+                        region.map[index].tiletype.set_river();
+                        continue;
+                    }
+
+                    if(region.map[index - this->region_settings.size.x].tiletype.is_river()) {
+                        float random_number1 = (float)rand();
+                        float random_number2 = (float)RAND_MAX * chance;
+                        
+                        if(random_number1 < random_number2) {
+                            region.map[index].texture = this->m_engine->resource.getTexture("tile_sea");
+                            region.map[index].tiletype.set_river();
+                        }
+                    }
+
+                    chance *= modifier * modifier;
+                }
+            }
+
+            break;
+        }
+
+        case RiverDirection::RIVER_VERTICAL: {
+            
+        }
+
+        default: {
+            std::cout << "Other\n";
+            break;
         }
     }
 }

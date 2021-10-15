@@ -5,4 +5,6 @@ LEGEND:
 
 [!] Make sure that virtual functions from different classes have matching return type.
 [?] Create a separate class for a scene UI so that the cluttered and messy code is separated from the game logic itself, and provide public methods update() and render() to include in the level loop.
-[.] Create a utility class for Regions and Tiles which will hold information about it's parent. 
+[!] When selecting a tile by searching for it in the vector, try checking only adjacent tiles, because this will be faster and it's not possible to move more than one tile at a time.
+[!] For information about the region's biome use and create functions in worldGenerator class. For other purposes (such as information about a river, or a forest) use the bit representation system.
+[!] Think of a way to generate rivers in other directions than horizontal and vertical (Look into circle related math?). 

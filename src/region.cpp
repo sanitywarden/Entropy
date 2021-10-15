@@ -4,8 +4,7 @@ using namespace iso;
 
 Region::Region() {
     this->_marked  = false;
-    this->_terrain = false;
-    this->_coast   = false;
+    this->_direction = RiverDirection::RIVER_NONE;
 
     this->height      = 0.0f;
     this->latitude    = 0.0f;
@@ -43,4 +42,8 @@ void Region::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     if(this->forest.exists())
         target.draw(this->forest);
+}
+
+RiverDirection Region::riverDirection() {
+    return this->_direction;
 }

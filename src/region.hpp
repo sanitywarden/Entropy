@@ -4,6 +4,7 @@
 #include "biome.hpp"
 #include "tile.hpp"
 #include "entity.hpp"
+#include "regionType.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -11,13 +12,23 @@
 namespace iso {
     class worldGenerator;
     
+    enum class RiverDirection {
+        RIVER_HORIZONTAL,
+        RIVER_VERTICAL,
+        RIVER_NORTH_TO_EAST,
+        RIVER_NORTH_TO_WEST,
+        RIVER_SOUTH_TO_EAST,
+        RIVER_SOUTH_TO_WEST, 
+        RIVER_NONE,          // River does not exist.
+        RIVER_ORIGIN         // Beginning of the river, first tile.
+    };
+
     class Region : public sf::Drawable {
         friend class worldGenerator;
         
         protected:
-            bool _terrain;
-            bool _coast;
             bool _marked;
+            RiverDirection _direction;      
 
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -30,6 +41,7 @@ namespace iso {
             sf::Vector2f position;
             sf::Vector2f size;    
             sf::Texture  texture;
+            RegionType   regiontype;
 
             Entity forest;
             Entity river;
@@ -44,6 +56,7 @@ namespace iso {
 
             std::vector <Tile> map;
 
+            RiverDirection riverDirection();
     };  
 }
 
