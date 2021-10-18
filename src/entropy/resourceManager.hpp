@@ -3,8 +3,9 @@
 
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Font.hpp>
-
+#include <SFML/System/Err.hpp>
 #include <map>
+#include <ios>
 
 namespace entropy {
     // This class works as a easy to use resource manager.

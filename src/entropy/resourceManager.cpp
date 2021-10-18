@@ -4,19 +4,23 @@
 
 using namespace entropy;
 
-resourceManager::resourceManager() {
+static std::ios_base::iostate m_sfmlerror;
 
+resourceManager::resourceManager() {
+    sf::err().clear(std::ios::failbit);
 }
 
 resourceManager::~resourceManager() {
-
+    sf::err().clear(m_sfmlerror);
 }
 
 void resourceManager::loadTexture(std::string filename, std::string id, sf::IntRect area) {
     sf::Texture texture;
     
+
     if(!texture.loadFromFile(filename, area)) {
-        std::cerr << "[Entropy Engine][Resource Manager]: Could not load texture: " << filename << " with id: " << id << ".\n";
+        std::cout << "[Entropy Engine][Resource Manager]: Could not load texture: " << filename << " with id: " << id << ".\n";
+        return;
     }
 
     this->m_textures[id] = texture;
@@ -34,7 +38,8 @@ void resourceManager::loadFont(std::string filename, std::string id) {
     sf::Font font;
 
     if(!font.loadFromFile(filename)) {
-        std::cerr << "[Entropy Engine][Resource Manager]: Could not load font: " << filename << " with id: " << id << ".\n";
+        std::cout << "[Entropy Engine][Resource Manager]: Could not load font: " << filename << " with id: " << id << ".\n";
+        return;
     }
 
     this->m_fonts[id] = font;

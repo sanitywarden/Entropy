@@ -9,7 +9,7 @@
 
 namespace entropy {
     /* Entropy is a main class which is supposed to work as a engine.
-     * All the modules that you add are supposed to be there and should be instantinated.
+     * All the modules that you add are supposed to be in Entropy class.
      * To create a application using this engine you need to:
      * - Create a window using Entropy::windowManager. Either fullscreen or custom size.
      * - Create a gamestate with three overloaded functions: update(), render() and handleInput().
@@ -28,7 +28,7 @@ namespace entropy {
 
             void loop();
 
-            static void quitApplication(int code, bool close_console = true);
+            static void quitApplication(int code);
     };
 }
 

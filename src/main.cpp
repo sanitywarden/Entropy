@@ -3,7 +3,7 @@
 #include "worldmap.hpp"
 
 int main() {
-    entropy::Entropy game_engine;
+    static entropy::Entropy game_engine;
 
     iso::Worldmap worldmap = iso::Worldmap(&game_engine);
     game_engine.gamestate.addGamestate("worldmap", worldmap);
@@ -12,6 +12,6 @@ int main() {
 
     game_engine.loop();
 
-    entropy::Entropy::quitApplication(0, false);
+    entropy::Entropy::quitApplication(0);
 }
 

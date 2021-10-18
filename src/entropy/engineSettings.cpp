@@ -53,7 +53,6 @@ void entropy::applicationSettings::loadUserSettings() {
         return;
     } 
 
-    std::cout << "[Entropy Engine][Engine Settings]: Custom user settings file loaded.\n";
 
     std::string file_line;
 
@@ -61,7 +60,18 @@ void entropy::applicationSettings::loadUserSettings() {
     // Extract the window size from the file.
     std::getline(input_file, file_line);
 
-    int index = file_line.find_first_of('x');
+    size_t index = file_line.find_first_of('x');
+    
+    if(index == std::string::npos) {
+        std::cout << "[Entropy Engine][Engine Settings]: Custom user settings file is empty.\n";
+        std::cout << "[Entropy Engine][Engine Settings]: Application loaded with default settings.\n";        
+
+        this->m_settings = Settings();
+        return;     
+    }
+
+    std::cout << "[Entropy Engine][Engine Settings]: Custom user settings file loaded.\n";
+
     auto width  = std::stoi(this->extractPartString(0, index, file_line));
     auto height = std::stoi(this->extractPartString(index + 1, file_line.length(), file_line));
 
@@ -96,7 +106,6 @@ void entropy::applicationSettings::saveUserSettings() {
     std::fstream output_file(filename.c_str(), std::ios::out);
     if(!output_file) {
         std::cout << "[Entropy Engine][Engine Settings]: User settings config file not found. Settings will not be saved.\n";
-    
         return;
     }
 

@@ -31,7 +31,7 @@ void Entropy::loop() {
     }
 }
 
-void Entropy::quitApplication(int code, bool close_console) {
+void Entropy::quitApplication(int code) {
     std::cout << "[Entropy Engine]: Application quit with code " << code << ".\n";
 
     switch(code) {
@@ -48,6 +48,5 @@ void Entropy::quitApplication(int code, bool close_console) {
             break;
     }
 
-    if(close_console)
-        exit(code);
+    exit(code);
 }

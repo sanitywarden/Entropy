@@ -40,7 +40,7 @@ namespace iso {
             void generateForests();
 
             void regionGenerateRiver(Region& region);
-            void regionGenerateForest(Region& region, bool dense = true);
+            void regionGenerateForest(Region& region);
 
             sf::Texture& getBiomeTileTexture(Biome biome); 
 
