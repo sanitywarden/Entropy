@@ -17,7 +17,7 @@ namespace iso {
             ~Tile();
 
             Entity tree;
-            Entity side;
+            std::vector <Entity> side;
 
             sf::Vector2f position;
             sf::Vector2f size;

@@ -28,8 +28,11 @@ void Tile::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.texture = &this->texture;
     target.draw(tile, states); 
 
-    if(this->side.exists())
-        target.draw(this->side);
+    if(this->side.size() > 0) {
+        for(auto& side : this->side) {
+            target.draw(side);
+        }
+    } 
 
     if(this->tree.exists()) 
         target.draw(this->tree);

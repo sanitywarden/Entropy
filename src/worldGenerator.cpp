@@ -701,6 +701,9 @@ void worldGenerator::generateForests() {
 }
 
 void worldGenerator::generateRegion(int index, Region& region) {
+    if(region.visited)
+        return;
+    
     sf::Clock clock;
 
     // Do this because if at least one region was visitied,
@@ -724,7 +727,7 @@ void worldGenerator::generateRegion(int index, Region& region) {
     }
     
     const bool region_terrain = region.regiontype.is_terrain();
-    if(region_terrain && !region.visited) {
+    if(region_terrain) {
         this->regionGenerateHeight(index);
         this->regionGenerateRiver (index);   
         this->regionGenerateForest(index);
@@ -740,7 +743,7 @@ void worldGenerator::generateRegion(int index, Region& region) {
                     if(region.map[index].tiletype.is_river()) {
                         region.map[index].height   = 0;
                         region.map[index].position = this->tilePositionScreen(x, y);
-                        region.map[index].side     = Entity();
+                        region.map[index].side = std::vector <Entity> (0);
                     }
                 }
             }
@@ -757,18 +760,30 @@ void worldGenerator::generateRegion(int index, Region& region) {
 
             if(index_bottom < this->region_settings.size.x * this->region_settings.size.y) {
                 if(region.map[index].height > region.map[index_bottom].height) {
-                    region.map[index].side = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                    const int height_difference = region.map[index].height - region.map[index_bottom].height;
+                    region.map[index].side.resize(height_difference);
+
+                    for(int i = 0; i < height_difference; i++) {
+                        region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                    }
                 }
             }
 
             if(index_right < this->region_settings.size.x * this->region_settings.size.y) {
                 if(region.map[index].height > region.map[index_right].height) {
-                    region.map[index].side = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                    const int height_difference = region.map[index].height - region.map[index_right].height;
+                    region.map[index].side.resize(height_difference);
+
+                    for(int i = 0; i < height_difference; i++) {
+                        region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                    }
                 }
             }
 
+            // Make sure that the border tiles have depth.
             if(y == this->region_settings.size.y - 1 || x == this->region_settings.size.x - 1) {
-                region.map[index].side = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                region.map[index].side.resize(1);
+                region.map[index].side[0] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
             }
         }
     }
@@ -934,10 +949,17 @@ void worldGenerator::regionGenerateRiver(int region_index) {
     if(!region.regiontype.is_river())
         return;
 
+    std::cout << "[World Generation][Region Generation]: Generating river.\n";
+
     const int river_size = this->region_settings.size.y / 10 / 2;
     RiverDirection direction = region.riverDirection();
 
     switch(direction) {
+        default: {
+            std::cout << "[Error][Region Generation]: Unsupported river direction.\n";
+            break;
+        }
+        
         case RiverDirection::RIVER_NONE: {
             break;
         }
@@ -962,7 +984,7 @@ void worldGenerator::regionGenerateRiver(int region_index) {
             }
 
             if(adjacent_region_direction == '!') {
-                std::cout << "[Error][World Generator]: There is no adjacent region to river origin.\n";
+                std::cout << "[Error][Region Generator]: There is no adjacent region to river origin.\n";
                 return;
             }
 
@@ -985,7 +1007,7 @@ void worldGenerator::regionGenerateRiver(int region_index) {
             // Draw the river "connecting" the pond with adjacent regions.
             switch(adjacent_region_direction) {
                 default: {
-                    std::cout << "Could not generate river connection.\n";
+                    std::cout << "[Error][Region Generator]: Could not generate river connection.\n";
                     break;                 
                 }
 
@@ -1211,11 +1233,6 @@ void worldGenerator::regionGenerateRiver(int region_index) {
 
             break;
         }
-        
-        default: {
-            std::cout << "[Error][World Generation]: Unsupported river direction.\n";
-            break;
-        }
     }
 }
 
@@ -1260,6 +1277,5 @@ void worldGenerator::regionGenerateHeight(int region_index) {
 
         region.map[i].height   = elevation;
         region.map[i].position = region.map[i].position + sf::Vector2f(0, -elevation * this->region_settings.tile_size.y / 2);
-        // region.map[i].side     = Entity(region.map[i].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
     }
 }
