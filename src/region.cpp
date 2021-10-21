@@ -3,7 +3,7 @@
 using namespace iso;
 
 Region::Region() {
-    this->_marked  = false;
+    this->_marked    = false;
     this->_direction = RiverDirection::RIVER_NONE;
 
     this->height      = 0.0f;

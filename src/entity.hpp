@@ -13,7 +13,7 @@ namespace iso {
 
         public:
             Entity();
-            Entity(sf::Vector2f, sf::Vector2f, sf::Vector2f, sf::Texture*);
+            Entity(sf::Vector2f parent_position, sf::Vector2f relative_position, sf::Vector2f size, sf::Texture* texture);
             ~Entity();
 
             sf::Vector2f parent_position;

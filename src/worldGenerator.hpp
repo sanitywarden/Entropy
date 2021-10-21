@@ -11,6 +11,8 @@
 #include <iostream>
 #include <cmath>
 
+static const double PI = 3.1415926535;
+
 namespace iso {
     class worldGenerator {
         private:
@@ -39,8 +41,9 @@ namespace iso {
             void generateRivers();
             void generateForests();
 
-            void regionGenerateRiver(Region& region);
-            void regionGenerateForest(Region& region);
+            void regionGenerateHeight(int region_index);
+            void regionGenerateRiver (int region_index);
+            void regionGenerateForest(int region_index);
 
             sf::Texture& getBiomeTileTexture(Biome biome); 
 

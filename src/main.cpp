@@ -10,7 +10,11 @@ int main() {
 
     game_engine.gamestate.setGamestate("worldmap");
 
-    game_engine.loop();
+    try {
+        game_engine.loop();
+    }  catch(const std::exception& exception) {
+        throw exception;
+    }
 
     entropy::Entropy::quitApplication(0);
 }

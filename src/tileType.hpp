@@ -3,8 +3,7 @@
 
 #include <bitset>
 
-// This list might and most likely will expand in the future.
-// Bits:
+// What does each bit mean?
 // 1 - 1 terrain, 0 water.
 // 2 - 1 river, 0 ocean.
 

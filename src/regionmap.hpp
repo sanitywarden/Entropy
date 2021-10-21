@@ -16,7 +16,7 @@ namespace iso {
             Region* m_region;
 
             int selected_panel_index;
-            int index; // Index of the tile under mouse pointer. It is not accurate. For accurate index use worldGenerator::getTileIndex();
+            int last_selected_index;  // Index provided by the worldGenerator::getTileIndex() functions.
 
             bool mouse_pressed;
             bool mouse_moved;
