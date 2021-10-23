@@ -755,35 +755,62 @@ void worldGenerator::generateRegion(int index, Region& region) {
         for(int x = 0; x < this->region_settings.size.x; x++) {
             const int index = y * this->region_settings.size.x + x;
 
+            // Indexes to check.
             const int index_bottom = index + this->region_settings.size.x;
             const int index_right  = index + 1;
+            const int index_left   = index - 1;
+            
+            // To avoid blank spots, you only fill in the missing height, when the biggest slope was found.
+            int biggest_difference = 0;
 
             if(index_bottom < this->region_settings.size.x * this->region_settings.size.y) {
                 if(region.map[index].height > region.map[index_bottom].height) {
-                    const int height_difference = region.map[index].height - region.map[index_bottom].height;
-                    region.map[index].side.resize(height_difference);
-
-                    for(int i = 0; i < height_difference; i++) {
-                        region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
-                    }
+                    const int height_difference = std::abs(region.map[index].height - region.map[index_bottom].height);
+                    if(biggest_difference < height_difference)
+                        biggest_difference = height_difference;
                 }
             }
 
             if(index_right < this->region_settings.size.x * this->region_settings.size.y) {
                 if(region.map[index].height > region.map[index_right].height) {
-                    const int height_difference = region.map[index].height - region.map[index_right].height;
-                    region.map[index].side.resize(height_difference);
-
-                    for(int i = 0; i < height_difference; i++) {
-                        region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
-                    }
+                    const int height_difference = std::abs(region.map[index].height - region.map[index_right].height);
+                    if(biggest_difference < height_difference)
+                        biggest_difference = height_difference;
                 }
             }
 
+            if(index_left > 0) {
+                if(region.map[index].height > region.map[index_left].height) {
+                    const int height_difference = std::abs(region.map[index].height - region.map[index_left].height);
+                    if(biggest_difference < height_difference)
+                        biggest_difference = height_difference;
+                }
+            }
+    
+            region.map[index].side.resize(biggest_difference);
+            for(int i = 0; i < biggest_difference; i++) {
+                region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+            }
+
             // Make sure that the border tiles have depth.
-            if(y == this->region_settings.size.y - 1 || x == this->region_settings.size.x - 1) {
-                region.map[index].side.resize(1);
-                region.map[index].side[0] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+            // Tiles near the y edge.
+            if(y == this->region_settings.size.y - 1) {
+                const int height_difference = std::abs(0 - region.map[(this->region_settings.size.y - 1) * this->region_settings.size.x + x].height);
+                region.map[index].side.resize(height_difference);
+                
+                for(int i = 0; i < height_difference; i++) {
+                    region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                }
+            }
+
+            // Tiles near the x edge.
+            if(x == this->region_settings.size.x - 1) {
+                const int height_difference = std::abs(0 - region.map[y * this->region_settings.size.x + this->region_settings.size.x - 1].height);
+                region.map[index].side.resize(height_difference);
+                
+                for(int i = 0; i < height_difference; i++) {
+                    region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                }
             }
         }
     }
