@@ -1,11 +1,16 @@
 #ifndef _ENTROPY_ENGINE_SETTINGS_HPP_
 #define _ENTROPY_ENGINE_SETTINGS_HPP_
 
-#include <iostream>
 #include <string>
 #include <fstream>
 
 #include <SFML/Graphics.hpp>
+
+// Settings order:
+// WIDTHxHEIGHT
+// FULLSCREEN
+// VSYNC
+// REFRESHRATE
 
 namespace entropy {
     // This is a class that represents the user-customisable application settings.
@@ -18,6 +23,8 @@ namespace entropy {
 
             sf::Vector2f window_size;
             bool         window_fullscreen;
+            bool         window_vsync;
+            unsigned int window_refresh_rate;
     };
     
     // This is a class that is responsible for loading and saving user settings whenever the application starts, or ends.
@@ -26,9 +33,9 @@ namespace entropy {
     class applicationSettings {
         private:
             entropy::Settings m_settings;
-            std::string   m_default_config_path; // Default path where the config file is stored.
+            std::string       m_default_config_path; // Default path where the config file is stored.
 
-            const std::string extractPartString(const int& from, const int& to, const std::string& str);
+            std::string extractPartString(const int from, const int to, std::string str);
 
             void loadUserSettings();
             void saveUserSettings();

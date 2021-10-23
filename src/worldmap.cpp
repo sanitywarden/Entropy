@@ -80,10 +80,8 @@ void Worldmap::initialise() {
         this->world_settings.panel_size.y * this->world_settings.size.y / (this->world_settings.size.y / 4)
     ));
 
-    auto window_size = this->engine->window.getWindowSize();
-
-    this->view_interface.setSize(window_size);
-    this->view_interface.setCenter(window_size.x / 2, window_size.y / 2);
+    this->view_interface.setSize(this->engine->window.windowSize());
+    this->view_interface.setCenter(this->engine->window.windowWidth() / 2, this->engine->window.windowHeight() / 2);
 }
 
 void Worldmap::loadResources() {
@@ -201,7 +199,7 @@ void Worldmap::updateCamera() {
     }
 }
 
-void Worldmap::update() {
+void Worldmap::update(float time_per_frame) {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
@@ -209,7 +207,7 @@ void Worldmap::update() {
     this->updateSelectedPanel();
 }
 
-void Worldmap::render() {
+void Worldmap::render(float time_per_frame) {
     this->engine->window.clear(sf::Color(50, 50, 50));
     this->engine->window.getWindow()->setView(this->view_game);
 
@@ -322,7 +320,7 @@ void Worldmap::renderWorld() {
 
         // Draw only the regions which you can see on the screen.
         if(camera_screen_area.intersects(region_screen_area))
-            this->engine->window.getWindow()->draw(panel);
+            this->engine->window.draw(panel);
     }
 }
 
@@ -370,7 +368,7 @@ void Worldmap::drawSelectedPanel() {
         sf::RenderStates states;
         states.texture = &this->engine->resource.getTexture("panel_highlight");
 
-        this->engine->window.getWindow()->draw(selection_indicator, states);
+        this->engine->window.draw(selection_indicator, states);
     }
 }
 
@@ -409,7 +407,7 @@ void Worldmap::highlightPanel() {
     sf::RenderStates states;
     states.texture = &this->engine->resource.getTexture("panel_highlight");
 
-    this->engine->window.getWindow()->draw(highlight, states);
+    this->engine->window.draw(highlight, states);
 }
 
 void Worldmap::createInterface() {
@@ -449,7 +447,6 @@ void Worldmap::updateInterface() {
     const int panel_index = panel_grid_position.y * this->world.world_settings.size.x + panel_grid_position.x;
     auto& panel = this->world.world_map[panel_index];
 
-    debug_text += "FPS: "   + std::to_string(this->engine->fps.getFPS()) + "\n";
     debug_text += "Index: " + std::to_string(panel_index) + "\n";
     debug_text += "Biome: " + panel.biome.biome_name + "\n";
 
@@ -463,15 +460,24 @@ void Worldmap::updateInterface() {
     gui::Button& button2 = *(gui::Button*)(&widget->getComponentByName("button_temporary"));
 
     if(button1.containsPoint(this->mouse_position_interface) && this->mouse_pressed) {        
+        auto& region = this->world.world_map[this->selected_panel_index];
+
+        // You check for these things here to avoid calling functions responsible for world generation.
+        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name) {
+            this->selected_panel_index = -1;
+            return;
+        }
+    
         this->move_camera   = false;
         this->zoom_camera   = false;
         this->mouse_pressed = false;
         this->mouse_drag    = false;
-        
+            
         // You have to generate the region first, because setCurrentRegion() depends on it being generated.
-        this->world.generateRegion(this->selected_panel_index, this->world.world_map[selected_panel_index]);
-        this->region_gamestate.setCurrentRegion(this->selected_panel_index);
+        if(!region.visited)
+            this->world.generateRegion(this->selected_panel_index, region);
 
+        this->region_gamestate.setCurrentRegion(this->selected_panel_index);
         this->engine->gamestate.setGamestate("regionmap");
     }
 
@@ -479,10 +485,10 @@ void Worldmap::updateInterface() {
 }
 
 void Worldmap::renderInterface() {
-    this->engine->window.getWindow()->draw(this->debug_text);
+    this->engine->window.draw(this->debug_text);
     
     if(this->selected_panel_index != -1 && this->draw_debug) {
         gui::Widget* widget = (gui::Widget*)this->m_interface["widget"];
-        this->engine->window.getWindow()->draw(*widget);
+        this->engine->window.draw(*widget);
     }
 }

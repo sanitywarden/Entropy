@@ -36,11 +36,11 @@ void Regionmap::initialise() {
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
     
-    this->view_game.setCenter(this->engine->window.getWindowSize().x / 2, this->engine->window.getWindowSize().y / 2);
-    this->view_game.setSize(this->engine->window.getWindowSize());
+    this->view_game.setCenter(this->engine->window.windowWidth() / 2, this->engine->window.windowHeight() / 2);
+    this->view_game.setSize(this->engine->window.windowSize());
 
-    this->view_interface.setCenter(this->engine->window.getWindowSize().x / 2, this->engine->window.getWindowSize().y / 2);
-    this->view_interface.setSize(this->engine->window.getWindowSize());
+    this->view_interface.setCenter(this->engine->window.windowWidth() / 2, this->engine->window.windowHeight() / 2);
+    this->view_interface.setSize(this->engine->window.windowSize());
 
 }
 
@@ -63,14 +63,14 @@ void Regionmap::loadResources() {
     this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1", sf::IntRect(256, 0, 64, 64 ));
 }
 
-void Regionmap::update() {
+void Regionmap::update(float time_per_frame) {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
     this->updateCurrentIndex();
 }
 
-void Regionmap::render() {
+void Regionmap::render(float time_per_frame) {
     this->engine->window.getWindow()->clear(sf::Color(100, 100, 100));    
 
     this->engine->window.getWindow()->setView(this->view_game);
@@ -187,37 +187,8 @@ void Regionmap::moveCamera() {
     this->move_camera = false;
 }
 
-void Regionmap::updateCurrentIndex() {
-    // auto tile_size   = this->world->region_settings.tile_size;
-    // auto tile_offset = this->world->region_settings.tile_offset;
+void Regionmap::updateCurrentIndex() {    
 
-    // auto tile_grid_position = sf::Vector2i(
-        // this->mouse_position_window.x / tile_size.x,
-        // this->mouse_position_window.y / tile_size.y
-    // );
-
-    // auto selected = sf::Vector2i(
-        // (tile_grid_position.y - tile_offset.y) + (tile_grid_position.x - tile_offset.x),
-        // (tile_grid_position.y - tile_offset.y) - (tile_grid_position.x - tile_offset.x)
-    // );
-
-    // auto pixel = sf::Vector2i(
-        // (int)this->mouse_position_window.x % (int)tile_size.x,
-        // (int)this->mouse_position_window.y % (int)tile_size.y
-    // );  
-
-    // auto pixel_colour = this->getTilePixelColour(pixel);
-
-    // if(pixel_colour == "Red")
-        // selected += sf::Vector2i(-1, 0);        
-    // else if(pixel_colour == "Green")
-        // selected += sf::Vector2i(1, 0);
-    // else if(pixel_colour == "Blue")
-        // selected += sf::Vector2i(0, -1);
-    // else if(pixel_colour == "Yellow")
-        // selected += sf::Vector2i(0, 1);
-
-    // this->index = selected.x * this->world->region_settings.size.y + selected.y;
 }
 
 void Regionmap::zoomCamera() {
@@ -262,7 +233,7 @@ void Regionmap::renderRegion() {
             sf::Rect region_screen_area(tile.position, tile.size);
             
             if(camera_screen_area.intersects(region_screen_area))
-                this->engine->window.getWindow()->draw(tile);
+                this->engine->window.draw(tile);
         }
     }
 }
@@ -328,30 +299,13 @@ void Regionmap::higlightTile() {
     sf::RenderStates states;
     states.texture = &this->engine->resource.getTexture("tile_highlight");
 
-    this->engine->window.getWindow()->draw(highlight, states);
-}
-
-std::string Regionmap::getTilePixelColour(sf::Vector2i pixel) {
-    if(pixel.x < 0 || pixel.y < 0) 
-        return "Other";
-
-    if(pixel.x > this->world->region_settings.tile_size.x - 1 || pixel.y > this->world->region_settings.tile_size.y - 1) 
-        return "Other";
-
-    auto pixel_colour = this->engine->resource.getTexture("tile_template_direction").copyToImage().getPixel(pixel.x, pixel.y);
-
-    if(pixel_colour == sf::Color::Red)         return "Red";
-    else if(pixel_colour == sf::Color::Green)  return "Green";
-    else if(pixel_colour == sf::Color::Blue)   return "Blue";
-    else if(pixel_colour == sf::Color::Yellow) return "Yellow";
-    else return "Other";
+    this->engine->window.draw(highlight, states);
 }
 
 void Regionmap::drawDebugText() {
     sf::Text text;
     std::string str;
 
-    str += "FPS: " + std::to_string(this->engine->fps.getFPS()) + "\n";
     str += "Index: " + std::to_string(this->last_selected_index) + "\n";
 
     text.setString(str);
@@ -360,5 +314,5 @@ void Regionmap::drawDebugText() {
     text.setFillColor(sf::Color::Black);
     text.setPosition(0, 0);
 
-    this->engine->window.getWindow()->draw(text);
+    this->engine->window.draw(text);
 }

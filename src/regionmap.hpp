@@ -53,15 +53,13 @@ namespace iso {
 
             void drawDebugText();
 
-            std::string getTilePixelColour(sf::Vector2i);
-
         public: 
             Regionmap();
             Regionmap(entropy::Entropy* engine, iso::worldGenerator* world);
             ~Regionmap();
 
-            void update() override;
-            void render() override;
+            void update(float time_per_frame) override;
+            void render(float time_per_frame) override;
 
             void setCurrentRegion(int region_index);
     }; 

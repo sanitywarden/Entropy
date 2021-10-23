@@ -6,28 +6,42 @@
 using namespace entropy;
 
 Entropy::Entropy() {
-    if(this->settings.getUserSettings().window_fullscreen) this->window.createFullscreenWindow();
-    else this->window.createWindow(this->settings.getUserSettings().window_size);
+    if(this->settings.getUserSettings().window_fullscreen) 
+        this->window.createFullscreenWindow();
+    
+    else 
+        this->window.createWindow(this->settings.getUserSettings().window_size);
+
+    this->window.setTitle("Entropy");
+    this->window.setVsync(this->settings.getUserSettings().window_vsync);
 
     std::cout << "[Entropy Engine]: Configuration finished.\n";
     std::cout << "[Entropy Engine]: Greetings from Entropy Game Engine.\n";
 }
 
-Entropy::~Entropy() {}
+Entropy::~Entropy() {
+    
+}
 
 void Entropy::loop() {    
-    this->fps = FPS();
+    this->m_clock          = sf::Clock();
+    this->m_last_update    = sf::Time::Zero;
+    this->m_time_per_frame = sf::Time(sf::seconds(1.f / (float)this->settings.getUserSettings().window_refresh_rate));
 
     while(this->window.open()) {
-        auto gamestate = this->gamestate.getGamestate();
-    
-        if(gamestate != nullptr) {
-            gamestate->handleInput();
-            gamestate->update();
-            gamestate->render();
-        }
+        sf::Time elapsed_time = this->m_clock.restart();
+        this->m_last_update += elapsed_time;
 
-        fps.update();
+        while(this->m_last_update > this->m_time_per_frame) {
+            this->m_last_update -= this->m_time_per_frame;
+            
+            auto gamestate = this->gamestate.getGamestate();
+
+            if(gamestate != nullptr) {
+                gamestate->update(this->m_time_per_frame.asSeconds());
+                gamestate->render(this->m_time_per_frame.asSeconds());
+            }
+        } 
     }
 }
 

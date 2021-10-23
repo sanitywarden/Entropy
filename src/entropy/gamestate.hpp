@@ -27,8 +27,11 @@ namespace entropy {
             // Main game loop functions.
             // Every gamestate has to override these functions.
 
-            virtual void update() { return; }
-            virtual void render() { return; }
+            // Time per frame time units are seconds.
+            virtual void update(float time_per_frame) { return; }
+            
+            // Time per frame time units are seconds.
+            virtual void render(float time_per_frame) { return; }
 
             // Additional functions that might be helpful to keep gamestates interface clear.
 

@@ -17,17 +17,22 @@ namespace entropy {
             ~windowManager();
             
             void createFullscreenWindow();
-            void createWindow(const sf::Vector2f& window_size);
+            void createWindow(sf::Vector2f window_size);
 
             sf::RenderWindow* getWindow();
-            sf::Vector2f getWindowSize();
+            sf::Vector2f      windowSize();
+            unsigned int      windowWidth();
+            unsigned int      windowHeight();
             bool open();
+            bool focused();
 
             void setTitle(std::string title);
+            void setVsync(bool on = false);
 
-            void clear(const sf::Color&);
+            void clear(const sf::Color& clear_colour);
             void display();
-            //void draw(sf::RenderTarget&, sf::RenderStates);
+            void draw(const sf::Drawable& drawable, sf::RenderStates states = sf::RenderStates());
+            void close();
     };
 }
 

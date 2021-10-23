@@ -30,12 +30,8 @@ bool RegionType::is_river() {
     return this->is_type(2);
 }
 
-bool RegionType::is_arctic() {
-    return this->is_type(3);
-}
-
 bool RegionType::is_forest() {
-    return this->is_type(4);
+    return this->is_type(3);
 }
 
 void RegionType::set_terrain() {
@@ -54,10 +50,6 @@ void RegionType::set_river() {
     this->set_type(2, true);
 }
 
-void RegionType::set_arctic() {
-    this->set_type(3, true);
-}
-
 void RegionType::set_forest() {
-    this->set_type(4, true);
+    this->set_type(3, true);
 }

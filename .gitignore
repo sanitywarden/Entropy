@@ -2,5 +2,7 @@
 .vscode
 
 /res
+/bin/run.bat
+/config/application_settings.ege
 NOTES.txt
 TODO.txt

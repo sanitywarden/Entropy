@@ -63,11 +63,20 @@ namespace iso {
             sf::Vector2f tilePositionScreen(sf::Vector2f grid_position);
             
             int getTileIndex(sf::Vector2f mouse_position, Region& region);
+            std::string getTilePixelColour(sf::Vector2i);
 
             WorldSettings  world_settings;
             RegionSettings region_settings;
 
-            bool is_arctic (int index);
+            bool is_arctic       (int index);
+            bool is_ocean        (int index);
+            bool is_sea          (int index);
+            bool is_tropical     (int index);
+            bool is_mediterranean(int index);
+            bool is_temperate    (int index);
+            bool is_continental  (int index);
+            bool is_tundra       (int index);
+            bool is_desert       (int index);
 
             std::vector <Region> world_map; 
     };

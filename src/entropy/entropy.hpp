@@ -5,7 +5,6 @@
 #include "windowManager.hpp"
 #include "gamestateManager.hpp"
 #include "engineSettings.hpp"
-#include "fps.hpp"
 
 namespace entropy {
     /* Entropy is a main class which is supposed to work as a engine.
@@ -16,6 +15,11 @@ namespace entropy {
      * 
      * Currently it automatically creates a window, with settings provided in config file, if it exists. */
     class Entropy {
+        private:
+            sf::Clock m_clock;
+            sf::Time  m_last_update;    // Time since the last update.
+            sf::Time  m_time_per_frame;
+
         public:
             Entropy();
             ~Entropy();
@@ -24,7 +28,6 @@ namespace entropy {
             entropy::gamestateManager    gamestate;
             entropy::windowManager       window;
             entropy::applicationSettings settings;
-            entropy::FPS                 fps;
 
             void loop();
 

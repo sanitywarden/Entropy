@@ -1,8 +1,11 @@
 #include "engineSettings.hpp"
 
+#include <iostream>
+
 entropy::Settings::Settings() {
-    this->window_size = sf::Vector2f(800, 600);
+    this->window_size       = sf::Vector2f(800, 600);
     this->window_fullscreen = false;
+    this->window_vsync      = false;
 }
 
 entropy::Settings::~Settings() {
@@ -12,7 +15,7 @@ entropy::Settings::~Settings() {
 // Extract part of the string.
 // Argument from is inclusive.
 // Argument to is exclusive.
-const std::string entropy::applicationSettings::extractPartString(const int& from, const int& to, const std::string& str) {
+std::string entropy::applicationSettings::extractPartString(const int from, const int to, std::string str) {
     std::string value;
 
     for(int i = from; i < to; i++) {
@@ -77,15 +80,25 @@ void entropy::applicationSettings::loadUserSettings() {
 
     this->m_settings.window_size = sf::Vector2f(width, height);
     
-    std::cout << "[Entropy Engine][Engine Settings]: Window size:\t" << width << "x" << height << "\n";
+    std::cout << "[Entropy Engine][Engine Settings]: Window size:\t\t" << width << "x" << height << "\n";
 
     // Extract if the window is supposed to be fullscreen.
     std::getline(input_file, file_line);
-
     int is_fullscreen = std::stoi(file_line);
     this->m_settings.window_fullscreen = is_fullscreen;
-    std::string prompt = (is_fullscreen) ? "True" : "False";
-    std::cout << "[Entropy Engine][Engine Settings]: Fullscreen:\t" << prompt << "\n";
+    std::string fullscreen_prompt = (is_fullscreen) ? "True" : "False";
+    std::cout << "[Entropy Engine][Engine Settings]: Fullscreen:\t\t" << fullscreen_prompt << "\n";
+
+    std::getline(input_file, file_line);
+    int vsync_on = std::stoi(file_line);
+    this->m_settings.window_vsync = vsync_on;
+    std::string vsync_prompt = (vsync_on) ? "True" : "False";
+    std::cout << "[Entropy Engine][Engine Settings]: Vsync enabled:\t" << vsync_prompt << "\n";
+
+    std::getline(input_file, file_line);
+    int refresh_rate = std::stoi(file_line);
+    this->m_settings.window_refresh_rate = refresh_rate;
+    std::cout << "[Entropy Engine][Engine Settings]: Refresh rate:\t" << refresh_rate << "\n";
 
     // Close the file.
 
@@ -114,6 +127,8 @@ void entropy::applicationSettings::saveUserSettings() {
     // Save the settings...
     output_file << this->m_settings.window_size.x << "x" << this->m_settings.window_size.y << "\n";
     output_file << this->m_settings.window_fullscreen << "\n";
+    output_file << this->m_settings.window_vsync << "\n";
+    output_file << this->m_settings.window_refresh_rate << "\n";
 
     // Close the file.
 

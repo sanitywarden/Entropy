@@ -13,7 +13,7 @@ void windowManager::createFullscreenWindow() {
     this->m_window = std::shared_ptr <sf::RenderWindow> (new sf::RenderWindow(sf::VideoMode::getFullscreenModes()[0], "", sf::Style::Fullscreen));
 }
 
-void windowManager::createWindow(const sf::Vector2f& window_size) {
+void windowManager::createWindow(sf::Vector2f window_size) {
     std::cout << "[Entropy Engine][Window Manager]: Window created in custom size mode.\n";
 
     this->m_window = std::shared_ptr <sf::RenderWindow> (new sf::RenderWindow(sf::VideoMode(window_size.x, window_size.y), ""));
@@ -23,13 +23,19 @@ sf::RenderWindow* windowManager::getWindow() {
     return this->m_window.get();
 }
 
-sf::Vector2f windowManager::getWindowSize() {
-    auto size = sf::Vector2f(
+sf::Vector2f windowManager::windowSize() {
+    return sf::Vector2f(
         this->getWindow()->getSize().x,
         this->getWindow()->getSize().y
     );
+}
 
-    return size;
+unsigned int windowManager::windowWidth() {
+    return this->getWindow()->getSize().x;
+}
+
+unsigned int windowManager::windowHeight() {
+    return this->getWindow()->getSize().y;
 }
 
 bool windowManager::open() {
@@ -40,10 +46,26 @@ void windowManager::setTitle(std::string title) {
     this->getWindow()->setTitle(title);
 }
 
-void windowManager::clear(const sf::Color& colour) {
-    this->getWindow()->clear(colour);
+void windowManager::clear(const sf::Color& clear_colour) {
+    this->getWindow()->clear(clear_colour);
 }
 
 void windowManager::display() {
     this->getWindow()->display();
+}
+
+void windowManager::draw(const sf::Drawable& drawable, sf::RenderStates states) {
+    this->getWindow()->draw(drawable, states);
+}
+
+void windowManager::close() {
+   this->getWindow()->close();
+}
+
+void windowManager::setVsync(bool on) {
+    this->getWindow()->setVerticalSyncEnabled(on);
+}
+
+bool windowManager::focused() {
+    return this->getWindow()->hasFocus();
 }

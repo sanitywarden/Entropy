@@ -74,8 +74,8 @@ namespace iso {
             Worldmap(entropy::Entropy* engine);
             ~Worldmap();
             
-            void update() override;
-            void render() override;
+            void update(float time_per_frame) override;
+            void render(float time_per_frame) override;
             
     };
 }
