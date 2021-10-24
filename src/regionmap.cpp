@@ -268,11 +268,7 @@ void Regionmap::drawSelectedTile() {
 }
 
 void Regionmap::higlightTile() {
-    // Do not even attempt to change how this works.
-    // It's shit, it's not efficient, and it uses hacky techniques instead of math, but I can not figure it out on my own, and the web has nothing interesting to say.
-    
     const int index = this->world->getTileIndex(this->mouse_position_window, *this->m_region);
-        
     if(index == -1)
         return;
 
