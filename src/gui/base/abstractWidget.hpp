@@ -11,7 +11,7 @@ namespace gui {
         STATE_HOVERED, // Mouse cursor is hovered over the widget.
         STATE_MARKED   // Widget is marked or highligted in some way.
     };
-    
+
     // Base class for GUI elements.
     class AbstractWidget : public sf::Drawable {
         private:
@@ -24,6 +24,8 @@ namespace gui {
             AbstractWidget* m_parent;
 
             bool m_transparent;
+
+            std::function <void()> m_update_callback;
 
         public:   
             
@@ -53,10 +55,10 @@ namespace gui {
             AbstractWidget* parent() const;
             bool attached() const;
 
-            virtual void update(std::function<void()>)               { return; }
-            virtual void onMouseButtonPress(std::function<void()>)   { return; }
-            virtual void onMouseButtonRelease(std::function<void()>) { return; }
-            virtual bool containsPoint(sf::Vector2f)                 { return false; }
+            void setCallback(std::function <void()> callback);
+
+            virtual void update();
+            virtual bool containsPoint(sf::Vector2f) { return false; }
     };
 }
 

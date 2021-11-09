@@ -1,8 +1,8 @@
 #ifndef _TILE_HPP_
 #define _TILE_HPP_
 
-#include "entity.hpp"
 #include "tileType.hpp"
+#include "gameObject.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <bitset>
@@ -16,8 +16,8 @@ namespace iso {
             Tile();
             ~Tile();
 
-            Entity tree;
-            std::vector <Entity> side;
+            GameObject tree;
+            std::vector <GameObject> side;
 
             sf::Vector2f position;
             sf::Vector2f size;

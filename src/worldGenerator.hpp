@@ -11,8 +11,6 @@
 #include <iostream>
 #include <cmath>
 
-static const double PI = 3.1415926535;
-
 namespace iso {
     class worldGenerator {
         private:
@@ -45,8 +43,7 @@ namespace iso {
             void regionGenerateRiver (int region_index);
             void regionGenerateForest(int region_index);
 
-            sf::Texture& getBiomeTileTexture(Biome biome); 
-
+            sf::Texture& getBiomeTileTexture (Biome biome); 
             sf::Texture& getTreeTextureWorld (Biome biome);
             sf::Texture& getTreeTextureRegion(Biome biome);
 
@@ -77,7 +74,8 @@ namespace iso {
             bool is_continental  (int index);
             bool is_tundra       (int index);
             bool is_desert       (int index);
-
+        
+        public:
             std::vector <Region> world_map; 
     };
 }

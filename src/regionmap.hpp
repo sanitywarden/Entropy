@@ -13,7 +13,7 @@ namespace iso {
     class Regionmap : public entropy::Gamestate {
         private:
             worldGenerator* world;
-            Region* m_region;
+            Region*         region;
 
             int selected_panel_index;
             int last_selected_index;  // Index provided by the worldGenerator::getTileIndex() functions.
@@ -43,14 +43,7 @@ namespace iso {
             void updateCamera()        override;
 
             void renderRegion();
-
-            void updateCurrentIndex();
-            void selectTile();
-            void unselectTile();
-            void updateSelectedTile();
-            void drawSelectedTile();
             void higlightTile();
-
             void drawDebugText();
 
         public: 

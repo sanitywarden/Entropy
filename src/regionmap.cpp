@@ -3,7 +3,7 @@
 using namespace iso;
 
 Regionmap::Regionmap() {
-
+    
 }
 
 Regionmap::Regionmap(entropy::Entropy* engine, worldGenerator* world) {
@@ -11,7 +11,7 @@ Regionmap::Regionmap(entropy::Entropy* engine, worldGenerator* world) {
     this->world    = world;
     this->state_id = "Regionmap";
 
-    this->m_region = nullptr;
+    this->region = nullptr;
 
     this->initialise();
     this->loadResources();
@@ -56,7 +56,8 @@ void Regionmap::loadResources() {
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                sf::IntRect(512, 0, 64, 32 ));
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_highlight",          sf::IntRect(0, 288, 64, 32 ));
     this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction", sf::IntRect(64, 288, 64, 32));
-    this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height",             sf::IntRect(0, 32, 64, 32  ));
+    this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_dirt",        sf::IntRect(0, 32, 64, 32  ));
+    this->engine->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_stone",       sf::IntRect(64, 32, 64, 32 ));
     this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",     sf::IntRect(0, 0, 64, 64   ));
     this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",     sf::IntRect(64, 0, 64, 64  ));
     this->engine->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",     sf::IntRect(128, 0, 64, 64 ));
@@ -66,8 +67,7 @@ void Regionmap::loadResources() {
 void Regionmap::update(float time_per_frame) {
     this->updateMousePosition();
     this->handleInput();
-    this->updateCamera();
-    this->updateCurrentIndex();
+    this->updateCamera();    
 }
 
 void Regionmap::render(float time_per_frame) {
@@ -97,12 +97,13 @@ void Regionmap::handleInput() {
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) {
                     this->engine->gamestate.setGamestate("worldmap");
                 }
+
+                break;
             }
 
             case sf::Event::MouseButtonPressed: {
-                this->mouse_pressed = true;
-
                 if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+                    this->mouse_pressed    = true;
                     this->position_pressed = this->mouse_position_window;
                 }
 
@@ -111,6 +112,7 @@ void Regionmap::handleInput() {
 
             case sf::Event::MouseButtonReleased: {
                 this->mouse_pressed = false;
+                this->mouse_drag    = false;
 
                 break;
             }
@@ -118,13 +120,17 @@ void Regionmap::handleInput() {
             case sf::Event::MouseMoved: {
                 this->mouse_moved = true;
 
-                if(!this->mouse_drag) break;
+                if(!this->mouse_drag) {
+                    this->mouse_drag  = false;
+                    break;
+                }
 
                 this->position_released = this->mouse_position_window;
 
                 // Avoid accidental drags.
                 // This also helps to record button presses (without the intention of dragging the screen).
-                if(this->mouse_drag && std::abs(this->position_pressed.x - this->position_released.x) > 5 && std::abs(this->position_pressed.y - this->position_released.y) > 5) this->move_camera = true;
+                if(this->mouse_drag && std::abs(this->position_pressed.x - this->position_released.x) > 5 && std::abs(this->position_pressed.y - this->position_released.y) > 5) 
+                    this->move_camera = true;
 
                 break;
             }
@@ -142,10 +148,11 @@ void Regionmap::handleInput() {
 
     // Mouse button pressed is used in multiple situations.
     // Distinguish from dragging the screen and selecting a option.
-    if(this->mouse_moved && this->mouse_pressed) this->mouse_drag = true;
+    if(this->mouse_moved && this->mouse_pressed) 
+        this->mouse_drag = true;
 
     else {
-        this->mouse_drag = false;
+        this->mouse_drag  = false;
         this->mouse_moved = false;
     }
 }
@@ -187,10 +194,6 @@ void Regionmap::moveCamera() {
     this->move_camera = false;
 }
 
-void Regionmap::updateCurrentIndex() {    
-
-}
-
 void Regionmap::zoomCamera() {
     // If you scroll up   - zoom in.
     // If you scroll down - zoom out.
@@ -228,8 +231,8 @@ void Regionmap::renderRegion() {
     
     sf::Rect camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
 
-    if(this->m_region != nullptr) {
-        for(const Tile& tile : this->m_region->map) {
+    if(this->region != nullptr) {
+        for(const auto& tile : this->region->map) {
             sf::Rect region_screen_area(tile.position, tile.size);
             
             if(camera_screen_area.intersects(region_screen_area))
@@ -239,36 +242,20 @@ void Regionmap::renderRegion() {
 }
 
 void Regionmap::setCurrentRegion(int region_index) {
-    this->m_region = &this->world->world_map[region_index];
+    this->region  = &this->world->world_map[region_index];
 
     // Here you can setup what to do when entering a region.
     // For example, centre the camera.
     sf::Vector2f first_tile_position = sf::Vector2f(
-        this->m_region->map[0].position.x + this->world->region_settings.tile_size.x / 2,
-        this->m_region->map[0].position.y
+        this->region->map[0].position.x + this->world->region_settings.tile_size.x / 2,
+        this->region->map[0].position.y
     );
 
     this->view_game.setCenter(first_tile_position);
 }
 
-void Regionmap::selectTile() {
-
-}
-
-void Regionmap::unselectTile() {
-
-}
-
-void Regionmap::updateSelectedTile() {
-    
-}
-
-void Regionmap::drawSelectedTile() {
-
-}
-
 void Regionmap::higlightTile() {
-    const int index = this->world->getTileIndex(this->mouse_position_window, *this->m_region);
+    const int index = this->world->getTileIndex(this->mouse_position_window, *this->region);
     if(index == -1)
         return;
 
@@ -278,7 +265,7 @@ void Regionmap::higlightTile() {
     auto tile_offset = this->world->region_settings.tile_offset;
     auto region_size = this->world->region_settings.size;
 
-    sf::Vector2f position_transformed = this->m_region->map[index].position;
+    sf::Vector2f position_transformed = this->region->map[index].position;
 
     sf::VertexArray highlight(sf::Quads, 4);
 

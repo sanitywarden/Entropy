@@ -6,10 +6,10 @@
 #include "generationSettings.hpp"
 #include "worldGenerator.hpp"
 #include "regionmap.hpp"
-#include "gui/abstractWidget.hpp"
-#include "gui/button.hpp"
-#include "gui/widget.hpp"
-#include "gui/text.hpp"
+#include "gui/base/abstractWidget.hpp"
+#include "gui/base/button.hpp"
+#include "gui/base/widget.hpp"
+#include "gui/base/text.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -68,7 +68,7 @@ namespace iso {
 
             void createInterface();
             void updateInterface();
-            void renderInterface();
+            void drawInterface();
 
         public:
             Worldmap(entropy::Entropy* engine);

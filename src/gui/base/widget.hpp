@@ -18,18 +18,19 @@ namespace gui {
         private:
             void draw(sf::RenderTarget&, sf::RenderStates) const override;
 
+            gui::Button button_utility;
+            gui::Label  label_utility;
+
         public:
             Widget();
             ~Widget();
 
+            
             // When attaching a component it's position becomes relative to the position of the main widget.
             void attachComponent(gui::AbstractWidget* component, std::string component_name);
             const gui::AbstractWidget& getComponentByName(std::string component_name) const;
 
-            void update(std::function<void()>)               override;
-            void onMouseButtonPress(std::function<void()>)   override;
-            void onMouseButtonRelease(std::function<void()>) override;
-            bool containsPoint(sf::Vector2f)                 override;
+            bool containsPoint(sf::Vector2f) override;
     };
 }
 

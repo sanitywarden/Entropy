@@ -1,7 +1,5 @@
 #include "widget.hpp"
 
-#include <iostream>
-
 using namespace gui;
 
 Widget::Widget() {
@@ -32,15 +30,17 @@ void Widget::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     target.draw(widget, states);  
 
-    for(const auto& pair : this->m_attached_components) {
-        auto* interface_component = pair.second;
-        target.draw(*interface_component);
+    if(this->m_attached_components.size() > 0) {
+        for(const auto& pair : this->m_attached_components) {
+            auto* interface_component = pair.second;
+            target.draw(*interface_component);
+        }
     }
 }
 
 void Widget::attachComponent(gui::AbstractWidget* component, std::string component_name) {
     component->setWidgetPosition(this->widgetPosition() + component->widgetPosition());
-    
+
     std::pair <std::string, gui::AbstractWidget*> pair = { component_name, component };
 
     this->m_attached_components.insert(pair);    
@@ -50,18 +50,6 @@ const gui::AbstractWidget& Widget::getComponentByName(std::string component_name
     // This should definately have a value.
     // Although if you read this message, and have a access violation error perhaps this might be the reason, because you dereference a nullptr; 
     return *this->m_attached_components.at(component_name);
-}
-
-void Widget::update(std::function<void()> callback) {
-    callback();
-}
-
-void Widget::onMouseButtonPress(std::function<void()> callback) {
-    callback();
-}
-
-void Widget::onMouseButtonRelease(std::function<void()> callback) {
-    callback();
 }
 
 bool Widget::containsPoint(sf::Vector2f point) {

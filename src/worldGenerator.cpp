@@ -300,7 +300,7 @@ void worldGenerator::generateRivers() {
             river_index = possible_river_origin_index;
             river_origin_index[river_number] = possible_river_origin_index;
         }
-
+        
         // Suitable position for a new river was not found; Ignore the rest of the algorithm and move on to the next river.
         if(river_index == -1)   
             continue;
@@ -426,41 +426,43 @@ void worldGenerator::generateRivers() {
 
                 case RiverDirection::RIVER_ORIGIN:
                     panel._direction = RiverDirection::RIVER_ORIGIN;
-                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_sea")); 
+                    panel.river = GameObject(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_sea")); 
                     break;
                 
                 case RiverDirection::RIVER_NORTH_TO_EAST:
                     panel._direction = RiverDirection::RIVER_NORTH_TO_EAST;
-                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_bl")); 
+                    panel.river = GameObject(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_bl")); 
                     break;
 
                 case RiverDirection::RIVER_NORTH_TO_WEST:
                     panel._direction = RiverDirection::RIVER_NORTH_TO_WEST;
-                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_br")); 
+                    panel.river = GameObject(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_br")); 
                     break;
 
                 case RiverDirection::RIVER_SOUTH_TO_EAST:
                     panel._direction = RiverDirection::RIVER_SOUTH_TO_EAST;
-                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tl")); 
+                    panel.river = GameObject(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tl")); 
                     break;
 
                 case RiverDirection::RIVER_SOUTH_TO_WEST:
                     panel._direction = RiverDirection::RIVER_SOUTH_TO_WEST;
-                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tr")); 
+                    panel.river = GameObject(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_corner_tr")); 
                     break;
 
                 case RiverDirection::RIVER_VERTICAL:
                     panel._direction = RiverDirection::RIVER_VERTICAL;
-                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_vertical")); 
+                    panel.river = GameObject(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_vertical")); 
                     break;
 
                 case RiverDirection::RIVER_HORIZONTAL:
                     panel._direction = RiverDirection::RIVER_HORIZONTAL;
-                    panel.river = Entity(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_horizontal")); 
+                    panel.river = GameObject(panel_position, panel_offset, panel_size, &this->m_engine->resource.getTexture("panel_river_horizontal")); 
                     break;
             }
 
             panel.regiontype.set_river();
+
+            
 
             last_move_value = current_move_value;
             river_index_current = current_move_direction;
@@ -695,7 +697,7 @@ void worldGenerator::generateForests() {
         Region& region = this->world_map[index];
 
         if(result > 0.7f && !this->is_arctic(index) && !this->is_desert(index) && !this->world_map[index].regiontype.is_river() && this->world_map[index].regiontype.is_terrain()) {
-            region.forest = Entity(region.position, sf::Vector2f(0, 0), region.size, &this->getTreeTextureWorld(region.biome)); 
+            region.forest = GameObject(region.position, sf::Vector2f(0, 0), region.size, &this->getTreeTextureWorld(region.biome)); 
 	        region.regiontype.set_forest();
 	    }
     }    
@@ -783,7 +785,8 @@ void worldGenerator::generateRegion(int index, Region& region) {
 
             region.map[index].side.resize(biggest_difference);
             for(int i = 0; i < biggest_difference; i++) {
-                region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                std::string tile = i > 2 ? "tile_height_stone" : "tile_height_dirt";
+                region.map[index].side[i] = GameObject(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture(tile));
             }
 
             // Make sure that the border tiles have depth.
@@ -793,7 +796,8 @@ void worldGenerator::generateRegion(int index, Region& region) {
                 region.map[index].side.resize(height_difference);
                 
                 for(int i = 0; i < height_difference; i++) {
-                    region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                    std::string tile = i > 2 ? "tile_height_stone" : "tile_height_dirt";
+                    region.map[index].side[i] = GameObject(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture(tile));
                 }
             }
 
@@ -803,7 +807,8 @@ void worldGenerator::generateRegion(int index, Region& region) {
                 region.map[index].side.resize(height_difference);
                 
                 for(int i = 0; i < height_difference; i++) {
-                    region.map[index].side[i] = Entity(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture("tile_height"));
+                    std::string tile = i > 2 ? "tile_height_stone" : "tile_height_dirt";
+                    region.map[index].side[i] = GameObject(region.map[index].position, sf::Vector2f(0, this->region_settings.tile_size.y / 2 + i * this->region_settings.tile_size.y / 2), this->region_settings.tile_size, &this->m_engine->resource.getTexture(tile));
                 }
             }
         }
@@ -1358,7 +1363,7 @@ void worldGenerator::regionGenerateForest(int region_index) {
     for(int i = 0; i < noise.size(); i++) {
         auto& tile = region.map[i];
         if(!tile.tiletype.is_river() && noise[i] > 0.7f) {
-            tile.tree = Entity(tile.position, sf::Vector2f(0, 1.5f * -this->region_settings.tile_size.y), sf::Vector2f(this->region_settings.tile_size.x, 2 * this->region_settings.tile_size.y), &this->getTreeTextureRegion(region.biome));
+            tile.tree = GameObject(tile.position, sf::Vector2f(0, 1.5f * -this->region_settings.tile_size.y), sf::Vector2f(this->region_settings.tile_size.x, 2 * this->region_settings.tile_size.y), &this->getTreeTextureRegion(region.biome));
         }
     }
 }
@@ -1366,14 +1371,37 @@ void worldGenerator::regionGenerateForest(int region_index) {
 void worldGenerator::regionGenerateHeight(int region_index) {
     Region& region = this->world_map[region_index];
 
-    noiseSettings height_settings(this->region_settings.size, 16, 20, 4, 1.00f);
+    noiseSettings height_settings; 
     std::vector <float> height;
 
-    // You do not need to check here if the region is already generated, because the main region generation function does that for you.
+    const float region_noise_worldmap = this->world_map[region_index].height;
+    float       division_value;
+    std::string region_elevation_type;
+
+    if(region_noise_worldmap > 0.8f) {
+        region_elevation_type = "mountainous";
+        division_value = 0.05f;
+        height_settings = noiseSettings(this->region_settings.size, 16, 12, 4, 1.10f);
+    } 
+
+    else if(region_noise_worldmap > 0.65f) {
+        region_elevation_type = "hills";
+        division_value = 0.125;
+        height_settings = noiseSettings(this->region_settings.size, 16, 10, 4, 1.05f);
+    }
+
+    else {
+        region_elevation_type = "flatlands";
+        division_value = 0.25f;
+        height_settings = noiseSettings(this->region_settings.size, 16, 20, 4, 1.00f);
+    }  
+
+    std::cout << "[World Generation][Region Generation]: Generating terrain (" << region_elevation_type << ").\n";
+
     this->generateNoise(height_settings, height);
 
     for(int i = 0; i < height.size(); i++) {
-        const int elevation = height[i] / 0.2f;
+        const int elevation = height[i] / division_value;
 
         region.map[i].height   = elevation;
         region.map[i].position = region.map[i].position + sf::Vector2f(0, -elevation * this->region_settings.tile_size.y / 2);

@@ -3,8 +3,8 @@
 
 #include "biome.hpp"
 #include "tile.hpp"
-#include "entity.hpp"
 #include "regionType.hpp"
+#include "gameObject.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -43,8 +43,8 @@ namespace iso {
             sf::Texture  texture;
             RegionType   regiontype;
 
-            Entity forest;
-            Entity river;
+            GameObject forest;
+            GameObject river;
 
             Biome biome;
             float height;
@@ -54,7 +54,7 @@ namespace iso {
 
             bool visited;
 
-            std::vector <Tile> map;
+            std::vector <Tile>     map;
 
             RiverDirection riverDirection();
     };  

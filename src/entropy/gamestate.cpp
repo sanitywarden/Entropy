@@ -1,9 +1,16 @@
 #include "gamestate.hpp"
 
-entropy::Gamestate::Gamestate() {
+using namespace entropy;
+
+Gamestate::Gamestate() {
     this->engine = nullptr;
+    this->state_id = "default";
 }
 
-entropy::Gamestate::~Gamestate() {
+Gamestate::~Gamestate() {
     
+}
+
+std::string Gamestate::getStateID() {
+    return this->state_id;
 }

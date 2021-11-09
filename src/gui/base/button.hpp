@@ -10,22 +10,20 @@
 namespace gui {
     class Button : public AbstractWidget {
         private:    
-            Label m_button_text;
+            Label message;
 
         private:
             void draw(sf::RenderTarget&, sf::RenderStates) const override;
 
         public:
             Button();
+            Button(std::string message, sf::Font& font, unsigned int font_size);
             ~Button();
 
-            void setTextComponent(Label text_component);
+            void setTextComponent(const Label& text_component);
             Label& textComponent();
 
-            void update(std::function<void()>)               override;
-            void onMouseButtonPress(std::function<void()>)   override;
-            void onMouseButtonRelease(std::function<void()>) override;
-            bool containsPoint(sf::Vector2f)                 override;
+            bool containsPoint(sf::Vector2f) override;
     };
 }
 

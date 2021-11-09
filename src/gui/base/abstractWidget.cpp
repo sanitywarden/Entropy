@@ -78,3 +78,12 @@ AbstractWidget* AbstractWidget::parent() const {
 bool AbstractWidget::attached() const {
     return (this->m_parent) ? true : false; 
 }
+
+// This callback has to handle everything that can happen with a component.
+void AbstractWidget::update() {
+    this->m_update_callback();
+}
+
+void AbstractWidget::setCallback(std::function <void()> callback) {
+    this->m_update_callback = callback;
+}

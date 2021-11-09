@@ -3,9 +3,10 @@
 #include <iostream>
 
 entropy::Settings::Settings() {
-    this->window_size       = sf::Vector2f(800, 600);
-    this->window_fullscreen = false;
-    this->window_vsync      = false;
+    this->window_size         = sf::Vector2f(800, 600);
+    this->window_fullscreen   = false;
+    this->window_vsync        = false;
+    this->window_refresh_rate = 60;
 }
 
 entropy::Settings::~Settings() {

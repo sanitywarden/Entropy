@@ -8,11 +8,11 @@ namespace entropy {
     // Gamestates represent possible states that the application can be in.
     // To create a new gamestate, inherit from this class, and override at least update(), render() and handleInput().
     class Gamestate {
-        public:
+        protected:
             entropy::Entropy* engine;
 
             std::string state_id;
-            sf::Event event;
+            sf::Event   event;
 
             sf::Vector2i mouse_position_desktop;
             sf::Vector2f mouse_position_window;
@@ -21,6 +21,7 @@ namespace entropy {
             sf::View view_game;
             sf::View view_interface;
 
+        public:
             Gamestate();
             ~Gamestate();
 
@@ -42,6 +43,8 @@ namespace entropy {
             virtual void moveCamera()   { return; }
             virtual void zoomCamera()   { return; }
             virtual void updateCamera() { return; }
+
+            std::string getStateID();
     };
 }
 

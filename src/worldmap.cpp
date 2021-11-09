@@ -217,7 +217,7 @@ void Worldmap::render(float time_per_frame) {
 
     this->engine->window.getWindow()->setView(this->view_interface);
 
-    this->renderInterface();
+    this->drawInterface();
 
     this->engine->window.getWindow()->setView(this->view_game);
     this->engine->window.display();
@@ -272,6 +272,8 @@ void Worldmap::handleInput() {
                 if(this->view_game.getCenter().x + (this->world_settings.panel_size.x * modifier) <= (this->world_settings.size.x * this->world_settings.panel_size.x) - this->view_game.getSize().x / 2)
                     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
                         this->view_game.move(this->world_settings.panel_size.x * modifier, 0);
+
+                break;
             }
 
             case sf::Event::MouseMoved: {
@@ -410,29 +412,23 @@ void Worldmap::highlightPanel() {
     this->engine->window.draw(highlight, states);
 }
 
-void Worldmap::createInterface() {
+void Worldmap::createInterface() {    
     static gui::Button button1;
-    button1.setWidgetSize(sf::Vector2f(80, 50));
-    button1.setWidgetPosition(sf::Vector2f(10, 15));
+    button1.setWidgetSize(sf::Vector2f(80, 30));
+    button1.setWidgetPosition(sf::Vector2f(5, 10));
     button1.setWidgetColour(sf::Color(50, 80, 130));
     button1.setWidgetID("button_enter_region");
-    button1.setTextComponent(gui::Label(&button1, "Visit region", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
-
-    static gui::Button button2;
-    button2.setWidgetSize(sf::Vector2f(80, 50));
-    button2.setWidgetPosition(sf::Vector2f(10, 75));
-    button2.setWidgetColour(sf::Color(50, 80, 130));
-    button2.setWidgetID("button_temporary");
-    button2.setTextComponent(gui::Label(&button2, "No function", this->engine->resource.getFont("garamond"), 14, sf::Vector2f(0, 0)));
-
-    static gui::Widget widget1;
-    widget1.setWidgetSize(sf::Vector2f(100, 180));
-    widget1.setWidgetPosition(sf::Vector2f(0, 0));
-    widget1.setWidgetColour(sf::Color(50, 50, 50));
     
+    static gui::Widget widget1;
+    widget1.setWidgetSize(sf::Vector2f(90, 50));
+    widget1.setWidgetPosition(sf::Vector2f(0, 0));
+    widget1.setWidgetColour(sf::Color(0, 0, 0, 191));
     widget1.attachComponent(&button1, button1.getWidgetID());
-    widget1.attachComponent(&button2, button2.getWidgetID());
-
+    
+    static gui::Label label1(&button1, "Visit region", this->engine->resource.getFont("garamond"), 12);
+    label1.align(gui::Alignment::ALIGNMENT_CENTRED);
+    button1.setTextComponent(label1);
+    
     this->m_interface.insert({ "widget", &widget1 });
 }
 
@@ -457,7 +453,6 @@ void Worldmap::updateInterface() {
 
     auto* widget = (gui::Widget*)this->m_interface["widget"];
     gui::Button& button1 = *(gui::Button*)(&widget->getComponentByName("button_enter_region"));
-    gui::Button& button2 = *(gui::Button*)(&widget->getComponentByName("button_temporary"));
 
     if(button1.containsPoint(this->mouse_position_interface) && this->mouse_pressed) {        
         auto& region = this->world.world_map[this->selected_panel_index];
@@ -484,7 +479,7 @@ void Worldmap::updateInterface() {
     // Rest of the updates.
 }
 
-void Worldmap::renderInterface() {
+void Worldmap::drawInterface() {
     this->engine->window.draw(this->debug_text);
     
     if(this->selected_panel_index != -1 && this->draw_debug) {
