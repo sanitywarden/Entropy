@@ -5,12 +5,16 @@
 #include "gameObject.hpp"
 
 #include <SFML/Graphics.hpp>
-#include <bitset>
 
 namespace iso {    
     class Tile : public sf::Drawable {
+        friend class worldGenerator;
+
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+
+        protected:
+            bool _marked;
 
         public:
             Tile();
@@ -24,8 +28,7 @@ namespace iso {
             sf::Texture  texture;
             TileType     tiletype;
 
-            int height;
-
+            int elevation;
     };
 }
 

@@ -27,7 +27,7 @@ namespace iso {
         friend class worldGenerator;
         
         protected:
-            bool _marked;
+            bool _marked; 
             RiverDirection _direction;      
 
         private:
@@ -54,7 +54,7 @@ namespace iso {
 
             bool visited;
 
-            std::vector <Tile>     map;
+            std::vector <Tile> map;
 
             RiverDirection riverDirection();
     };  

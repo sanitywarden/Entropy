@@ -37,7 +37,7 @@ entropy::applicationSettings::~applicationSettings() {
 }
 
 void entropy::applicationSettings::loadUserSettings() {
-    std::string filename = "./config/application_settings.ege";
+    std::string filename = "./config/config.ege";
     
     // Check if the file has the correct extension.
     int length = filename.length();
@@ -107,7 +107,7 @@ void entropy::applicationSettings::loadUserSettings() {
 }
 
 void entropy::applicationSettings::saveUserSettings() {
-    std::string filename = "./config/application_settings.ege";
+    std::string filename = "./config/config.ege";
 
     // Check if the file has the correct extension.
     int length = filename.length();

@@ -3,9 +3,11 @@
 using namespace iso;
 
 Tile::Tile() {
-    this->position = sf::Vector2f(0, 0);
-    this->size     = sf::Vector2f(0, 0);
-    this->height   = 0;
+    this->_marked = false;
+
+    this->position  = sf::Vector2f(0, 0);
+    this->size      = sf::Vector2f(0, 0);
+    this->elevation = 0;
 }
 
 Tile::~Tile() {

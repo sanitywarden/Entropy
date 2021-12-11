@@ -725,8 +725,8 @@ void worldGenerator::generateRegion(int index, Region& region) {
     
     const bool region_terrain = region.regiontype.is_terrain();
     if(region_terrain) {
-        this->regionGenerateHeight(index);
         this->regionGenerateRiver (index);   
+        this->regionGenerateHeight(index);
         this->regionGenerateForest(index);
     }
 
@@ -738,8 +738,8 @@ void worldGenerator::generateRegion(int index, Region& region) {
                     const int index = y * this->region_settings.size.x + x;
     
                     if(region.map[index].tiletype.is_river()) {
-                        region.map[index].height   = 0;
-                        region.map[index].position = this->tilePositionScreen(x, y);
+                        region.map[index].elevation = 0;
+                        region.map[index].position  = this->tilePositionScreen(x, y);
                     }
                 }
             }
@@ -760,24 +760,24 @@ void worldGenerator::generateRegion(int index, Region& region) {
             int biggest_difference = 0;
 
             if(index_bottom < this->region_settings.size.x * this->region_settings.size.y) {
-                if(region.map[index].height > region.map[index_bottom].height) {
-                    const int height_difference = std::abs(region.map[index].height - region.map[index_bottom].height);
+                if(region.map[index].elevation > region.map[index_bottom].elevation) {
+                    const int height_difference = std::abs(region.map[index].elevation - region.map[index_bottom].elevation);
                     if(biggest_difference < height_difference)
                         biggest_difference = height_difference;
                 }
             }
 
             if(index_right < this->region_settings.size.x * this->region_settings.size.y) {
-                if(region.map[index].height > region.map[index_right].height) {
-                    const int height_difference = std::abs(region.map[index].height - region.map[index_right].height);
+                if(region.map[index].elevation > region.map[index_right].elevation) {
+                    const int height_difference = std::abs(region.map[index].elevation - region.map[index_right].elevation);
                     if(biggest_difference < height_difference)
                         biggest_difference = height_difference;
                 }
             }
 
             if(index_left > 0) {
-                if(region.map[index].height > region.map[index_left].height) {
-                    const int height_difference = std::abs(region.map[index].height - region.map[index_left].height);
+                if(region.map[index].elevation > region.map[index_left].elevation) {
+                    const int height_difference = std::abs(region.map[index].elevation - region.map[index_left].elevation);
                     if(biggest_difference < height_difference)
                         biggest_difference = height_difference;
                 }
@@ -792,7 +792,7 @@ void worldGenerator::generateRegion(int index, Region& region) {
             // Make sure that the border tiles have depth.
             // Tiles near the y edge.
             if(y == this->region_settings.size.y - 1) {
-                const int height_difference = std::abs(0 - region.map[(this->region_settings.size.y - 1) * this->region_settings.size.x + x].height) + 1;
+                const int height_difference = std::abs(0 - region.map[(this->region_settings.size.y - 1) * this->region_settings.size.x + x].elevation) + 1;
                 region.map[index].side.resize(height_difference);
                 
                 for(int i = 0; i < height_difference; i++) {
@@ -803,7 +803,7 @@ void worldGenerator::generateRegion(int index, Region& region) {
 
             // Tiles near the x edge.
             if(x == this->region_settings.size.x - 1) {
-                const int height_difference = std::abs(0 - region.map[y * this->region_settings.size.x + this->region_settings.size.x - 1].height) + 1;
+                const int height_difference = std::abs(0 - region.map[y * this->region_settings.size.x + this->region_settings.size.x - 1].elevation) + 1;
                 region.map[index].side.resize(height_difference);
                 
                 for(int i = 0; i < height_difference; i++) {
@@ -1371,39 +1371,218 @@ void worldGenerator::regionGenerateForest(int region_index) {
 void worldGenerator::regionGenerateHeight(int region_index) {
     Region& region = this->world_map[region_index];
 
-    noiseSettings height_settings; 
+    std::cout << "[World Generation][Region Generation]: Generating flatlands.\n";
+
+    // Height modifier for fancier terrain.
+    const float height_modifier = 1.2f;
+
+    noiseSettings height_settings(this->region_settings.size, 16, 16, 4, height_modifier);
     std::vector <float> height;
-
-    const float region_noise_worldmap = this->world_map[region_index].height;
-    float       division_value;
-    std::string region_elevation_type;
-
-    if(region_noise_worldmap > 0.8f) {
-        region_elevation_type = "mountainous";
-        division_value = 0.05f;
-        height_settings = noiseSettings(this->region_settings.size, 16, 12, 4, 1.10f);
-    } 
-
-    else if(region_noise_worldmap > 0.65f) {
-        region_elevation_type = "hills";
-        division_value = 0.125;
-        height_settings = noiseSettings(this->region_settings.size, 16, 10, 4, 1.05f);
-    }
-
-    else {
-        region_elevation_type = "flatlands";
-        division_value = 0.25f;
-        height_settings = noiseSettings(this->region_settings.size, 16, 20, 4, 1.00f);
-    }  
-
-    std::cout << "[World Generation][Region Generation]: Generating terrain (" << region_elevation_type << ").\n";
-
     this->generateNoise(height_settings, height);
 
-    for(int i = 0; i < height.size(); i++) {
-        const int elevation = height[i] / division_value;
+    const RiverDirection river_direction = region._direction;
 
-        region.map[i].height   = elevation;
-        region.map[i].position = region.map[i].position + sf::Vector2f(0, -elevation * this->region_settings.tile_size.y / 2);
+    for(int i = 0; i < region.map.size(); i++) {
+        region.map[i]._marked = false;
     }
+
+    // How many tiles from the river should be smoothed to create a valley-like look.
+    const int terrain_slope = (this->region_settings.size.x + this->region_settings.size.y) / 2 / 10;
+    const auto smaller_slope = [&](int slope) -> float {
+        return std::floor(std::abs(std::sqrt(slope) - 1));
+    };
+
+    for(int y = 0; y < this->region_settings.size.y; y++) {
+        for(int x = 0; x < this->region_settings.size.x; x++) {
+            const int index = y * this->region_settings.size.x + x;
+
+            // For tiles that follow a river the elevation should be similar to a valley.
+            if(region.map[index].tiletype.is_river()) {
+                if(river_direction == RiverDirection::RIVER_HORIZONTAL) {
+                    // For the southern coast.
+                    if(index - 1 >= 0) {
+                        if(!region.map[index - 1].tiletype.is_river()) {
+                            for(int slope_left = 0; slope_left < terrain_slope; slope_left++) {
+                                const int index_left = index - slope_left;
+                    
+                                if(index_left >= 0) {
+                                    if(!region.map[index_left].tiletype.is_river() && !region.map[index_left]._marked) {
+                                        const int elevation = smaller_slope(slope_left);  
+                                        region.map[index_left]._marked = true;
+                                        region.map[index_left].elevation = elevation;
+                                        region.map[index_left].tiletype.set_terrain();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // For the northern coast.
+                    if(index + 1 < this->region_settings.size.x * this->region_settings.size.y) {
+                        if(!region.map[index + 1].tiletype.is_river()) {
+                            for(int slope_right = 0; slope_right < terrain_slope; slope_right++) {
+                                const int index_right = index + slope_right;
+    
+                                if(index_right < this->region_settings.size.x * this->region_settings.size.y) {
+                                    if(!region.map[index_right].tiletype.is_river() && !region.map[index_right]._marked) {
+                                        const int elevation = smaller_slope(slope_right); 
+                                        region.map[index_right]._marked = true;
+                                        region.map[index_right].elevation = elevation;
+                                        region.map[index_right].tiletype.set_terrain();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }                      
+
+                if(river_direction == RiverDirection::RIVER_VERTICAL) {
+                    // For the western coast.
+                    if(index - this->region_settings.size.x >= 0) {
+                        if(!region.map[index - this->region_settings.size.x].tiletype.is_river()) {
+                            for(int slope_top = 0; slope_top < terrain_slope; slope_top++) {
+                                const int index_top = index - slope_top * this->region_settings.size.x;
+
+                                if(index_top >= 0) {
+                                    if(!region.map[index_top].tiletype.is_river() && !region.map[index_top]._marked) {
+                                        const int elevation = smaller_slope(slope_top); 
+                                        region.map[index_top]._marked = true;
+                                        region.map[index_top].elevation = elevation;
+                                        region.map[index_top].tiletype.set_terrain();
+                                    }
+                                }
+                            }
+                        }
+                    } 
+
+                    // For the eastern coast.
+                    if(index + this->region_settings.size.x < this->region_settings.size.x * this->region_settings.size.y) {
+                        if(!region.map[index + this->region_settings.size.x].tiletype.is_river()) {
+                            for(int slope_bottom = 0; slope_bottom < terrain_slope; slope_bottom++) {
+                                const int index_bottom = index + slope_bottom * this->region_settings.size.x;
+
+                                if(index_bottom < this->region_settings.size.x * this->region_settings.size.y) {
+                                    if(!region.map[index_bottom].tiletype.is_river() && !region.map[index_bottom]._marked) {
+                                        const int elevation = smaller_slope(slope_bottom); 
+                                        region.map[index_bottom]._marked = true;
+                                        region.map[index_bottom].elevation = elevation;
+                                        region.map[index_bottom].tiletype.set_terrain();
+                                    }
+                                }                                
+                            }
+                        }
+                    }
+                } 
+            
+                if(river_direction == RiverDirection::RIVER_NORTH_TO_EAST || river_direction == RiverDirection::RIVER_NORTH_TO_WEST || river_direction == RiverDirection::RIVER_SOUTH_TO_EAST || river_direction == RiverDirection::RIVER_SOUTH_TO_WEST || river_direction == RiverDirection::RIVER_ORIGIN) {
+                    // For the western coast.
+                    if(index - 1 >= 0 && index - 1 >= y * this->region_settings.size.x) {
+                        if(!region.map[index - 1].tiletype.is_river()) {
+                            for(int slope_left = 0; slope_left < terrain_slope; slope_left++) {
+                                const int index_left = index - slope_left;
+
+                                if(index_left >= 0) {
+                                    if(!region.map[index_left].tiletype.is_river() && !region.map[index_left]._marked) {
+                                        const int elevation = smaller_slope(slope_left);
+                                        region.map[index_left]._marked = true;
+                                        region.map[index_left].elevation = elevation;
+                                        region.map[index_left].tiletype.set_terrain();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // For the eastern coast.
+                    if(index + 1 < this->region_settings.size.x * this->region_settings.size.y && index + 1 < (y + 1) * this->region_settings.size.x) {
+                        if(!region.map[index + 1].tiletype.is_river()) {
+                            for(int slope_right = 0; slope_right < terrain_slope; slope_right++) {
+                                const int index_right = index + slope_right;
+
+                                if(index_right < this->region_settings.size.x * this->region_settings.size.y) {
+                                    if(!region.map[index_right].tiletype.is_river() && !region.map[index_right]._marked) {
+                                        const int elevation = smaller_slope(slope_right);
+                                        region.map[index_right]._marked = true;
+                                        region.map[index_right].elevation = elevation;
+                                        region.map[index_right].tiletype.set_terrain();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // For the southern coast.
+                    if(index - this->region_settings.size.x >= 0) {
+                        if(!region.map[index - this->region_settings.size.x].tiletype.is_river()) {
+                            for(int slope_left = 0; slope_left < terrain_slope; slope_left++) {
+                                const int index_left = index - slope_left * this->region_settings.size.x;
+                    
+                                if(index_left >= 0) {
+                                    if(!region.map[index_left].tiletype.is_river() && !region.map[index_left]._marked) {
+                                        const int elevation = smaller_slope(slope_left);  
+                                        region.map[index_left]._marked = true;
+                                        region.map[index_left].elevation = elevation;
+                                        region.map[index_left].tiletype.set_terrain();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // For the northern coast.
+                    if(index + this->region_settings.size.x < this->region_settings.size.x * this->region_settings.size.y) {
+                        if(!region.map[index + this->region_settings.size.x].tiletype.is_river()) {
+                            for(int slope_right = 0; slope_right < terrain_slope; slope_right++) {
+                                const int index_right = index + slope_right * this->region_settings.size.x;
+    
+                                if(index_right < this->region_settings.size.x * this->region_settings.size.y) {
+                                    if(!region.map[index_right].tiletype.is_river() && !region.map[index_right]._marked) {
+                                        const int elevation = smaller_slope(slope_right);
+                                        region.map[index_right]._marked = true;
+                                        region.map[index_right].elevation = elevation;
+                                        region.map[index_right].tiletype.set_terrain();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Mark the river tiles.
+                region.map[index]._marked = true; 
+            }
+
+            // For tiles that are not placed along a river and are not the river itself.
+            if(!region.map[index]._marked && !region.map[index].tiletype.is_river()) {
+                // Terrain generation starts from the top left corner of the region
+                // and continues until it reaches the bottom right corner.
+                // That is why you only check only two cardinal directions, rather than four.
+                const int elevation_top  = (index - this->region_settings.size.x >= 0) ? std::ceil(region.map[index - this->region_settings.size.x].elevation * height_modifier) : 0;
+                const int elevation_left = (index - 1 >= 0)                            ? std::ceil(region.map[index - 1].elevation * height_modifier) : 0;
+
+                int elevation = height[index] / 0.25f;
+                int divisors  = 1;
+                
+                if(elevation_top != 0) {
+                    elevation += elevation_top;
+                    divisors++;
+                }
+
+                if(elevation_left != 0) {
+                    elevation += elevation_left;
+                    divisors++;
+                }
+
+                // Calculate the average value of the elevation of the three tiles.
+                elevation /= divisors;
+                
+                region.map[index].elevation = elevation;
+                region.map[index].tiletype.set_terrain();
+            }   
+        }
+    }
+
+    // Correct the position of tiles due to change in elevation.
+    for(int i = 0; i < region.map.size(); i++) 
+        region.map[i].position = region.map[i].position + sf::Vector2f(0, -region.map[i].elevation * this->region_settings.tile_size.y / 2);
 }

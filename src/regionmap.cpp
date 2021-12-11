@@ -289,8 +289,9 @@ void Regionmap::drawDebugText() {
     sf::Text text;
     std::string str;
 
-    str += "Index: " + std::to_string(this->last_selected_index) + "\n";
-
+    str += "Index:  " + std::to_string(this->last_selected_index) + "\n";
+    str += "Height: " + std::to_string(this->region->map[this->last_selected_index].elevation) + "\n";
+    
     text.setString(str);
     text.setFont(this->engine->resource.getFont("garamond"));
     text.setCharacterSize(14);
