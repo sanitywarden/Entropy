@@ -3,10 +3,11 @@
 #include <iostream>
 
 entropy::Settings::Settings() {
-    this->window_size         = sf::Vector2f(800, 600);
-    this->window_fullscreen   = false;
-    this->window_vsync        = false;
-    this->window_refresh_rate = 60;
+    this->window_size            = sf::Vector2f(1200, 800);
+    this->window_fullscreen      = false;
+    this->window_vsync           = false;
+    this->window_refresh_rate    = 144;
+    this->application_debug_mode = true;
 }
 
 entropy::Settings::~Settings() {
@@ -76,14 +77,11 @@ void entropy::applicationSettings::loadUserSettings() {
 
     std::cout << "[Entropy Engine][Engine Settings]: Custom user settings file loaded.\n";
 
-    auto width  = std::stoi(this->extractPartString(0, index, file_line));
-    auto height = std::stoi(this->extractPartString(index + 1, file_line.length(), file_line));
-
+    int width  = std::stoi(this->extractPartString(0, index, file_line));
+    int height = std::stoi(this->extractPartString(index + 1, file_line.length(), file_line));
     this->m_settings.window_size = sf::Vector2f(width, height);
-    
     std::cout << "[Entropy Engine][Engine Settings]: Window size:\t\t" << width << "x" << height << "\n";
 
-    // Extract if the window is supposed to be fullscreen.
     std::getline(input_file, file_line);
     int is_fullscreen = std::stoi(file_line);
     this->m_settings.window_fullscreen = is_fullscreen;
@@ -101,6 +99,12 @@ void entropy::applicationSettings::loadUserSettings() {
     this->m_settings.window_refresh_rate = refresh_rate;
     std::cout << "[Entropy Engine][Engine Settings]: Refresh rate:\t" << refresh_rate << "\n";
 
+    std::getline(input_file, file_line);
+    int debug_mode_on = std::stoi(file_line);
+    this->m_settings.application_debug_mode = debug_mode_on;
+    std::string debug_mode_prompt = (debug_mode_on) ? "True" : "False";
+    std::cout << "[Entropy Engine][Engine Settings]: Debug mode:\t\t" << debug_mode_prompt << "\n";
+
     // Close the file.
 
     input_file.close();
@@ -111,9 +115,8 @@ void entropy::applicationSettings::saveUserSettings() {
 
     // Check if the file has the correct extension.
     int length = filename.length();
-    if(filename[length - 1] != 'e' && filename[length - 2] != 'g' && filename[length - 3] != 'e' && filename[length - 4] != '.') {
+    if(filename[length - 1] != 'e' && filename[length - 2] != 'g' && filename[length - 3] != 'e' && filename[length - 4] != '.')
         filename += ".ege";
-    }
 
     // Check if the file has been opened correctly, or if the file even exists.
     // If the file could not be opened, do not save the settings.
@@ -130,12 +133,13 @@ void entropy::applicationSettings::saveUserSettings() {
     output_file << this->m_settings.window_fullscreen << "\n";
     output_file << this->m_settings.window_vsync << "\n";
     output_file << this->m_settings.window_refresh_rate << "\n";
+    output_file << this->m_settings.application_debug_mode << "\n";
 
     // Close the file.
 
     output_file.close();
 }
 
-const entropy::Settings& entropy::applicationSettings::getUserSettings() {
+const entropy::Settings& entropy::applicationSettings::userSettings() {
     return this->m_settings;
 }

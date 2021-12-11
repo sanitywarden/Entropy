@@ -227,7 +227,7 @@ void Worldmap::handleInput() {
     while(this->engine->window.getWindow()->pollEvent(this->event)) {    
         switch(this->event.type) {
             case sf::Event::Closed: {
-                entropy::Entropy::quitApplication(0);
+                this->engine->exitApplication(0);
                 break;
             }
 
@@ -442,6 +442,9 @@ void Worldmap::updateInterface() {
 
     const int panel_index = panel_grid_position.y * this->world.world_settings.size.x + panel_grid_position.x;
     auto& panel = this->world.world_map[panel_index];
+
+    debug_text += "Frames per second: " + std::to_string(this->engine->getFramesPerSecond()) + "\n";
+    debug_text += "Time per frame: "    + std::to_string(this->engine->getTimePerFrame()) + "ms\n";
 
     debug_text += "Index: " + std::to_string(panel_index) + "\n";
     debug_text += "Biome: " + panel.biome.biome_name + "\n";

@@ -28,6 +28,7 @@ namespace entropy {
 
             void setTitle(std::string title);
             void setVsync(bool on = false);
+            void setMaxFramerate(unsigned int framerate);
 
             void clear(const sf::Color& clear_colour);
             void display();

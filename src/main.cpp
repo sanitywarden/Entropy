@@ -1,6 +1,8 @@
 #include "entropy/entropy.hpp"
 #include "worldmap.hpp"
 
+#include <conio.h> // Included for getch().
+
 int main() {
     static entropy::Entropy game_engine;
 
@@ -11,9 +13,8 @@ int main() {
     try {
         game_engine.loop();
     } catch(const std::exception& exception) {
+        game_engine.exitApplication(1);
         std::cout << exception.what() << "\n";
     }
-
-    entropy::Entropy::quitApplication(0);
 }
 

@@ -6,61 +6,66 @@
 using namespace entropy;
 
 Entropy::Entropy() {
-    if(this->settings.getUserSettings().window_fullscreen) 
+    if(this->settings.userSettings().window_fullscreen) 
         this->window.createFullscreenWindow();
     
     else 
-        this->window.createWindow(this->settings.getUserSettings().window_size);
+        this->window.createWindow(this->settings.userSettings().window_size);
 
     this->window.setTitle("Entropy");
-    this->window.setVsync(this->settings.getUserSettings().window_vsync);
+    this->window.setVsync(this->settings.userSettings().window_vsync);
+    this->window.setMaxFramerate(this->settings.userSettings().window_refresh_rate);
 
     std::cout << "[Entropy Engine]: Configuration finished.\n";
-    std::cout << "[Entropy Engine]: Greetings from Entropy Game Engine.\n";
+    std::cout << "[Entropy Engine]: Greetings from Entropy Game Engine.\n";   
 }
 
 Entropy::~Entropy() {
     
 }
 
-void Entropy::loop() {    
-    this->m_clock          = sf::Clock();
-    this->m_last_update    = sf::Time::Zero;
-    this->m_time_per_frame = sf::Time(sf::seconds(1.f / (float)this->settings.getUserSettings().window_refresh_rate));
+void Entropy::loop() {        
+    this->m_measurement_clock = sf::Clock();
+    const sf::Time one_second = sf::seconds(1.0f);
+    
+    // Frames per second.
+    uint16_t updates = 0;
 
     while(this->window.open()) {
-        sf::Time elapsed_time = this->m_clock.restart();
-        this->m_last_update += elapsed_time;
-
-        while(this->m_last_update > this->m_time_per_frame) {
-            this->m_last_update -= this->m_time_per_frame;
+        if(this->m_time_since_start.asMilliseconds() < one_second.asMilliseconds()) {
+            // Measure the difference in time between the last frame and this frame.
+            const float delta_time = this->m_measurement_clock.getElapsedTime().asMilliseconds() - this->m_frames_per_second;
             
-            auto gamestate = this->gamestate.getGamestate();
+            this->m_time_since_start = this->m_measurement_clock.getElapsedTime();
+            updates++;
 
+            Gamestate* gamestate = this->gamestate.getGamestate();
             if(gamestate != nullptr) {
-                gamestate->update(this->m_time_per_frame.asSeconds());
-                gamestate->render(this->m_time_per_frame.asSeconds());
+                gamestate->update(delta_time);
+                gamestate->render(delta_time);
             }
-        } 
+        }
+
+        else {
+            this->m_frames_per_second = updates;
+            this->m_time_per_frame    = (float)this->m_time_since_start.asMilliseconds() / (float)this->m_frames_per_second;
+
+            this->m_measurement_clock = sf::Clock();
+            this->m_time_since_start  = sf::Time::Zero;
+            updates = 0;
+        }
     }
 }
 
-void Entropy::quitApplication(int code) {
+uint16_t Entropy::getFramesPerSecond() {
+    return this->m_frames_per_second;
+}
+
+uint32_t Entropy::getTimePerFrame() {
+    return this->m_time_per_frame;
+}
+
+void Entropy::exitApplication(int code) {
     std::cout << "[Entropy Engine]: Application quit with code " << code << ".\n";
-
-    switch(code) {
-        default:
-            std::cout << "[Entropy Engine]: Unkown exit code.\n";
-            break;
-
-        case 0:
-            std::cout << "[Entropy Engine]: Application exited successfully.\n";
-            break;
-        
-        case 1:
-            std::cout << "[Entropy Engine]: Application exited, error occurred.\n";
-            break;
-    }
-
     exit(code);
 }

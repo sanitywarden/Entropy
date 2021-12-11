@@ -66,6 +66,10 @@ void windowManager::setVsync(bool on) {
     this->getWindow()->setVerticalSyncEnabled(on);
 }
 
+void windowManager::setMaxFramerate(unsigned int framerate) {
+    this->getWindow()->setFramerateLimit(framerate);
+}
+
 bool windowManager::focused() {
     return this->getWindow()->hasFocus();
 }

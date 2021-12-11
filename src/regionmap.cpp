@@ -89,7 +89,7 @@ void Regionmap::handleInput() {
     while(this->engine->window.getWindow()->pollEvent(this->event)) {    
         switch(this->event.type) {
             case sf::Event::Closed: {
-                entropy::Entropy::quitApplication(0);
+                this->engine->exitApplication(0);
                 break;
             }
 
@@ -289,9 +289,12 @@ void Regionmap::drawDebugText() {
     sf::Text text;
     std::string str;
 
+    str += "Frames per second: " + std::to_string(this->engine->getFramesPerSecond()) + "\n";
+    str += "Time per frame: "    + std::to_string(this->engine->getTimePerFrame()) + "ms\n";
+
     str += "Index:  " + std::to_string(this->last_selected_index) + "\n";
-    str += "Height: " + std::to_string(this->region->map[this->last_selected_index].elevation) + "\n";
-    
+    str += "Height: " + std::to_string(this->region->map[this->last_selected_index].elevation) + "\n";    
+
     text.setString(str);
     text.setFont(this->engine->resource.getFont("garamond"));
     text.setCharacterSize(14);

@@ -11,6 +11,7 @@
 // FULLSCREEN
 // VSYNC
 // REFRESHRATE
+// DEBUGMODE
 
 namespace entropy {
     // This is a class that represents the user-customisable application settings.
@@ -25,6 +26,7 @@ namespace entropy {
             bool         window_fullscreen;
             bool         window_vsync;
             unsigned int window_refresh_rate;
+            bool         application_debug_mode;
     };
     
     // This is a class that is responsible for loading and saving user settings whenever the application starts, or ends.
@@ -35,16 +37,16 @@ namespace entropy {
             entropy::Settings m_settings;
             std::string       m_default_config_path; // Default path where the config file is stored.
 
+            /* From is inclusive. To is exclusive. */
             std::string extractPartString(const int from, const int to, std::string str);
 
             void loadUserSettings();
             void saveUserSettings();
-
         public:
             applicationSettings();
             ~applicationSettings();
 
-            const entropy::Settings& getUserSettings();
+            const entropy::Settings& userSettings();
     };  
 }
 
