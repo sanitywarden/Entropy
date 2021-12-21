@@ -3,13 +3,13 @@
 
 #include "entropy/gamestate.hpp"
 #include "entropy/entropy.hpp"
-#include "generationSettings.hpp"
 #include "worldGenerator.hpp"
-#include "regionmap.hpp"
 #include "gui/base/abstractWidget.hpp"
 #include "gui/base/button.hpp"
 #include "gui/base/widget.hpp"
 #include "gui/base/text.hpp"
+#include "simulationManager.hpp"
+#include "regionmap.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -19,14 +19,11 @@
 
 namespace iso {
     class Worldmap : public entropy::Gamestate {
-        private:
-            Region         region;
-            WorldSettings  world_settings;
-            RegionSettings region_settings;
-            worldGenerator world;
-            Regionmap      region_gamestate;
+        friend class SimulationManager;
 
-            int selected_panel_index;
+        private:
+            Region             region;
+            SimulationManager* manager;
 
             std::map <std::string, gui::AbstractWidget*> m_interface;
 
@@ -49,6 +46,7 @@ namespace iso {
 
             bool draw_debug;
 
+            int current_index;
         private:
             void handleInput()         override;
             void initialise()          override;
@@ -71,12 +69,13 @@ namespace iso {
             void drawInterface();
 
         public:
-            Worldmap(entropy::Entropy* engine);
+            Worldmap(SimulationManager* manager);
             ~Worldmap();
             
             void update(float time_per_frame) override;
             void render(float time_per_frame) override;
             
+            int getCurrentIndex();
     };
 }
 

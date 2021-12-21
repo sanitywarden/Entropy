@@ -5,6 +5,8 @@
 #include "tile.hpp"
 #include "regionType.hpp"
 #include "gameObject.hpp"
+#include "player.hpp"
+#include "building.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -23,13 +25,13 @@ namespace iso {
         RIVER_ORIGIN         // Beginning of the river, first tile.
     };
 
-    class Region : public sf::Drawable {
+    class Region : public GameObject {
         friend class worldGenerator;
         
         protected:
-            bool _marked; 
+            bool           _marked; 
             RiverDirection _direction;      
-
+            
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
@@ -37,10 +39,7 @@ namespace iso {
             Region();
             ~Region();
 
-            sf::Vector2i grid;
-            sf::Vector2f position;
-            sf::Vector2f size;    
-            sf::Texture  texture;
+            sf::Color    colour;
             RegionType   regiontype;
 
             GameObject forest;
@@ -53,8 +52,12 @@ namespace iso {
             float latitude;
 
             bool visited;
+            bool owned;   // Region is owned by a player.   
 
-            std::vector <Tile> map;
+            std::vector <Tile>                         map;
+            std::map    <int, GameObject>              trees;
+            std::map    <int, std::vector<GameObject>> sides;
+            std::map    <int, Building>                buildings;
 
             RiverDirection riverDirection();
     };  

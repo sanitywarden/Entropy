@@ -34,8 +34,7 @@ void Entropy::loop() {
     while(this->window.open()) {
         if(this->m_time_since_start.asMilliseconds() < one_second.asMilliseconds()) {
             // Measure the difference in time between the last frame and this frame.
-            const float delta_time = this->m_measurement_clock.getElapsedTime().asMilliseconds() - this->m_frames_per_second;
-            
+            const float delta_time   = this->m_measurement_clock.getElapsedTime().asMilliseconds() - this->m_time_since_start.asMilliseconds();            
             this->m_time_since_start = this->m_measurement_clock.getElapsedTime();
             updates++;
 
@@ -66,6 +65,6 @@ uint32_t Entropy::getTimePerFrame() {
 }
 
 void Entropy::exitApplication(int code) {
-    std::cout << "[Entropy Engine]: Application quit with code " << code << ".\n";
+    std::cout << "[Entropy Engine]: Requested application exit with code " << code << ".\n";
     exit(code);
 }

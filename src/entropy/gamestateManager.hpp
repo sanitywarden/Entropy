@@ -18,11 +18,12 @@ namespace entropy {
             gamestateManager();
             ~gamestateManager();
 
-            void addGamestate(const std::string& id, entropy::Gamestate& gamestate);
-            void removeGamestate(const std::string& id);
-            bool checkGamestateExists(const std::string& id);
-            void setGamestate(const std::string& id);
+            void addGamestate(std::string id, entropy::Gamestate& gamestate);
+            void removeGamestate(std::string id);
+            bool checkGamestateExists(std::string id);
+            void setGamestate(std::string id);
             Gamestate* getGamestate();
+            Gamestate* getGamestateByName(std::string id);
     };
 }
 

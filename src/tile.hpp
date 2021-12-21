@@ -7,11 +7,11 @@
 #include <SFML/Graphics.hpp>
 
 namespace iso {    
-    class Tile : public sf::Drawable {
+    class Tile : public GameObject {
         friend class worldGenerator;
 
         private:
-            void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+            // void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
         protected:
             bool _marked;
@@ -20,14 +20,7 @@ namespace iso {
             Tile();
             ~Tile();
 
-            GameObject tree;
-            std::vector <GameObject> side;
-
-            sf::Vector2f position;
-            sf::Vector2f size;
-            sf::Texture  texture;
-            TileType     tiletype;
-
+            TileType tiletype;
             int elevation;
     };
 }

@@ -15,14 +15,11 @@ namespace entropy {
      * 
      * Currently it automatically creates a window, with settings provided in config file, if it exists. */
     class Entropy {
-        private:
+        protected:
             sf::Clock m_measurement_clock;
             sf::Time  m_time_since_start;
             uint16_t  m_frames_per_second;
             uint32_t  m_time_per_frame;
-
-        private:
-            void beforeExit();
 
         public:
             Entropy();
@@ -33,12 +30,9 @@ namespace entropy {
             entropy::windowManager       window;
             entropy::applicationSettings settings;
 
-            void loop();
+            virtual void loop();
             uint16_t getFramesPerSecond();
             uint32_t getTimePerFrame();
-
-            /* Proper way to close the application. 
-             * Console may, but does not have to be closed. */
             void exitApplication(int code);
     };
 }

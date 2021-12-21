@@ -16,8 +16,6 @@ resourceManager::~resourceManager() {
 
 void resourceManager::loadTexture(std::string filename, std::string id, sf::IntRect area) {
     sf::Texture texture;
-    
-
     if(!texture.loadFromFile(filename, area)) {
         std::cout << "[Entropy Engine][Resource Manager]: Could not load texture: " << filename << " with id: " << id << ".\n";
         return;
@@ -36,7 +34,6 @@ const std::map <std::string, sf::Texture>& resourceManager::getTextureCollection
 
 void resourceManager::loadFont(std::string filename, std::string id) {
     sf::Font font;
-
     if(!font.loadFromFile(filename)) {
         std::cout << "[Entropy Engine][Resource Manager]: Could not load font: " << filename << " with id: " << id << ".\n";
         return;

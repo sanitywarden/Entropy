@@ -2,21 +2,21 @@
 #define _REGIONMAP_HPP_
 
 #include "entropy/gamestate.hpp"
-#include "entropy/entropy.hpp"
+#include "simulationManager.hpp"
 #include "region.hpp"
-#include "worldGenerator.hpp"
+#include "buildingManager.hpp"
 
 #include <SFML/Graphics.hpp>
 
 namespace iso {
     // Gamestate class responsible for management of a single region.
     class Regionmap : public entropy::Gamestate {
-        private:
-            worldGenerator* world;
-            Region*         region;
+        friend class SimulationManager;
 
-            int selected_panel_index;
-            int last_selected_index;  // Index provided by the worldGenerator::getTileIndex() functions.
+        private:
+            Region*            region;
+            SimulationManager* manager;
+            BuildingManager    building_manager;
 
             bool mouse_pressed;
             bool mouse_moved;
@@ -33,6 +33,7 @@ namespace iso {
             int max_zoom_in;
             int max_zoom_out;
 
+            int current_index;
         private:
             void handleInput()         override;
             void initialise()          override;
@@ -46,15 +47,20 @@ namespace iso {
             void higlightTile();
             void drawDebugText();
 
+            void updateTile();
+
         public: 
             Regionmap();
-            Regionmap(entropy::Entropy* engine, iso::worldGenerator* world);
+            Regionmap(SimulationManager* manager);
             ~Regionmap();
 
             void update(float time_per_frame) override;
             void render(float time_per_frame) override;
 
             void setCurrentRegion(int region_index);
+
+            int getCurrentIndex();
+            Region* getCurrentRegion();
     }; 
 }
 

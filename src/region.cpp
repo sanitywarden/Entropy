@@ -11,6 +11,7 @@ Region::Region() {
     this->moisture    = 0.0f;
     this->temperature = 0.0f;
 
+    this->colour  = sf::Color::Black;
     this->visited = false;
 }
 
@@ -19,29 +20,29 @@ Region::~Region() {
 }
 
 // Remember that you can implement fog of war by colouring the regions texture (sf::Color).
-
 void Region::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     sf::VertexArray worldmap_region(sf::Quads, 4);
 
-    worldmap_region[0].position = this->position;
-    worldmap_region[1].position = this->position + sf::Vector2f(this->size.x, 0);
-    worldmap_region[2].position = this->position + sf::Vector2f(this->size.x, this->size.y);
-    worldmap_region[3].position = this->position + sf::Vector2f(0, this->size.y);
+    const sf::Vector2f position = this->getPosition();
+
+    worldmap_region[0].position = position;
+    worldmap_region[1].position = position + sf::Vector2f(this->getSize().x, 0);
+    worldmap_region[2].position = position + sf::Vector2f(this->getSize().x, this->getSize().y);
+    worldmap_region[3].position = position + sf::Vector2f(0, this->getSize().y);
     
     worldmap_region[0].texCoords = sf::Vector2f(0, 0);
-    worldmap_region[1].texCoords = sf::Vector2f(this->size.x, 0);
-    worldmap_region[2].texCoords = sf::Vector2f(this->size.x, this->size.y);
-    worldmap_region[3].texCoords = sf::Vector2f(0, this->size.y);
+    worldmap_region[1].texCoords = sf::Vector2f(this->getSize().x, 0);
+    worldmap_region[2].texCoords = sf::Vector2f(this->getSize().x, this->getSize().y);
+    worldmap_region[3].texCoords = sf::Vector2f(0, this->getSize().y);
 
-    states.texture = &this->texture;
+    if(this->colour != COLOUR_BLACK && this->colour != COLOUR_WHITE) {
+        worldmap_region[0].color = this->colour; 
+        worldmap_region[1].color = this->colour;
+        worldmap_region[2].color = this->colour;
+        worldmap_region[3].color = this->colour;
+    }
+
     target.draw(worldmap_region, states);
-    
-    // Draw region's features to the worldmap.
-    if(this->river.exists()) 
-        target.draw(this->river);
-
-    if(this->forest.exists())
-        target.draw(this->forest);
 }
 
 RiverDirection Region::riverDirection() {

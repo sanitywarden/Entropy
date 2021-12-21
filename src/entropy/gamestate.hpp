@@ -2,6 +2,7 @@
 #define _ENTROPY_GAMESTATE_HPP_
 
 #include "entropy.hpp"
+#include "controls.hpp"
 
 namespace entropy {
     // Base class for gamestates.
@@ -20,7 +21,6 @@ namespace entropy {
 
             sf::View view_game;
             sf::View view_interface;
-
         public:
             Gamestate();
             ~Gamestate();
@@ -28,10 +28,10 @@ namespace entropy {
             // Main game loop functions.
             // Every gamestate has to override these functions.
 
-            // Time per frame time units are seconds.
+            // Time per frame time units are in seconds (1ms = 0.001s).
             virtual void update(float time_per_frame) { return; }
             
-            // Time per frame time units are seconds.
+            // Time per frame time units are in seconds (1ms = 0.001s).
             virtual void render(float time_per_frame) { return; }
 
             // Additional functions that might be helpful to keep gamestates interface clear.
@@ -44,7 +44,12 @@ namespace entropy {
             virtual void zoomCamera()   { return; }
             virtual void updateCamera() { return; }
 
-            std::string getStateID();
+            std::string  getStateID();
+            sf::Vector2i getMousePositionDesktop();
+            sf::Vector2f getMousePositionWindow();
+            sf::Vector2f getMousePositionInterface();
+
+            Controls controls;
     };
 }
 

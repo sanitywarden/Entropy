@@ -1,19 +1,14 @@
 #include "entropy/entropy.hpp"
 #include "worldmap.hpp"
-
-#include <conio.h> // Included for getch().
+#include "simulationManager.hpp"
 
 int main() {
-    static entropy::Entropy game_engine;
-
-    iso::Worldmap worldmap = iso::Worldmap(&game_engine);
-    game_engine.gamestate.addGamestate("worldmap", worldmap);
-    game_engine.gamestate.setGamestate("worldmap");
+    static iso::SimulationManager game_manager;
 
     try {
-        game_engine.loop();
+        game_manager.loop();
     } catch(const std::exception& exception) {
-        game_engine.exitApplication(1);
+        game_manager.exitApplication(1);
         std::cout << exception.what() << "\n";
     }
 }

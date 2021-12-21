@@ -3,15 +3,17 @@
 using namespace iso;
 
 GameObject::GameObject() {
-    this->object_position = sf::Vector2f(0, 0);
-    this->object_size     = sf::Vector2f(0, 0);
-    this->object_texture  = nullptr;
+    this->object_name         = "*";
+    this->object_position     = sf::Vector2f(0, 0);
+    this->object_size         = sf::Vector2f(0, 0);
+    this->object_texture_name = "*";
 }
 
-GameObject::GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, sf::Texture* texture) {
-    this->object_position = position + relative_position;
-    this->object_size     = size;
-    this->object_texture  = texture;
+GameObject::GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name) {
+    this->object_name         = "*";
+    this->object_position     = position + relative_position;
+    this->object_size         = size;
+    this->object_texture_name = texture_name;
 }
 
 GameObject::~GameObject() {
@@ -19,7 +21,23 @@ GameObject::~GameObject() {
 }
 
 bool GameObject::exists() const {
-    return this->object_texture == nullptr ? false : true;
+    return this->object_texture_name[0] != '*';
+}
+
+std::string GameObject::getName() const {
+    return this->object_name;
+}
+
+sf::Vector2f GameObject::getPosition() const {
+    return this->object_position;
+}
+
+sf::Vector2f GameObject::getSize() const {
+    return this->object_size;
+}
+
+std::string GameObject::getTextureName() const {
+    return this->object_texture_name;
 }
 
 void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -35,6 +53,5 @@ void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     game_object[2].texCoords = sf::Vector2f(this->object_size.x, this->object_size.y);
     game_object[3].texCoords = sf::Vector2f(0, this->object_size.y);
 
-    states.texture = this->object_texture;
     target.draw(game_object, states);
 }

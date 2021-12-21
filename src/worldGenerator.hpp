@@ -17,7 +17,7 @@ namespace iso {
             Region m_region;
             Tile   m_tile;
 
-            entropy::Entropy *m_engine;
+            entropy::resourceManager* resource;
 
             std::string m_log_prefix;
 
@@ -26,7 +26,7 @@ namespace iso {
             std::vector <float> m_tree_noise;
 
         private:
-            void generateNoise(noiseSettings& settings, std::vector<float>& container);
+            void generateNoise(noiseSettings& settings, std::vector<float>& container, bool d = false);
             bool is_biome(int index, Biome biome);            
 
             void generateNoiseMap();
@@ -43,17 +43,17 @@ namespace iso {
             void regionGenerateRiver (int region_index);
             void regionGenerateForest(int region_index);
 
-            sf::Texture& getBiomeTileTexture (Biome biome); 
-            sf::Texture& getTreeTextureWorld (Biome biome);
-            sf::Texture& getTreeTextureRegion(Biome biome);
+            std::string getBiomeTileTextureName (Biome biome); 
+            std::string getTreeTextureNameWorld (Biome biome);
+            std::string getTreeTextureNameRegion(Biome biome);
 
         public:
             worldGenerator();
-            worldGenerator(WorldSettings& world_settings, RegionSettings& region_settings, entropy::Entropy* engine);
+            worldGenerator(entropy::resourceManager* resource, WorldSettings& world_settings, RegionSettings& region_settings);
             ~worldGenerator();
         
             void generateWorld();
-            void generateRegion(int index, Region& region);
+            void    generateRegion(int index, Region& region);
     
             sf::Vector2f tilePositionScreen(int x, int y);
             sf::Vector2f tilePositionScreen(sf::Vector2i grid_position);
@@ -74,7 +74,8 @@ namespace iso {
             bool is_continental  (int index);
             bool is_tundra       (int index);
             bool is_desert       (int index);
-        
+
+            int getWorldSize();
         public:
             std::vector <Region> world_map; 
     };
