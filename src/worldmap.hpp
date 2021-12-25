@@ -47,6 +47,7 @@ namespace iso {
             bool draw_debug;
 
             int current_index;
+            int draw_calls;
         private:
             void handleInput()         override;
             void initialise()          override;

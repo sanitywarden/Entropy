@@ -4,19 +4,8 @@
 
 using namespace iso;
 
-PlayerResources::PlayerResources() {
-    this->owned_regions.resize(0);
-    this->gold = 0;
-    this->wood = 0;
-    this->food = 0;
-}
-
-PlayerResources::~PlayerResources() {
-
-}
-
 Player::Player() {
-    this->player_is_human = false;
+    this->is_human = false;
 }
 
 Player::~Player() {
@@ -24,22 +13,70 @@ Player::~Player() {
 }   
 
 void Player::addOwnedRegion(int region_index) {
-    this->resources.owned_regions.push_back(region_index);
+    this->owned_regions.push_back(region_index);
 }
 
 void Player::removeOwnedRegion(int region_index) { 
-    for(auto iterator = this->resources.owned_regions.begin(); iterator != this->resources.owned_regions.end(); ++iterator) {
+    for(auto iterator = this->owned_regions.begin(); iterator != this->owned_regions.end(); ++iterator) {
         if(*iterator == region_index) {
-            this->resources.owned_regions.erase(iterator);
+            this->owned_regions.erase(iterator);
             break;
         }
     }
 }
 
-void Player::setHuman(bool player_is_human) {
-    this->player_is_human = player_is_human;
+void Player::setHuman(bool is_human) {
+    this->is_human = is_human;
 }
 
 bool Player::isHuman() {
-    return this->player_is_human;
+    return this->is_human;
+}
+
+void Player::addResource(Resource resource, int quantity) {
+    switch(resource) {
+        default:
+            break;
+
+        case Resource::RESOURCE_WOOD:
+            this->resources.wood += quantity;
+            break;
+
+        case Resource::RESOURCE_STONE:
+            this->resources.stone += quantity;
+            break;
+
+        case Resource::RESOURCE_GOLD:
+            this->resources.gold += quantity;
+            break;
+    }
+}
+
+void Player::addResources(ResourceCost resource) {
+    this->resources += resource;
+}
+
+int Player::getResourceQuantity(Resource resource) {
+    switch(resource) {
+        default:
+            return 0;
+
+        case Resource::RESOURCE_WOOD:
+            return this->resources.wood;
+
+        case Resource::RESOURCE_STONE:
+            return this->resources.wood;
+    
+        case Resource::RESOURCE_GOLD:
+            return this->resources.gold;
+    }
+}
+
+bool Player::isBuildingAffordable(const Building building) {
+    return (this->resources >= building.getBuildingCost());
+}
+
+/* Remove the resources needed to construct provided building from player's resource pool. */
+void Player::removeBuildingCost(const Building building) {
+    this->resources -= building.getBuildingCost();
 }

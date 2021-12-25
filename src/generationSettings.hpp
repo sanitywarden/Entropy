@@ -29,32 +29,42 @@ namespace iso {
         sf::Vector2f size;
     };  
     
-    struct WorldSettings {
-        sf::Vector2f size;
-        sf::Vector2f panel_size;
-        sf::Vector2i margin;
+    struct GenerationSettings {
+        // World settings.
+        // General settings.
+        unsigned int world_size;            // Side of the world area - x means world size is x * x.
+        unsigned int world_margin_island;   // Distance between the edge of the world and the island.
+        unsigned int world_margin_poles;    // Size of the poles.
+        unsigned int world_river_quantity;  // Number of rivers that generation algorithm will attempt to generate.
+        unsigned int world_river_scan_size; // Side of the area scanned by river generation algorithm - x means area size is (2x + 1)(2x + 1). 
+        float        world_noise_terrain;   // From this value terrain will generate - has to be between 0 and 1.
+        float        world_noise_forest;    // From this value forests will generate - has to be between 0 and 1.
+        sf::Vector2f world_panel_size;
         
-        float minimum_terrain_height; // Minimum noise value required for a region to be considered terrain and not water.
 
-        int noise_octaves;     
-        int noise_persistence;
-        int noise_bias;
-        int moisture_octaves;
-        int moisture_persistence;
-        int moisture_bias;
+        // Noise settings.
+        unsigned int world_noise_octaves;
+        unsigned int world_noise_persistence;
+        unsigned int world_noise_bias;
+        float        world_noise_multiplier;
+
+        // Moisture settings.
+        unsigned int world_moisture_octaves;
+        unsigned int world_moisture_persistence;
+        unsigned int world_moisture_bias;
+        float        world_moisture_multiplier;
     
-        int river_quantity;
-        int pole_size;
-
-        float multiplier_noise;
-        float multiplier_gradient;
-        float multiplier_moisture;
-    };
-
-    struct RegionSettings {
-        sf::Vector2f size;        // Size of the region.
-        sf::Vector2f tile_size;   // Size of the tile.
-        sf::Vector2f tile_offset; // Coordinates of the origin of the isometric world.
+        // Gradient settings.
+        unsigned int world_gradient_octaves;
+        unsigned int world_gradient_persistence;
+        unsigned int world_gradient_bias;
+        float        world_gradient_multiplier;
+    
+        // Region settings.
+        // General.
+        unsigned int region_size;        // Side of the region area - x means region size is x * x.
+        sf::Vector2f region_tile_size;   
+        sf::Vector2f region_tile_offset; // By how many tiles is the region offset.
     };
 }
 

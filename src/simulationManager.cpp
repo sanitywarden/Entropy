@@ -9,41 +9,45 @@ using namespace iso;
 using namespace entropy;
 
 SimulationManager::SimulationManager() {
-    this->world_settings.size.x                 = 100;
-    this->world_settings.size.y                 = 100;
-    this->world_settings.margin.x               = this->world_settings.size.x / 10;
-    this->world_settings.margin.y               = this->world_settings.size.y / 10;
-    this->world_settings.panel_size.x           = 64;
-    this->world_settings.panel_size.y           = 32;
-    this->world_settings.noise_octaves          = 16;
-    this->world_settings.noise_persistence      = 4;
-    this->world_settings.noise_bias             = 4;
-    this->world_settings.moisture_octaves       = 8;
-    this->world_settings.moisture_persistence   = 8;
-    this->world_settings.moisture_bias          = 4;
-    this->world_settings.minimum_terrain_height = 0.3f;
-    this->world_settings.river_quantity         = (this->world_settings.size.x * this->world_settings.size.y) / ((this->world_settings.size.x * this->world_settings.size.y) / ((this->world_settings.margin.x + this->world_settings.margin.y) / 2));
-    this->world_settings.pole_size              = this->world_settings.size.y / 10;
-    this->world_settings.multiplier_noise       = 1.25f; // Magic number to make the world look as good as possible.
-    this->world_settings.multiplier_gradient    = 2.00f; // Magic number to make the world look as good as possible.
-    this->world_settings.multiplier_moisture    = 0.90f; // Magic number to make the world look as good as possible.
+    GenerationSettings settings;
+    settings.world_size                 = 100;
+    settings.world_margin_island        = settings.world_size / 10;
+    settings.world_margin_poles         = settings.world_size / 10;
+    settings.world_river_quantity       = settings.world_size / 10;
+    settings.world_river_scan_size      = settings.world_size / 20;
+    settings.world_noise_terrain        = 0.3f;
+    settings.world_noise_forest         = 0.7f;
+    settings.world_panel_size.x         = 64;
+    settings.world_panel_size.y         = 32;
+    settings.world_noise_octaves        = 16;
+    settings.world_noise_persistence    = 4;
+    settings.world_noise_bias           = 4;
+    settings.world_noise_multiplier     = 1.25f;
+    settings.world_moisture_octaves     = 8;
+    settings.world_moisture_persistence = 8;
+    settings.world_moisture_bias        = 4;
+    settings.world_moisture_multiplier  = 0.90f;
+    settings.world_gradient_octaves     = 16;
+    settings.world_gradient_persistence = 4;
+    settings.world_gradient_bias        = 4;
+    settings.world_gradient_multiplier  = 2.00f;
+    settings.region_size                = 100;
+    settings.region_tile_size.x         = 64;           
+    settings.region_tile_size.y         = 32;           
+    settings.region_tile_offset.x       = 100; 
+    settings.region_tile_offset.y       = 100; 
 
-    this->region_settings.size.x        = 100;
-    this->region_settings.size.y        = 100;
-    this->region_settings.tile_offset.x = 100;
-    this->region_settings.tile_offset.y = 100;
-    this->region_settings.tile_size.x   = 64;
-    this->region_settings.tile_size.y   = 32;
+    this->settings = settings;
+    // Settings for world generation set.
 
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
     this->gamestate.setGamestate("worldmap");
 
-    this->world = worldGenerator(&this->resource, this->world_settings, this->region_settings);
+    this->world = worldGenerator(&this->resource, this->settings);
     this->world.generateWorld();
 
     this->spawnPlayers();
-    this->players[0].setHuman(true);
 }
 
 SimulationManager::~SimulationManager() {
@@ -93,19 +97,19 @@ void SimulationManager::internalLoop(float delta_time) {
     gamestate->render(delta_time);
 
     const std::string gamestate_name = gamestate->getStateID();
-    if(gamestate_name == "Worldmap") {
+    for(auto& player : this->players) {
+        // Player updates are tied to gamestate updates.
+        if(player.isHuman())
+            continue;
 
-    }
+        // AI updates are handled here.
+        else {
+            if(gamestate_name == "Worldmap") {
 
-    else if(gamestate_name == "Regionmap") {
-        for(auto& player : this->players) {
-            // Player updates are tied to gamestate updates.
-            if(player.isHuman())
-                continue;
+            }
 
-            // AI updates are handled here.
-            else {
-                
+            else if(gamestate_name == "Regionmap") {
+            
             }
         }
     }
@@ -131,43 +135,19 @@ void SimulationManager::spawnPlayers() {
             }
         }
     
-        this->players.at(current_player).player_colour = team_colours[current_player];
+        this->players.at(current_player).team_colour = team_colours[current_player];
         this->players.at(current_player).addOwnedRegion(claimed_spots.back());
         current_player++;
     }
 
     for(auto player : this->players) {
-        this->world.world_map[player.resources.owned_regions[0]].colour = player.player_colour;
+        this->world.world_map[player.owned_regions[0]].colour = player.team_colour;
     }
 
+    this->players[0].setHuman(true);
     std::cout << "[Simulation Manager]: Starting locations found.\n";
 }
 
-// void SimulationManager::regionmapUpdateTile(Player& player) {    
-//     Regionmap* gamestate = static_cast<Regionmap*>(this->gamestate.getGamestate());
-//     gamestate->controls.addKeyMappingCheck("key_cut_tree", sf::Keyboard::Key::D);    
-//     if(gamestate->controls.isKeyPressed("key_cut_tree")) {
-//         if(gamestate->current_index >= 0 && gamestate->current_index < this->world.getWorldSize()) {
-//             player.resources.wood += TREE_WOOD_HARVEST;
-
-//             Region* region = gamestate->getCurrentRegion();
-//             region->trees.erase(gamestate->current_index);
-//         }
-//     }
-// }
-
-// void SimulationManager::regionmapPlaceBuilding(Player& player) {
-//     Regionmap* gamestate = static_cast<Regionmap*>(this->gamestate.getGamestate());
-//     gamestate->controls.addKeyMapping("key_place_building", sf::Keyboard::Key::B);
-//     if(gamestate->controls.isKeyPressed("key_place_building")) {
-//         if(gamestate->current_index >= 0 && gamestate->current_index < this->world.getWorldSize()) {
-//             if(player.resources.wood >= 10) {
-
-//                 Region* region = gamestate->getCurrentRegion();
-//                 // region->trees.erase(gamestate->current_index);
-
-//                 player.resources.wood -= 10;
-//             } 
-//         }
-//     }
-// }
+Player& SimulationManager::getHumanPlayer() {
+    return this->players[0];
+}

@@ -29,10 +29,11 @@ void Regionmap::initialise() {
     this->zoom_camera    = false;
 
     this->current_index = -1;
+    this->draw_calls    = 0;
 
-    this->zoom = 0;
+    this->zoom = 2;
     this->max_zoom_in  = 0; 
-    this->max_zoom_out = 1;
+    this->max_zoom_out = 3;
     
     this->view_game.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
     this->view_game.setSize(this->manager->window.windowSize());
@@ -62,9 +63,9 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",     sf::IntRect(128, 0, 64, 64 ));
     this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1", sf::IntRect(256, 0, 64, 64 ));
 
-    this->manager->resource.loadTexture("./res/building_templates.png", "building_treecutter",  sf::IntRect(0, 0, 128, 128  ));
-    this->manager->resource.loadTexture("./res/building_templates.png", "building_stonecutter", sf::IntRect(128, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/building_templates.png", "building_house_small", sf::IntRect(0, 128, 64, 64));
+    this->manager->resource.loadTexture("./res/building_templates.png", "building_house_small", sf::IntRect(64, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/building_templates.png", "building_farmland",    sf::IntRect(128, 0, 64, 64));
+    this->manager->resource.loadTexture("./res/building_templates.png", "building_quarry",      sf::IntRect(192, 0, 64, 64));
 }
 
 void Regionmap::update(float time_per_frame) {
@@ -176,7 +177,7 @@ void Regionmap::updateMousePosition() {
 }
 
 void Regionmap::moveCamera() {
-    auto division = this->manager->world.region_settings.tile_size.x + this->manager->world.region_settings.tile_size.y;
+    auto division = this->manager->settings.region_tile_size.x + this->manager->settings.region_tile_size.y;
     auto distance = sf::Vector2f(
         (this->position_pressed.x - this->position_released.x) / division,       
         (this->position_pressed.y - this->position_released.y) / division
@@ -234,17 +235,21 @@ void Regionmap::renderRegion() {
     sf::Vector2f camera_size   = this->view_game.getSize();
     sf::Vector2f camera_centre = this->view_game.getCenter();
     
+    int draw_calls = 0;
     sf::Rect camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
 
     if(this->region != nullptr) {
-        for(int i = 0; i < this->region->map.size(); i++) {
-            const auto& tile = this->region->map[i];
+        
+        int i = 0;
+        for(auto tile_iterator = this->region->map.begin(); tile_iterator != this->region->map.end(); tile_iterator++, i++) {
+            const auto& tile = *tile_iterator;
            
             sf::Rect region_screen_area(tile.getPosition(), tile.getSize());
             if(camera_screen_area.intersects(region_screen_area)) {
                 sf::RenderStates states;
                 states.texture = &this->manager->resource.getTexture(tile.getTextureName());
                 this->manager->window.draw(tile, states);
+                draw_calls++;
             }
 
             const bool tree_exists = this->region->trees.count(i) ? true : false;
@@ -255,31 +260,36 @@ void Regionmap::renderRegion() {
                 if(camera_screen_area.intersects(tree_screen_area)) {
                     sf::RenderStates states;
                     states.texture = &this->manager->resource.getTexture(tree.getTextureName());
-                    this->manager->window.draw(tree, states);            
+                    this->manager->window.draw(tree, states);     
+                    draw_calls++;
                 }
             }
 
             const bool sides_exist = this->region->sides[i].size() > 0 ? true : false;
             if(sides_exist) {
                 for(const auto& side : this->region->sides[i]) {
-                    sf::RenderStates states;
-                    states.texture = &this->manager->resource.getTexture(side.getTextureName());
-                    this->manager->window.draw(side, states);
+                    sf::Rect side_screen_area(side.getPosition(), side.getSize());
+
+                    if(camera_screen_area.intersects(side_screen_area)) {
+                        sf::RenderStates states;
+                        states.texture = &this->manager->resource.getTexture(side.getTextureName());
+                        this->manager->window.draw(side, states);
+                        draw_calls++;
+                    }
                 }
             }
         }
         
-        for(int i = 0; i < this->region->map.size(); i++) {
-            const bool building_exists = this->region->buildings.count(i) ? true : false;
-            if(building_exists) {
-                auto building = this->region->buildings[i];
-
-                sf::RenderStates states;
-                states.texture = &this->manager->resource.getTexture(building.getTextureName());
-                this->manager->window.draw(building, states);
-            }
+        for(auto building_iterator = this->region->buildings.begin(); building_iterator != this->region->buildings.end(); building_iterator++) {
+            Building building = (*building_iterator).second;
+            sf::RenderStates states;
+            states.texture = &this->manager->resource.getTexture(building.getTextureName());
+            this->manager->window.draw(building, states);
+            draw_calls++;
         }
     }
+
+    this->draw_calls = draw_calls;
 }
 
 void Regionmap::setCurrentRegion(int region_index) {
@@ -288,7 +298,7 @@ void Regionmap::setCurrentRegion(int region_index) {
     // Here you can setup what to do when entering a region.
     // For example, centre the camera.
     sf::Vector2f first_tile_position = sf::Vector2f(
-        this->region->map[0].getPosition().x + this->manager->world.region_settings.tile_size.x / 2,
+        this->region->map[0].getPosition().x + this->manager->settings.region_tile_size.x / 2,
         this->region->map[0].getPosition().y
     );
 
@@ -302,9 +312,9 @@ void Regionmap::higlightTile() {
 
     this->current_index = index;
 
-    auto tile_size   = this->manager->world.region_settings.tile_size;
-    auto tile_offset = this->manager->world.region_settings.tile_offset;
-    auto region_size = this->manager->world.region_settings.size;
+    auto tile_size   = this->manager->settings.region_tile_size;
+    auto tile_offset = this->manager->settings.region_tile_offset;
+    auto region_size = sf::Vector2f(this->manager->settings.region_size, this->manager->settings.region_size);
 
     sf::Vector2f position_transformed = this->region->map[index].getPosition();
 
@@ -331,10 +341,13 @@ void Regionmap::drawDebugText() {
     std::string str;
 
     str += "Frames per second: " + std::to_string(this->manager->getFramesPerSecond()) + "\n";
-    str += "Time per frame: "    + std::to_string(this->manager->getTimePerFrame()) + "ms\n";
+    str += "Time per frame: " + std::to_string(this->manager->getTimePerFrame()) + "ms\n";
+    str += "Draw calls: " + std::to_string(this->draw_calls) + "\n";
 
     str += "Index:  " + std::to_string(this->current_index) + "\n";
     str += "Height: " + std::to_string(this->region->map[this->current_index].elevation) + "\n";    
+    
+    str += "\nWood:   " + std::to_string(this->manager->getHumanPlayer().getResourceQuantity(Resource::RESOURCE_WOOD)) + "\n";
 
     text.setString(str);
     text.setFont(this->manager->resource.getFont("garamond"));
@@ -354,18 +367,41 @@ int Regionmap::getCurrentIndex() {
 }
 
 void Regionmap::updateTile() {
-    this->controls.addKeyMappingCheck("key_build_building",  sf::Keyboard::Key::B);
-    this->controls.addKeyMappingCheck("key_remove_building", sf::Keyboard::Key::D);
+    this->controls.addKeyMappingCheck("key_build_building",      sf::Keyboard::Key::B);
+    this->controls.addKeyMappingCheck("key_remove_building",     sf::Keyboard::Key::D);
+    this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
 
-    if(this->controls.isKeyPressed("key_build_building")) {
-        Building building_adjusted        = BUILDING_HOUSE_SMALL;
-        building_adjusted.object_position = this->region->map[this->current_index].getPosition() + sf::Vector2f(0, -building_adjusted.getSize().y / 4 - this->manager->region_settings.tile_size.y / 2);
-        building_adjusted.object_position += sf::Vector2f(-1, 1); // Adjust for strange textures.
+    // Temporary key binds. 
+    // Delete after UI for buildings is made.
+    this->controls.addKeyMappingCheck("key_build_house"   ,   sf::Keyboard::Key::Num2);
+    this->controls.addKeyMappingCheck("key_build_farmland",   sf::Keyboard::Key::Num3);
+    this->controls.addKeyMappingCheck("key_build_quarry",     sf::Keyboard::Key::Num4);
 
-        this->building_manager.placeBuildingCheck(this->current_index, building_adjusted);
+    if(this->controls.isKeyPressed("key_build_house")) {
+        Building building = BUILDING_HOUSE_SMALL;
+        this->building_manager.placeBuildingCheck(this->current_index, building);
+    }
+
+    if(this->controls.isKeyPressed("key_build_farmland")) {
+        Building building = BUILDING_FARMLAND;
+        this->building_manager.placeBuildingCheck(this->current_index, building);
+    }
+
+    if(this->controls.isKeyPressed("key_build_quarry")) {
+        Building building = BUILDING_QUARRY;
+        this->building_manager.placeBuildingCheck(this->current_index, building);
     }
 
     if(this->controls.isKeyPressed("key_remove_building")) {
+        Building building = this->region->buildings[this->current_index]; 
+        this->manager->getHumanPlayer().addResources(building.getBuildingRefund());
         this->building_manager.removeBuilding(this->current_index);
+    }
+
+    if(this->controls.isKeyPressed("key_removeresource_tree")) {
+        if(this->region->trees[this->current_index].exists()) {
+            this->region->trees.erase(this->current_index);
+            this->manager->getHumanPlayer().addResource(Resource::RESOURCE_WOOD, 10);
+        }
     }
 }

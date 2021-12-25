@@ -2,6 +2,8 @@
 #define _PLAYER_HPP_
 
 #include "region.hpp"
+#include "building.hpp"
+#include "resourceCost.hpp"
 
 #include <vector>
 
@@ -24,27 +26,17 @@ namespace iso {
         COLOUR_CYAN
     };
 
-    class PlayerResources {
-        public:
-            PlayerResources();
-            ~PlayerResources();
-
-            std::vector <int> owned_regions; // Indexes of the player owned regions. 
-            int gold;
-            int wood;
-            int food;
-    };
-
     class Player {
         friend class SimulationManager;
+        friend class BuildingManager;
 
         private:
 
         protected:
-            PlayerResources resources;
-
-            bool player_is_human;
-            sf::Color player_colour;
+            ResourceCost      resources;
+            std::vector <int> owned_regions; // Indexes of the player owned regions. 
+            bool              is_human;
+            sf::Color         team_colour;
 
         public:
             Player();
@@ -52,8 +44,14 @@ namespace iso {
 
             void addOwnedRegion(int region_index);
             void removeOwnedRegion(int region_index);
-            void setHuman(bool player_is_human);
+            void setHuman(bool is_human);
             bool isHuman();
+            void addResource(Resource resource, int quantity);
+            void addResources(ResourceCost resource);
+            int  getResourceQuantity(Resource resource);
+            
+            bool isBuildingAffordable(const Building building);
+            void removeBuildingCost(const Building building);
     };
 }
 

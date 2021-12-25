@@ -34,6 +34,7 @@ namespace iso {
             int max_zoom_out;
 
             int current_index;
+            int draw_calls;
         private:
             void handleInput()         override;
             void initialise()          override;

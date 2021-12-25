@@ -26,7 +26,7 @@ namespace iso {
             std::vector <float> m_tree_noise;
 
         private:
-            void generateNoise(noiseSettings& settings, std::vector<float>& container, bool d = false);
+            void generateNoise(noiseSettings& settings, std::vector<float>& container);
             bool is_biome(int index, Biome biome);            
 
             void generateNoiseMap();
@@ -49,11 +49,11 @@ namespace iso {
 
         public:
             worldGenerator();
-            worldGenerator(entropy::resourceManager* resource, WorldSettings& world_settings, RegionSettings& region_settings);
+            worldGenerator(entropy::resourceManager* resource, GenerationSettings& settings);
             ~worldGenerator();
         
             void generateWorld();
-            void    generateRegion(int index, Region& region);
+            void generateRegion(int index, Region& region);
     
             sf::Vector2f tilePositionScreen(int x, int y);
             sf::Vector2f tilePositionScreen(sf::Vector2i grid_position);
@@ -62,8 +62,7 @@ namespace iso {
             int getTileIndex(sf::Vector2f mouse_position, Region& region);
             std::string getTilePixelColour(sf::Vector2i);
 
-            WorldSettings  world_settings;
-            RegionSettings region_settings;
+            GenerationSettings settings;
 
             bool is_arctic       (int index);
             bool is_ocean        (int index);
@@ -76,6 +75,9 @@ namespace iso {
             bool is_desert       (int index);
 
             int getWorldSize();
+            int getRegionSize();
+            int rCalculateIndex(int x, int y);
+            int wCalculateIndex(int x, int y);
         public:
             std::vector <Region> world_map; 
     };
