@@ -187,15 +187,21 @@ void Regionmap::moveCamera() {
     float x_multiplier = 6.0f;
     float y_multiplier = 6.0f;    
 
-    // Check the horizontal and vertical bounds of the screen.
-    // This makes sure that you can not move past the world map.
-    // if(this->view_game.getCenter().x + (distance.x * x_multiplier) < (this->manager->world_settings.size.x * this->manager->world_settings.panel_size.x) - this->view_game.getSize().x / 2.f && this->view_game.getCenter().x + (distance.x * x_multiplier) > 0.f + this->view_game.getSize().x / 2.f) {
-        this->view_game.move(x_multiplier * distance.x, 0.f);
-    // }
+    auto top_tile    = this->region->map[0];
+    auto left_tile   = this->region->map[this->manager->world.getRegionSize() - this->manager->settings.region_size];
+    auto right_tile  = this->region->map[this->manager->settings.region_size - 1];
+    auto bottom_tile = this->region->map[this->manager->world.getRegionSize() - 1];
 
-    // if(this->view_game.getCenter().y + (distance.y * y_multiplier) < (this->manager->world_settings.size.y * this->manager->world_settings.panel_size.y) - this->view_game.getSize().y / 2.f && this->view_game.getCenter().y + (distance.y * y_multiplier) > 0.f + this->view_game.getSize().y / 2.f) {
-        this->view_game.move(0.f, y_multiplier * distance.y);
-    // }
+    const int left_bound   = left_tile.getPosition().x;
+    const int right_bound  = right_tile.getPosition().x + this->manager->settings.region_tile_size.x;
+    const int top_bound    = top_tile.getPosition().y;
+    const int bottom_bound = bottom_tile.getPosition().y + this->manager->settings.region_tile_size.y;
+
+    if(this->view_game.getCenter().x + distance.x * x_multiplier > left_bound - this->view_game.getSize().x / 4 && this->view_game.getCenter().x + distance.x * x_multiplier < right_bound + this->view_game.getSize().x / 4)
+        this->view_game.move(distance.x * x_multiplier, 0);
+
+    if(this->view_game.getCenter().y + distance.y * y_multiplier > top_bound - this->view_game.getSize().y / 4 && this->view_game.getCenter().y + distance.y * y_multiplier < bottom_bound + this->view_game.getSize().y / 4)
+        this->view_game.move(0, distance.y * y_multiplier);
 
     this->move_camera = false;
 }

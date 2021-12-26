@@ -34,8 +34,8 @@ SimulationManager::SimulationManager() {
     settings.region_size                = 100;
     settings.region_tile_size.x         = 64;           
     settings.region_tile_size.y         = 32;           
-    settings.region_tile_offset.x       = 100; 
-    settings.region_tile_offset.y       = 100; 
+    settings.region_tile_offset.x       = 0; 
+    settings.region_tile_offset.y       = 0; 
 
     this->settings = settings;
     // Settings for world generation set.
