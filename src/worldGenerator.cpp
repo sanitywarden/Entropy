@@ -61,7 +61,7 @@ void worldGenerator::generateWorld() {
         }
     }
 
-    // this->generatePoles();
+    this->generatePoles();
 
     // Find and mark coast tiles.
     for(int y = 0; y < this->settings.world_size; y++) {
@@ -196,11 +196,11 @@ void worldGenerator::generatePoles() {
     const float chance   = 1.0f;
     const float modifier = 0.6f;
 
-    for(unsigned int y = 0; y < this->settings.world_size; y++) {
+    for(unsigned int x = 0; x < this->settings.world_size; x++) {
         float pole_chance   = chance;
         float pole_modifier = modifier;
 
-        for(unsigned int x = 0; x < this->settings.world_margin_poles; x++) {
+        for(unsigned int y = 0; y < this->settings.world_margin_poles; y++) {
             const int   index = this->wCalculateIndex(x, y);
             const float random_number1 = (float)rand();
             const float random_number2 = (float)RAND_MAX * pole_chance;
@@ -214,11 +214,11 @@ void worldGenerator::generatePoles() {
         }
     }
 
-    for(unsigned int y = 0; y < this->settings.world_size; y++) { 
+    for(unsigned int x = 0; x < this->settings.world_size; x++) { 
         float pole_chance   = chance;
         float pole_modifier = modifier;
 
-        for(unsigned int x = this->settings.world_size - 1; x > this->settings.world_size - 1 - this->settings.world_margin_poles; x--) {
+        for(unsigned int y = this->settings.world_size - 1; y > this->settings.world_size - 1 - this->settings.world_margin_poles; y--) {
             const int   index = this->wCalculateIndex(x, y);
             const float random_number1 = (float)rand();
             const float random_number2 = (float)RAND_MAX * pole_chance;
