@@ -1,19 +1,23 @@
 #ifndef _ENTROPY_WINDOW_MANAGER_HPP_
 #define _ENTROPY_WINDOW_MANAGER_HPP_
 
+#include <SFML/Graphics.hpp>
 #include <string>
 #include <memory>
 
-#include <SFML/Graphics.hpp>
+
+#include "engineSettings.hpp"
 
 namespace entropy {
     // Window Manager is a class responsible for creating and managing a SFML window.
     class windowManager {
         private:
-            std::shared_ptr <sf::RenderWindow> m_window;
+            Settings m_settings;
 
+            std::shared_ptr <sf::RenderWindow> m_window;
         public:
             windowManager();
+            windowManager(const Settings& settings);
             ~windowManager();
             
             void createFullscreenWindow();

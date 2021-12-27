@@ -34,6 +34,12 @@ namespace entropy {
             // Time per frame time units are in seconds (1ms = 0.001s).
             virtual void render(float time_per_frame) { return; }
 
+            // This function will be called by the engine for a new set gamestate.
+            virtual void gamestateLoad()  { return; }
+            
+            // This function will be called by the engine for the old gamestate, when a new one is set.
+            virtual void gamestateClose() { return; }
+
             // Additional functions that might be helpful to keep gamestates interface clear.
 
             virtual void handleInput()   { return; }

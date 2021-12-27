@@ -4,17 +4,28 @@
 
 using namespace entropy;
 
-windowManager::windowManager() {}
-windowManager::~windowManager() {}
+windowManager::windowManager() {
+
+}
+
+windowManager::windowManager(const Settings& settings) {
+    this->m_settings = settings;
+}
+
+windowManager::~windowManager() {
+
+}
 
 void windowManager::createFullscreenWindow() {
-    std::cout << "[Entropy Engine][Window Manager]: Window created in fullscreen mode.\n";
+    if(this->m_settings.application_debug_mode)
+        std::cout << "[Entropy Engine][Window Manager]: Window created in fullscreen mode.\n";
     
     this->m_window = std::shared_ptr <sf::RenderWindow> (new sf::RenderWindow(sf::VideoMode::getFullscreenModes()[0], "", sf::Style::Fullscreen));
 }
 
 void windowManager::createWindow(sf::Vector2f window_size) {
-    std::cout << "[Entropy Engine][Window Manager]: Window created in custom size mode.\n";
+    if(this->m_settings.application_debug_mode)
+        std::cout << "[Entropy Engine][Window Manager]: Window created in custom size mode.\n";
 
     this->m_window = std::shared_ptr <sf::RenderWindow> (new sf::RenderWindow(sf::VideoMode(window_size.x, window_size.y), ""));
 }

@@ -6,6 +6,12 @@
 using namespace entropy;
 
 Entropy::Entropy() {
+    auto settings = this->settings.userSettings();
+
+    this->resource  = resourceManager(settings);
+    this->gamestate = gamestateManager(settings);
+    this->window    = windowManager(settings);
+    
     if(this->settings.userSettings().window_fullscreen) 
         this->window.createFullscreenWindow();
     
