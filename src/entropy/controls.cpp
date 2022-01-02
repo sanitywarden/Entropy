@@ -38,7 +38,13 @@ bool Controls::checkKeyMappingExists(std::string id) {
 }
 
 bool Controls::isKeyPressed(std::string id) {
-    if(sf::Keyboard::isKeyPressed(this->getKeyMapping(id)))
-        return true;
-    return false;
+    return sf::Keyboard::isKeyPressed(this->getKeyMapping(id));
+}
+
+bool Controls::isLeftMouseButtonPressed() {
+    return sf::Mouse::isButtonPressed(sf::Mouse::Left);
+}
+
+bool Controls::isRightMouseButtonPressed() {
+    return sf::Mouse::isButtonPressed(sf::Mouse::Right);
 }

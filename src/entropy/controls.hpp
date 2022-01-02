@@ -25,6 +25,9 @@ namespace entropy {
             sf::Keyboard::Key getKeyMapping(std::string id);
             bool checkKeyMappingExists(std::string id);
             bool isKeyPressed(std::string id);
+
+            bool isLeftMouseButtonPressed();
+            bool isRightMouseButtonPressed();
     };
 }
 

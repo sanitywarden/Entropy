@@ -1,5 +1,5 @@
-#ifndef _PLAYER_MANAGER_HPP_
-#define _PLAYER_MANAGER_HPP_
+#ifndef _MANAGER_HPP_
+#define _MANAGER_HPP_
 
 #include "entropy/entropy.hpp"
 #include "player.hpp"

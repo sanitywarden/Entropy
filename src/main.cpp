@@ -3,6 +3,6 @@
 int main() {
     static iso::SimulationManager game_manager;
     game_manager.loop();
-    game_manager.exitApplication(1);
+    game_manager.exitApplication(0);
 }
 

@@ -14,6 +14,7 @@ Regionmap::Regionmap(SimulationManager* manager) {
 
     this->initialise();
     this->loadResources();
+    this->createUI();
 }
 
 Regionmap::~Regionmap() {
@@ -45,27 +46,28 @@ void Regionmap::initialise() {
 }
 
 void Regionmap::loadResources() {
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_warm",         sf::IntRect(0, 0, 64, 32   ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_cold",         sf::IntRect(64, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_subtropical",  sf::IntRect(128, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_tropical",     sf::IntRect(192, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_tundra",             sf::IntRect(256, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_arctic",             sf::IntRect(320, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_desert",             sf::IntRect(384, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_ocean",              sf::IntRect(448, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                sf::IntRect(512, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_highlight",          sf::IntRect(0, 288, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction", sf::IntRect(64, 288, 64, 32));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_dirt",        sf::IntRect(0, 32, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_stone",       sf::IntRect(64, 32, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",     sf::IntRect(0, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",     sf::IntRect(64, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",     sf::IntRect(128, 0, 64, 64 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1", sf::IntRect(256, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_warm",                       sf::IntRect(0, 0, 64, 32   ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_cold",                       sf::IntRect(64, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_subtropical",                sf::IntRect(128, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_tropical",                   sf::IntRect(192, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_tundra",                           sf::IntRect(256, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_arctic",                           sf::IntRect(320, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_desert",                           sf::IntRect(384, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_ocean",                            sf::IntRect(448, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                              sf::IntRect(512, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_highlight",                        sf::IntRect(0, 288, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction",               sf::IntRect(64, 288, 64, 32));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_dirt",                      sf::IntRect(0, 32, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_stone",                     sf::IntRect(64, 32, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",               sf::IntRect(0, 0, 64, 64   ));
+    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",               sf::IntRect(64, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",               sf::IntRect(128, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1",           sf::IntRect(256, 0, 64, 64 ));
 
-    this->manager->resource.loadTexture("./res/building_templates.png", "building_house_small", sf::IntRect(64, 0, 64, 64 ));
-    this->manager->resource.loadTexture("./res/building_templates.png", "building_farmland",    sf::IntRect(128, 0, 64, 64));
-    this->manager->resource.loadTexture("./res/building_templates.png", "building_quarry",      sf::IntRect(192, 0, 64, 64));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 0, 64, 64   ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_farmland",        sf::IntRect(64, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_quarry",          sf::IntRect(128, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64 ));
 }
 
 void Regionmap::update(float time_per_frame) {
@@ -74,6 +76,7 @@ void Regionmap::update(float time_per_frame) {
     this->updateCamera();
 
     this->updateTile();
+    this->updateUI();
 }
 
 void Regionmap::render(float time_per_frame) {
@@ -86,7 +89,7 @@ void Regionmap::render(float time_per_frame) {
 
     this->manager->window.getWindow()->setView(this->view_interface);
 
-    this->drawDebugText();
+    this->renderUI();
 
     this->manager->window.getWindow()->display();
 }
@@ -100,9 +103,14 @@ void Regionmap::handleInput() {
             }
 
             case sf::Event::KeyPressed: {
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1)) {
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1))
                     this->manager->gamestate.setGamestate("worldmap");
+
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Tilde)) {
+                    gui::DebugPerformance* widget_performance = static_cast<gui::DebugPerformance*>(this->interface["component_debug_performance"]);
+                    widget_performance->show = !widget_performance->show;
                 }
+
 
                 break;
             }
@@ -342,28 +350,6 @@ void Regionmap::higlightTile() {
     this->manager->window.draw(highlight, states);
 }
 
-void Regionmap::drawDebugText() {
-    sf::Text text;
-    std::string str;
-
-    str += "Frames per second: " + std::to_string(this->manager->getFramesPerSecond()) + "\n";
-    str += "Time per frame: " + std::to_string(this->manager->getTimePerFrame()) + "ms\n";
-    str += "Draw calls: " + std::to_string(this->draw_calls) + "\n";
-
-    str += "Index:  " + std::to_string(this->current_index) + "\n";
-    str += "Height: " + std::to_string(this->region->map[this->current_index].elevation) + "\n";    
-    
-    str += "\nWood:   " + std::to_string(this->manager->getHumanPlayer().getResourceQuantity(Resource::RESOURCE_WOOD)) + "\n";
-
-    text.setString(str);
-    text.setFont(this->manager->resource.getFont("garamond"));
-    text.setCharacterSize(14);
-    text.setFillColor(sf::Color::Black);
-    text.setPosition(0, 0);
-
-    this->manager->window.draw(text);
-}
-
 Region* Regionmap::getCurrentRegion() {
     return this->region;
 }
@@ -410,4 +396,29 @@ void Regionmap::updateTile() {
             this->manager->getHumanPlayer().addResource(Resource::RESOURCE_WOOD, 10);
         }
     }
+}
+
+void Regionmap::createUI() {
+    static gui::WidgetMenuBuilding widget_menu_building(this->manager);
+        widget_menu_building.show = true;
+    this->interface.insert({ widget_menu_building.getWidgetID(), &widget_menu_building });
+
+    static gui::DebugPerformance widget_performance_regionmap(this->manager);
+    this->interface.insert({ widget_performance_regionmap.getWidgetID(), &widget_performance_regionmap });
+}
+
+void Regionmap::renderUI() {
+    for(const auto& pair : this->interface) {
+        auto* page = pair.second;
+        if(page) {
+            if(page->show) {
+                page->updateUI();
+                this->manager->window.draw(*page);   
+            }
+        }
+    }
+}
+
+void Regionmap::updateUI() {
+
 }

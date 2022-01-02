@@ -4,12 +4,11 @@
 #include "entropy/gamestate.hpp"
 #include "entropy/entropy.hpp"
 #include "worldGenerator.hpp"
-#include "gui/base/abstractWidget.hpp"
-#include "gui/base/button.hpp"
-#include "gui/base/widget.hpp"
-#include "gui/base/text.hpp"
 #include "simulationManager.hpp"
 #include "regionmap.hpp"
+
+#include "gui/performance.hpp"
+#include "gui/widgetRegion.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -25,7 +24,7 @@ namespace iso {
             Region             region;
             SimulationManager* manager;
 
-            std::map <std::string, gui::AbstractWidget*> m_interface;
+            std::map <std::string, gui::InterfacePage*> interface;
 
             bool mouse_pressed;
             bool mouse_moved;
@@ -42,11 +41,10 @@ namespace iso {
             int max_zoom_in;
             int max_zoom_out;
 
-            sf::Text debug_text;
-
-            bool draw_debug;
+            bool draw_control_panel;
 
             int current_index;
+            int selected_index;
             int draw_calls;
         private:
             void handleInput()         override;
@@ -64,10 +62,12 @@ namespace iso {
             void highlightPanel();
 
             void renderWorld();
-
-            void createInterface();
-            void updateInterface();
-            void drawInterface();
+            void drawDebugText();
+            
+            void createUI();
+            void updateUI(); 
+            void renderUI();
+            bool intersectsUI();
 
         public:
             Worldmap(SimulationManager* manager);
@@ -77,6 +77,7 @@ namespace iso {
             void render(float time_per_frame) override;
             
             int getCurrentIndex();
+            int getSelectedIndex();
     };
 }
 

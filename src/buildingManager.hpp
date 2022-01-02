@@ -10,9 +10,10 @@ const auto VECTOR1X1         = sf::Vector2f(1, 1);
 const auto BUILDINGSIZE64X64 = sf::Vector2f(64, 64);
 
 namespace iso {
-    const Building BUILDING_HOUSE_SMALL(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_house_small", "building_house_small", VECTOR1X1, ResourceCost(0, 0, 0));
-    const Building BUILDING_FARMLAND   (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_farmland"   , "building_farmland"   , VECTOR1X1, ResourceCost(0, 0, 0));
-    const Building BUILDING_QUARRY     (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_quarry"     , "building_quarry"     , VECTOR1X1, ResourceCost(0, 0, 0));
+    const Building BUILDING_HOUSE_SMALL(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_primitive_house", "building_primitive_house", VECTOR1X1, ResourceCost(0, 0, 0));
+    const Building BUILDING_FARMLAND   (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_farmland"       , "building_farmland"       , VECTOR1X1, ResourceCost(0, 0, 0));
+    const Building BUILDING_QUARRY     (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_quarry"         , "building_quarry"         , VECTOR1X1, ResourceCost(0, 0, 0));
+    const Building BUILDING_WOODCUTTER (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_woodcutter"     , "building_woodcutter"     , VECTOR1X1, ResourceCost(0, 0, 0));
 
     /*  BuildingManager is a tool for placing buildings in the game world.
      *  It does not manage them, update them etc. */

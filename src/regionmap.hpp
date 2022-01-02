@@ -6,7 +6,12 @@
 #include "region.hpp"
 #include "buildingManager.hpp"
 
+#include "gui/widgetMenuBuilding.hpp"
+#include "gui/performance.hpp"
+
 #include <SFML/Graphics.hpp>
+#include <map>
+#include <string>
 
 namespace iso {
     // Gamestate class responsible for management of a single region.
@@ -17,6 +22,8 @@ namespace iso {
             Region*            region;
             SimulationManager* manager;
             BuildingManager    building_manager;
+
+            std::map <std::string, gui::InterfacePage*> interface;
 
             bool mouse_pressed;
             bool mouse_moved;
@@ -46,10 +53,12 @@ namespace iso {
 
             void renderRegion();
             void higlightTile();
-            void drawDebugText();
 
             void updateTile();
 
+            void createUI();
+            void renderUI();
+            void updateUI();
         public: 
             Regionmap();
             Regionmap(SimulationManager* manager);

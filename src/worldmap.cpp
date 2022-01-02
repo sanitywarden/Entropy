@@ -10,7 +10,7 @@ Worldmap::Worldmap(SimulationManager* manager) {
 
     this->initialise();
     this->loadResources();   
-    this->createInterface();
+    this->createUI();
 }        
 
 Worldmap::~Worldmap() {
@@ -25,19 +25,15 @@ void Worldmap::initialise() {
     this->move_camera    = false;
     this->zoom_camera    = false;
 
-    this->current_index = -1;
+    this->current_index  = -1;
+    this->selected_index = -1;
     this->draw_calls    = 0;
 
-    this->draw_debug = true;
+    this->draw_control_panel = false;
 
     this->zoom = 0;
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
-
-    this->debug_text.setFont(this->manager->resource.getFont("garamond"));
-    this->debug_text.setFillColor(sf::Color::Black);
-    this->debug_text.setCharacterSize(16);
-    this->debug_text.setPosition(0, 0);
 
     this->view_game.setCenter(sf::Vector2f(
         this->manager->settings.world_panel_size.x * this->manager->settings.world_size / 2,
@@ -51,29 +47,64 @@ void Worldmap::initialise() {
 
     this->view_interface.setSize(this->manager->window.windowSize());
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
+
+    this->controls.addKeyMappingCheck("key_open_control_panel", sf::Keyboard::Key::Escape);
 }
 
 void Worldmap::loadResources() {
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_highlight",        sf::IntRect(0, 288, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_cold",       sf::IntRect(0, 0, 64, 32   ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_warm",       sf::IntRect(64, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_tropical",   sf::IntRect(128, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_subtropical",sf::IntRect(512, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_ocean",            sf::IntRect(192, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_sea",              sf::IntRect(256, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_arctic",           sf::IntRect(320, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_tundra",           sf::IntRect(384, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_desert",           sf::IntRect(448, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_tl",  sf::IntRect(0, 32, 64, 32  ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_tr",  sf::IntRect(64, 32, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_bl",  sf::IntRect(0, 64, 64, 32  ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_br",  sf::IntRect(64, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_horizontal", sf::IntRect(128, 32, 64, 32));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_vertical",   sf::IntRect(128, 64, 64, 32));
-    this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_cold",     sf::IntRect(0, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_warm",     sf::IntRect(128, 0, 64, 32));
-    this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_tropical", sf::IntRect(64, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_highlight",             sf::IntRect(0, 288, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_cold",            sf::IntRect(0, 0, 64, 32   ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_warm",            sf::IntRect(64, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_tropical",        sf::IntRect(128, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_subtropical",     sf::IntRect(512, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_ocean",                 sf::IntRect(192, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_sea",                   sf::IntRect(256, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_arctic",                sf::IntRect(320, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_tundra",                sf::IntRect(384, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_desert",                sf::IntRect(448, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_tl",       sf::IntRect(0, 32, 64, 32  ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_tr",       sf::IntRect(64, 32, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_bl",       sf::IntRect(0, 64, 64, 32  ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_br",       sf::IntRect(64, 64, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_horizontal",      sf::IntRect(128, 32, 64, 32));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_vertical",        sf::IntRect(128, 64, 64, 32));
+    this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_cold",     sf::IntRect(0, 0, 64, 32   ));
+    this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_warm",     sf::IntRect(128, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_tropical", sf::IntRect(64, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/default.png", "default");
+
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_top_left",                sf::IntRect(0, 0, 64, 64    ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_top_right",               sf::IntRect(128, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_bottom_left",             sf::IntRect(0, 128, 64, 64  ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_bottom_right",            sf::IntRect(128, 128, 64, 64));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_middle",                  sf::IntRect(64, 64, 64, 64  ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_top",                     sf::IntRect(64, 0, 64, 64   ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_left",                    sf::IntRect(0, 64, 64, 64   ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_right",                   sf::IntRect(128, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_bottom",                  sf::IntRect(64, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_small_horizontal_left",   sf::IntRect(0, 192, 64, 64  ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_small_horizontal_right",  sf::IntRect(128, 192, 64, 64));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_small_horizontal_middle", sf::IntRect(64, 192, 64, 64 ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_small_vertical_top",      sf::IntRect(192, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_small_vertical_bottom",   sf::IntRect(192, 128, 64, 64));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_small_vertical_middle",   sf::IntRect(192, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/ui/template.png", "widget_base_single",                  sf::IntRect(192, 192, 64, 64));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_top_left",                sf::IntRect(0, 0, 8, 8      ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_top_right",               sf::IntRect(16, 0, 8, 8     ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_bottom_left",             sf::IntRect(0, 16, 8, 8     ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_bottom_right",            sf::IntRect(16, 16, 8, 8    ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_top",                     sf::IntRect(8, 0, 8, 8      ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_left",                    sf::IntRect(0, 8, 8, 8      ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_right",                   sf::IntRect(16, 8, 8, 8     ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_bottom",                  sf::IntRect(8, 16, 8, 8     ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_middle",                  sf::IntRect(8, 8, 8, 8      ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_small_horizontal_left",   sf::IntRect(0, 24, 8, 8     ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_small_horizontal_right",  sf::IntRect(16, 24, 8, 8    ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_small_horizontal_middle", sf::IntRect(8, 24, 8, 8     ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_small_vertical_top",      sf::IntRect(24, 0, 8, 8     ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_small_vertical_bottom",   sf::IntRect(24, 16, 8, 8    ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_small_vertical_middle",   sf::IntRect(24, 8, 8, 8     ));
+    this->manager->resource.loadTexture("./res/ui/buttons.png",  "button_base_single",                  sf::IntRect(24, 24, 8, 8    ));
 
     this->manager->resource.loadFont("./res/font/proggy.ttf",   "proggy");
     this->manager->resource.loadFont("./res/font/garamond.ttf", "garamond");
@@ -172,8 +203,9 @@ void Worldmap::update(float time_per_frame) {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
-    this->updateInterface();
     this->updateSelectedPanel();
+
+    this->updateUI();
 }
 
 void Worldmap::render(float time_per_frame) {
@@ -186,7 +218,7 @@ void Worldmap::render(float time_per_frame) {
 
     this->manager->window.getWindow()->setView(this->view_interface);
 
-    this->drawInterface();
+    this->renderUI();
 
     this->manager->window.getWindow()->setView(this->view_game);
     this->manager->window.display();
@@ -201,16 +233,9 @@ void Worldmap::handleInput() {
             }
 
             case sf::Event::MouseButtonPressed: {
-
                 if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
                     this->mouse_pressed    = true;
                     this->position_pressed = this->mouse_position_window;
-                }
-
-                if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-                    if(this->current_index != -1) {
-                        this->current_index = -1;
-                    }
                 }
 
                 break;
@@ -226,7 +251,14 @@ void Worldmap::handleInput() {
             case sf::Event::KeyPressed: {
                 const float modifier = 2.0f;
 
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1))   this->draw_debug = !this->draw_debug;
+                if(this->controls.isKeyPressed("key_open_control_panel"))
+                    this->draw_control_panel = !this->draw_control_panel;
+
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Tilde)) {
+                    gui::DebugPerformance* widget_performance = static_cast<gui::DebugPerformance*>(this->interface["component_debug_performance"]);
+                    widget_performance->show = !widget_performance->show;
+                }  
+                
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))      this->manager->world.generateWorld();
                 
                 if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
@@ -324,27 +356,26 @@ void Worldmap::renderWorld() {
 }
 
 void Worldmap::selectPanel() {
-    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag) {
+    if(this->controls.isLeftMouseButtonPressed() && !this->intersectsUI() && !this->mouse_moved && !this->mouse_drag) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
             this->mouse_position_window.y / this->manager->settings.world_panel_size.y
         );
 
         const int index = panel_grid_position.y * this->manager->settings.world_size + panel_grid_position.x;
-        this->current_index = index;
+        this->selected_index = index;
+
+        gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
+            widget_region->show = true;
     }
 }
 
 void Worldmap::unselectPanel() {
-    if(this->mouse_pressed && !this->mouse_moved && !this->mouse_drag && this->current_index != -1) {
-        sf::Vector2i panel_grid_position = sf::Vector2i(
-            this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
-            this->mouse_position_window.y / this->manager->settings.world_panel_size.y
-        );
-
-        const int index = panel_grid_position.y * this->manager->settings.world_size + panel_grid_position.x;
-        if(this->current_index != index) 
-            this->current_index = -1;
+    if(this->controls.isRightMouseButtonPressed() && !this->mouse_moved && !this->mouse_drag && this->selected_index != -1) {
+        this->selected_index = -1;
+        
+        gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
+            widget_region->show = false;
     }
 }
 
@@ -372,12 +403,15 @@ void Worldmap::drawSelectedPanel() {
 }
 
 void Worldmap::updateSelectedPanel() {
-    if(this->event.type == sf::Event::MouseButtonPressed) {
-        if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-            this->selectPanel();
-            this->unselectPanel();
-        }
-    }
+    sf::Vector2i tile_grid = sf::Vector2i(
+        this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
+        this->mouse_position_window.y / this->manager->settings.world_panel_size.y
+    );
+    
+    this->current_index = tile_grid.y * this->manager->settings.world_size + tile_grid.x;
+
+    this->selectPanel();
+    this->unselectPanel();
 }
 
 void Worldmap::highlightPanel() {
@@ -409,59 +443,38 @@ void Worldmap::highlightPanel() {
     this->manager->window.draw(highlight, states);
 }
 
-void Worldmap::createInterface() {    
-    static gui::Button button1;
-    button1.setWidgetSize(sf::Vector2f(80, 30));
-    button1.setWidgetPosition(sf::Vector2f(5, 10));
-    button1.setWidgetColour(sf::Color(50, 80, 130));
-    button1.setWidgetID("button_enter_region");
-    
-    static gui::Widget widget1;
-    widget1.setWidgetSize(sf::Vector2f(90, 50));
-    widget1.setWidgetPosition(sf::Vector2f(0, 0));
-    widget1.setWidgetColour(sf::Color(0, 0, 0, 191));
-    widget1.attachComponent(&button1, button1.getWidgetID());
-    
-    static gui::Label label1(&button1, "Visit region", this->manager->resource.getFont("garamond"), 12);
-    label1.align(gui::Alignment::ALIGNMENT_CENTRED);
-    button1.setTextComponent(label1);
-    
-    this->m_interface.insert({ "widget", &widget1 });
+void Worldmap::createUI() {
+    static gui::WidgetRegion widget_region(this->manager);
+    this->interface.insert({ widget_region.getWidgetID(), &widget_region });
+
+    static gui::DebugPerformance widget_performance_worldmap(this->manager);
+    this->interface.insert({ widget_performance_worldmap.getWidgetID(), &widget_performance_worldmap });
 }
 
-void Worldmap::updateInterface() {
-    std::string debug_text;
-    
-    auto panel_grid_position = sf::Vector2i(
-        this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
-        this->mouse_position_window.y / this->manager->settings.world_panel_size.y
-    );
+void Worldmap::renderUI() {
+    for(const auto& pair : this->interface) {
+        auto* page = pair.second;
+        if(page) {
+            if(page->show) {
+                page->updateUI();
+                this->manager->window.draw(*page);   
+            }
+        }
+    }
+}
 
-    const int panel_index = panel_grid_position.y * this->manager->settings.world_size + panel_grid_position.x;
-    auto& panel = this->manager->world.world_map[panel_index];
+void Worldmap::updateUI() {
+    gui::WidgetRegion* widget_region = (static_cast<gui::WidgetRegion*>(this->interface.at("component_widget_region")));
+    gui::Button*       button_travel = (static_cast<gui::Button*>(widget_region->getComponent("button_travel")));
 
-    debug_text += "Frames per second: " + std::to_string(this->manager->getFramesPerSecond()) + "\n";
-    debug_text += "Time per frame: "    + std::to_string(this->manager->getTimePerFrame()) + "ms\n";
-    debug_text += "Draw calls: "        + std::to_string(this->draw_calls) + "\n";
-
-    debug_text += "Index: " + std::to_string(panel_index) + "\n";
-    debug_text += "Biome: " + panel.biome.biome_name + "\n";
-
-    if(this->current_index != -1)
-        debug_text += "\nSelected index: " + std::to_string(this->current_index) + "\n";
-
-    this->debug_text.setString(debug_text);
-
-    auto* widget = (gui::Widget*)this->m_interface["widget"];
-    gui::Button& button1 = *(gui::Button*)(&widget->getComponentByName("button_enter_region"));
-
-    if(button1.containsPoint(this->mouse_position_interface) && this->mouse_pressed) {        
-        auto& region = this->manager->world.world_map[this->current_index]; 
+    if(this->selected_index != -1 && this->controls.isLeftMouseButtonPressed() && button_travel->containsPoint(this->mouse_position_interface)) {
+        Region& region = this->manager->world.world_map[this->selected_index]; 
 
         // You check for these things here to avoid calling functions responsible for world generation.
-        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name) {
+        // Biomes: arctic, ocean and sea do not have planned content.
+        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
             std::cout << "[Worldmap][Button Visit Region]: Requested to generate a region not meant for visiting.\n";
-            this->current_index = -1;
+            this->selected_index = -1;
             return;
         }
 
@@ -486,24 +499,32 @@ void Worldmap::updateInterface() {
 
         // You have to generate the region first, because setCurrentRegion() depends on it being generated.
         if(!region.visited)
-            this->manager->world.generateRegion(this->current_index, region);
+            this->manager->world.generateRegion(this->selected_index, region);
 
-        regionmap->setCurrentRegion(this->current_index);
+        regionmap->setCurrentRegion(this->selected_index);
         this->manager->gamestate.setGamestate("regionmap");
     }
-
-    // Rest of the updates.
-}
-
-void Worldmap::drawInterface() {
-    this->manager->window.draw(this->debug_text);
     
-    if(this->current_index != -1 && this->draw_debug) {
-        gui::Widget* widget = (gui::Widget*)this->m_interface["widget"];
-        this->manager->window.draw(*widget);
-    }
+    // Rest of the updates.
 }
 
 int Worldmap::getCurrentIndex() {
     return this->current_index;
+}
+
+int Worldmap::getSelectedIndex() {
+    return this->selected_index;
+}
+
+bool Worldmap::intersectsUI() {
+    for(const auto& pair : this->interface) {
+        const auto* component = pair.second;
+
+        if(component) {
+            if(component->intersectsUI(this->mouse_position_interface))
+                return true;
+        }
+    }
+    
+    return false;
 }
