@@ -72,6 +72,7 @@ bool AbstractWidget::attached() const {
     return (this->m_parent) ? true : false; 
 }
 
+/*
 sf::Vector2f AbstractWidget::getFinalPosition(const AbstractWidget* parent) const {
     sf::Vector2f final_position = parent
         ? parent->getWidgetPosition()
@@ -82,6 +83,7 @@ sf::Vector2f AbstractWidget::getFinalPosition(const AbstractWidget* parent) cons
 
     return final_position;
 }
+*/
 
 bool AbstractWidget::containsPoint(sf::Vector2f point) const {
     auto top_left     = this->getWidgetPosition();

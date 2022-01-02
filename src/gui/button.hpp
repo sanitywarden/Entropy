@@ -14,9 +14,6 @@ namespace gui {
         private:    
             iso::SimulationManager* manager;
 
-        protected:
-            std::string m_data;
-
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             std::string getBlockTexture(int x, int y, sf::Vector2i dimensions) const override;
@@ -24,6 +21,8 @@ namespace gui {
             Button();
             Button(iso::SimulationManager* manager, sf::Vector2i dimensions, std::string label);
             ~Button();
+
+            Label label;
     };
 }
 

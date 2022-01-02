@@ -12,11 +12,11 @@ Button::Button() {
 
 Button::Button(SimulationManager* manager, sf::Vector2i dimensions, std::string label) {
     this->manager      = manager;
-    this->m_data       = label;
     this->m_dimensions = dimensions;
     this->m_blocks.resize(dimensions.x * dimensions.y);
 
     this->setWidgetSize(dimensions.x * 8, dimensions.y * 8);
+    this->label = Label(this->manager, label);
 }
 
 Button::~Button() {
@@ -24,7 +24,7 @@ Button::~Button() {
 } 
 
 void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    auto widget_position = this->getFinalPosition(this);
+    auto widget_position = this->getWidgetPosition();
 
     for(int x = 0; x < this->m_dimensions.x; x++) {
         for(int y = 0; y < this->m_dimensions.y; y++) {
@@ -43,11 +43,8 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         }
     }
 
-    Label label(this->manager, this->m_data);
-    label.setWidgetPosition(widget_position);
-    label.setParent(this);
-    label.align(Alignment::ALIGNMENT_CENTRED, widget_position, this->getWidgetSize());
-    target.draw(label);
+    this->label.align(Alignment::ALIGNMENT_CENTRED, widget_position, this->getWidgetSize());
+    target.draw(this->label);
 }
 
 std::string Button::getBlockTexture(int x, int y, sf::Vector2i dimensions) const {

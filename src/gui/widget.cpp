@@ -31,10 +31,8 @@ Widget::~Widget() {
 }
 
 void Widget::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    auto widget_position = this->isAdjustable()
-        ? this->getFinalPosition(this)
-        : this->getWidgetPosition();
-
+    auto widget_position = this->getWidgetPosition();
+    
     // Draw the blocks that make up the foundation of the interface.
     // These are not custom elements such as text or images.
     for(int x = 0; x < this->m_dimensions.x; x++) {

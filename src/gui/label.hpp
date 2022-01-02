@@ -32,11 +32,13 @@ namespace gui {
             sf::Text    m_text;
         public:
             Label();
+            Label(iso::SimulationManager* manager);
             Label(iso::SimulationManager* manager, std::string data);
             ~Label();
 
             // Align the text within it's parent.
             void align(Alignment alignment, sf::Vector2f parent_position, sf::Vector2f parent_size, sf::Vector2f offset = sf::Vector2f(0, 0));
+            void setString(std::string data);
             sf::Text& label();
     };
 }

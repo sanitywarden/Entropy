@@ -50,7 +50,8 @@ namespace gui {
             virtual bool containsPoint(sf::Vector2f point) const;
 
             /* Adjust the position for each parent of a high-level UI. */
-            sf::Vector2f getFinalPosition(const AbstractWidget* parent) const;
+            /* TODO: The idea is good, a universal function for positioning the UI, but this does not work. Create something that will.
+            sf::Vector2f getFinalPosition(const AbstractWidget* parent) const; */
     };
 }
 

@@ -16,12 +16,17 @@ Label::Label(SimulationManager* manager, std::string data) {
     this->m_data  = data;
 }
 
+Label::Label(SimulationManager* manager) {
+    this->manager = manager;
+}
+
 Label::~Label() {
     
 }
 
 void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    this->m_text.setCharacterSize(12);
+    this->m_text.setPosition(this->getWidgetPosition());
+    this->m_text.setCharacterSize(14);
     this->m_text.setFillColor(sf::Color::Black);
     this->m_text.setFont(this->manager->resource.getFont("garamond"));
     this->m_text.setString(this->m_data);
@@ -56,3 +61,6 @@ sf::Text& Label::label() {
     return this->m_text;
 }
 
+void Label::setString(std::string data) {
+    this->m_data = data;
+}
