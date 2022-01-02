@@ -41,3 +41,7 @@ void ImageHolder::draw(sf::RenderTarget& target, sf::RenderStates states) const 
     states.texture = &this->manager->resource.getTexture(this->texture_name);
     target.draw(image, states);
 }
+
+std::string ImageHolder::getTextureName() {
+    return this->texture_name;
+}

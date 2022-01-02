@@ -18,6 +18,8 @@ namespace gui {
             ImageHolder();
             ImageHolder(iso::SimulationManager* manager, std::string texture_name);
             ~ImageHolder();
+
+            std::string getTextureName();
     };
 }
 

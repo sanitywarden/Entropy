@@ -25,7 +25,9 @@ namespace iso {
 
             /* Get the refund of the building (when the building is destroyed). */
             const ResourceCost getBuildingRefund() const;
-            
+
+            bool operator == (const Building& building);      
+            bool operator != (const Building& building);      
     };
 }
 

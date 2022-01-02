@@ -1,4 +1,5 @@
 #include "widgetMenuBuilding.hpp"
+#include "regionmap.hpp"
 
 #include <iostream>
 
@@ -13,6 +14,8 @@ WidgetMenuBuilding::WidgetMenuBuilding() {
 WidgetMenuBuilding::WidgetMenuBuilding(SimulationManager* manager) : InterfacePage(manager) {
     this->setWidgetID("component_widget_menu_building");
     this->createUI();
+
+    this->last_selected_building = "building_empty";
 }
 
 WidgetMenuBuilding::~WidgetMenuBuilding() {
@@ -45,10 +48,16 @@ void WidgetMenuBuilding::createUI() {
         image_building_farm.setWidgetSize(64, 64);
         image_building_farm.setWidgetPosition(widget_position + sf::Vector2f(128, 0));
 
-    this->interface.insert({ widget_body.getWidgetID()          , &widget_body           });
-    this->interface.insert({ image_building_house.getWidgetID() , &image_building_house  });
-    this->interface.insert({ image_building_farm.getWidgetID()  , &image_building_farm   });
-    this->interface.insert({ image_building_quarry.getWidgetID(), &image_building_quarry });
+    static ImageHolder image_building_woodcutter(this->manager, "building_woodcutter");
+        image_building_woodcutter.setWidgetID("imageholder_building_woodcutter");
+        image_building_woodcutter.setWidgetSize(64, 64);
+        image_building_woodcutter.setWidgetPosition(widget_position + sf::Vector2f(192, 0));
+
+    this->interface.insert({ widget_body.getWidgetID()              , &widget_body               });
+    this->interface.insert({ image_building_house.getWidgetID()     , &image_building_house      });
+    this->interface.insert({ image_building_farm.getWidgetID()      , &image_building_farm       });
+    this->interface.insert({ image_building_quarry.getWidgetID()    , &image_building_quarry     });
+    this->interface.insert({ image_building_woodcutter.getWidgetID(), &image_building_woodcutter });
 }
 
 void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -73,4 +82,43 @@ void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states)
     auto* image3 = static_cast<ImageHolder*>(this->interface.at("imageholder_building_quarry"));
     if(image3)
         target.draw(*image3);
+
+    auto* image4 = static_cast<ImageHolder*>(this->interface.at("imageholder_building_woodcutter"));
+    if(image4)
+        target.draw(*image4);
+}
+
+/* Returns the texture name of the image under mouse position. 
+ * Returns "building_empty" if no image is there. */
+void WidgetMenuBuilding::findBuilding() {
+    auto* gamestate = this->manager->gamestate.getGamestate(); 
+    auto* regionmap = static_cast<Regionmap*>(gamestate);
+    auto mouse_position = regionmap->getMousePositionInterface();
+
+    for(const auto& pair : this->interface) {
+        auto* component = pair.second;
+        if(component) {
+            if(component->getWidgetID() != "widget_menu_building") {
+                if(component->containsPoint(mouse_position) && gamestate->controls.isLeftMouseButtonPressed()) {
+                    auto* image_holder = static_cast<ImageHolder*>(component);
+                    auto  texture_name = image_holder->getTextureName();
+                    this->last_selected_building = texture_name;
+                }
+            }
+        }
+    }
+}
+
+void WidgetMenuBuilding::updateUI() {
+    this->findBuilding();
+}
+
+Building WidgetMenuBuilding::getBuilding() {
+    const std::string& building_name = this->last_selected_building;
+    for(int index = 0; index < BUILDING_LOOKUP_TABLE.size(); index++) {
+        auto building = BUILDING_LOOKUP_TABLE[index];
+
+        if(building_name == building.getName())
+            return building;
+    }
 }

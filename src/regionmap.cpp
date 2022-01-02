@@ -363,24 +363,9 @@ void Regionmap::updateTile() {
     this->controls.addKeyMappingCheck("key_remove_building",     sf::Keyboard::Key::D);
     this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
 
-    // Temporary key binds. 
-    // Delete after UI for buildings is made.
-    this->controls.addKeyMappingCheck("key_build_house"   ,   sf::Keyboard::Key::Num2);
-    this->controls.addKeyMappingCheck("key_build_farmland",   sf::Keyboard::Key::Num3);
-    this->controls.addKeyMappingCheck("key_build_quarry",     sf::Keyboard::Key::Num4);
-
-    if(this->controls.isKeyPressed("key_build_house")) {
-        Building building = BUILDING_HOUSE_SMALL;
-        this->building_manager.placeBuildingCheck(this->current_index, building);
-    }
-
-    if(this->controls.isKeyPressed("key_build_farmland")) {
-        Building building = BUILDING_FARMLAND;
-        this->building_manager.placeBuildingCheck(this->current_index, building);
-    }
-
-    if(this->controls.isKeyPressed("key_build_quarry")) {
-        Building building = BUILDING_QUARRY;
+    auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
+    if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.isLeftMouseButtonPressed() && !intersectsUI() && !this->mouse_drag) {
+        Building building = building_menu->getBuilding();
         this->building_manager.placeBuildingCheck(this->current_index, building);
     }
 
@@ -421,4 +406,17 @@ void Regionmap::renderUI() {
 
 void Regionmap::updateUI() {
 
+}
+
+bool Regionmap::intersectsUI() {
+    for(const auto& pair : this->interface) {
+        const auto* component = pair.second;
+
+        if(component) {
+            if(component->intersectsUI(this->mouse_position_interface))
+                return true;
+        }
+    }
+    
+    return false;
 }

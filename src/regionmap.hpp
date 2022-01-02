@@ -59,6 +59,7 @@ namespace iso {
             void createUI();
             void renderUI();
             void updateUI();
+            bool intersectsUI();
         public: 
             Regionmap();
             Regionmap(SimulationManager* manager);

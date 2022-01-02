@@ -2,18 +2,25 @@
 #define _GUI_WIDGET_MENU_BUILDING_HPP_
 
 #include "gui/interfacePage.hpp"
+#include "building.hpp"
+#include "buildingManager.hpp"
 
 namespace gui {
     class WidgetMenuBuilding : public InterfacePage {
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             void createUI() override;
+            void findBuilding();
+        private:
+            std::string last_selected_building;
+        
         public:
             WidgetMenuBuilding();
             WidgetMenuBuilding(iso::SimulationManager* manager);
             ~WidgetMenuBuilding();
 
-            // void updateUI() const override;
+            void updateUI() override;
+            iso::Building getBuilding();
     };
 }
 

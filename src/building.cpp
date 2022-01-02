@@ -35,3 +35,11 @@ const ResourceCost Building::getBuildingRefund() const {
         this->building_cost.gold  * 0.9f
     );
 }
+
+bool Building::operator== (const Building& building) {
+    return this->object_name == building.getName();
+}
+
+bool Building::operator!= (const Building& building) {
+    return !(*this == building);  
+}
