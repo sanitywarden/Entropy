@@ -1,1 +1,1 @@
-app.bat && start ./bin/entropy.exe
+ap.bat && start ./bin/entropy.exe
