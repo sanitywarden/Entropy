@@ -1,0 +1,1 @@
+g++ ./src/*.cpp ./src/entropy/*.cpp ./src/gui/*.cpp -o ./bin/entropy.exe -fpermissive -L./lib/SFML/ -DSFML_STATIC -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lgdi32 -lwinmm -lopengl32 -lfreetype -I./src/ -I./src/entropy -I./src/gui
