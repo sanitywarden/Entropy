@@ -37,7 +37,10 @@ void DebugPerformance::updateUI() {
     /*  Current gamestate.
      *  Check what gamestate is it and display adequate data. */
     auto* gamestate = this->manager->gamestate.getGamestate();
-    std::string gamestate_id = gamestate->getStateID();
+    std::string gamestate_id = gamestate->state_id;
+    
+    data += "Mouse position:  " + std::to_string((int)gamestate->mouse_position_window.x)    + " / " + std::to_string((int)gamestate->mouse_position_window.y)    + "\n"; 
+    data += "Mouse interface: " + std::to_string((int)gamestate->mouse_position_interface.x) + " / " + std::to_string((int)gamestate->mouse_position_interface.y) + "\n"; 
 
     if(gamestate_id == "Worldmap") {
         auto* worldmap = static_cast<Worldmap*>(gamestate);

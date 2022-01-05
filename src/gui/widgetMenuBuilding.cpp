@@ -93,13 +93,13 @@ void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states)
 void WidgetMenuBuilding::findBuilding() {
     auto* gamestate = this->manager->gamestate.getGamestate(); 
     auto* regionmap = static_cast<Regionmap*>(gamestate);
-    auto mouse_position = regionmap->getMousePositionInterface();
+    auto mouse_position = regionmap->mouse_position_interface;
 
     for(const auto& pair : this->interface) {
         auto* component = pair.second;
         if(component) {
             if(component->getWidgetID() != "widget_menu_building") {
-                if(component->containsPoint(mouse_position) && gamestate->controls.isLeftMouseButtonPressed()) {
+                if(component->containsPoint(mouse_position) && gamestate->controls.mouseLeftPressed()) {
                     auto* image_holder = static_cast<ImageHolder*>(component);
                     auto  texture_name = image_holder->getTextureName();
                     this->last_selected_building = texture_name;

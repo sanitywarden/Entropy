@@ -10,13 +10,11 @@ Button::Button() {
     std::cout << "[GUI][Button]: Simulation manager is a nullptr.\n";
 }
 
-Button::Button(SimulationManager* manager, sf::Vector2i dimensions, std::string label) {
+Button::Button(SimulationManager* manager, sf::Vector2i dimensions, std::string data) : label(manager, data) {
     this->manager      = manager;
     this->m_dimensions = dimensions;
     this->m_blocks.resize(dimensions.x * dimensions.y);
-
     this->setWidgetSize(dimensions.x * 8, dimensions.y * 8);
-    this->label = Label(this->manager, label);
 }
 
 Button::~Button() {
@@ -24,8 +22,10 @@ Button::~Button() {
 } 
 
 void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    auto widget_position = this->getWidgetPosition();
+    if(!this->show)
+        return;
 
+    auto widget_position = this->getWidgetPosition();
     for(int x = 0; x < this->m_dimensions.x; x++) {
         for(int y = 0; y < this->m_dimensions.y; y++) {
             const int index = y * this->m_dimensions.x + x;
@@ -43,8 +43,10 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         }
     }
 
-    this->label.align(Alignment::ALIGNMENT_CENTRED, widget_position, this->getWidgetSize());
-    target.draw(this->label);
+    if(this->label.show) {
+        this->label.align(Alignment::ALIGNMENT_CENTRED, widget_position, this->getWidgetSize());
+        target.draw(this->label);
+    }
 }
 
 std::string Button::getBlockTexture(int x, int y, sf::Vector2i dimensions) const {

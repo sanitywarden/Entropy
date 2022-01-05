@@ -20,7 +20,7 @@ namespace iso {
     class Worldmap : public entropy::Gamestate {
         friend class SimulationManager;
 
-        private:
+        public:
             Region             region;
             SimulationManager* manager;
 
@@ -29,8 +29,6 @@ namespace iso {
             bool mouse_pressed;
             bool mouse_moved;
             bool mouse_drag;
-
-            bool mouse_wheel_up;
             bool move_camera;
             bool zoom_camera;
 
@@ -50,10 +48,11 @@ namespace iso {
             void handleInput()         override;
             void initialise()          override;
             void loadResources()       override;
-            void updateMousePosition() override;
+            // void updateMousePosition() override;
             void moveCamera()          override;
             void zoomCamera()          override;
             void updateCamera()        override;
+            void gamestateLoad()       override;
 
             void selectPanel();
             void unselectPanel();
@@ -73,8 +72,8 @@ namespace iso {
             Worldmap(SimulationManager* manager);
             ~Worldmap();
             
-            void update(float time_per_frame) override;
-            void render(float time_per_frame) override;
+            void update(float delta_time) override;
+            void render(float delta_time) override;
             
             int getCurrentIndex();
             int getSelectedIndex();

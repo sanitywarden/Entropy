@@ -40,14 +40,17 @@ SimulationManager::SimulationManager() {
     this->settings = settings;
     // Settings for world generation set.
 
+    this->window.setTitle("Entropy by Vivit");
+
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
-    this->gamestate.setGamestate("worldmap");
 
     this->world = worldGenerator(&this->resource, this->settings);
     this->world.generateWorld();
-
+    
     this->spawnPlayers();
+
+    this->gamestate.setGamestate("worldmap");
 }
 
 SimulationManager::~SimulationManager() {
@@ -59,7 +62,7 @@ void SimulationManager::loop() {
     const sf::Time one_second = sf::seconds(1.0f);
     
     // Frames per second.
-    uint16_t updates = 0;
+    int updates = 0;
 
     while(this->window.open()) {
         if(this->m_time_since_start.asMilliseconds() < one_second.asMilliseconds()) {
@@ -68,24 +71,24 @@ void SimulationManager::loop() {
             this->m_time_since_start = this->m_measurement_clock.getElapsedTime();
             updates++;
 
-            this->internalLoop(delta_time); 
+            /* Delta time is saved as milliseconds, convert that to seconds.
+             * 1 ms -> 0.001s. */
+            const float delta_time_s = delta_time / 1000;
+            this->internalLoop(delta_time_s); 
         }
 
         else {
             this->m_frames_per_second = updates;
             this->m_time_per_frame    = (float)this->m_time_since_start.asMilliseconds() / (float)this->m_frames_per_second;
 
-            this->m_measurement_clock = sf::Clock();
-            this->m_time_since_start  = sf::Time::Zero;
+            this->m_measurement_clock.restart();
+            this->m_time_since_start = sf::Time::Zero;
             updates = 0;
         }
     }
 }
 
 void SimulationManager::internalLoop(float delta_time) {
-    // Write this as if it was for singular use.
-    // It is placed inside a loop that runs the application.
-
     entropy::Gamestate* gamestate = this->gamestate.getGamestate();
     if(gamestate == nullptr) {
         std::cout << "[Simulation Manager]: Gamestate is a nullptr.\n";
@@ -96,7 +99,7 @@ void SimulationManager::internalLoop(float delta_time) {
     gamestate->update(delta_time);
     gamestate->render(delta_time);
 
-    const std::string gamestate_name = gamestate->getStateID();
+    const std::string gamestate_name = gamestate->state_id;
     for(auto& player : this->players) {
         // Player updates are tied to gamestate updates.
         if(player.isHuman())
@@ -118,7 +121,7 @@ void SimulationManager::internalLoop(float delta_time) {
 void SimulationManager::spawnPlayers() {    
     std::srand(time(0));
 
-    const int number_of_players = team_colours.size();
+    const int number_of_players = TEAM_COLOURS.size();
     this->players.resize(number_of_players);
     std::cout << "[Simulation Manager]: Manager will prepare " << number_of_players << " starting locations.\n";
     std::vector <int> claimed_spots(number_of_players); // Storage for already claimed spots, these will be the capitals of player countries.
@@ -126,26 +129,25 @@ void SimulationManager::spawnPlayers() {
     while(current_player != number_of_players) {
         bool spot_found = false;
         while(!spot_found) {
-            int index = std::rand() % this->world.getWorldSize();
-
+            const int index = std::rand() % this->world.getWorldSize();
             if(!this->world.is_arctic(index) && !this->world.is_ocean(index) && !this->world.is_sea(index)) {
                 claimed_spots.push_back(index);
                 spot_found = true;
                 break;
             }
         }
-    
-        this->players.at(current_player).team_colour = team_colours[current_player];
+        
+        this->players.at(current_player).team_colour = TEAM_COLOURS[current_player];
         this->players.at(current_player).addOwnedRegion(claimed_spots.back());
         current_player++;
     }
 
-    for(auto player : this->players) {
+    for(auto& player : this->players) {
         this->world.world_map[player.owned_regions[0]].colour = player.team_colour;
     }
 
     this->players[0].setHuman(true);
-    std::cout << "[Simulation Manager]: Starting locations found.\n";
+    std::cout << "[Simulation Manager]: Starting locations found.\n";    
 }
 
 Player& SimulationManager::getHumanPlayer() {

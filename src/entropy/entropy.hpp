@@ -18,22 +18,23 @@ namespace entropy {
         protected:
             sf::Clock m_measurement_clock;
             sf::Time  m_time_since_start;
-            uint16_t  m_frames_per_second;
-            uint32_t  m_time_per_frame;
-
+            int       m_frames_per_second;
+            int       m_time_per_frame;
         public:
             Entropy();
             ~Entropy();
             
-            entropy::resourceManager     resource;
-            entropy::gamestateManager    gamestate;
-            entropy::windowManager       window;
-            entropy::applicationSettings settings;
+            resourceManager     resource;
+            gamestateManager    gamestate;
+            windowManager       window;
+            applicationSettings settings;
 
             virtual void loop();
-            uint16_t getFramesPerSecond();
-            uint32_t getTimePerFrame();
+            int getFramesPerSecond();
+            int getTimePerFrame();
             void exitApplication(int code);
+
+            
     };
 }
 

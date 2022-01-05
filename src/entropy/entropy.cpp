@@ -18,7 +18,7 @@ Entropy::Entropy() {
     else 
         this->window.createWindow(this->settings.userSettings().window_size);
 
-    this->window.setTitle("Entropy");
+    this->window.setTitle("Entropy Application");
     this->window.setVsync(this->settings.userSettings().window_vsync);
     this->window.setMaxFramerate(this->settings.userSettings().window_refresh_rate);
 
@@ -35,7 +35,7 @@ void Entropy::loop() {
     const sf::Time one_second = sf::seconds(1.0f);
     
     // Frames per second.
-    uint16_t updates = 0;
+    int updates = 0;
 
     while(this->window.open()) {
         if(this->m_time_since_start.asMilliseconds() < one_second.asMilliseconds()) {
@@ -44,29 +44,41 @@ void Entropy::loop() {
             this->m_time_since_start = this->m_measurement_clock.getElapsedTime();
             updates++;
 
+            /* Delta time is saved as milliseconds, convert that to seconds.
+             * 1ms -> 0.001s. */
+            const float delta_time_s = delta_time / 1000;
+
             Gamestate* gamestate = this->gamestate.getGamestate();
-            if(gamestate != nullptr) {
-                gamestate->update(delta_time);
-                gamestate->render(delta_time);
+            if(gamestate == nullptr) {
+                std::cout << "[Entropy Engine]: Current gamestate is a nullptr.\n";
+                return;
             }
+
+            if(gamestate->engine == nullptr) {
+                std::cout << "[Entropy Engine] Current gamestate created without engine.\n";
+                return;
+            }
+
+            gamestate->update(delta_time_s);
+            gamestate->render(delta_time_s);
         }
 
         else {
             this->m_frames_per_second = updates;
             this->m_time_per_frame    = (float)this->m_time_since_start.asMilliseconds() / (float)this->m_frames_per_second;
 
-            this->m_measurement_clock = sf::Clock();
-            this->m_time_since_start  = sf::Time::Zero;
+            this->m_measurement_clock.restart();
+            this->m_time_since_start = sf::Time::Zero;
             updates = 0;
         }
     }
 }
 
-uint16_t Entropy::getFramesPerSecond() {
+int Entropy::getFramesPerSecond() {
     return this->m_frames_per_second;
 }
 
-uint32_t Entropy::getTimePerFrame() {
+int Entropy::getTimePerFrame() {
     return this->m_time_per_frame;
 }
 

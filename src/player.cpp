@@ -25,6 +25,10 @@ void Player::removeOwnedRegion(int region_index) {
     }
 }
 
+const std::vector <int>& Player::readOwnedRegions() {
+    return this->owned_regions;
+}
+
 void Player::setHuman(bool is_human) {
     this->is_human = is_human;
 }
@@ -79,4 +83,12 @@ bool Player::isBuildingAffordable(const Building building) {
 /* Remove the resources needed to construct provided building from player's resource pool. */
 void Player::removeBuildingCost(const Building building) {
     this->resources -= building.getBuildingCost();
+}
+
+int Player::getCapital() {
+    return this->owned_regions[0];
+}
+
+const sf::Color& Player::getTeamColour() {
+    return this->team_colour;
 }

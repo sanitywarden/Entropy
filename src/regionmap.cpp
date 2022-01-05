@@ -1,16 +1,15 @@
 #include "regionmap.hpp"
 
 using namespace iso;
+using namespace entropy;
 
 Regionmap::Regionmap() {
     
 }
 
-Regionmap::Regionmap(SimulationManager* manager) {
-    this->manager  = manager;
-    this->state_id = "Regionmap";
-
-    this->region = nullptr;
+Regionmap::Regionmap(SimulationManager* manager) : Gamestate(manager, "Regionmap") {
+    this->manager = manager;
+    this->region  = nullptr;
 
     this->initialise();
     this->loadResources();
@@ -25,9 +24,6 @@ void Regionmap::initialise() {
     this->mouse_pressed  = false;
     this->mouse_moved    = false;
     this->mouse_drag     = false;
-    this->mouse_wheel_up = false;
-    this->move_camera    = false;
-    this->zoom_camera    = false;
 
     this->current_index = -1;
     this->draw_calls    = 0;
@@ -43,6 +39,13 @@ void Regionmap::initialise() {
     this->view_interface.setSize(this->manager->window.windowSize());
 
     this->building_manager = BuildingManager(this->manager);
+
+    this->controls.addKeyMappingCheck("key_tilde",   sf::Keyboard::Key::Tilde);
+    this->controls.addKeyMappingCheck("key_escape",  sf::Keyboard::Key::Escape);
+    this->controls.addKeyMappingCheck("arrow_left",  sf::Keyboard::Key::Left);
+    this->controls.addKeyMappingCheck("arrow_right", sf::Keyboard::Key::Right);
+    this->controls.addKeyMappingCheck("arrow_down",  sf::Keyboard::Key::Down);
+    this->controls.addKeyMappingCheck("arrow_up",    sf::Keyboard::Key::Up);
 }
 
 void Regionmap::loadResources() {
@@ -70,7 +73,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64 ));
 }
 
-void Regionmap::update(float time_per_frame) {
+void Regionmap::update(float delta_time) {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
@@ -79,7 +82,7 @@ void Regionmap::update(float time_per_frame) {
     this->updateUI();
 }
 
-void Regionmap::render(float time_per_frame) {
+void Regionmap::render(float delta_time) {
     this->manager->window.getWindow()->clear(sf::Color(100, 100, 100));    
 
     this->manager->window.getWindow()->setView(this->view_game);
@@ -103,85 +106,110 @@ void Regionmap::handleInput() {
             }
 
             case sf::Event::KeyPressed: {
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1))
-                    this->manager->gamestate.setGamestate("worldmap");
+                for(const auto& pair : this->controls.key_map) {
+                    const auto& name  = pair.first;
+                    const int   state = this->controls.isKeyPressed(name);
 
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Tilde)) {
-                    gui::DebugPerformance* widget_performance = static_cast<gui::DebugPerformance*>(this->interface["component_debug_performance"]);
-                    widget_performance->show = !widget_performance->show;
+                    if(this->controls.key_state.count(name))
+                        this->controls.key_state[name] = state;
+                    else this->controls.key_state.insert({ name, state });
                 }
 
+                if(this->controls.keyState("key_tilde")) {
+                    auto widget_debug = static_cast<gui::DebugPerformance*>(this->interface["component_debug_performance"]);
+                    widget_debug->show = !widget_debug->show;
+                }
 
+                if(this->controls.keyState("key_escape")) {
+                    this->manager->gamestate.setGamestate("worldmap");
+                }
+
+                if(this->controls.keyState("arrow_left"))
+                    if(this->view_game.getCenter().x + this->manager->settings.region_tile_size.x >= this->view_game.getSize().x / 2)
+                        this->view_game.move(-this->manager->settings.region_tile_size.x, 0);
+
+                if(this->controls.keyState("arrow_right"))
+                    if(this->view_game.getCenter().x + this->manager->settings.region_tile_size.x <= (this->manager->settings.region_size * this->manager->settings.region_tile_size.x) - this->view_game.getSize().x / 2)
+                        this->view_game.move(this->manager->settings.region_tile_size.x, 0);
+
+                if(this->controls.keyState("arrow_down"))
+                    if(this->view_game.getCenter().y + this->manager->settings.region_tile_size.y <= (this->manager->settings.region_size * this->manager->settings.region_tile_size.y) - this->view_game.getSize().y / 2)
+                        this->view_game.move(0, this->manager->settings.region_tile_size.y);
+
+                if(this->controls.keyState("arrow_up"))
+                    if(this->view_game.getCenter().x + (this->manager->settings.region_tile_size.x) <= (this->manager->settings.region_size * this->manager->settings.region_tile_size.x) - this->view_game.getSize().x / 2)
+                        this->view_game.move(0, -this->manager->settings.region_tile_size.y);
+
+                break;
+            }
+
+            case sf::Event::KeyReleased: {
+                for(const auto& pair : this->controls.key_map) {
+                    const auto& name          = pair.first;
+                    const int   state_old     = this->controls.key_state[name];
+                    const int   state_current = this->controls.isKeyPressed(name);
+
+                    if(!(state_old && state_current))
+                        this->controls.key_state[name] = state_current;  
+                }
                 break;
             }
 
             case sf::Event::MouseButtonPressed: {
-                if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+                this->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+                this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
+                this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
+                
+                if(this->controls.mouseLeftPressed()) {
                     this->mouse_pressed    = true;
                     this->position_pressed = this->mouse_position_window;
                 }
-
+                
                 break;
             }
 
             case sf::Event::MouseButtonReleased: {
-                this->mouse_pressed = false;
+                this->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+                this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
+                this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
+                
                 this->mouse_drag    = false;
+                this->mouse_pressed = false;
+                break;
+            }
+
+            case sf::Event::MouseWheelScrolled: {
+                this->controls.mouse_middle_up   = this->event.mouseWheelScroll.delta ==  1 ? 1 : 0;
+                this->controls.mouse_middle_down = this->event.mouseWheelScroll.delta == -1 ? 1 : 0;
+                
+                if(this->controls.mouse_middle_up || this->controls.mouse_middle_down)
+                    this->zoom_camera = true;
 
                 break;
             }
 
             case sf::Event::MouseMoved: {
                 this->mouse_moved = true;
-
-                if(!this->mouse_drag) {
-                    this->mouse_drag  = false;
+                
+                if(!this->mouse_drag)
                     break;
-                }
 
                 this->position_released = this->mouse_position_window;
-
-                // Avoid accidental drags.
-                // This also helps to record button presses (without the intention of dragging the screen).
-                if(this->mouse_drag && std::abs(this->position_pressed.x - this->position_released.x) > 5 && std::abs(this->position_pressed.y - this->position_released.y) > 5) 
+                if(this->mouse_drag && this->mouse_moved && std::abs(this->position_pressed.x - this->position_released.x) > 5 && std::abs(this->position_pressed.y - this->position_released.y) > 5)
                     this->move_camera = true;
 
-                break;
-            }
-
-            case sf::Event::MouseWheelScrolled: {          
-                if(this->event.mouseWheelScroll.delta == -1) this->mouse_wheel_up = false; 
-                if(this->event.mouseWheelScroll.delta == 1)  this->mouse_wheel_up = true; 
-                
-                this->zoom_camera = true;
-                
                 break;
             }
         }
     }
 
-    // Mouse button pressed is used in multiple situations.
-    // Distinguish from dragging the screen and selecting a option.
-    if(this->mouse_moved && this->mouse_pressed) 
+    if(this->mouse_moved && this->mouse_pressed)
         this->mouse_drag = true;
 
     else {
         this->mouse_drag  = false;
         this->mouse_moved = false;
     }
-}
-
-void Regionmap::updateMousePosition() {
-    this->manager->window.getWindow()->setView(this->view_game);
-    
-    this->mouse_position_desktop = sf::Mouse::getPosition(*this->manager->window.getWindow());
-    this->mouse_position_window  = this->manager->window.getWindow()->mapPixelToCoords(this->mouse_position_desktop);
-    
-    this->manager->window.getWindow()->setView(this->view_interface);
-
-    this->mouse_position_interface = this->manager->window.getWindow()->mapPixelToCoords(this->mouse_position_desktop);
-    
-    this->manager->window.getWindow()->setView(this->view_game);
 }
 
 void Regionmap::moveCamera() {
@@ -218,31 +246,27 @@ void Regionmap::zoomCamera() {
     // If you scroll up   - zoom in.
     // If you scroll down - zoom out.
 
-    if((this->zoom > this->max_zoom_in && this->mouse_wheel_up) || (this->zoom < this->max_zoom_out && !this->mouse_wheel_up)) {  
-        if(this->mouse_wheel_up) {
+    if((this->zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
+        if(this->controls.mouseMiddleUp()) {
             this->zoom = this->zoom - 1;
-
             this->view_game.zoom(0.5f);
         }
         
-        else if(!this->mouse_wheel_up) {
+        else if(this->controls.mouseMiddleDown()) {
             this->zoom = this->zoom + 1;
-
             this->view_game.zoom(2.f);
         }
     } 
+
+    this->zoom_camera = false;
 }
 
 void Regionmap::updateCamera() {
-    if(this->move_camera) {
+    if(this->move_camera)
         this->moveCamera();
-        this->move_camera = false;
-    }
 
-    if(this->zoom_camera) {
+    if(this->zoom_camera)
         this->zoomCamera();
-        this->zoom_camera = false;
-    }
 }
 
 void Regionmap::renderRegion() {
@@ -307,7 +331,8 @@ void Regionmap::renderRegion() {
 }
 
 void Regionmap::setCurrentRegion(int region_index) {
-    this->region = &this->manager->world.world_map[region_index];
+    this->region       = &this->manager->world.world_map[region_index];
+    this->region_index = region_index;
 
     // Here you can setup what to do when entering a region.
     // For example, centre the camera.
@@ -354,6 +379,10 @@ Region* Regionmap::getCurrentRegion() {
     return this->region;
 }
 
+int Regionmap::getRegionIndex() {
+    return this->region_index;
+}
+
 int Regionmap::getCurrentIndex() {
     return this->current_index;
 }
@@ -364,18 +393,18 @@ void Regionmap::updateTile() {
     this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
 
     auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.isLeftMouseButtonPressed() && !intersectsUI() && !this->mouse_drag) {
+    if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && !intersectsUI() && !this->mouse_drag) {
         Building building = building_menu->getBuilding();
         this->building_manager.placeBuildingCheck(this->current_index, building);
     }
 
-    if(this->controls.isKeyPressed("key_remove_building")) {
+    if(this->controls.keyState("key_remove_building")) {
         Building building = this->region->buildings[this->current_index]; 
         this->manager->getHumanPlayer().addResources(building.getBuildingRefund());
         this->building_manager.removeBuilding(this->current_index);
     }
 
-    if(this->controls.isKeyPressed("key_removeresource_tree")) {
+    if(this->controls.keyState("key_removeresource_tree")) {
         if(this->region->trees[this->current_index].exists()) {
             this->region->trees.erase(this->current_index);
             this->manager->getHumanPlayer().addResource(Resource::RESOURCE_WOOD, 10);

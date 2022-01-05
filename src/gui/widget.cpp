@@ -31,6 +31,9 @@ Widget::~Widget() {
 }
 
 void Widget::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if(!this->show)
+        return;
+
     auto widget_position = this->getWidgetPosition();
     
     // Draw the blocks that make up the foundation of the interface.
@@ -54,7 +57,8 @@ void Widget::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     for(const auto& pair : this->m_components) {
         auto* component = pair.second;
-        target.draw(*component);
+        if(component->show)
+            target.draw(*component);
     }
 }
 

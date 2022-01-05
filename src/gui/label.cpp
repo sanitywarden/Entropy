@@ -25,6 +25,9 @@ Label::~Label() {
 }
 
 void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if(!this->show)
+        return;
+    
     this->m_text.setPosition(this->getWidgetPosition());
     this->m_text.setCharacterSize(14);
     this->m_text.setFillColor(sf::Color::Black);

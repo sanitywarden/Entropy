@@ -17,7 +17,7 @@ namespace iso {
     const sf::Color COLOUR_WHITE  (255, 255, 255, 255);
     const sf::Color COLOUR_BLACK  (0, 0, 0, 255);
     
-    const std::vector <sf::Color> team_colours = {
+    const std::vector <sf::Color> TEAM_COLOURS = {
         COLOUR_RED, 
         COLOUR_BLUE, 
         COLOUR_GREEN,
@@ -29,8 +29,6 @@ namespace iso {
     class Player {
         friend class SimulationManager;
         friend class BuildingManager;
-
-        private:
 
         protected:
             ResourceCost      resources;
@@ -44,12 +42,15 @@ namespace iso {
 
             void addOwnedRegion(int region_index);
             void removeOwnedRegion(int region_index);
+            const std::vector <int>& readOwnedRegions();
+            int  getCapital();
             void setHuman(bool is_human);
             bool isHuman();
             void addResource(Resource resource, int quantity);
             void addResources(ResourceCost resource);
             int  getResourceQuantity(Resource resource);
-            
+            const sf::Color& getTeamColour();
+
             bool isBuildingAffordable(const Building building);
             void removeBuildingCost(const Building building);
     };

@@ -30,9 +30,13 @@ void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const
     if(widget)
         target.draw(*widget);
 
-    auto* button = static_cast<Button*>(this->interface.at("button_travel"));
-    if(button)
-        target.draw(*button);
+    auto* button_travel = static_cast<Button*>(this->interface.at("button_travel"));
+    if(button_travel)
+        target.draw(*button_travel);
+
+    auto* button_expand = static_cast<Button*>(this->interface.at("button_expand"));
+    if(button_expand)
+        target.draw(*button_expand);
 
     auto* label = static_cast<Label*>(this->interface.at("text_region_index"));
     if(label)
@@ -57,11 +61,19 @@ void WidgetRegion::createUI() {
         button_travel.setWidgetPosition(widget_position + widget_size - button_size);
         button_travel.label.setWidgetPosition(button_travel.getWidgetPosition() + sf::Vector2f(button_size.x / 2, button_size.y / 2));
 
+    static Button button_expand(this->manager, t_button_size, "Expand");
+        button_expand.setWidgetID("button_expand");
+        button_expand.setWidgetPosition(widget_position + widget_size - sf::Vector2f(button_size.x, 2 * button_size.y));
+        button_expand.label.setWidgetPosition(button_expand.getWidgetPosition() + sf::Vector2f(button_size.x / 2, button_size.y / 2));
+
     this->interface.insert({ widget_body.getWidgetID()  , &widget_body   });
     this->interface.insert({ button_travel.getWidgetID(), &button_travel });
+    this->interface.insert({ button_expand.getWidgetID(), &button_expand });
 }
 
 void WidgetRegion::updateUI() {
+    // Update button_travel text.
+    
     Worldmap* worldmap = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
     int index = worldmap->getSelectedIndex();
 
@@ -81,10 +93,37 @@ void WidgetRegion::updateUI() {
     data += "Forest: " + forest + "\n";
     data += "River: "  + river  + "\n";
 
-    static Label text_region_index(this->manager, "");
+    static Label text_region_index(this->manager);
         text_region_index.setWidgetID("text_region_index");
         text_region_index.setString(data);
         text_region_index.setWidgetPosition(widget_position + sf::Vector2f(0.05f * widget_size.x, 0.0375f * widget_size.y));
     
     this->interface.insert({ text_region_index.getWidgetID(), &text_region_index });
+
+    // Update button_expand visibility.
+
+    Button* button_expand = static_cast<Button*>(this->getComponent("button_expand"));
+    
+    const std::vector <int>& owned_regions = this->manager->getHumanPlayer().readOwnedRegions();
+    const int selected_index               = worldmap->getSelectedIndex(); 
+    const auto& selected_region            = this->manager->world.world_map[selected_index]; 
+    
+    for(auto index : owned_regions) {
+
+        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
+            button_expand->show = false;
+            break;
+        }
+
+        if(selected_index == index - 1 ||
+           selected_index == index + 1 ||
+           selected_index == index - this->manager->settings.world_size ||
+           selected_index == index + this->manager->settings.world_size
+        ) {
+            button_expand->show = true;
+            break;
+        }
+        else
+            button_expand->show = false;
+    }
 }

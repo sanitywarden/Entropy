@@ -11,6 +11,8 @@ AbstractWidget::AbstractWidget() {
     this->m_parent          = nullptr;
     this->m_adjust          = true;
     this->m_transparent     = false;
+    
+    this->show              = true;
 }
 
 AbstractWidget::~AbstractWidget() {

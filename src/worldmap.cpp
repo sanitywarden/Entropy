@@ -1,11 +1,10 @@
 #include "worldmap.hpp"
 
 using namespace iso;
+using namespace entropy;
 
-Worldmap::Worldmap(SimulationManager* manager) {
-    this->manager  = manager;
-    this->state_id = "Worldmap";
-
+Worldmap::Worldmap(SimulationManager* manager) : Gamestate(manager, "Worldmap") {
+    this->manager = manager;
     std::srand(time(0));
 
     this->initialise();
@@ -21,7 +20,6 @@ void Worldmap::initialise() {
     this->mouse_pressed  = false;
     this->mouse_moved    = false;
     this->mouse_drag     = false;
-    this->mouse_wheel_up = false;
     this->move_camera    = false;
     this->zoom_camera    = false;
 
@@ -48,7 +46,12 @@ void Worldmap::initialise() {
     this->view_interface.setSize(this->manager->window.windowSize());
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
 
-    this->controls.addKeyMappingCheck("key_open_control_panel", sf::Keyboard::Key::Escape);
+    this->controls.addKeyMappingCheck("key_tilde",   sf::Keyboard::Key::Tilde);
+    this->controls.addKeyMappingCheck("key_escape",  sf::Keyboard::Key::Escape);
+    this->controls.addKeyMappingCheck("arrow_left",  sf::Keyboard::Key::Left);
+    this->controls.addKeyMappingCheck("arrow_right", sf::Keyboard::Key::Right);
+    this->controls.addKeyMappingCheck("arrow_down",  sf::Keyboard::Key::Down);
+    this->controls.addKeyMappingCheck("arrow_up",    sf::Keyboard::Key::Up);
 }
 
 void Worldmap::loadResources() {
@@ -110,15 +113,6 @@ void Worldmap::loadResources() {
     this->manager->resource.loadFont("./res/font/garamond.ttf", "garamond");
 }
 
-void Worldmap::updateMousePosition() {
-    this->mouse_position_desktop = sf::Mouse::getPosition(*this->manager->window.getWindow());
-    this->mouse_position_window  = this->manager->window.getWindow()->mapPixelToCoords(this->mouse_position_desktop);
-    
-    this->manager->window.getWindow()->setView(this->view_interface);
-    this->mouse_position_interface = this->manager->window.getWindow()->mapPixelToCoords(this->mouse_position_desktop);
-    this->manager->window.getWindow()->setView(this->view_game);
-}
-
 void Worldmap::moveCamera() {
     auto distance = sf::Vector2f(
         (this->position_pressed.x - this->position_released.x) / this->manager->settings.world_panel_size.x / 2,       
@@ -126,8 +120,8 @@ void Worldmap::moveCamera() {
     );
 
     // Multipliers for faster camera movement. 
-    float x_multiplier = 6.0f;
-    float y_multiplier = 6.0f;    
+    const float x_multiplier = 6.0f;
+    const float y_multiplier = 6.0f;    
 
     // Check the horizontal and vertical bounds of the screen.
     // This makes sure that you can not move past the world map.
@@ -146,25 +140,23 @@ void Worldmap::zoomCamera() {
     // If you scroll up   - zoom in.
     // If you scroll down - zoom out.
 
-    if((this->zoom > this->max_zoom_in && this->mouse_wheel_up) || (this->zoom < this->max_zoom_out && !this->mouse_wheel_up)) {  
-        if(this->mouse_wheel_up) {
+    if((this->zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
+        if(this->controls.mouseMiddleUp()) {
             this->zoom = this->zoom - 1;
-
             this->view_game.zoom(0.5f);
         }
         
-        else if(!this->mouse_wheel_up) {
+        if(this->controls.mouseMiddleDown()) {
             this->zoom = this->zoom + 1;
-
             this->view_game.zoom(2.f);
         }
-    
-        this->zoom_camera = false;
     } 
+
+    this->zoom_camera = false;
 }
 
 void Worldmap::updateCamera() {
-    if(this->move_camera) 
+    if(this->move_camera)
         this->moveCamera();
 
     if(this->zoom_camera) 
@@ -199,7 +191,7 @@ void Worldmap::updateCamera() {
     }
 }
 
-void Worldmap::update(float time_per_frame) {
+void Worldmap::update(float delta_time) {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
@@ -208,7 +200,7 @@ void Worldmap::update(float time_per_frame) {
     this->updateUI();
 }
 
-void Worldmap::render(float time_per_frame) {
+void Worldmap::render(float delta_time) {
     this->manager->window.clear(sf::Color(50, 50, 50));
     this->manager->window.getWindow()->setView(this->view_game);
 
@@ -232,89 +224,110 @@ void Worldmap::handleInput() {
                 break;
             }
 
+            case sf::Event::KeyPressed: {
+                for(const auto& pair : this->controls.key_map) {
+                    const auto& name  = pair.first;
+                    const int   state = this->controls.isKeyPressed(name);
+
+                    if(this->controls.key_state.count(name))
+                        this->controls.key_state[name] = state;
+                    else this->controls.key_state.insert({ name, state });
+                }
+
+                if(this->controls.keyState("key_tilde")) {
+                    auto widget_debug = static_cast<gui::DebugPerformance*>(this->interface["component_debug_performance"]);
+                    widget_debug->show = !widget_debug->show;
+                }
+
+                if(this->controls.keyState("key_escape")) {
+                    this->manager->exitApplication(0);
+                }
+
+                if(this->controls.keyState("arrow_left"))
+                    if(this->view_game.getCenter().x + this->manager->settings.world_panel_size.x >= this->view_game.getSize().x / 2)
+                        this->view_game.move(-this->manager->settings.world_panel_size.x, 0);
+
+                if(this->controls.keyState("arrow_right"))
+                    if(this->view_game.getCenter().x + this->manager->settings.world_panel_size.x <= (this->manager->settings.world_size * this->manager->settings.world_panel_size.x) - this->view_game.getSize().x / 2)
+                        this->view_game.move(this->manager->settings.world_panel_size.x, 0);
+
+                if(this->controls.keyState("arrow_down"))
+                    if(this->view_game.getCenter().y + this->manager->settings.world_panel_size.y <= (this->manager->settings.world_size * this->manager->settings.world_panel_size.y) - this->view_game.getSize().y / 2)
+                        this->view_game.move(0, this->manager->settings.world_panel_size.y);
+
+                if(this->controls.keyState("arrow_up"))
+                    if(this->view_game.getCenter().x + (this->manager->settings.world_panel_size.x) <= (this->manager->settings.world_size * this->manager->settings.world_panel_size.x) - this->view_game.getSize().x / 2)
+                        this->view_game.move(0, -this->manager->settings.world_panel_size.y);
+
+                break;
+            }
+
+            case sf::Event::KeyReleased: {
+                for(const auto& pair : this->controls.key_map) {
+                    const auto& name          = pair.first;
+                    const int   state_old     = this->controls.key_state[name];
+                    const int   state_current = this->controls.isKeyPressed(name);
+
+                    if(!(state_old && state_current))
+                        this->controls.key_state[name] = state_current;  
+                }
+                break;
+            }
+
             case sf::Event::MouseButtonPressed: {
-                if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+                this->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+                this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
+                this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
+                
+                if(this->controls.mouseLeftPressed()) {
                     this->mouse_pressed    = true;
                     this->position_pressed = this->mouse_position_window;
                 }
-
+                
                 break;
             }
 
             case sf::Event::MouseButtonReleased: {
-                this->mouse_pressed = false;
+                this->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
+                this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
+                this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
+                
                 this->mouse_drag    = false;
-
+                this->mouse_pressed = false;
                 break;
             }
 
-            case sf::Event::KeyPressed: {
-                const float modifier = 2.0f;
-
-                if(this->controls.isKeyPressed("key_open_control_panel"))
-                    this->draw_control_panel = !this->draw_control_panel;
-
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Tilde)) {
-                    gui::DebugPerformance* widget_performance = static_cast<gui::DebugPerformance*>(this->interface["component_debug_performance"]);
-                    widget_performance->show = !widget_performance->show;
-                }  
+            case sf::Event::MouseWheelScrolled: {
+                this->controls.mouse_middle_up   = this->event.mouseWheelScroll.delta ==  1 ? 1 : 0;
+                this->controls.mouse_middle_down = this->event.mouseWheelScroll.delta == -1 ? 1 : 0;
                 
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))      this->manager->world.generateWorld();
-                
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
-                    this->view_game.move(0, -this->manager->settings.world_panel_size.y * modifier);
-
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-                    this->view_game.move(-this->manager->settings.world_panel_size.x * modifier, 0);
-
-                if(this->view_game.getCenter().y + (this->manager->settings.world_panel_size.y * modifier) <= (this->manager->settings.world_size * this->manager->settings.world_panel_size.y) - this->view_game.getSize().y / 2)
-                    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
-                        this->view_game.move(0, this->manager->settings.world_panel_size.y * modifier);
-
-                if(this->view_game.getCenter().x + (this->manager->settings.world_panel_size.x * modifier) <= (this->manager->settings.world_size * this->manager->settings.world_panel_size.x) - this->view_game.getSize().x / 2)
-                    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-                        this->view_game.move(this->manager->settings.world_panel_size.x * modifier, 0);
+                if(this->controls.mouse_middle_up || this->controls.mouse_middle_down)
+                    this->zoom_camera = true;
 
                 break;
             }
 
             case sf::Event::MouseMoved: {
                 this->mouse_moved = true;
-
-                if(!this->mouse_drag) {
-                    this->mouse_drag = false;
+                
+                if(!this->mouse_drag)
                     break;
-                }
 
                 this->position_released = this->mouse_position_window;
-
-                // Avoid accidental drags.
-                // This also helps to record button presses (without the intention of dragging the screen).
-                if(this->mouse_drag && std::abs(this->position_pressed.x - this->position_released.x) > 10 && std::abs(this->position_pressed.y - this->position_released.y) > 10) 
+                if(this->mouse_drag && this->mouse_moved && std::abs(this->position_pressed.x - this->position_released.x) > 5 && std::abs(this->position_pressed.y - this->position_released.y) > 5)
                     this->move_camera = true;
 
                 break;
             }
-
-            case sf::Event::MouseWheelScrolled: {          
-                if(this->event.mouseWheelScroll.delta == -1) this->mouse_wheel_up = false; 
-                if(this->event.mouseWheelScroll.delta == 1)  this->mouse_wheel_up = true; 
-                
-                this->zoom_camera = true;
-                
-                break;
-            }
         }
+    }
 
-        // Mouse button pressed is used in multiple situations.
-        // Distinguish from dragging the screen and selecting a option.
-        if(this->mouse_moved && this->mouse_pressed) 
-            this->mouse_drag = true;
+    if(this->mouse_moved && this->mouse_pressed)
+        this->mouse_drag = true;
 
-        else {
-            this->mouse_drag = false;
-            this->mouse_moved = false;
-        }
+    else {
+        this->mouse_drag  = false;
+        this->mouse_moved = false;
     }
 }
 
@@ -356,7 +369,7 @@ void Worldmap::renderWorld() {
 }
 
 void Worldmap::selectPanel() {
-    if(this->controls.isLeftMouseButtonPressed() && !this->intersectsUI() && !this->mouse_moved && !this->mouse_drag) {
+    if(this->controls.mouseLeftPressed() && !this->intersectsUI() && !this->mouse_moved && !this->mouse_drag) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
             this->mouse_position_window.y / this->manager->settings.world_panel_size.y
@@ -371,7 +384,7 @@ void Worldmap::selectPanel() {
 }
 
 void Worldmap::unselectPanel() {
-    if(this->controls.isRightMouseButtonPressed() && !this->mouse_moved && !this->mouse_drag && this->selected_index != -1) {
+    if(this->controls.mouseRightPressed() && !this->mouse_moved && !this->mouse_drag && this->selected_index != -1) {
         this->selected_index = -1;
         
         gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
@@ -467,7 +480,8 @@ void Worldmap::updateUI() {
     gui::WidgetRegion* widget_region = (static_cast<gui::WidgetRegion*>(this->interface.at("component_widget_region")));
     gui::Button*       button_travel = (static_cast<gui::Button*>(widget_region->getComponent("button_travel")));
 
-    if(this->selected_index != -1 && this->controls.isLeftMouseButtonPressed() && button_travel->containsPoint(this->mouse_position_interface)) {
+    // Update button_travel.
+    if(this->selected_index != -1 && this->mouse_pressed && button_travel->containsPoint(this->mouse_position_interface)) {
         Region& region = this->manager->world.world_map[this->selected_index]; 
 
         // You check for these things here to avoid calling functions responsible for world generation.
@@ -477,11 +491,6 @@ void Worldmap::updateUI() {
             this->selected_index = -1;
             return;
         }
-
-        this->move_camera   = false;
-        this->zoom_camera   = false;
-        this->mouse_pressed = false;
-        this->mouse_drag    = false;
 
         if(!this->manager->gamestate.checkGamestateExists("regionmap")) {
             static Regionmap regionmap_gamestate(this->manager);
@@ -497,6 +506,11 @@ void Worldmap::updateUI() {
             this->manager->exitApplication(1);
         }
 
+        this->zoom_camera   = false;
+        this->move_camera   = false;
+        this->mouse_drag    = false;
+        this->mouse_moved   = false;
+    
         // You have to generate the region first, because setCurrentRegion() depends on it being generated.
         if(!region.visited)
             this->manager->world.generateRegion(this->selected_index, region);
@@ -505,6 +519,20 @@ void Worldmap::updateUI() {
         this->manager->gamestate.setGamestate("regionmap");
     }
     
+    gui::Button* button_expand = static_cast<gui::Button*>(widget_region->getComponent("button_expand"));
+    if(this->selected_index != -1 && this->controls.mouseLeftPressed() && button_expand->containsPoint(this->mouse_position_interface)) {
+        Region& region = this->manager->world.world_map[this->selected_index];
+
+        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
+            std::cout << "[Worldmap][Button Expand]: Requested to expand to a region not meant for owning.\n";
+            this->selected_index = -1;
+            return;
+        }
+
+        this->manager->getHumanPlayer().addOwnedRegion(this->selected_index);
+        region.colour = this->manager->getHumanPlayer().getTeamColour();
+    }
+
     // Rest of the updates.
 }
 
@@ -519,12 +547,31 @@ int Worldmap::getSelectedIndex() {
 bool Worldmap::intersectsUI() {
     for(const auto& pair : this->interface) {
         const auto* component = pair.second;
-
         if(component) {
             if(component->intersectsUI(this->mouse_position_interface))
                 return true;
         }
     }
-    
     return false;
+}
+
+void Worldmap::gamestateLoad() {
+    /* Centre the camera on current tile.
+     * Current tile is the capital (when first loaded in) or a tile the player was visiting. */
+    
+    auto* regionmap = this->manager->gamestate.getGamestateByName("regionmap")
+        ? static_cast<Regionmap*>(this->manager->gamestate.getGamestateByName("regionmap"))
+        : nullptr;
+        
+    const int index = regionmap == nullptr
+        ? this->manager->getHumanPlayer().getCapital()
+        : regionmap->getRegionIndex();
+    
+    const auto& tile    = this->manager->world.world_map[index];
+    const auto position = sf::Vector2f(tile.getPosition() + sf::Vector2f(this->manager->settings.region_tile_size.x / 2, this->manager->settings.region_tile_size.y / 2));
+    this->view_game.setCenter(position);
+
+    this->mouse_moved   = false;
+    this->mouse_drag    = false;
+    this->mouse_pressed = false;
 }

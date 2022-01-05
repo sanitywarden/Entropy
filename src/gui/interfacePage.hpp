@@ -33,9 +33,6 @@ namespace gui {
             virtual void    updateUI() { return; }
             AbstractWidget* getComponent(std::string id) const;
             bool            intersectsUI(sf::Vector2f point) const;
-
-        public:
-            bool show;
     };
 }
 

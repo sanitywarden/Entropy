@@ -9,30 +9,31 @@ namespace entropy {
     // Gamestates represent possible states that the application can be in.
     // To create a new gamestate, inherit from this class, and override at least update(), render() and handleInput().
     class Gamestate {
-        protected:
-            entropy::Entropy* engine;
+        friend class Entropy;
 
-            std::string state_id;
-            sf::Event   event;
-
+        public:
+            Entropy*     engine;
+            Controls     controls;
             sf::Vector2i mouse_position_desktop;
             sf::Vector2f mouse_position_window;
             sf::Vector2f mouse_position_interface;
-
-            sf::View view_game;
-            sf::View view_interface;
+            sf::Event    event;
+            std::string  state_id;
+            sf::View     view_game;
+            sf::View     view_interface;
         public:
             Gamestate();
+            Gamestate(Entropy* engine, std::string state_id);
             ~Gamestate();
 
-            // Main game loop functions.
-            // Every gamestate has to override these functions.
+            /* Main game loop functions.
+             * Every gamestate has to override these functions.
+             * Delta time is passed as seconds, i.e: 0.001s => 1ms. */
 
-            // Time per frame time units are in seconds (1ms = 0.001s).
-            virtual void update(float time_per_frame) { return; }
-            
-            // Time per frame time units are in seconds (1ms = 0.001s).
-            virtual void render(float time_per_frame) { return; }
+            virtual void update(float delta_time) { return; }
+            virtual void render(float delta_time) { return; }
+
+            // Additional functions that might be helpful to keep gamestates interface clear.
 
             // This function will be called by the engine for a new set gamestate.
             virtual void gamestateLoad()  { return; }
@@ -40,22 +41,17 @@ namespace entropy {
             // This function will be called by the engine for the old gamestate, when a new one is set.
             virtual void gamestateClose() { return; }
 
-            // Additional functions that might be helpful to keep gamestates interface clear.
-
-            virtual void handleInput()   { return; }
-            virtual void initialise()    { return; }
-            virtual void loadResources() { return; }
-            virtual void updateMousePosition() { return; }
-            virtual void moveCamera()   { return; }
-            virtual void zoomCamera()   { return; }
-            virtual void updateCamera() { return; }
-
-            std::string  getStateID();
-            sf::Vector2i getMousePositionDesktop();
-            sf::Vector2f getMousePositionWindow();
-            sf::Vector2f getMousePositionInterface();
-
-            Controls controls;
+            /* This function does not need to but may be overriden.
+             * It provides default updates for 3 types of mouse position. 
+             * Check entropy::Gamestate class for more details on mouse position types. */
+            virtual void updateMousePosition();
+            
+            virtual void handleInput()          { return; }
+            virtual void initialise()           { return; }
+            virtual void loadResources()        { return; }
+            virtual void moveCamera()           { return; }
+            virtual void zoomCamera()           { return; }
+            virtual void updateCamera()         { return; }
     };
 }
 

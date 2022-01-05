@@ -28,8 +28,6 @@ namespace iso {
             bool mouse_pressed;
             bool mouse_moved;
             bool mouse_drag;
-
-            bool mouse_wheel_up;
             bool move_camera;
             bool zoom_camera;
 
@@ -41,12 +39,12 @@ namespace iso {
             int max_zoom_out;
 
             int current_index;
+            int region_index;
             int draw_calls;
         private:
             void handleInput()         override;
             void initialise()          override;
             void loadResources()       override;
-            void updateMousePosition() override;
             void moveCamera()          override;
             void zoomCamera()          override;
             void updateCamera()        override;
@@ -65,13 +63,14 @@ namespace iso {
             Regionmap(SimulationManager* manager);
             ~Regionmap();
 
-            void update(float time_per_frame) override;
-            void render(float time_per_frame) override;
+            void update(float delta_time) override;
+            void render(float delta_time) override;
 
             void setCurrentRegion(int region_index);
 
-            int getCurrentIndex();
             Region* getCurrentRegion();
+            int getRegionIndex();
+            int getCurrentIndex();
     }; 
 }
 

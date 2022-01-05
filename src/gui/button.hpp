@@ -19,7 +19,7 @@ namespace gui {
             std::string getBlockTexture(int x, int y, sf::Vector2i dimensions) const override;
         public:
             Button();
-            Button(iso::SimulationManager* manager, sf::Vector2i dimensions, std::string label);
+            Button(iso::SimulationManager* manager, sf::Vector2i dimensions, std::string data);
             ~Button();
 
             Label label;
