@@ -12,8 +12,6 @@
 #include <vector>
 
 namespace iso {
-    class worldGenerator;
-    
     enum class RiverDirection {
         RIVER_HORIZONTAL,
         RIVER_VERTICAL,
@@ -26,7 +24,7 @@ namespace iso {
     };
 
     class Region : public GameObject {
-        friend class worldGenerator;
+        friend class WorldGenerator;
         
         protected:
             bool           _marked; 

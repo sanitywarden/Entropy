@@ -45,7 +45,7 @@ SimulationManager::SimulationManager() {
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
 
-    this->world = worldGenerator(&this->resource, this->settings);
+    this->world = WorldGenerator(&this->resource, this->settings);
     this->world.generateWorld();
     
     this->spawnPlayers();

@@ -8,7 +8,7 @@
 
 namespace iso {    
     class Tile : public GameObject {
-        friend class worldGenerator;
+        friend class WorldGenerator;
 
         private:
             // void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

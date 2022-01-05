@@ -19,7 +19,7 @@ namespace iso {
 
         public:
             GenerationSettings   settings;
-            worldGenerator       world;
+            WorldGenerator       world;
             std::vector <Player> players;
 
         public:

@@ -2,11 +2,11 @@
 
 using namespace iso;
 
-worldGenerator::worldGenerator() {
+WorldGenerator::WorldGenerator() {
 
 }
 
-worldGenerator::worldGenerator(entropy::resourceManager* resource, GenerationSettings& settings) {
+WorldGenerator::WorldGenerator(entropy::resourceManager* resource, GenerationSettings& settings) {
     this->settings     = settings;
     this->resource     = resource;
     this->m_log_prefix = "[World Generation]";
@@ -20,11 +20,11 @@ worldGenerator::worldGenerator(entropy::resourceManager* resource, GenerationSet
     std::srand(std::time(0));
 }
 
-worldGenerator::~worldGenerator() {
+WorldGenerator::~WorldGenerator() {
 
 }
 
-void worldGenerator::generateWorld() {
+void WorldGenerator::generateWorld() {
     std::cout << this->m_log_prefix << ": Generating world.\n";
     
     sf::Clock clock;
@@ -110,7 +110,7 @@ void worldGenerator::generateWorld() {
     std::cout << this->m_log_prefix << ": " << this->getWorldSize() << " panels generated in " << clock.getElapsedTime().asSeconds() << " seconds.\n";
 }
 
-void worldGenerator::generateNoiseMap() {
+void WorldGenerator::generateNoiseMap() {
     std::vector <float> input(this->getWorldSize());
     for(int i = 0; i < this->getWorldSize(); i++) {
         input[i] = (float)rand() / (float)RAND_MAX;    
@@ -161,7 +161,7 @@ void worldGenerator::generateNoiseMap() {
     }
 }
 
-void worldGenerator::generateCircularGradient() {
+void WorldGenerator::generateCircularGradient() {
     const sf::Vector2i centre = sf::Vector2i(
         this->settings.world_size / 2,
         this->settings.world_size / 2
@@ -190,7 +190,7 @@ void worldGenerator::generateCircularGradient() {
     }
 }
 
-void worldGenerator::generatePoles() {
+void WorldGenerator::generatePoles() {
     std::cout << this->m_log_prefix << ": Generating poles.\n";
     
     const float chance   = 1.0f;
@@ -236,7 +236,7 @@ void worldGenerator::generatePoles() {
     }
 }
 
-void worldGenerator::generateRivers() {
+void WorldGenerator::generateRivers() {
     std::cout << this->m_log_prefix << ": Generating rivers.\n";
     
     // Number of rivers is a maximum amount of rivers.
@@ -470,7 +470,7 @@ void worldGenerator::generateRivers() {
     }
 }
 
-void worldGenerator::generateLatititude() {
+void WorldGenerator::generateLatititude() {
     std::cout << this->m_log_prefix << ": Calculating latitude.\n";
     
     for(int y = 0; y < this->settings.world_size; y++) {
@@ -491,7 +491,7 @@ void worldGenerator::generateLatititude() {
     }
 }
 
-void worldGenerator::generateTemperature() {
+void WorldGenerator::generateTemperature() {
     std::cout << this->m_log_prefix << ": Calculating temperature.\n";
     
     for(int y = 0; y < this->settings.world_size; y++) {
@@ -525,7 +525,7 @@ void worldGenerator::generateTemperature() {
     }
 }
 
-void worldGenerator::generateMoistureMap() {
+void WorldGenerator::generateMoistureMap() {
     std::cout << this->m_log_prefix << ": Calculating moisture.\n";
     
     std::vector <float> input(this->settings.world_size * this->settings.world_size);
@@ -593,7 +593,7 @@ void worldGenerator::generateMoistureMap() {
     }
 }
 
-void worldGenerator::assignBiome() {
+void WorldGenerator::assignBiome() {
     std::cout << this->m_log_prefix << ": Generating biomes.\n";
     
     for(int index = 0; index < this->getWorldSize(); index++) {
@@ -670,7 +670,7 @@ void worldGenerator::assignBiome() {
     }
 }
 
-void worldGenerator::generateForests() {
+void WorldGenerator::generateForests() {
     std::cout << this->m_log_prefix << ": Generating forests.\n";
 
     noiseSettings settings;
@@ -697,7 +697,7 @@ void worldGenerator::generateForests() {
     }    
 }
 
-void worldGenerator::generateRegion(int index, Region& region) {
+void WorldGenerator::generateRegion(int index, Region& region) {
     sf::Clock clock;
 
     std::cout << "[World Generation][Region Generation]: Beginning to generate region " << index << ".\n"; 
@@ -817,7 +817,7 @@ void worldGenerator::generateRegion(int index, Region& region) {
     std::cout.precision(6);
 }
 
-void worldGenerator::generateNoise(noiseSettings& settings, std::vector<float>& storage) {
+void WorldGenerator::generateNoise(noiseSettings& settings, std::vector<float>& storage) {
     // Generate a random input sequence.
     std::vector <float> input(settings.size.x * settings.size.y);
     for(int i = 0; i < input.size(); i++) {
@@ -881,7 +881,7 @@ void worldGenerator::generateNoise(noiseSettings& settings, std::vector<float>& 
     }
 }
 
-std::string worldGenerator::getBiomeTileTextureName(Biome biome) {
+std::string WorldGenerator::getBiomeTileTextureName(Biome biome) {
     if(biome.biome_name == "Continental")
         return "tile_grass_cold";
 
@@ -912,64 +912,64 @@ std::string worldGenerator::getBiomeTileTextureName(Biome biome) {
     else return "default";
 }
 
-sf::Vector2f worldGenerator::tilePositionScreen(int x, int y) {
+sf::Vector2f WorldGenerator::tilePositionScreen(int x, int y) {
     return sf::Vector2f(
         (this->settings.region_tile_offset.x * this->settings.region_tile_size.x) + (x - y) * (this->settings.region_tile_size.x / 2),
         (this->settings.region_tile_offset.y * this->settings.region_tile_size.y) + (x + y) * (this->settings.region_tile_size.y / 2)
     );
 }
 
-sf::Vector2f worldGenerator::tilePositionScreen(sf::Vector2i tile_position) {
+sf::Vector2f WorldGenerator::tilePositionScreen(sf::Vector2i tile_position) {
     return this->tilePositionScreen(tile_position.x, tile_position.y);
 }
 
-sf::Vector2f worldGenerator::tilePositionScreen(sf::Vector2f tile_position) {
+sf::Vector2f WorldGenerator::tilePositionScreen(sf::Vector2f tile_position) {
     return this->tilePositionScreen(sf::Vector2i(tile_position.x, tile_position.y));
 }
 
-bool worldGenerator::is_biome(int region_index, Biome biome) {
+bool WorldGenerator::is_biome(int region_index, Biome biome) {
     if(this->world_map[region_index].biome.biome_name == biome.biome_name)
         return true;
     return false;
 }
 
-bool worldGenerator::is_arctic(int region_index) {
+bool WorldGenerator::is_arctic(int region_index) {
     return this->is_biome(region_index, BIOME_ARCTIC);
 }
 
-bool worldGenerator::is_ocean(int region_index) {
+bool WorldGenerator::is_ocean(int region_index) {
     return this->is_biome(region_index, BIOME_OCEAN);
 }
 
-bool worldGenerator::is_sea(int region_index) {
+bool WorldGenerator::is_sea(int region_index) {
     return this->is_biome(region_index, BIOME_SEA);
 }
 
-bool worldGenerator::is_tropical(int region_index) {
+bool WorldGenerator::is_tropical(int region_index) {
     return this->is_biome(region_index, BIOME_TROPICAL);
 }
 
-bool worldGenerator::is_mediterranean(int region_index) {
+bool WorldGenerator::is_mediterranean(int region_index) {
     return this->is_biome(region_index, BIOME_MEADITERRANEAN);
 }
 
-bool worldGenerator::is_temperate(int region_index) {
+bool WorldGenerator::is_temperate(int region_index) {
     return this->is_biome(region_index, BIOME_TEMPERATE);
 }
 
-bool worldGenerator::is_continental(int region_index) {
+bool WorldGenerator::is_continental(int region_index) {
     return this->is_biome(region_index, BIOME_CONTINENTAL);
 }
 
-bool worldGenerator::is_tundra(int region_index) {
+bool WorldGenerator::is_tundra(int region_index) {
     return this->is_biome(region_index, BIOME_TUNDRA);
 }
 
-bool worldGenerator::is_desert(int region_index) {
+bool WorldGenerator::is_desert(int region_index) {
     return this->is_biome(region_index, BIOME_DESERT);
 }
 
-std::string worldGenerator::getTreeTextureNameWorld(Biome biome) {
+std::string WorldGenerator::getTreeTextureNameWorld(Biome biome) {
     if(biome.biome_name == "Temperate")
         return "panel_tree_warm";
     
@@ -982,7 +982,7 @@ std::string worldGenerator::getTreeTextureNameWorld(Biome biome) {
     else return "default";
 }
 
-std::string worldGenerator::getTreeTextureNameRegion(Biome biome) {
+std::string WorldGenerator::getTreeTextureNameRegion(Biome biome) {
     if(biome.biome_name == "Temperate") {
         int value = std::rand() % 2;
 
@@ -1000,7 +1000,7 @@ std::string worldGenerator::getTreeTextureNameRegion(Biome biome) {
     else return "default";
 }
 
-std::string worldGenerator::getTilePixelColour(sf::Vector2i pixel) {
+std::string WorldGenerator::getTilePixelColour(sf::Vector2i pixel) {
     if(pixel.x < 0 || pixel.y < 0) 
         return "Other";
 
@@ -1018,7 +1018,7 @@ std::string worldGenerator::getTilePixelColour(sf::Vector2i pixel) {
 
 // Returns the index of a tile under mouse pointer.
 // If index is not found, returns -1.
-int worldGenerator::getTileIndex(sf::Vector2f mouse_position, Region& region) {
+int WorldGenerator::getTileIndex(sf::Vector2f mouse_position, Region& region) {
     // Tiles which intersect with the mouse position.
     std::vector <int> tiles;
     
@@ -1061,7 +1061,7 @@ int worldGenerator::getTileIndex(sf::Vector2f mouse_position, Region& region) {
         return tiles[1];
 }
 
-void worldGenerator::regionGenerateRiver(int region_index) {    
+void WorldGenerator::regionGenerateRiver(int region_index) {    
     Region& region = this->world_map[region_index];
 
     if(!region.regiontype.is_river())
@@ -1358,7 +1358,7 @@ void worldGenerator::regionGenerateRiver(int region_index) {
     }
 }
 
-void worldGenerator::regionGenerateForest(int region_index) {
+void WorldGenerator::regionGenerateForest(int region_index) {
     Region& region = this->world_map[region_index];
 
     noiseSettings settings;
@@ -1385,7 +1385,7 @@ void worldGenerator::regionGenerateForest(int region_index) {
     }
 }
 
-void worldGenerator::regionGenerateHeight(int region_index) {
+void WorldGenerator::regionGenerateHeight(int region_index) {
     Region& region = this->world_map[region_index];
 
     std::cout << "[World Generation][Region Generation]: Generating flatlands.\n";
@@ -1604,20 +1604,20 @@ void worldGenerator::regionGenerateHeight(int region_index) {
         region.map[i].object_position = region.map[i].object_position + sf::Vector2f(0, -region.map[i].elevation * this->settings.region_tile_size.y / 2);
 }
 
-int worldGenerator::getWorldSize() {
+int WorldGenerator::getWorldSize() {
     return this->settings.world_size * this->settings.world_size;
 }
 
-int worldGenerator::getRegionSize() {
+int WorldGenerator::getRegionSize() {
     return this->settings.region_size * this->settings.region_size;
 }
 
 /* Calculate index required for regionmap tile. */
-int worldGenerator::rCalculateIndex(int x, int y) {
+int WorldGenerator::rCalculateIndex(int x, int y) {
     return y * this->settings.region_size + x;
 }
 
 /* Calculate index required for worldmap region. */
-int worldGenerator::wCalculateIndex(int x, int y) {
+int WorldGenerator::wCalculateIndex(int x, int y) {
     return y * this->settings.world_size + x;
 }

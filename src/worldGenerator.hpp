@@ -12,7 +12,7 @@
 #include <cmath>
 
 namespace iso {
-    class worldGenerator {
+    class WorldGenerator {
         private:
             Region m_region;
             Tile   m_tile;
@@ -49,9 +49,9 @@ namespace iso {
             std::string getTreeTextureNameRegion(Biome biome);
 
         public:
-            worldGenerator();
-            worldGenerator(entropy::resourceManager* resource, GenerationSettings& settings);
-            ~worldGenerator();
+            WorldGenerator();
+            WorldGenerator(entropy::resourceManager* resource, GenerationSettings& settings);
+            ~WorldGenerator();
         
             void generateWorld();
             void generateRegion(int index, Region& region);
