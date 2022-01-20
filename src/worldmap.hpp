@@ -44,11 +44,11 @@ namespace iso {
             int current_index;
             int selected_index;
             int draw_calls;
+        
         private:
             void handleInput()         override;
             void initialise()          override;
             void loadResources()       override;
-            // void updateMousePosition() override;
             void moveCamera()          override;
             void zoomCamera()          override;
             void updateCamera()        override;
@@ -61,13 +61,11 @@ namespace iso {
             void highlightPanel();
 
             void renderWorld();
-            void drawDebugText();
             
             void createUI();
             void updateUI(); 
             void renderUI();
             bool intersectsUI();
-
         public:
             Worldmap(SimulationManager* manager);
             ~Worldmap();

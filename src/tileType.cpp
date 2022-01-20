@@ -6,7 +6,7 @@ bitmask& TileType::tileType() {
     return this->m_type;
 }
 
-bool TileType::is_type(char bit) {
+bool TileType::is_type(char bit) const {
     return this->m_type.test(bit);
 }
 
@@ -14,19 +14,19 @@ void TileType::set_type(char bit, bool value) {
     this->m_type.set(bit, value);
 }
 
-bool TileType::is_terrain() {
+bool TileType::is_terrain() const {
     return this->is_type(0);
 }
 
-bool TileType::is_water() {
+bool TileType::is_water() const {
     return !this->is_type(0);
 }
 
-bool TileType::is_river() {
+bool TileType::is_river() const {
     return this->is_type(1);
 }
 
-bool TileType::is_ocean() {
+bool TileType::is_ocean() const {
     return !this->is_type(1);
 }
 

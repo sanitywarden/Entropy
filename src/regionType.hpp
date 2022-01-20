@@ -16,17 +16,17 @@ namespace iso {
         private:
             bitmask m_type;
             
-            bool is_type(char bit);
+            bool is_type(char bit) const;
             void set_type(char bit, bool value = true);
 
         public:
             bitmask& regionType();
 
-            bool is_terrain();
-            bool is_ocean();
-            bool is_river();
-            bool is_coast();
-            bool is_forest();
+            bool is_terrain() const;
+            bool is_ocean()   const;
+            bool is_river()   const;
+            bool is_coast()   const;
+            bool is_forest()  const;
 
             void set_terrain();
             void set_ocean();

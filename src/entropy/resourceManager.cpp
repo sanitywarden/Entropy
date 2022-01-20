@@ -22,7 +22,7 @@ resourceManager::~resourceManager() {
 void resourceManager::loadTexture(const std::string filename, const std::string id, const sf::IntRect area) {
     sf::Texture texture;
     if(!texture.loadFromFile(filename, area)) {
-        std::cout << "[Entropy Engine][Resource Manager]: Could not load texture: " << filename << " with id: " << id << ".\n";
+        std::cout << "[Entropy Engine][ResourceType Manager]: Could not load texture: " << filename << " with id: " << id << ".\n";
         return;
     }
 
@@ -35,7 +35,7 @@ void resourceManager::unloadTexture(const std::string id) {
         return;
     }
 
-    std::cout << "[Entropy Engine][Resource Manager]: Could not unload texture: " << id << ".\n";
+    std::cout << "[Entropy Engine][ResourceType Manager]: Could not unload texture: " << id << ".\n";
 }
 
 bool resourceManager::checkTextureExists(const std::string id) {
@@ -53,7 +53,7 @@ const std::map <std::string, sf::Texture>& resourceManager::getTextureCollection
 void resourceManager::loadFont(const std::string filename, const std::string id) {
     sf::Font font;
     if(!font.loadFromFile(filename)) {
-        std::cout << "[Entropy Engine][Resource Manager]: Could not load font: " << filename << " with id: " << id << ".\n";
+        std::cout << "[Entropy Engine][ResourceType Manager]: Could not load font: " << filename << " with id: " << id << ".\n";
         return;
     }
 
@@ -66,7 +66,7 @@ void resourceManager::unloadFont(const std::string id) {
         return;
     }
 
-    std::cout << "[Entropy Engine][Resource Manager]: Could not unload font: " << id << ".\n";
+    std::cout << "[Entropy Engine][ResourceType Manager]: Could not unload font: " << id << ".\n";
 }
 
 bool resourceManager::checkFontExists(const std::string id) {

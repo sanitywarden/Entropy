@@ -18,10 +18,6 @@ namespace iso {
             Tile   m_tile;
 
             entropy::resourceManager* resource;
-
-            std::string m_log_prefix;
-            bool generated;
-
             std::vector <float> m_noise;    
             std::vector <float> m_gradient; 
             std::vector <float> m_tree_noise;

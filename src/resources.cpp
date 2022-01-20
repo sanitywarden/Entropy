@@ -1,8 +1,8 @@
-#include "resourceCost.hpp"
+#include "resources.hpp"
 
 using namespace iso;
 
-ResourceCost& ResourceCost::operator+= (const ResourceCost& cost) {
+ResourceCollection& ResourceCollection::operator+= (const ResourceCollection& cost) {
     this->wood  += cost.wood;
     this->stone += cost.stone;
     this->gold  += cost.gold;
@@ -10,7 +10,7 @@ ResourceCost& ResourceCost::operator+= (const ResourceCost& cost) {
     return *this;
 }
 
-ResourceCost& ResourceCost::operator-= (const ResourceCost& cost) {
+ResourceCollection& ResourceCollection::operator-= (const ResourceCollection& cost) {
     this->wood  -= cost.wood;
     this->stone -= cost.stone;
     this->gold  -= cost.gold;
@@ -18,17 +18,17 @@ ResourceCost& ResourceCost::operator-= (const ResourceCost& cost) {
     return *this;
 }
 
-ResourceCost ResourceCost::operator+ (const ResourceCost& cost) {
-    ResourceCost temporary(*this);
+ResourceCollection ResourceCollection::operator+ (const ResourceCollection& cost) {
+    ResourceCollection temporary(*this);
     return temporary -= cost;
 }
 
-ResourceCost ResourceCost::operator- (const ResourceCost& cost) {
-    ResourceCost temporary(*this);
+ResourceCollection ResourceCollection::operator- (const ResourceCollection& cost) {
+    ResourceCollection temporary(*this);
     return temporary -= cost;
 }
 
-bool ResourceCost::operator> (const ResourceCost& cost) {
+bool ResourceCollection::operator> (const ResourceCollection& cost) const {
     return (
         this->wood  > cost.wood  &&
         this->stone > cost.stone &&
@@ -36,7 +36,7 @@ bool ResourceCost::operator> (const ResourceCost& cost) {
     );
 }
 
-bool ResourceCost::operator>= (const ResourceCost& cost) {
+bool ResourceCollection::operator>= (const ResourceCollection& cost) const {
     return (
         this->wood  >= cost.wood  &&
         this->stone >= cost.stone &&
@@ -44,12 +44,12 @@ bool ResourceCost::operator>= (const ResourceCost& cost) {
     );
 }
 
-bool ResourceCost::operator< (const ResourceCost& cost) {
+bool ResourceCollection::operator< (const ResourceCollection& cost) const {
     // Reuse the '>' operator by negating it's result.
     return !(*this > cost);
 }
 
-bool ResourceCost::operator<= (const ResourceCost& cost) {
+bool ResourceCollection::operator<= (const ResourceCollection& cost) const {
     return (
         this->wood  <= cost.wood  &&
         this->stone <= cost.stone &&

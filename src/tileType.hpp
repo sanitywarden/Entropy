@@ -16,16 +16,16 @@ namespace iso {
         private:
             bitmask m_type;
 
-            bool is_type(char bit);
+            bool is_type(char bit) const;
             void set_type(char bit, bool value = true);
-
+            
         public: 
             bitmask& tileType();
 
-            bool is_terrain();
-            bool is_water();   // Returns true if the tile is of type river or ocean.
-            bool is_river();
-            bool is_ocean();
+            bool is_terrain() const;
+            bool is_water()   const; // Returns true if the tile is of type river or ocean.
+            bool is_river()   const;
+            bool is_ocean()   const;
 
             void set_terrain();
             void set_water();

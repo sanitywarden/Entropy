@@ -7,9 +7,8 @@ WorldGenerator::WorldGenerator() {
 }
 
 WorldGenerator::WorldGenerator(entropy::resourceManager* resource, GenerationSettings& settings) {
-    this->settings     = settings;
-    this->resource     = resource;
-    this->m_log_prefix = "[World Generation]";
+    this->settings = settings;
+    this->resource = resource;
 
     auto world_size = this->getWorldSize();
 
@@ -25,17 +24,17 @@ WorldGenerator::~WorldGenerator() {
 }
 
 void WorldGenerator::generateWorld() {
-    std::cout << this->m_log_prefix << ": Generating world.\n";
+    std::cout << "[World Generation]: Generating world.\n";
     
     sf::Clock clock;
     unsigned int panel_quantity = 0;
 
-    std::cout << this->m_log_prefix << ": Generating noise.\n";
+    std::cout << "[World Generation]: Generating noise.\n";
 
     this->generateNoiseMap();
     this->generateCircularGradient();
 
-    std::cout << this->m_log_prefix << ": Generating terrain.\n";
+    std::cout << "[World Generation]: Generating terrain.\n";
 
     for(int y = 0; y < this->settings.world_size; y++) {
         for(int x = 0; x < this->settings.world_size; x++) {                
@@ -93,21 +92,21 @@ void WorldGenerator::generateWorld() {
         }
     }
 
-    std::cout << this->m_log_prefix << ": Simulating world climate.\n";
+    std::cout << "[World Generation]: Simulating world climate.\n";
     
     this->generateLatititude();
     this->generateTemperature();
     this->generateMoistureMap();
     this->assignBiome();
 
-    std::cout << this->m_log_prefix << ": Generating world features.\n";
+    std::cout << "[World Generation]: Generating world features.\n";
 
     this->generateRivers();
     this->generateForests();
 
-    std::cout << this->m_log_prefix << ": World generated.\n";
-    std::cout << this->m_log_prefix << ": Terrain is " << panel_quantity  << " panels out of total " << this->getWorldSize() << " panels" << " (" << int(float(panel_quantity / float(this->getWorldSize())) * 100) << "%)." << "\n";
-    std::cout << this->m_log_prefix << ": " << this->getWorldSize() << " panels generated in " << clock.getElapsedTime().asSeconds() << " seconds.\n";
+    std::cout << "[World Generation]: World generated.\n";
+    std::cout << "[World Generation]: Terrain is " << panel_quantity  << " panels out of total " << this->getWorldSize() << " panels" << " (" << int(float(panel_quantity / float(this->getWorldSize())) * 100) << "%)." << "\n";
+    std::cout << "[World Generation]: " << this->getWorldSize() << " panels generated in " << clock.getElapsedTime().asSeconds() << " seconds.\n";
 }
 
 void WorldGenerator::generateNoiseMap() {
@@ -191,7 +190,7 @@ void WorldGenerator::generateCircularGradient() {
 }
 
 void WorldGenerator::generatePoles() {
-    std::cout << this->m_log_prefix << ": Generating poles.\n";
+    std::cout << "[World Generation]: Generating poles.\n";
     
     const float chance   = 1.0f;
     const float modifier = 0.6f;
@@ -237,7 +236,7 @@ void WorldGenerator::generatePoles() {
 }
 
 void WorldGenerator::generateRivers() {
-    std::cout << this->m_log_prefix << ": Generating rivers.\n";
+    std::cout << "[World Generation]: Generating rivers.\n";
     
     // Number of rivers is a maximum amount of rivers.
     // It does not mean that there will be the specified amount.
@@ -471,7 +470,7 @@ void WorldGenerator::generateRivers() {
 }
 
 void WorldGenerator::generateLatititude() {
-    std::cout << this->m_log_prefix << ": Calculating latitude.\n";
+    std::cout << "[World Generation]: Calculating latitude.\n";
     
     for(int y = 0; y < this->settings.world_size; y++) {
         for(int x = 0; x < this->settings.world_size; x++) {       
@@ -492,7 +491,7 @@ void WorldGenerator::generateLatititude() {
 }
 
 void WorldGenerator::generateTemperature() {
-    std::cout << this->m_log_prefix << ": Calculating temperature.\n";
+    std::cout << "[World Generation]: Calculating temperature.\n";
     
     for(int y = 0; y < this->settings.world_size; y++) {
         for(int x = 0; x < this->settings.world_size; x++) {            
@@ -526,7 +525,7 @@ void WorldGenerator::generateTemperature() {
 }
 
 void WorldGenerator::generateMoistureMap() {
-    std::cout << this->m_log_prefix << ": Calculating moisture.\n";
+    std::cout << "[World Generation]: Calculating moisture.\n";
     
     std::vector <float> input(this->settings.world_size * this->settings.world_size);
     for(int i = 0; i < this->settings.world_size * this->settings.world_size; i++) {
@@ -594,7 +593,7 @@ void WorldGenerator::generateMoistureMap() {
 }
 
 void WorldGenerator::assignBiome() {
-    std::cout << this->m_log_prefix << ": Generating biomes.\n";
+    std::cout << "[World Generation]: Generating biomes.\n";
     
     for(int index = 0; index < this->getWorldSize(); index++) {
         Region& panel = this->world_map[index];
@@ -671,7 +670,7 @@ void WorldGenerator::assignBiome() {
 }
 
 void WorldGenerator::generateForests() {
-    std::cout << this->m_log_prefix << ": Generating forests.\n";
+    std::cout << "[World Generation]: Generating forests.\n";
 
     noiseSettings settings;
     settings.octaves     = 8;
@@ -1282,8 +1281,8 @@ void WorldGenerator::regionGenerateRiver(int region_index) {
 
         case RiverDirection::RIVER_NORTH_TO_EAST: {            
             const sf::Vector2i relative_point = sf::Vector2i(0, 0);
-            for(int y = 0; y < this->settings.region_size / 2; y++) {
-                for(int x = 0; x < this->settings.region_size / 2; x++) {
+            for(int x = 0; x < this->settings.region_size / 2; x++) {
+                for(int y = 0; y < this->settings.region_size / 2; y++) {
                     const int   index = this->rCalculateIndex(x, y);
                     const float distance_x = (relative_point.x - x) * (relative_point.x - x);
                     const float distance_y = (relative_point.y - y) * (relative_point.y - y);
@@ -1529,12 +1528,12 @@ void WorldGenerator::regionGenerateHeight(int region_index) {
                         }
                     }
 
-                    // For the southern coast.
+                    // For the northern coast.
                     if(index - this->settings.region_size >= 0) {
                         if(!region.map[index - this->settings.region_size].tiletype.is_river()) {
                             for(int slope_left = 0; slope_left < terrain_slope; slope_left++) {
                                 const int index_left = index - slope_left * this->settings.region_size;
-                    
+
                                 if(index_left >= 0) {
                                     if(!region.map[index_left].tiletype.is_river() && !region.map[index_left]._marked) {
                                         const int elevation = smaller_slope(slope_left);  
@@ -1547,12 +1546,12 @@ void WorldGenerator::regionGenerateHeight(int region_index) {
                         }
                     }
 
-                    // For the northern coast.
+                    // For the southern coast.
                     if(index + this->settings.region_size < this->getRegionSize()) {
                         if(!region.map[index + this->settings.region_size].tiletype.is_river()) {
                             for(int slope_right = 0; slope_right < terrain_slope; slope_right++) {
                                 const int index_right = index + slope_right * this->settings.region_size;
-    
+                                
                                 if(index_right < this->getRegionSize()) {
                                     if(!region.map[index_right].tiletype.is_river() && !region.map[index_right]._marked) {
                                         const int elevation = smaller_slope(slope_right);

@@ -5,7 +5,8 @@
 using namespace iso;
 
 Player::Player() {
-    this->is_human = false;
+    this->is_human     = false;
+    this->country_name = "*";
 }
 
 Player::~Player() {
@@ -33,56 +34,8 @@ void Player::setHuman(bool is_human) {
     this->is_human = is_human;
 }
 
-bool Player::isHuman() {
+bool Player::isHuman() const {
     return this->is_human;
-}
-
-void Player::addResource(Resource resource, int quantity) {
-    switch(resource) {
-        default:
-            break;
-
-        case Resource::RESOURCE_WOOD:
-            this->resources.wood += quantity;
-            break;
-
-        case Resource::RESOURCE_STONE:
-            this->resources.stone += quantity;
-            break;
-
-        case Resource::RESOURCE_GOLD:
-            this->resources.gold += quantity;
-            break;
-    }
-}
-
-void Player::addResources(ResourceCost resource) {
-    this->resources += resource;
-}
-
-int Player::getResourceQuantity(Resource resource) {
-    switch(resource) {
-        default:
-            return 0;
-
-        case Resource::RESOURCE_WOOD:
-            return this->resources.wood;
-
-        case Resource::RESOURCE_STONE:
-            return this->resources.wood;
-    
-        case Resource::RESOURCE_GOLD:
-            return this->resources.gold;
-    }
-}
-
-bool Player::isBuildingAffordable(const Building building) {
-    return (this->resources >= building.getBuildingCost());
-}
-
-/* Remove the resources needed to construct provided building from player's resource pool. */
-void Player::removeBuildingCost(const Building building) {
-    this->resources -= building.getBuildingCost();
 }
 
 int Player::getCapital() {
@@ -91,4 +44,12 @@ int Player::getCapital() {
 
 const sf::Color& Player::getTeamColour() {
     return this->team_colour;
+}
+
+void Player::setCountryName(std::string name) {
+    this->country_name = name;
+}
+
+const std::string& Player::getCountryName() {
+    return this->country_name;
 }

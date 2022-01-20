@@ -1,9 +1,8 @@
 #ifndef _PLAYER_HPP_
 #define _PLAYER_HPP_
 
-#include "region.hpp"
 #include "building.hpp"
-#include "resourceCost.hpp"
+#include "resources.hpp"
 
 #include <vector>
 
@@ -28,31 +27,26 @@ namespace iso {
 
     class Player {
         friend class SimulationManager;
-        friend class BuildingManager;
 
         protected:
-            ResourceCost      resources;
             std::vector <int> owned_regions; // Indexes of the player owned regions. 
             bool              is_human;
             sf::Color         team_colour;
+            std::string       country_name;
 
         public:
             Player();
             ~Player();
 
-            void addOwnedRegion(int region_index);
-            void removeOwnedRegion(int region_index);
+            void                     addOwnedRegion(int region_index);
+            void                     removeOwnedRegion(int region_index);
             const std::vector <int>& readOwnedRegions();
-            int  getCapital();
-            void setHuman(bool is_human);
-            bool isHuman();
-            void addResource(Resource resource, int quantity);
-            void addResources(ResourceCost resource);
-            int  getResourceQuantity(Resource resource);
-            const sf::Color& getTeamColour();
-
-            bool isBuildingAffordable(const Building building);
-            void removeBuildingCost(const Building building);
+            int                      getCapital();
+            void                     setHuman(bool is_human);
+            bool                     isHuman() const;
+            const sf::Color&         getTeamColour();
+            void                     setCountryName(std::string name);
+            const std::string&       getCountryName();
     };
 }
 

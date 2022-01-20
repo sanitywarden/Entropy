@@ -1,7 +1,6 @@
 #include "worldmap.hpp"
 
 using namespace iso;
-using namespace entropy;
 
 Worldmap::Worldmap(SimulationManager* manager) : Gamestate(manager, "Worldmap") {
     this->manager = manager;
@@ -46,12 +45,13 @@ void Worldmap::initialise() {
     this->view_interface.setSize(this->manager->window.windowSize());
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
 
-    this->controls.addKeyMappingCheck("key_tilde",   sf::Keyboard::Key::Tilde);
-    this->controls.addKeyMappingCheck("key_escape",  sf::Keyboard::Key::Escape);
-    this->controls.addKeyMappingCheck("arrow_left",  sf::Keyboard::Key::Left);
-    this->controls.addKeyMappingCheck("arrow_right", sf::Keyboard::Key::Right);
-    this->controls.addKeyMappingCheck("arrow_down",  sf::Keyboard::Key::Down);
-    this->controls.addKeyMappingCheck("arrow_up",    sf::Keyboard::Key::Up);
+    this->controls.addKeyMappingCheck("key_tilde",             sf::Keyboard::Key::Tilde);
+    this->controls.addKeyMappingCheck("key_escape",            sf::Keyboard::Key::Escape);
+    this->controls.addKeyMappingCheck("key_regenerate_world",  sf::Keyboard::Key::R);
+    this->controls.addKeyMappingCheck("arrow_left",            sf::Keyboard::Key::Left);
+    this->controls.addKeyMappingCheck("arrow_right",           sf::Keyboard::Key::Right);
+    this->controls.addKeyMappingCheck("arrow_down",            sf::Keyboard::Key::Down);
+    this->controls.addKeyMappingCheck("arrow_up",              sf::Keyboard::Key::Up);
 }
 
 void Worldmap::loadResources() {
@@ -243,6 +243,10 @@ void Worldmap::handleInput() {
                     this->manager->exitApplication(0);
                 }
 
+                if(this->controls.keyState("key_regenerate_world")) {
+                    this->manager->prepare();
+                }
+
                 if(this->controls.keyState("arrow_left"))
                     if(this->view_game.getCenter().x + this->manager->settings.world_panel_size.x >= this->view_game.getSize().x / 2)
                         this->view_game.move(-this->manager->settings.world_panel_size.x, 0);
@@ -428,6 +432,9 @@ void Worldmap::updateSelectedPanel() {
 }
 
 void Worldmap::highlightPanel() {
+    if(this->mouse_drag)
+        return;
+    
     auto panel_grid_position = sf::Vector2i(
         this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
         this->mouse_position_window.y / this->manager->settings.world_panel_size.y
@@ -469,7 +476,6 @@ void Worldmap::renderUI() {
         auto* page = pair.second;
         if(page) {
             if(page->show) {
-                page->updateUI();
                 this->manager->window.draw(*page);   
             }
         }
@@ -477,63 +483,15 @@ void Worldmap::renderUI() {
 }
 
 void Worldmap::updateUI() {
-    gui::WidgetRegion* widget_region = (static_cast<gui::WidgetRegion*>(this->interface.at("component_widget_region")));
-    gui::Button*       button_travel = (static_cast<gui::Button*>(widget_region->getComponent("button_travel")));
-
-    // Update button_travel.
-    if(this->selected_index != -1 && this->mouse_pressed && button_travel->containsPoint(this->mouse_position_interface)) {
-        Region& region = this->manager->world.world_map[this->selected_index]; 
-
-        // You check for these things here to avoid calling functions responsible for world generation.
-        // Biomes: arctic, ocean and sea do not have planned content.
-        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
-            std::cout << "[Worldmap][Button Visit Region]: Requested to generate a region not meant for visiting.\n";
-            this->selected_index = -1;
-            return;
+    for(const auto& pair : this->interface) {
+        auto* page = pair.second;
+        if(page) {
+            if(page->show) {
+                page->updateUI();
+                page->functionality();   
+            }
         }
-
-        if(!this->manager->gamestate.checkGamestateExists("regionmap")) {
-            static Regionmap regionmap_gamestate(this->manager);
-            this->manager->gamestate.addGamestate("regionmap", regionmap_gamestate);
-        }
-
-        // Get a pointer to the gamestate.
-        // You do not need to check if it's a nullptr, because it can not be, but do it just to be sure. 
-        // It will make debugging easier in case of a unexpected behaviour (function returns nullptr).
-        Regionmap* regionmap = static_cast<Regionmap*>(this->manager->gamestate.getGamestateByName("regionmap"));
-        if(!regionmap) {
-            std::cout << "[Worldmap][Button Visit Region]: Gamestate regionmap is a nullptr.\n";
-            this->manager->exitApplication(1);
-        }
-
-        this->zoom_camera   = false;
-        this->move_camera   = false;
-        this->mouse_drag    = false;
-        this->mouse_moved   = false;
-    
-        // You have to generate the region first, because setCurrentRegion() depends on it being generated.
-        if(!region.visited)
-            this->manager->world.generateRegion(this->selected_index, region);
-
-        regionmap->setCurrentRegion(this->selected_index);
-        this->manager->gamestate.setGamestate("regionmap");
     }
-    
-    gui::Button* button_expand = static_cast<gui::Button*>(widget_region->getComponent("button_expand"));
-    if(this->selected_index != -1 && this->controls.mouseLeftPressed() && button_expand->containsPoint(this->mouse_position_interface)) {
-        Region& region = this->manager->world.world_map[this->selected_index];
-
-        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
-            std::cout << "[Worldmap][Button Expand]: Requested to expand to a region not meant for owning.\n";
-            this->selected_index = -1;
-            return;
-        }
-
-        this->manager->getHumanPlayer().addOwnedRegion(this->selected_index);
-        region.colour = this->manager->getHumanPlayer().getTeamColour();
-    }
-
-    // Rest of the updates.
 }
 
 int Worldmap::getCurrentIndex() {
