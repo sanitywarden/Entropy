@@ -6,7 +6,7 @@ Building::Building() {
     
 }
 
-Building::Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, sf::Vector2f building_size, ResourceCost building_cost) {
+Building::Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, sf::Vector2f building_size, ResourceCollection building_cost) {
     this->object_name         = building_name;
     this->object_position     = position + relative_position;
     this->object_size         = size;
@@ -24,12 +24,12 @@ const sf::Vector2f Building::getBuildingArea() const {
     return this->building_size;
 }
 
-const ResourceCost Building::getBuildingCost() const {
+const ResourceCollection Building::getBuildingCost() const {
     return this->building_cost;
 }
 
-const ResourceCost Building::getBuildingRefund() const {
-    return ResourceCost(
+const ResourceCollection Building::getBuildingRefund() const {
+    return ResourceCollection(
         this->building_cost.wood  * 0.9f,
         this->building_cost.stone * 0.9f,
         this->building_cost.gold  * 0.9f
