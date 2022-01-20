@@ -1,11 +1,6 @@
 #include "regionmap.hpp"
 
 using namespace iso;
-using namespace entropy;
-
-Regionmap::Regionmap() {
-    
-}
 
 Regionmap::Regionmap(SimulationManager* manager) : Gamestate(manager, "Regionmap") {
     this->manager = manager;
@@ -38,39 +33,59 @@ void Regionmap::initialise() {
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
     this->view_interface.setSize(this->manager->window.windowSize());
 
-    this->building_manager = BuildingManager(this->manager);
-
     this->controls.addKeyMappingCheck("key_tilde",   sf::Keyboard::Key::Tilde);
     this->controls.addKeyMappingCheck("key_escape",  sf::Keyboard::Key::Escape);
     this->controls.addKeyMappingCheck("arrow_left",  sf::Keyboard::Key::Left);
     this->controls.addKeyMappingCheck("arrow_right", sf::Keyboard::Key::Right);
     this->controls.addKeyMappingCheck("arrow_down",  sf::Keyboard::Key::Down);
     this->controls.addKeyMappingCheck("arrow_up",    sf::Keyboard::Key::Up);
+
+    this->controls.addKeyMappingCheck("key_remove_building",     sf::Keyboard::Key::D);
+    this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
+
+    UpdateUtility update_pawn_movement("update_pawn_movement", 1);
+        this->scheduler.insert({ update_pawn_movement.id, update_pawn_movement });
 }
 
 void Regionmap::loadResources() {
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_warm",                       sf::IntRect(0, 0, 64, 32   ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_cold",                       sf::IntRect(64, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_subtropical",                sf::IntRect(128, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_tropical",                   sf::IntRect(192, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_tundra",                           sf::IntRect(256, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_arctic",                           sf::IntRect(320, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_desert",                           sf::IntRect(384, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_ocean",                            sf::IntRect(448, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                              sf::IntRect(512, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_highlight",                        sf::IntRect(0, 288, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction",               sf::IntRect(64, 288, 64, 32));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_dirt",                      sf::IntRect(0, 32, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_stone",                     sf::IntRect(64, 32, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",               sf::IntRect(0, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",               sf::IntRect(64, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",               sf::IntRect(128, 0, 64, 64 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1",           sf::IntRect(256, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_warm",                       sf::IntRect(0, 0, 64, 32    ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_cold",                       sf::IntRect(64, 0, 64, 32   ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_subtropical",                sf::IntRect(128, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_tropical",                   sf::IntRect(192, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_tundra",                           sf::IntRect(256, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_arctic",                           sf::IntRect(320, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_desert",                           sf::IntRect(384, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_ocean",                            sf::IntRect(448, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                              sf::IntRect(512, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_highlight",                        sf::IntRect(0, 288, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction",               sf::IntRect(64, 288, 64, 32 ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_dirt",                      sf::IntRect(0, 32, 64, 32   ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_stone",                     sf::IntRect(64, 32, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",               sf::IntRect(0, 0, 64, 64    ));
+    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",               sf::IntRect(64, 0, 64, 64   ));
+    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",               sf::IntRect(128, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1",           sf::IntRect(256, 0, 64, 64  ));
 
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_farmland",        sf::IntRect(64, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_quarry",          sf::IntRect(128, 0, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_small_house",     sf::IntRect(0, 0, 64, 64    ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_farmland",        sf::IntRect(64, 0, 64, 64   ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_quarry",          sf::IntRect(128, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 64, 64, 64   ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_horizontal",     sf::IntRect(0, 128, 64, 32  ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_vertical",       sf::IntRect(0, 160, 64, 32  ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_cross",          sf::IntRect(64, 128, 64, 32 ));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_point",          sf::IntRect(64, 160, 64, 32));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_turn_up",        sf::IntRect(128, 128, 64, 32));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_turn_down",      sf::IntRect(128, 160, 64, 32));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_turn_right",     sf::IntRect(192, 128, 64, 32));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_turn_left",      sf::IntRect(192, 160, 64, 32));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_without_left",   sf::IntRect(320, 128, 64, 32));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_without_right",  sf::IntRect(320, 160, 64, 32));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_without_top",    sf::IntRect(256, 160, 64, 32));
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "path_dirt_without_down",   sf::IntRect(256, 128, 64, 32));
+
+
+    this->manager->resource.loadTexture("./res/actors/actor.png", "actor");
 }
 
 void Regionmap::update(float delta_time) {
@@ -80,6 +95,19 @@ void Regionmap::update(float delta_time) {
 
     this->updateTile();
     this->updateUI();
+    
+    auto& update_pawn = this->scheduler["update_pawn_movement"];
+    update_pawn.counter++;
+    const int fps_value = this->manager->getAverageFramesPerSecond() != 0 ? this->manager->getAverageFramesPerSecond() : this->manager->getFramesPerSecond();
+    if(update_pawn.counter >= update_pawn.interval * fps_value && !this->pawn.path.empty()) {
+        this->pawn.nextMove();
+        update_pawn.counter = 0;
+    }
+
+    else if(this->pawn.path.empty()) {
+        int goal = std::rand() % this->manager->world.getRegionSize() - 1;
+        this->pawn.path = this->manager->astar(this->pawn.current_index, goal);
+    }
 }
 
 void Regionmap::render(float delta_time) {
@@ -89,6 +117,7 @@ void Regionmap::render(float delta_time) {
 
     this->renderRegion();
     this->higlightTile();
+    this->manager->window.draw(this->pawn);
 
     this->manager->window.getWindow()->setView(this->view_interface);
 
@@ -125,7 +154,7 @@ void Regionmap::handleInput() {
                 }
 
                 if(this->controls.keyState("arrow_left"))
-                    if(this->view_game.getCenter().x + this->manager->settings.region_tile_size.x >= this->view_game.getSize().x / 2)
+                    if(this->view_game.getCenter().x + this->manager->settings.region_tile_size.x >= -this->view_game.getSize().x / 2)
                         this->view_game.move(-this->manager->settings.region_tile_size.x, 0);
 
                 if(this->controls.keyState("arrow_right"))
@@ -342,11 +371,16 @@ void Regionmap::setCurrentRegion(int region_index) {
     );
 
     this->view_game.setCenter(first_tile_position);
+
+    this->pawn      = Pawn(this->region);
 }
 
 void Regionmap::higlightTile() {
     const int index = this->manager->world.getTileIndex(this->mouse_position_window, *this->region);
     if(index == -1)
+        return;
+
+    if(this->mouse_drag)
         return;
 
     this->current_index = index;
@@ -388,26 +422,100 @@ int Regionmap::getCurrentIndex() {
 }
 
 void Regionmap::updateTile() {
-    this->controls.addKeyMappingCheck("key_build_building",      sf::Keyboard::Key::B);
-    this->controls.addKeyMappingCheck("key_remove_building",     sf::Keyboard::Key::D);
-    this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
-
     auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && !intersectsUI() && !this->mouse_drag) {
+    if(building_menu->getBuilding() != BUILDING_EMPTY && !intersectsUI() && this->mouse_pressed && !this->mouse_drag) {
         Building building = building_menu->getBuilding();
-        this->building_manager.placeBuildingCheck(this->current_index, building);
+        this->region->placeBuildingCheck(building, this->manager->settings, this->current_index);
+
+        if(building == BUILDING_PATH && this->mouse_pressed) {
+            this->updatePaths(this->current_index);
+        }
     }
 
     if(this->controls.keyState("key_remove_building")) {
         Building building = this->region->buildings[this->current_index]; 
-        this->manager->getHumanPlayer().addResources(building.getBuildingRefund());
-        this->building_manager.removeBuilding(this->current_index);
+        this->region->addResources(building.getBuildingRefund());
+        this->region->removeBuilding(this->current_index);
     }
 
     if(this->controls.keyState("key_removeresource_tree")) {
         if(this->region->trees[this->current_index].exists()) {
             this->region->trees.erase(this->current_index);
-            this->manager->getHumanPlayer().addResource(Resource::RESOURCE_WOOD, 10);
+        }
+    }
+}
+
+void Regionmap::updatePaths(int index) {
+    if(!this->region->buildings.count(index))
+        return;
+    
+    /* Assigns appropriate path texture based on the path tile's surroundings. */
+    const auto directions = [&](bool LEFT, bool RIGHT, bool TOP, bool DOWN, Building& building) -> void {
+        if(LEFT && RIGHT && !TOP && !DOWN)
+            building.object_texture_name = "path_dirt_horizontal";
+
+        else if(!LEFT && !RIGHT && TOP && DOWN)
+            building.object_texture_name = "path_dirt_vertical";
+
+        else if(LEFT && RIGHT && TOP && DOWN)
+            building.object_texture_name = "path_dirt_cross";
+
+        else if(LEFT && !RIGHT && TOP && !DOWN)
+            building.object_texture_name = "path_dirt_turn_up";
+    
+        else if(!LEFT && RIGHT && !TOP && DOWN)
+            building.object_texture_name = "path_dirt_turn_down";
+
+        else if(!LEFT && RIGHT && TOP && !DOWN)
+            building.object_texture_name = "path_dirt_turn_right";
+
+        else if(LEFT && !RIGHT && !TOP && DOWN)
+            building.object_texture_name = "path_dirt_turn_left";
+
+        else if(LEFT && RIGHT && TOP && !DOWN)
+            building.object_texture_name = "path_dirt_without_down";
+
+        else if(LEFT && RIGHT && !TOP && DOWN)
+            building.object_texture_name = "path_dirt_without_top";
+
+        else if(LEFT && !RIGHT && TOP && DOWN)
+            building.object_texture_name = "path_dirt_without_right";
+
+        else if(!LEFT && RIGHT && TOP && DOWN)
+            building.object_texture_name = "path_dirt_without_left";
+    
+        else if((LEFT && !RIGHT && !TOP && !DOWN) || (!LEFT && RIGHT && !TOP && !DOWN))
+            building.object_texture_name = "path_dirt_horizontal";
+
+        else if((!LEFT && !RIGHT && !TOP && DOWN) || (!LEFT && !RIGHT && TOP && !DOWN))
+            building.object_texture_name = "path_dirt_vertical";
+        
+        else building.object_texture_name = "path_dirt_point";
+    };
+
+    // Update the singular tile.
+    if(this->region->buildings[index] == BUILDING_PATH) {
+        Building& building = this->region->buildings[index];
+        
+        bool LEFT  = this->region->buildings.count(index - 1) ? true : false;
+        bool RIGHT = this->region->buildings.count(index + 1) ? true : false;
+        bool TOP   = this->region->buildings.count(index - this->manager->settings.region_size) ? true : false;
+        bool DOWN  = this->region->buildings.count(index + this->manager->settings.region_size) ? true : false;
+        directions(LEFT, RIGHT, TOP, DOWN, building);
+    }
+
+    // Update the tiles that might have been affected by the previous change.
+    for(auto& pair : this->region->buildings) {
+        Building& building = pair.second;
+        const int i        = pair.first;
+
+        if(building == BUILDING_PATH) {
+            bool LEFT  = this->region->buildings.count(i - 1) ? true : false;
+            bool RIGHT = this->region->buildings.count(i + 1) ? true : false;
+            bool TOP   = this->region->buildings.count(i - this->manager->settings.region_size) ? true : false;
+            bool DOWN  = this->region->buildings.count(i + this->manager->settings.region_size) ? true : false;
+    
+            directions(LEFT, RIGHT, TOP, DOWN, building);
         }
     }
 }
@@ -426,7 +534,6 @@ void Regionmap::renderUI() {
         auto* page = pair.second;
         if(page) {
             if(page->show) {
-                page->updateUI();
                 this->manager->window.draw(*page);   
             }
         }
@@ -434,13 +541,20 @@ void Regionmap::renderUI() {
 }
 
 void Regionmap::updateUI() {
-
+    for(const auto& pair : this->interface) {
+        auto* page = pair.second;
+        if(page) {
+            if(page->show) {
+                page->updateUI();
+                page->functionality();   
+            }
+        }
+    }
 }
 
 bool Regionmap::intersectsUI() {
     for(const auto& pair : this->interface) {
         const auto* component = pair.second;
-
         if(component) {
             if(component->intersectsUI(this->mouse_position_interface))
                 return true;
@@ -449,3 +563,4 @@ bool Regionmap::intersectsUI() {
     
     return false;
 }
+

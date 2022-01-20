@@ -8,6 +8,9 @@
 using namespace iso;
 using namespace entropy;
 
+static int LOOPS = 0; // Number of loops that the program has run.
+static int SUM   = 0; // Sum of the FPS. Used for averaging.
+
 SimulationManager::SimulationManager() {
     GenerationSettings settings;
     settings.world_size                 = 100;
@@ -40,15 +43,16 @@ SimulationManager::SimulationManager() {
     this->settings = settings;
     // Settings for world generation set.
 
+    this->time_passed = 0;
+
     this->window.setTitle("Entropy by Vivit");
 
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
 
     this->world = WorldGenerator(&this->resource, this->settings);
-    this->world.generateWorld();
     
-    this->spawnPlayers();
+    this->prepare();
 
     this->gamestate.setGamestate("worldmap");
 }
@@ -83,13 +87,23 @@ void SimulationManager::loop() {
 
             this->m_measurement_clock.restart();
             this->m_time_since_start = sf::Time::Zero;
+            
+            if(this->time_passed + 1 <= INT_MAX) {
+                this->time_passed++;
+
+                SUM += updates;
+                LOOPS++;
+
+                this->average_fps = SUM / LOOPS;
+            }
+
             updates = 0;
         }
     }
 }
 
 void SimulationManager::internalLoop(float delta_time) {
-    entropy::Gamestate* gamestate = this->gamestate.getGamestate();
+    Gamestate* gamestate = this->gamestate.getGamestate();
     if(gamestate == nullptr) {
         std::cout << "[Simulation Manager]: Gamestate is a nullptr.\n";
         this->exitApplication(1);
@@ -99,22 +113,14 @@ void SimulationManager::internalLoop(float delta_time) {
     gamestate->update(delta_time);
     gamestate->render(delta_time);
 
-    const std::string gamestate_name = gamestate->state_id;
-    for(auto& player : this->players) {
+    const std::string& gamestate_name = gamestate->state_id;
+    for(const auto& player : this->players) {
         // Player updates are tied to gamestate updates.
         if(player.isHuman())
             continue;
 
-        // AI updates are handled here.
-        else {
-            if(gamestate_name == "Worldmap") {
-
-            }
-
-            else if(gamestate_name == "Regionmap") {
-            
-            }
-        }
+        /* Handle AI updates here. */
+        
     }
 }
 
@@ -132,6 +138,13 @@ void SimulationManager::spawnPlayers() {
             const int index = std::rand() % this->world.getWorldSize();
             if(!this->world.is_arctic(index) && !this->world.is_ocean(index) && !this->world.is_sea(index)) {
                 claimed_spots.push_back(index);
+                
+                Region& region = this->world.world_map[index];
+                // this->world.generateRegion(index, region);
+
+                Player& player = this->players[current_player]; 
+                region.owner = &player;
+
                 spot_found = true;
                 break;
             }
@@ -143,13 +156,147 @@ void SimulationManager::spawnPlayers() {
     }
 
     for(auto& player : this->players) {
-        this->world.world_map[player.owned_regions[0]].colour = player.team_colour;
+        this->world.world_map[player.getCapital()].object_colour = player.team_colour;
     }
 
     this->players[0].setHuman(true);
+    this->players[0].setCountryName("Sanity Wardens");
     std::cout << "[Simulation Manager]: Starting locations found.\n";    
 }
 
 Player& SimulationManager::getHumanPlayer() {
     return this->players[0];
+}
+
+void SimulationManager::prepare() {
+    this->world.generateWorld();
+    this->spawnPlayers();
+}
+
+struct AStarNode {
+    int x;
+    int y;
+    int index;
+    int cost_heuristic;
+    int cost_sincestart;
+    bool visited;
+
+    AStarNode* parent;
+    std::vector <AStarNode> neighbours;
+
+    AStarNode() : index(0), cost_heuristic(9999), cost_sincestart(9999), visited(false), parent(nullptr) {};
+};
+
+/* A* algorithm implementation. 
+ * Returns a vector with indexes of tiles forming a path. */
+std::vector <int> SimulationManager::astar(int start_index, int end_index) {
+    const auto distance = [](AStarNode& node1, AStarNode& node2) -> int {
+        return std::abs(node1.x - node2.x) + std::abs(node1.y - node2.y);
+    };
+
+    const auto heuristic = [distance](AStarNode& node1, AStarNode& node2) -> int {
+        return distance(node1, node2);
+    };
+
+    // One million.
+    const int ASTAR_LIMIT = 1000000;
+
+    std::queue  <AStarNode> list_to_check;
+    std::vector <AStarNode> discovered_tiles(this->settings.region_size * this->settings.region_size);
+    std::vector <int>  solution;
+
+    AStarNode node;
+    for(int y = 0; y < this->settings.region_size; y++) {
+        for(int x = 0; x < this->settings.region_size; x++) {
+            const int index = y * this->settings.region_size + x;
+            node.x     = x;
+            node.y     = y;
+            node.index = index;
+            discovered_tiles[index] = node;
+        }
+    }
+
+
+    solution.push_back(start_index);
+
+    AStarNode& start = discovered_tiles[start_index];
+    AStarNode& end   = discovered_tiles[end_index];    
+
+    start.cost_sincestart = 0;
+    start.cost_heuristic  = heuristic(start, end);
+
+    list_to_check.push(start);
+    int counter = 0;
+
+    AStarNode* current = nullptr;
+    while(!list_to_check.empty()) {
+        if(list_to_check.empty())
+            break;
+    
+        if(counter == ASTAR_LIMIT) {
+            std::cout << "[Simulation Manager][A*]: Astar limit reached.\n";
+            break;
+        }
+
+        current = &list_to_check.front();
+        current->visited = true;
+
+        list_to_check.pop();
+
+        if(current->index == end.index)
+            break;
+
+        // Find neighbours.
+        if(current->index - 1 >= 0) {
+            auto& neighbour = discovered_tiles[current->index - 1];
+            if(current->y == neighbour.y)
+                current->neighbours.push_back(neighbour);
+        }
+
+        if(current->index + 1 < this->world.getRegionSize()) {
+            auto& neighbour = discovered_tiles[current->index + 1];
+            if(current->y == neighbour.y)
+                current->neighbours.push_back(neighbour);
+        }
+
+        if(current->index - this->settings.region_size >= 0) {
+            auto& neighbour = discovered_tiles[current->index - this->settings.region_size];
+            current->neighbours.push_back(neighbour);
+        }
+
+        if(current->index + this->settings.region_size < this->world.getRegionSize()) {
+            auto& neighbour = discovered_tiles[current->index + this->settings.region_size];
+            current->neighbours.push_back(neighbour);
+        }
+        
+        int smallest_cost = 9999;
+        int index         = -1;
+
+        for(int i = 0; i < current->neighbours.size(); i++) {
+            auto& neighbour = current->neighbours[i];
+
+            neighbour.cost_sincestart = current->cost_sincestart + 1;
+            neighbour.cost_heuristic  = heuristic(neighbour, end);
+
+            // Try to find the best possible tile to continue pathing through.
+            if(!neighbour.visited && neighbour.cost_heuristic <= smallest_cost) {
+                smallest_cost     = neighbour.cost_heuristic;
+                index             = neighbour.index;
+                neighbour.visited = true;
+            }
+
+            if(i == current->neighbours.size() - 1 && index != -1) {
+                list_to_check.push(discovered_tiles[index]);
+                solution.push_back(index);
+            }
+        }
+
+        counter++;
+    }
+
+    return solution;
+}
+
+int SimulationManager::getAverageFramesPerSecond() {
+    return this->average_fps;
 }

@@ -4,7 +4,8 @@
 #include "entropy/gamestate.hpp"
 #include "simulationManager.hpp"
 #include "region.hpp"
-#include "buildingManager.hpp"
+
+#include "pawn.hpp"
 
 #include "gui/widgetMenuBuilding.hpp"
 #include "gui/performance.hpp"
@@ -12,6 +13,7 @@
 #include <SFML/Graphics.hpp>
 #include <map>
 #include <string>
+#include <bitset>
 
 namespace iso {
     // Gamestate class responsible for management of a single region.
@@ -21,9 +23,12 @@ namespace iso {
         private:
             Region*            region;
             SimulationManager* manager;
-            BuildingManager    building_manager;
 
             std::map <std::string, gui::InterfacePage*> interface;
+            std::map <std::string, UpdateUtility>       scheduler;
+
+            Pawn pawn;
+            int frames;
 
             bool mouse_pressed;
             bool mouse_moved;
@@ -53,13 +58,13 @@ namespace iso {
             void higlightTile();
 
             void updateTile();
+            void updatePaths(int index);
 
             void createUI();
             void renderUI();
             void updateUI();
             bool intersectsUI();
         public: 
-            Regionmap();
             Regionmap(SimulationManager* manager);
             ~Regionmap();
 
