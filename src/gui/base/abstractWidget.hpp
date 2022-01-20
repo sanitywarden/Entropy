@@ -17,10 +17,10 @@ namespace gui {
         private:
             std::string     m_widget_id;
             sf::Vector2f    m_widget_position; 
+            sf::Vector2f    m_widget_offset;
             sf::Vector2f    m_widget_size;     
             AbstractWidget* m_parent;
             bool            m_transparent;
-            bool            m_adjust;          // Adjust the position when drawing by using getFinalPosition().
         public:
             AbstractWidget();
             ~AbstractWidget();
@@ -32,15 +32,16 @@ namespace gui {
             void setWidgetPosition(float x, float y);
             sf::Vector2f getWidgetPosition() const;
             
+            void setWidgetOffset(sf::Vector2f offset);
+            void setWidgetOffset(float x, float y);
+            sf::Vector2f getWidgetOffset() const;
+
             void setWidgetSize(sf::Vector2f size);
             void setWidgetSize(float x, float y);
             sf::Vector2f getWidgetSize() const;
 
             void setTransparent(bool transparent);
             bool isTransparent() const;
-
-            void setAdjustable(bool adjust);
-            bool isAdjustable() const;
 
             void setParent(AbstractWidget* parent);
             AbstractWidget* getParent() const;
@@ -49,10 +50,6 @@ namespace gui {
             /* By default checks if the mouse is contained inside a widget in the shape of a square / rectangle. */
             virtual bool containsPoint(sf::Vector2f point) const;
 
-            /* Adjust the position for each parent of a high-level UI. */
-            /* TODO: The idea is good, a universal function for positioning the UI, but this does not work. Create something that will.
-            sf::Vector2f getFinalPosition(const AbstractWidget* parent) const; */
-    
         public:
             bool show;
     };

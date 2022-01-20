@@ -1,7 +1,7 @@
 #ifndef _GUI_PERFORMANCE_HPP_
 #define _GUI_PERFORMANCE_HPP_
 
-#include "interfacePage.hpp"
+#include "base/interfacePage.hpp"
 
 namespace gui {
     class DebugPerformance : public InterfacePage {

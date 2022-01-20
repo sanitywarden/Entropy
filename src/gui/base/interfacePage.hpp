@@ -4,11 +4,11 @@
 #include "abstractWidget.hpp"
 #include "simulationManager.hpp"
 
-#include "gui/abstractWidget.hpp"
-#include "gui/button.hpp"
-#include "gui/label.hpp"
-#include "gui/image.hpp"
-#include "gui/widget.hpp"
+#include "gui/base/abstractWidget.hpp"
+#include "gui/base/button.hpp"
+#include "gui/base/label.hpp"
+#include "gui/base/image.hpp"
+#include "gui/base/widget.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <map>
@@ -30,7 +30,8 @@ namespace gui {
             InterfacePage(iso::SimulationManager* manager);
             ~InterfacePage();
 
-            virtual void    updateUI() { return; }
+            virtual void    updateUI()      { return; }
+            virtual void    functionality() { return; }
             AbstractWidget* getComponent(std::string id) const;
             bool            intersectsUI(sf::Vector2f point) const;
     };

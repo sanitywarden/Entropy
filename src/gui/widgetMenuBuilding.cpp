@@ -6,6 +6,18 @@
 using namespace gui;
 using namespace iso;
 
+bool startsWith(const std::string& str, const std::string& phrase) {
+    const int length = phrase.length();
+    int good = 0;
+
+    for(int i = 0; i < length; i++) {
+        if(str[i] == phrase[i])
+            good++;
+    }
+
+    return good == length;
+}
+
 WidgetMenuBuilding::WidgetMenuBuilding() {
     this->manager = nullptr;
     std::cout << "[GUI][WidgetMenuBuilding]: Simulation manager is a nullptr.\n";
@@ -33,7 +45,7 @@ void WidgetMenuBuilding::createUI() {
         widget_body.setWidgetPosition(window_width / 2 - widget_size.x / 2, window_height - widget_size.y);
         sf::Vector2f widget_position = widget_body.getWidgetPosition();
 
-    static ImageHolder image_building_house(this->manager, "building_primitive_house");
+    static ImageHolder image_building_house(this->manager, "building_small_house");
         image_building_house.setWidgetID("imageholder_building_house");
         image_building_house.setWidgetSize(64, 64);
         image_building_house.setWidgetPosition(widget_position);
@@ -53,11 +65,24 @@ void WidgetMenuBuilding::createUI() {
         image_building_woodcutter.setWidgetSize(64, 64);
         image_building_woodcutter.setWidgetPosition(widget_position + sf::Vector2f(192, 0));
 
+    static ImageHolder image_building_tent(this->manager, "building_primitive_house");
+        image_building_tent.setWidgetID("imageholder_building_tent");
+        image_building_tent.setWidgetSize(64, 64);
+        image_building_tent.setWidgetPosition(widget_position + sf::Vector2f(256, 0));
+
+    static ImageHolder image_building_path(this->manager, "path_dirt_point");
+        image_building_path.setWidgetID("imageholder_building_path");
+        image_building_path.setWidgetSize(64, 64);
+        image_building_path.setWidgetPosition(widget_position + sf::Vector2f(320, 0));
+        image_building_path.setWidgetOffset(sf::Vector2f(0, 24));
+
     this->interface.insert({ widget_body.getWidgetID()              , &widget_body               });
     this->interface.insert({ image_building_house.getWidgetID()     , &image_building_house      });
     this->interface.insert({ image_building_farm.getWidgetID()      , &image_building_farm       });
     this->interface.insert({ image_building_quarry.getWidgetID()    , &image_building_quarry     });
     this->interface.insert({ image_building_woodcutter.getWidgetID(), &image_building_woodcutter });
+    this->interface.insert({ image_building_tent.getWidgetID()      , &image_building_tent       });
+    this->interface.insert({ image_building_path.getWidgetID()      , &image_building_path       });
 }
 
 void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -67,25 +92,21 @@ void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states)
     if(!this->show)
         return;
 
-    auto* widget = static_cast<Widget*>(this->interface.at("widget_menu_building"));
-    if(widget)
-        target.draw(*widget);
+    // Draw the main widget first.
+    auto* main_widget = static_cast<Widget*>(this->interface.at("widget_menu_building"));
+    if(main_widget)
+        target.draw(*main_widget);
 
-    auto* image1 = static_cast<ImageHolder*>(this->interface.at("imageholder_building_house"));
-    if(image1)
-        target.draw(*image1);
-
-    auto* image2 = static_cast<ImageHolder*>(this->interface.at("imageholder_building_farm"));
-    if(image2)
-        target.draw(*image2);
-
-    auto* image3 = static_cast<ImageHolder*>(this->interface.at("imageholder_building_quarry"));
-    if(image3)
-        target.draw(*image3);
-
-    auto* image4 = static_cast<ImageHolder*>(this->interface.at("imageholder_building_woodcutter"));
-    if(image4)
-        target.draw(*image4);
+    // Draw all the images on top of the main widget.
+    for(const auto& pair : this->interface) {
+        auto* component = pair.second;
+        if(component) {
+            if(startsWith(component->getWidgetID(), "imageholder")) {
+                auto* image_holder = static_cast<ImageHolder*>(component);
+                target.draw(*image_holder);
+            }
+        }
+    }
 }
 
 /* Returns the texture name of the image under mouse position. 
@@ -98,7 +119,7 @@ void WidgetMenuBuilding::findBuilding() {
     for(const auto& pair : this->interface) {
         auto* component = pair.second;
         if(component) {
-            if(component->getWidgetID() != "widget_menu_building") {
+            if(startsWith(component->getWidgetID(), "imageholder")) {
                 if(component->containsPoint(mouse_position) && gamestate->controls.mouseLeftPressed()) {
                     auto* image_holder = static_cast<ImageHolder*>(component);
                     auto  texture_name = image_holder->getTextureName();
@@ -121,4 +142,6 @@ Building WidgetMenuBuilding::getBuilding() {
         if(building_name == building.getName())
             return building;
     }
+
+    return BUILDING_EMPTY;
 }

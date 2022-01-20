@@ -121,8 +121,7 @@ void Widget::addComponent(AbstractWidget* component, std::string id) {
     std::pair <std::string, gui::AbstractWidget*> pair = { id, component };
     component->setParent(this);
     
-    if(component->isAdjustable())
-        component->setWidgetPosition(component->getWidgetPosition() + this->getWidgetPosition());
+    component->setWidgetPosition(component->getWidgetPosition() + this->getWidgetPosition());
     
     this->m_components.insert(pair);
 }

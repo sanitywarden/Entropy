@@ -27,12 +27,14 @@ void DebugPerformance::createUI() {
 }
 
 void DebugPerformance::updateUI() {
-    const int fps   = this->manager->getFramesPerSecond();
-    const int time  = this->manager->getTimePerFrame();
+    const int fps         = this->manager->getFramesPerSecond();
+    const int time        = this->manager->getTimePerFrame();
+    const int average_fps = this->manager->getAverageFramesPerSecond();
 
     std::string data;
-    data += "Frames per second: " + std::to_string(fps)  + "\n";
-    data += "Time per frame: "    + std::to_string(time) + "ms\n";
+    data += "Frames per second: " + std::to_string(fps)         + "\n";
+    data += "Average: "           + std::to_string(average_fps) + "\n";
+    data += "Time per frame: "    + std::to_string(time)        + "ms\n";
 
     /*  Current gamestate.
      *  Check what gamestate is it and display adequate data. */
@@ -41,6 +43,7 @@ void DebugPerformance::updateUI() {
     
     data += "Mouse position:  " + std::to_string((int)gamestate->mouse_position_window.x)    + " / " + std::to_string((int)gamestate->mouse_position_window.y)    + "\n"; 
     data += "Mouse interface: " + std::to_string((int)gamestate->mouse_position_interface.x) + " / " + std::to_string((int)gamestate->mouse_position_interface.y) + "\n"; 
+    data += "Time: " + std::to_string(this->manager->time_passed) + "\n";
 
     if(gamestate_id == "Worldmap") {
         auto* worldmap = static_cast<Worldmap*>(gamestate);

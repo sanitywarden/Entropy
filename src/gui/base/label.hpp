@@ -26,10 +26,9 @@ namespace gui {
 
         private:
             iso::SimulationManager* manager;
-
-        protected:
-            std::string m_data;
-            sf::Text    m_text;
+            sf::Vector2f final_position;
+            sf::Vector2f final_origin;
+            std::string  data;
         public:
             Label();
             Label(iso::SimulationManager* manager);
@@ -37,9 +36,8 @@ namespace gui {
             ~Label();
 
             // Align the text within it's parent.
-            void align(Alignment alignment, sf::Vector2f parent_position, sf::Vector2f parent_size, sf::Vector2f offset = sf::Vector2f(0, 0));
+            void align(Alignment alignment, sf::Vector2f parent_position, sf::Vector2f parent_size);
             void setString(std::string data);
-            sf::Text& label();
     };
 }
 

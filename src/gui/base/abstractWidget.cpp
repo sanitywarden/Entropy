@@ -7,9 +7,9 @@ using namespace gui;
 AbstractWidget::AbstractWidget() {
     this->m_widget_id       = "*";
     this->m_widget_position = sf::Vector2f(0, 0);
+    this->m_widget_offset   = sf::Vector2f(0, 0);
     this->m_widget_size     = sf::Vector2f(0, 0);
     this->m_parent          = nullptr;
-    this->m_adjust          = true;
     this->m_transparent     = false;
     
     this->show              = true;
@@ -74,19 +74,6 @@ bool AbstractWidget::attached() const {
     return (this->m_parent) ? true : false; 
 }
 
-/*
-sf::Vector2f AbstractWidget::getFinalPosition(const AbstractWidget* parent) const {
-    sf::Vector2f final_position = parent
-        ? parent->getWidgetPosition()
-        : sf::Vector2f(0, 0);
-        
-    if(parent != nullptr)
-        final_position += this->getFinalPosition(parent->getParent());
-
-    return final_position;
-}
-*/
-
 bool AbstractWidget::containsPoint(sf::Vector2f point) const {
     auto top_left     = this->getWidgetPosition();
     auto bottom_right = this->getWidgetPosition() + this->getWidgetSize();
@@ -94,10 +81,14 @@ bool AbstractWidget::containsPoint(sf::Vector2f point) const {
     return (point.x >= top_left.x && point.y >= top_left.y && point.x <= bottom_right.x && point.y <= bottom_right.y); 
 }
 
-void AbstractWidget::setAdjustable(bool adjust) {
-    this->m_adjust = adjust;
+void AbstractWidget::setWidgetOffset(sf::Vector2f offset) {
+    this->m_widget_offset = offset;
 }
 
-bool AbstractWidget::isAdjustable() const {
-    return this->m_adjust;
+void AbstractWidget::setWidgetOffset(float x, float y) {
+    this->m_widget_offset = sf::Vector2f(x, y);
+}
+
+sf::Vector2f AbstractWidget::getWidgetOffset() const {
+    return this->m_widget_offset;
 }

@@ -1,9 +1,8 @@
 #ifndef _GUI_WIDGET_MENU_BUILDING_HPP_
 #define _GUI_WIDGET_MENU_BUILDING_HPP_
 
-#include "gui/interfacePage.hpp"
+#include "gui/base/interfacePage.hpp"
 #include "building.hpp"
-#include "buildingManager.hpp"
 
 namespace gui {
     class WidgetMenuBuilding : public InterfacePage {

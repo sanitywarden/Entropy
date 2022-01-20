@@ -88,10 +88,15 @@ void WidgetRegion::updateUI() {
     std::string data;
     std::string forest = region.forest.exists() ? "True" : "False";
     std::string river  = region.river.exists()  ? "True" : "False";
+    std::string owned  = region.isOwned()       ? "True" : "False";
     data += "Index: "  + std::to_string(index)   + "\n";
     data += "Biome: "  + region.biome.biome_name + "\n";
     data += "Forest: " + forest + "\n";
     data += "River: "  + river  + "\n";
+    data += "Owned: "  + owned  + "\n";
+    
+    if(region.isOwned())
+        data += "Owner: " + region.owner->getCountryName() + "\n";
 
     static Label text_region_index(this->manager);
         text_region_index.setWidgetID("text_region_index");
@@ -103,27 +108,85 @@ void WidgetRegion::updateUI() {
     // Update button_expand visibility.
 
     Button* button_expand = static_cast<Button*>(this->getComponent("button_expand"));
+    button_expand->show = this->buttonExpandShow(worldmap->getSelectedIndex());
+}
+
+void WidgetRegion::functionality() {
+    Worldmap* worldmap    = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
+    Button* button_travel = static_cast<Button*>(this->getComponent("button_travel"));
+
+    if(worldmap->selected_index != -1 && worldmap->mouse_pressed && !worldmap->mouse_drag && button_travel->containsPoint(worldmap->mouse_position_interface)) {
+        Region& region = this->manager->world.world_map[worldmap->selected_index]; 
+
+        // You check for these things here to avoid calling functions responsible for world generation.
+        // Biomes: arctic, ocean and sea do not have planned content.
+        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
+            std::cout << "[Button Visit Region]: Requested to generate a region not meant for visiting.\n";
+            worldmap->selected_index = -1;
+            return;
+        }
+
+        if(!this->manager->gamestate.checkGamestateExists("regionmap")) {
+            static Regionmap regionmap_gamestate(this->manager);
+            this->manager->gamestate.addGamestate("regionmap", regionmap_gamestate);
+        }
+
+        // Get a pointer to the gamestate.
+        // You do not need to check if it's a nullptr, because it can not be, but do it just to be sure. 
+        // It will make debugging easier in case of a unexpected behaviour (function returns nullptr).
+        Regionmap* regionmap = static_cast<Regionmap*>(this->manager->gamestate.getGamestateByName("regionmap"));
+        if(!regionmap) {
+            std::cout << "[Button Visit Region]: Gamestate regionmap is a nullptr.\n";
+            this->manager->exitApplication(1);
+        }
     
-    const std::vector <int>& owned_regions = this->manager->getHumanPlayer().readOwnedRegions();
-    const int selected_index               = worldmap->getSelectedIndex(); 
-    const auto& selected_region            = this->manager->world.world_map[selected_index]; 
-    
-    for(auto index : owned_regions) {
+        // You have to generate the region first, because setCurrentRegion() depends on it being generated.
+        if(!region.visited)
+            this->manager->world.generateRegion(worldmap->selected_index, region);
+
+        regionmap->setCurrentRegion(worldmap->selected_index);
+        this->manager->gamestate.setGamestate("regionmap");
+        return;
+    }
+
+    Button* button_expand = static_cast<Button*>(this->getComponent("button_expand"));
+    if(worldmap->selected_index != -1 && worldmap->mouse_pressed && !worldmap->mouse_drag && button_expand->containsPoint(worldmap->mouse_position_interface) && this->buttonExpandShow(worldmap->selected_index)) {
+        Region& region = this->manager->world.world_map[worldmap->selected_index];
 
         if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
-            button_expand->show = false;
+            std::cout << "[Button Expand]: Requested to expand to a region not meant for owning.\n";
+            worldmap->selected_index = -1;
+            return;
+        }
+
+        this->manager->getHumanPlayer().addOwnedRegion(worldmap->selected_index);
+        region.object_colour = this->manager->getHumanPlayer().getTeamColour();
+        region.owner = &this->manager->getHumanPlayer();
+        return;
+    } 
+}
+
+bool WidgetRegion::buttonExpandShow(int index) {
+    if(index == -1)
+        return false;
+
+    const std::vector <int>& owned_regions = this->manager->getHumanPlayer().readOwnedRegions();
+    const Region&            region        = this->manager->world.world_map[index];
+
+    for(auto i : owned_regions) {
+        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
+            return false;
             break;
         }
 
-        if(selected_index == index - 1 ||
-           selected_index == index + 1 ||
-           selected_index == index - this->manager->settings.world_size ||
-           selected_index == index + this->manager->settings.world_size
+        if(index == i - 1 ||
+           index == i + 1 ||
+           index == i - this->manager->settings.world_size ||
+           index == i + this->manager->settings.world_size
         ) {
-            button_expand->show = true;
-            break;
+            return true;
         }
-        else
-            button_expand->show = false;
     }
+
+    return false;
 }

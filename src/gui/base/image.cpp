@@ -25,7 +25,7 @@ void ImageHolder::draw(sf::RenderTarget& target, sf::RenderStates states) const 
         return;
 
     sf::VertexArray image(sf::Quads, 4);
-    sf::Vector2f widget_position = this->getWidgetPosition();
+    sf::Vector2f widget_position = this->getWidgetPosition() + this->getWidgetOffset();
     sf::Vector2f widget_size     = this->getWidgetSize();
     
     image[0].position = widget_position;
