@@ -1379,7 +1379,8 @@ void WorldGenerator::regionGenerateForest(int region_index) {
     for(int i = 0; i < noise.size(); i++) {
         auto& tile = region.map[i];
         if(!tile.tiletype.is_river() && noise[i] > 0.7f) {
-            region.trees[i] = GameObject(tile.getPosition(), sf::Vector2f(0, 1.5f * -this->settings.region_tile_size.y), sf::Vector2f(this->settings.region_tile_size.x, 2 * this->settings.region_tile_size.y), this->getTreeTextureNameRegion(region.biome));
+            std::pair <int, GameObject> pair(i, GameObject(tile.getPosition(), sf::Vector2f(0, 1.5f * -this->settings.region_tile_size.y), sf::Vector2f(this->settings.region_tile_size.x, 2 * this->settings.region_tile_size.y), this->getTreeTextureNameRegion(region.biome)));
+            region.trees.insert(pair);
         }
     }
 }
@@ -1576,7 +1577,7 @@ void WorldGenerator::regionGenerateHeight(int region_index) {
                 // That is why you only check only two cardinal directions, rather than four.
                 int elevation_top  = (index >= this->settings.region_size)         ? region.map[index - this->settings.region_size].elevation * height_modifier : 0;
                 int elevation_left = (index - 1 > 0)                               ? region.map[index - 1].elevation * height_modifier : 0;
-                int elevation      = (index >= 0 && index < this->getRegionSize()) ? height[index] / 0.25f : 0;        
+                int elevation      = (index >= 0 && index < this->getRegionSize()) ? height[index] / 0.20f : 0;        
 
                 int divisors  = 1;
                 if(elevation_top != 0) {

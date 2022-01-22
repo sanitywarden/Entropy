@@ -533,3 +533,7 @@ void Worldmap::gamestateLoad() {
     this->mouse_drag    = false;
     this->mouse_pressed = false;
 }
+
+int Worldmap::getDrawCalls() {
+    return this->draw_calls;
+}

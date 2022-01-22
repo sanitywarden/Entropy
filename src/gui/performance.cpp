@@ -50,17 +50,25 @@ void DebugPerformance::updateUI() {
         
         const int current_index  = worldmap->getCurrentIndex();
         const int selected_index = worldmap->getSelectedIndex();
+        const int draw_calls     = worldmap->getDrawCalls();
 
         data += "Current index:  " + std::to_string(current_index)  + "\n";
         data += "Selected index: " + std::to_string(selected_index) + "\n";
+        data += "Draw calls: "     + std::to_string(draw_calls) + "\n";
     }
 
     if(gamestate_id == "Regionmap") {
         auto* regionmap = static_cast<Regionmap*>(gamestate);
 
         const int current_index = regionmap->getCurrentIndex();
+        const int draw_calls    = regionmap->getDrawCalls();
+        const auto* region      = regionmap->getCurrentRegion();
 
-        data += "Current index: " + std::to_string(current_index) + "\n";
+        data += "Current index: "     + std::to_string(current_index)            + "\n";
+        data += "Draw calls: "        + std::to_string(draw_calls)               + "\n";
+        data += "Map size: "          + std::to_string(region->map.size())       + "\n";
+        data += "Tree quantity: "     + std::to_string(region->trees.size())     + "\n";
+        data += "Building quantity: " + std::to_string(region->buildings.size()) + "\n";
     }
 
     auto* text = static_cast<Label*>(this->interface.at("label_debug_performance"));

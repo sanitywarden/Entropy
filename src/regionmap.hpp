@@ -76,7 +76,8 @@ namespace iso {
             Region* getCurrentRegion();
             int getRegionIndex();
             int getCurrentIndex();
-    }; 
+            int getDrawCalls();
+    };
 }
 
 #endif

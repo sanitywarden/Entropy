@@ -14,8 +14,8 @@ Pawn::Pawn(Region* region) {
     this->current_index = 0;
     this->path.resize(0);
 
-    this->object_size         = sf::Vector2f(16, 16);
-    this->object_texture_name = "actor";
+    this->object_size         = sf::Vector2f(64, 32);
+    this->object_texture_name = "default";
     this->object_position     = this->region->map[this->current_index].getPosition();
 }
 

@@ -75,6 +75,7 @@ namespace iso {
             
             int getCurrentIndex();
             int getSelectedIndex();
+            int getDrawCalls();
     };
 }
 
