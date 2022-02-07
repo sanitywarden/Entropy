@@ -18,10 +18,11 @@ Regionmap::~Regionmap() {
 }
 
 void Regionmap::initialise() {
-    this->mouse_pressed    = false;
-    this->mouse_moved      = false;
-    this->mouse_drag       = false;
-    this->recalculate_mesh = true;
+    this->mouse_pressed         = false;
+    this->mouse_moved           = false;
+    this->mouse_drag            = false;
+    this->recalculate_mesh      = true;
+    this->recalculate_tree_mesh = true;
 
     this->current_index = -1;
     this->draw_calls    = 0;
@@ -332,16 +333,13 @@ void Regionmap::renderRegion() {
             side_vector_size += this->region->sides[i].size();
 
         const size_t verticies_tilemap = 4 * this->region->map.size() + 4 * side_vector_size;
-        const size_t verticies_treemap = 4 * this->region->map.size();
 
         sf::Vertex verticies_tiles[verticies_tilemap];
-        sf::Vertex verticies_trees[verticies_treemap];
 
         if(!mesh_tile.getVertexCount())
             mesh_tile.create(verticies_tilemap);
 
-        if(!mesh_tree.getVertexCount())
-            mesh_tree.create(verticies_treemap);
+        
 
         for(int index = 0; index < this->manager->world.getRegionSize(); index++) {
             /* There is no point in checking if this tile is in screen coordinates since this would only slow down the drawing process (due to a lot of stuff to compute).
@@ -383,7 +381,19 @@ void Regionmap::renderRegion() {
                 verticies_index++;
             }
         }
-    
+
+        mesh_tile.update(verticies_tiles);
+        this->recalculate_mesh = false;
+    }
+
+    if(this->recalculate_tree_mesh) {
+        const size_t verticies_treemap = 4 * this->region->map.size();
+        
+        sf::Vertex verticies_trees[verticies_treemap];
+        
+        if(!mesh_tree.getVertexCount())
+            mesh_tree.create(verticies_treemap);
+        
         for(int y = 0; y < this->manager->settings.region_size; y++) {
             for(int x = 0; x < this->manager->settings.region_size; x++) {
                 const int  index       = this->manager->world.rCalculateIndex(x, y); 
@@ -407,9 +417,8 @@ void Regionmap::renderRegion() {
             }
         }
 
-        mesh_tile.update(verticies_tiles);
         mesh_tree.update(verticies_trees);
-        this->recalculate_mesh = false;
+        this->recalculate_tree_mesh = false;
     }
 
     sf::RenderStates states_tiles;
@@ -533,7 +542,7 @@ void Regionmap::updateTile() {
     if(this->controls.keyState("key_removeresource_tree")) {
         if(this->region->trees.count(this->current_index)) {
             this->region->trees.erase(this->current_index);
-            this->recalculate_mesh = true; 
+            this->recalculate_tree_mesh = true; 
         }
     }
 }
@@ -693,10 +702,38 @@ void Regionmap::updateScheduler() {
             }
         
             else if(pawn.path.empty()) {    
+                return;
                 int goal = std::rand() % this->manager->world.getRegionSize() - 1;                
                 auto path = this->manager->astar(pawn.current_index, goal);
                 pawn.setNewPath(path);
             }
         }
     }
+}
+
+void Regionmap::gamestateLoad() {
+    this->recalculate_mesh      = true;
+    this->recalculate_tree_mesh = true;
+    
+    int side_vector_size = 0;
+    for(int i = 0; i < this->region->sides.size(); i++)
+        side_vector_size += this->region->sides[i].size();
+
+    const size_t verticies_tilemap = 4 * this->region->map.size() + 4 * side_vector_size;
+    const size_t verticies_treemap = 4 * this->region->map.size();
+
+    mesh_tile.create(verticies_tilemap);
+    mesh_tree.create(verticies_treemap);
+
+
+}
+
+        
+
+
+void Regionmap::gamestateClose() {
+    this->recalculate_mesh      = false;
+    this->recalculate_tree_mesh = false;
+    mesh_tile.create(0);
+    mesh_tree.create(0);
 }
