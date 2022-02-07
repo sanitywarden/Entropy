@@ -54,6 +54,52 @@ namespace iso {
             this->interval = interval;
         }
     };
+    
+    const int INGAME_TIME_PER_HOUR  = 15;                         // n real-time seconds is one in-game hour.
+    const int INGAME_TIME_PER_DAY   = INGAME_TIME_PER_HOUR  * 12; // n hours  per in-game day.
+    const int INGAME_TIME_PER_MONTH = INGAME_TIME_PER_DAY   * 15; // n days   per in-game month
+    const int INGAME_TIME_PER_YEAR  = INGAME_TIME_PER_MONTH * 6;  // n months per in-game year.
+
+    struct WorldTime {
+        int time_passed; // The same as seconds, but this value is never reset.
+        int seconds;     // Same as time_passed, but this value is reset every INGAME_TIME_PER_HOUR.
+        int hours;
+        int days;
+        int months;
+        int years;
+
+        WorldTime() : time_passed(0), seconds(0), hours(0), days(0), months(0), years(0) {}
+        
+        void calculateInGameDate() {
+            this->seconds++;
+
+            if(this->seconds >= INGAME_TIME_PER_HOUR) {
+                this->seconds = 0;
+                this->hours++;
+            }
+
+            if(this->hours * INGAME_TIME_PER_HOUR >= INGAME_TIME_PER_DAY) {
+                this->hours = 0;
+                this->days++;
+            }
+
+            if(this->days * INGAME_TIME_PER_DAY >= INGAME_TIME_PER_MONTH) {
+                this->days = 0;
+                this->months++;
+            }
+
+            if(this->months * INGAME_TIME_PER_MONTH >= INGAME_TIME_PER_YEAR) {
+                this->months = 0;
+                this->years++;
+            }
+        }
+
+        std::string getInGameDateFormatted() {
+            return ("[" + std::to_string(this->years) + "-" + std::to_string(this->months) + "-" + std::to_string(this->days) + ":" + std::to_string(this->hours) + "-" + std::to_string(this->seconds) + "]");
+        }
+    };
+
+    
 
     class SimulationManager : public entropy::Entropy {
         private:
@@ -63,8 +109,8 @@ namespace iso {
         public:
             GenerationSettings   settings;
             WorldGenerator       world;
+            WorldTime            time;
             std::vector <Player> players;
-            int                  time_passed; // Time passed since start of the program. In seconds.
             int                  average_fps;
         public:
             SimulationManager();
@@ -77,6 +123,7 @@ namespace iso {
 
             void prepare();
             void loop() override;
+            std::string getInGameDateFormatted() const;
     };
 }
 

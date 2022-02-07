@@ -43,7 +43,8 @@ void DebugPerformance::updateUI() {
     
     data += "Mouse position:  " + std::to_string((int)gamestate->mouse_position_window.x)    + " / " + std::to_string((int)gamestate->mouse_position_window.y)    + "\n"; 
     data += "Mouse interface: " + std::to_string((int)gamestate->mouse_position_interface.x) + " / " + std::to_string((int)gamestate->mouse_position_interface.y) + "\n"; 
-    data += "Time: " + std::to_string(this->manager->time_passed) + "\n";
+    data += "Time passed: " + std::to_string(this->manager->time.time_passed) + "\n";
+    data += "Date: "        + this->manager->time.getInGameDateFormatted() + "\n";
 
     if(gamestate_id == "Worldmap") {
         auto* worldmap = static_cast<Worldmap*>(gamestate);

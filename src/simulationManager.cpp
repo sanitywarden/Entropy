@@ -43,8 +43,6 @@ SimulationManager::SimulationManager() {
     this->settings = settings;
     // Settings for world generation set.
 
-    this->time_passed = 0;
-
     this->window.setTitle("Entropy by Vivit");
 
     if(!this->performChecks()) {
@@ -93,14 +91,16 @@ void SimulationManager::loop() {
             this->m_measurement_clock.restart();
             this->m_time_since_start = sf::Time::Zero;
             
-            if(this->time_passed + 1 <= INT_MAX) {
-                this->time_passed++;
+            if(this->time.time_passed < INT_MAX) {
+                this->time.time_passed++;
 
                 SUM += updates;
                 LOOPS++;
 
                 this->average_fps = SUM / LOOPS;
             }
+
+            this->time.calculateInGameDate();
 
             updates = 0;
         }
@@ -130,7 +130,7 @@ void SimulationManager::internalLoop(float delta_time) {
 }
 
 void SimulationManager::spawnPlayers() {    
-    std::srand(time(0));
+    std::srand(std::time(0));
 
     const int number_of_players = TEAM_COLOURS.size();
     this->players.resize(number_of_players);
@@ -335,3 +335,4 @@ bool SimulationManager::performChecks() {
 
     return true;
 }
+
