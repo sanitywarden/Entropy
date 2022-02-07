@@ -5,18 +5,12 @@
 using namespace iso;
 
 Pawn::Pawn() {
-
-}
-
-Pawn::Pawn(Region* region) {
-    this->region        = region;
     this->object_name   = "pawn";
     this->current_index = 0;
     this->path.resize(0);
 
-    this->object_size         = sf::Vector2f(64, 32);
-    this->object_texture_name = "default";
-    this->object_position     = this->region->map[this->current_index].getPosition();
+    this->object_size         = sf::Vector2f(32, 32);
+    this->object_texture_name = "actor";
 }
 
 Pawn::~Pawn() {
@@ -31,18 +25,23 @@ bool Pawn::hasPath() {
     return !this->path.empty();
 }
 
-void Pawn::nextMove() {
+/* Returns next move of the pawn and deletes it from the list of moves. */
+int Pawn::getNextMove() {
     if(!this->path.size())
-        return;
+        return -1;
 
     this->current_index = this->path.front();
-    const Tile& tile    = this->region->map[this->current_index];
-    this->object_position = tile.getPosition();
     
     for(auto iterator = this->path.begin(); iterator != this->path.end(); ++iterator) {
         if(*iterator == this->current_index) {
             this->path.erase(iterator);
-            return;
+            break;
         }
     }
+
+    return this->current_index;
+}
+
+void Pawn::setNewPath(std::vector <int> path) {
+    this->path = path;
 }

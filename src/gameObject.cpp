@@ -1,4 +1,5 @@
 #include "gameObject.hpp"
+#include <iostream>
 
 using namespace iso;
 

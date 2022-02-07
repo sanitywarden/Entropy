@@ -64,11 +64,12 @@ void DebugPerformance::updateUI() {
         const int draw_calls    = regionmap->getDrawCalls();
         const auto* region      = regionmap->getCurrentRegion();
 
-        data += "Current index: "     + std::to_string(current_index)            + "\n";
-        data += "Draw calls: "        + std::to_string(draw_calls)               + "\n";
-        data += "Map size: "          + std::to_string(region->map.size())       + "\n";
-        data += "Tree quantity: "     + std::to_string(region->trees.size())     + "\n";
-        data += "Building quantity: " + std::to_string(region->buildings.size()) + "\n";
+        data += "Current index: "        + std::to_string(current_index)                        + "\n";
+        data += "Draw calls: "           + std::to_string(draw_calls)                           + "\n";
+        data += "Tree quantity: "        + std::to_string(region->trees.size())                 + "\n";
+        data += "Building quantity: "    + std::to_string(region->buildings.size())             + "\n";
+        data += "Population quantitiy: " + std::to_string(region->population.size())            + "\n";
+        data += "Tile elevation: "       + std::to_string(region->map[current_index].elevation) + "\n";
     }
 
     auto* text = static_cast<Label*>(this->interface.at("label_debug_performance"));

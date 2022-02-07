@@ -14,6 +14,9 @@ Region::Region() {
     this->visited     = false;
     
     this->owner = nullptr;
+
+    this->map.resize(0);
+    this->population.resize(0);
 }
 
 Region::~Region() {

@@ -34,7 +34,7 @@ SimulationManager::SimulationManager() {
     settings.world_gradient_persistence = 4;
     settings.world_gradient_bias        = 4;
     settings.world_gradient_multiplier  = 2.00f;
-    settings.region_size                = 100;
+    settings.region_size                = 200;
     settings.region_tile_size.x         = 64;           
     settings.region_tile_size.y         = 32;           
     settings.region_tile_offset.x       = 0; 
@@ -46,6 +46,11 @@ SimulationManager::SimulationManager() {
     this->time_passed = 0;
 
     this->window.setTitle("Entropy by Vivit");
+
+    if(!this->performChecks()) {
+        std::cout << "[Simulation Manager][Initialisation]: Application checks failed.\n";
+        this->exitApplication(1);
+    }
 
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
@@ -299,4 +304,34 @@ std::vector <int> SimulationManager::astar(int start_index, int end_index) {
 
 int SimulationManager::getAverageFramesPerSecond() {
     return this->average_fps;
+}
+
+bool SimulationManager::performChecks() {
+    #ifdef ENTROPYAPP_STACKSIZE
+    std::cout << "[Initialisation]: Max stack size allocation:   " << ENTROPYAPP_STACKSIZE / 1000000 << " MB\n";
+
+    const int tile_byte_size = sizeof(Tile);
+    std::cout << "[Initialisation]: Size of one tile instance:   " << tile_byte_size << " B\n";
+    
+    const int region_byte_size = sizeof(Region);
+    std::cout << "[Initialisation]: Size of one region instance: " << region_byte_size << " B\n";
+
+    const int regionmap_byte_size = settings.region_size * settings.region_size * tile_byte_size;
+    std::cout << "[Initialisation]: MB size of regionmap:        " << (float)regionmap_byte_size / 1000000 << " MB\n";
+    
+    const int worldmap_byte_size = settings.world_size * settings.world_size * region_byte_size;
+    std::cout << "[Initialisation]: MB size of worldmap:         " << (float)worldmap_byte_size / 1000000 << " MB\n";
+
+    if(regionmap_byte_size > ENTROPYAPP_STACKSIZE) {
+        std::cout << "[Initialisation]: Memory size of region map is greater than the stack allocation limit: " << regionmap_byte_size / 1000000 << " / " << ENTROPYAPP_STACKSIZE;
+        return false;
+    }
+
+    if(worldmap_byte_size > ENTROPYAPP_STACKSIZE) {
+        std::cout << "[Initialisation]: Memory size of world map is greater than the stack allocation limit:  " << worldmap_byte_size / 1000000 << " / " << ENTROPYAPP_STACKSIZE;
+        return false;
+    }
+    #endif
+
+    return true;
 }

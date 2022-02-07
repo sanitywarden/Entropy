@@ -1,10 +1,11 @@
 #ifndef _PLAYER_HPP_
 #define _PLAYER_HPP_
 
-#include "building.hpp"
 #include "resources.hpp"
 
 #include <vector>
+#include <string>
+#include <SFML/Graphics/Color.hpp>
 
 namespace iso {
     const sf::Color COLOUR_RED    (229, 20, 0, 255);

@@ -3,6 +3,7 @@
 
 #include "gui/base/interfacePage.hpp"
 #include "building.hpp"
+#include "globalutilities.hpp"
 
 namespace gui {
     class WidgetMenuBuilding : public InterfacePage {

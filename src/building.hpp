@@ -14,12 +14,13 @@ namespace iso {
         friend class BuildingManager;
         
         protected:
+            int                numerical_type;
             sf::Vector2f       building_size;
             ResourceCollection building_cost;
 
         public:
             Building();
-            Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, sf::Vector2f building_size, ResourceCollection building_cost);
+            Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, int numerical_type, sf::Vector2f building_size, ResourceCollection building_cost);
             ~Building();
 
             /* Get the area occupied by the building. */
@@ -31,26 +32,29 @@ namespace iso {
             /* Get the refund of the building (when the building is destroyed). */
             const ResourceCollection getBuildingRefund() const;
 
+            const int getNumericalType() const;
+
             bool operator == (const Building& building);      
-            bool operator != (const Building& building);      
+            bool operator != (const Building& building);
     };
 
-    const Building BUILDING_EMPTY      (VECTOR0X0, VECTOR0X0, VECTOR0X0        , "default"                 , "building_empty"          , VECTOR0X0, ResourceCollection(0, 0, 0));
-    const Building BUILDING_HOUSE_SMALL(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_small_house"    , "building_small_house"    , VECTOR1X1, ResourceCollection(0, 0, 0));
-    const Building BUILDING_FARMLAND   (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_farmland"       , "building_farmland"       , VECTOR1X1, ResourceCollection(0, 0, 0));
-    const Building BUILDING_QUARRY     (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_quarry"         , "building_quarry"         , VECTOR1X1, ResourceCollection(0, 0, 0));
-    const Building BUILDING_WOODCUTTER (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_woodcutter"     , "building_woodcutter"     , VECTOR1X1, ResourceCollection(0, 0, 0));
-    const Building BUILDING_HOUSE_TENT (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_primitive_house", "building_primitive_house", VECTOR1X1, ResourceCollection(0, 0, 0));
-    const Building BUILDING_PATH       (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X32, "path_dirt_point"         , "path_dirt_point"         , VECTOR1X1, ResourceCollection(0, 0, 0));
+    const Building BUILDING_EMPTY      (VECTOR0X0, VECTOR0X0, VECTOR0X0        , "default"                 , "Empty"          , 0, VECTOR0X0, ResourceCollection(0, 0, 0));
+    const Building BUILDING_HOUSE_SMALL(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_small_house"    , "Small House"    , 1, VECTOR1X1, ResourceCollection(0, 0, 0));
+    const Building BUILDING_FARMLAND   (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_farmland"       , "Farmhouse"      , 2, VECTOR1X1, ResourceCollection(0, 0, 0));
+    const Building BUILDING_QUARRY     (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_quarry"         , "Quarry"         , 3, VECTOR1X1, ResourceCollection(0, 0, 0));
+    const Building BUILDING_WOODCUTTER (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_woodcutter"     , "Woodcutter"     , 4, VECTOR1X1, ResourceCollection(0, 0, 0));
+    const Building BUILDING_HOUSE_TENT (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_primitive_house", "Primitive House", 5, VECTOR1X1, ResourceCollection(0, 0, 0));
+    const Building BUILDING_PATH_DIRT  (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X32, "path_dirt_point"         , "Dirt path"      , 6, VECTOR1X1, ResourceCollection(0, 0, 0));
+    const Building BUILDING_PATH_STONE (VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X32, "path_stone_point"        , "Stone path"     , 7, VECTOR1X1, ResourceCollection(0, 0, 0));
 
     static const std::vector <Building> BUILDING_LOOKUP_TABLE = {
-        BUILDING_EMPTY,
         BUILDING_HOUSE_SMALL,
         BUILDING_FARMLAND,
         BUILDING_QUARRY,
         BUILDING_WOODCUTTER,
         BUILDING_HOUSE_TENT,
-        BUILDING_PATH
+        BUILDING_PATH_DIRT,
+        BUILDING_PATH_STONE
     };
 }
 

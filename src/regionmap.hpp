@@ -4,8 +4,7 @@
 #include "entropy/gamestate.hpp"
 #include "simulationManager.hpp"
 #include "region.hpp"
-
-#include "pawn.hpp"
+#include "building.hpp"
 
 #include "gui/widgetMenuBuilding.hpp"
 #include "gui/performance.hpp"
@@ -13,7 +12,6 @@
 #include <SFML/Graphics.hpp>
 #include <map>
 #include <string>
-#include <bitset>
 
 namespace iso {
     // Gamestate class responsible for management of a single region.
@@ -27,14 +25,12 @@ namespace iso {
             std::map <std::string, gui::InterfacePage*> interface;
             std::map <std::string, UpdateUtility>       scheduler;
 
-            Pawn pawn;
-            int frames;
-
             bool mouse_pressed;
             bool mouse_moved;
             bool mouse_drag;
             bool move_camera;
             bool zoom_camera;
+            bool recalculate_mesh;
 
             sf::Vector2f position_pressed;
             sf::Vector2f position_released;
@@ -59,6 +55,7 @@ namespace iso {
 
             void updateTile();
             void updatePaths(int index);
+            void updateScheduler();
 
             void createUI();
             void renderUI();
@@ -77,6 +74,7 @@ namespace iso {
             int getRegionIndex();
             int getCurrentIndex();
             int getDrawCalls();
+            int getVertexIndex();
     };
 }
 

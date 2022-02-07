@@ -57,6 +57,7 @@ namespace iso {
 
     class SimulationManager : public entropy::Entropy {
         private:
+            bool performChecks();
             void internalLoop(float delta_time);
             void spawnPlayers();
         public:

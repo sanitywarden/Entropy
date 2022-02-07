@@ -6,18 +6,6 @@
 using namespace gui;
 using namespace iso;
 
-bool startsWith(const std::string& str, const std::string& phrase) {
-    const int length = phrase.length();
-    int good = 0;
-
-    for(int i = 0; i < length; i++) {
-        if(str[i] == phrase[i])
-            good++;
-    }
-
-    return good == length;
-}
-
 WidgetMenuBuilding::WidgetMenuBuilding() {
     this->manager = nullptr;
     std::cout << "[GUI][WidgetMenuBuilding]: Simulation manager is a nullptr.\n";
@@ -70,11 +58,17 @@ void WidgetMenuBuilding::createUI() {
         image_building_tent.setWidgetSize(64, 64);
         image_building_tent.setWidgetPosition(widget_position + sf::Vector2f(256, 0));
 
-    static ImageHolder image_building_path(this->manager, "path_dirt_point");
-        image_building_path.setWidgetID("imageholder_building_path");
-        image_building_path.setWidgetSize(64, 64);
-        image_building_path.setWidgetPosition(widget_position + sf::Vector2f(320, 0));
-        image_building_path.setWidgetOffset(sf::Vector2f(0, 24));
+    static ImageHolder image_building_path_dirt(this->manager, "path_dirt_point");
+        image_building_path_dirt.setWidgetID("imageholder_building_path_dirt");
+        image_building_path_dirt.setWidgetSize(64, 64);
+        image_building_path_dirt.setWidgetPosition(widget_position + sf::Vector2f(320, 0));
+        image_building_path_dirt.setWidgetOffset(sf::Vector2f(0, 24));
+
+    static ImageHolder image_building_path_stone(this->manager, "path_stone_point");
+        image_building_path_stone.setWidgetID("imageholder_building_path_stone");
+        image_building_path_stone.setWidgetSize(64, 64);
+        image_building_path_stone.setWidgetPosition(widget_position + sf::Vector2f(384, 0));
+        image_building_path_stone.setWidgetOffset(sf::Vector2f(0, 24));
 
     this->interface.insert({ widget_body.getWidgetID()              , &widget_body               });
     this->interface.insert({ image_building_house.getWidgetID()     , &image_building_house      });
@@ -82,7 +76,8 @@ void WidgetMenuBuilding::createUI() {
     this->interface.insert({ image_building_quarry.getWidgetID()    , &image_building_quarry     });
     this->interface.insert({ image_building_woodcutter.getWidgetID(), &image_building_woodcutter });
     this->interface.insert({ image_building_tent.getWidgetID()      , &image_building_tent       });
-    this->interface.insert({ image_building_path.getWidgetID()      , &image_building_path       });
+    this->interface.insert({ image_building_path_dirt.getWidgetID() , &image_building_path_dirt  });
+    this->interface.insert({ image_building_path_stone.getWidgetID(), &image_building_path_stone });
 }
 
 void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -138,8 +133,8 @@ Building WidgetMenuBuilding::getBuilding() {
     const std::string& building_name = this->last_selected_building;
     for(int index = 0; index < BUILDING_LOOKUP_TABLE.size(); index++) {
         auto building = BUILDING_LOOKUP_TABLE[index];
-
-        if(building_name == building.getName())
+        
+        if(building_name == building.getTextureName())
             return building;
     }
 

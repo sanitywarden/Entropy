@@ -834,13 +834,13 @@ void WorldGenerator::generateNoise(noiseSettings& settings, std::vector<float>& 
     };
 
     // Generate the noise.
-    for(unsigned int y = 0; y < settings.size.y; y++) {
-        for(unsigned int x = 0; x < settings.size.x; x++) {
+    for(int y = 0; y < settings.size.y; y++) {
+        for(int x = 0; x < settings.size.x; x++) {
             float noise = 0.0f;       // Noise accumulator.
             float scale = 1.0f;       // The frequency of the noise.
             float scale_check = 0.0f; // Scale check to keep the noise values between 0 and 1.
 
-            for(unsigned int o = 0; o < settings.octaves; o++) {
+            for(int o = 0; o < settings.octaves; o++) {
                 const int sampleX1 = (x / settings.persistence) * settings.persistence;
                 const int sampleY1 = (y / settings.persistence) * settings.persistence;
                 
@@ -868,7 +868,9 @@ void WorldGenerator::generateNoise(noiseSettings& settings, std::vector<float>& 
                 scale = float(scale / settings.bias);
             }
 
-            const int index = this->rCalculateIndex(x, y);
+            // Do not change this.
+            // World size and region size may be two different values.
+            int index = y * settings.size.x + x;
 
             float buffer_noise = (noise / scale_check) * settings.multiplier;
             

@@ -8,6 +8,7 @@
 #include "player.hpp"
 #include "building.hpp"
 #include "generationSettings.hpp"
+#include "pawn.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -67,6 +68,7 @@ namespace iso {
             std::map    <int, GameObject>              trees;
             std::map    <int, std::vector<GameObject>> sides;
             std::map    <int, Building>                buildings;
+            std::vector <Pawn>                         population;
 
             Player*            owner;     // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.
             ResourceCollection resources; // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.
