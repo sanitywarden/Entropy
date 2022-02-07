@@ -702,7 +702,6 @@ void Regionmap::updateScheduler() {
             }
         
             else if(pawn.path.empty()) {    
-                return;
                 int goal = std::rand() % this->manager->world.getRegionSize() - 1;                
                 auto path = this->manager->astar(pawn.current_index, goal);
                 pawn.setNewPath(path);
@@ -724,12 +723,7 @@ void Regionmap::gamestateLoad() {
 
     mesh_tile.create(verticies_tilemap);
     mesh_tree.create(verticies_treemap);
-
-
 }
-
-        
-
 
 void Regionmap::gamestateClose() {
     this->recalculate_mesh      = false;
