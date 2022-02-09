@@ -410,7 +410,8 @@ void WorldGenerator::generateRivers() {
                     direction = RiverDirection::RIVER_NONE; 
             }
 
-            Region& panel = this->world_map[river_index_current];
+            Region& panel     = this->world_map[river_index_current];
+            GameObject& river = this->rivers[river_index_current];
             const sf::Vector2f panel_position = panel.getPosition();
             const sf::Vector2f panel_offset   = sf::Vector2f(0, 0); 
             const sf::Vector2f panel_size     = this->settings.world_panel_size; 
@@ -422,37 +423,37 @@ void WorldGenerator::generateRivers() {
 
                 case RiverDirection::RIVER_ORIGIN:
                     panel._direction = RiverDirection::RIVER_ORIGIN;
-                    panel.river = GameObject(panel_position, panel_offset, panel_size, "panel_sea"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, "panel_sea"); 
                     break;
                 
                 case RiverDirection::RIVER_NORTH_TO_EAST:
                     panel._direction = RiverDirection::RIVER_NORTH_TO_EAST;
-                    panel.river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_bl"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_bl"); 
                     break;
 
                 case RiverDirection::RIVER_NORTH_TO_WEST:
                     panel._direction = RiverDirection::RIVER_NORTH_TO_WEST;
-                    panel.river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_br"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_br"); 
                     break;
 
                 case RiverDirection::RIVER_SOUTH_TO_EAST:
                     panel._direction = RiverDirection::RIVER_SOUTH_TO_EAST;
-                    panel.river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_tl"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_tl"); 
                     break;
 
                 case RiverDirection::RIVER_SOUTH_TO_WEST:
                     panel._direction = RiverDirection::RIVER_SOUTH_TO_WEST;
-                    panel.river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_tr"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_tr"); 
                     break;
 
                 case RiverDirection::RIVER_VERTICAL:
                     panel._direction = RiverDirection::RIVER_VERTICAL;
-                    panel.river = GameObject(panel_position, panel_offset, panel_size, "panel_river_vertical"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_vertical"); 
                     break;
 
                 case RiverDirection::RIVER_HORIZONTAL:
                     panel._direction = RiverDirection::RIVER_HORIZONTAL;
-                    panel.river = GameObject(panel_position, panel_offset, panel_size, "panel_river_horizontal"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_horizontal"); 
                     break;
             }
 
@@ -690,10 +691,11 @@ void WorldGenerator::generateForests() {
         Region& region = this->world_map[index];
 
         if(result > 0.7f && !this->is_arctic(index) && !this->is_desert(index) && !this->world_map[index].regiontype.is_river() && this->world_map[index].regiontype.is_terrain()) {
-            region.forest = GameObject(region.getPosition(), sf::Vector2f(0, 0), region.getSize(), this->getTreeTextureNameWorld(region.biome)); 
-	        region.regiontype.set_forest();
-	    }
-    }    
+            GameObject forest = GameObject(region.getPosition(), sf::Vector2f(0, 0), region.getSize(), this->getTreeTextureNameWorld(region.biome));
+	        this->forests[index] = forest;
+            region.regiontype.set_forest();
+        }
+    }
 }
 
 void WorldGenerator::generateRegion(int index, Region& region) {

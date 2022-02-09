@@ -76,7 +76,9 @@ namespace iso {
             int rCalculateIndex(int x, int y);
             int wCalculateIndex(int x, int y);
         public:
-            std::vector <Region> world_map; 
+            std::vector <Region>          world_map; 
+            std::map    <int, GameObject> forests;
+            std::map    <int, GameObject> rivers;
     };
 }
 

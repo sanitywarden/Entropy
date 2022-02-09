@@ -86,8 +86,8 @@ void WidgetRegion::updateUI() {
     sf::Vector2f widget_size     = widget.getWidgetSize();
 
     std::string data;
-    std::string forest = region.forest.exists() ? "True" : "False";
-    std::string river  = region.river.exists()  ? "True" : "False";
+    std::string forest = this->manager->world.forests.count(index) ? "True" : "False";
+    std::string river  = this->manager->world.rivers.count(index)  ? "True" : "False";
     std::string owned  = region.isOwned()       ? "True" : "False";
     data += "Index: "  + std::to_string(index)   + "\n";
     data += "Biome: "  + region.biome.biome_name + "\n";

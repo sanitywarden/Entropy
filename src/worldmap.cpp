@@ -55,6 +55,7 @@ void Worldmap::initialise() {
 }
 
 void Worldmap::loadResources() {
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_atlas");
     this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_highlight",             sf::IntRect(0, 288, 64, 32 ));
     this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_cold",            sf::IntRect(0, 0, 64, 32   ));
     this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_warm",            sf::IntRect(64, 0, 64, 32  ));
@@ -71,6 +72,8 @@ void Worldmap::loadResources() {
     this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_br",       sf::IntRect(64, 64, 64, 32 ));
     this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_horizontal",      sf::IntRect(128, 32, 64, 32));
     this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_vertical",        sf::IntRect(128, 64, 64, 32));
+    
+    this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_foliage_atlas");
     this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_cold",     sf::IntRect(0, 0, 64, 32   ));
     this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_warm",     sf::IntRect(128, 0, 64, 32 ));
     this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_tropical", sf::IntRect(64, 0, 64, 32  ));
@@ -335,41 +338,111 @@ void Worldmap::handleInput() {
     }
 }
 
+sf::VertexBuffer worldmap_mesh_tile(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
+sf::VertexBuffer worldmap_mesh_tree(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
 void Worldmap::renderWorld() {
-    sf::Vector2f camera_size   = this->view_game.getSize();
-    sf::Vector2f camera_centre = this->view_game.getCenter();
+    const auto findTexture = [this](const GameObject& object) -> sf::Vector2f {
+        const auto& tile_texture = object.getTextureName();
+        return TEXTURE_LOOKUP_TABLE.at(tile_texture);
+    };
+
+    const sf::Vector2f camera_size   = this->view_game.getSize();
+    const sf::Vector2f camera_centre = this->view_game.getCenter();
+    const sf::Vector2f panel_size    = this->manager->settings.world_panel_size;
 
     sf::Rect camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
 
-    int draw_calls = 0;
+    int gpu_draw_calls = 0;
 
-    for(Region& panel : this->manager->world.world_map) {        
-        sf::Rect region_screen_area(panel.getPosition(), panel.getSize());
+    if(this->recalculate_mesh) {
+        int verticies_index = 0;
+        sf::Vertex verticies_worldmap[worldmap_mesh_tile.getVertexCount()];
+        for(int index = 0; index < this->manager->world.world_map.size(); index++) {
+            sf::Vertex* quad = &verticies_worldmap[verticies_index * 4];
 
-        // Draw only the regions which you can see on the screen.
-        if(camera_screen_area.intersects(region_screen_area)) {
-            sf::RenderStates region_states;
-            region_states.texture = &this->manager->resource.getTexture(panel.getTextureName());
-            this->manager->window.draw(panel, region_states);
-            draw_calls++;
+            quad[0].position = this->manager->world.world_map[index].getPosition() + sf::Vector2f(0, 0);
+            quad[1].position = this->manager->world.world_map[index].getPosition() + sf::Vector2f(panel_size.x, 0);
+            quad[2].position = this->manager->world.world_map[index].getPosition() + sf::Vector2f(panel_size.x, panel_size.y);
+            quad[3].position = this->manager->world.world_map[index].getPosition() + sf::Vector2f(0, panel_size.y);
+        
+            const auto texture_coords = findTexture(this->manager->world.world_map[index]);
 
-            if(panel.forest.exists()) {
-                sf::RenderStates forest_states;
-                forest_states.texture = &this->manager->resource.getTexture(panel.forest.getTextureName());
-                this->manager->window.draw(panel.forest, forest_states);
-                draw_calls++;
-            }
+            quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
+            quad[1].texCoords = texture_coords + sf::Vector2f(panel_size.x, 0);
+            quad[2].texCoords = texture_coords + sf::Vector2f(panel_size.x, panel_size.y);
+            quad[3].texCoords = texture_coords + sf::Vector2f(0, panel_size.y);
 
-            if(panel.river.exists()) {
-                sf::RenderStates river_states;
-                river_states.texture = &this->manager->resource.getTexture(panel.river.getTextureName());
-                this->manager->window.draw(panel.river, river_states);
-                draw_calls++;
+            verticies_index++;
+
+            const bool river_exists = this->manager->world.rivers.count(index);
+            if(river_exists) {
+                sf::Vertex* river_quad = &verticies_worldmap[verticies_index * 4];
+
+                river_quad[0].position = this->manager->world.rivers[index].getPosition() + sf::Vector2f(0, 0);
+                river_quad[1].position = this->manager->world.rivers[index].getPosition() + sf::Vector2f(panel_size.x, 0);
+                river_quad[2].position = this->manager->world.rivers[index].getPosition() + sf::Vector2f(panel_size.x, panel_size.y);
+                river_quad[3].position = this->manager->world.rivers[index].getPosition() + sf::Vector2f(0, panel_size.y);
+            
+                const auto texture_coords = findTexture(this->manager->world.rivers[index]);
+
+                river_quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
+                river_quad[1].texCoords = texture_coords + sf::Vector2f(panel_size.x, 0);
+                river_quad[2].texCoords = texture_coords + sf::Vector2f(panel_size.x, panel_size.y);
+                river_quad[3].texCoords = texture_coords + sf::Vector2f(0, panel_size.y);
+
+                verticies_index++;
             }
         }
+
+        worldmap_mesh_tile.update(verticies_worldmap);
+        this->recalculate_mesh = false;
     }
 
-    this->draw_calls = draw_calls;
+    if(this->recalculate_tree_mesh) {
+        sf::Vertex verticies_forest[worldmap_mesh_tree.getVertexCount()];        
+        int verticies_index = 0;
+        for(int index = 0; index < this->manager->world.forests.size(); index++) {
+            const auto& forest = this->manager->world.forests[index];
+
+            // This should not be a requirement, because the texture should NOT be an asterisk.
+            // But something somewhere does not work right, and does not assign texture, or just triggers the default constructor of GameObject.
+            // I do not know where it happens so just leave it like this.
+            // You use verticies_index instead of index because the indexes will not be contigous.
+            // They will not be: 0, 1, 2, 3 - More like: 0, 2, 16, 42.
+            if(forest.getTextureName() != "*") {
+                sf::Vertex* tree_quad = &verticies_forest[verticies_index * 4];
+                
+                tree_quad[0].position = forest.getPosition() + sf::Vector2f(0, 0);
+                tree_quad[1].position = forest.getPosition() + sf::Vector2f(panel_size.x, 0);
+                tree_quad[2].position = forest.getPosition() + sf::Vector2f(panel_size.x, panel_size.y);
+                tree_quad[3].position = forest.getPosition() + sf::Vector2f(0, panel_size.y);
+            
+                const auto texture_coords = findTexture(forest);
+
+                tree_quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
+                tree_quad[1].texCoords = texture_coords + sf::Vector2f(panel_size.x, 0);
+                tree_quad[2].texCoords = texture_coords + sf::Vector2f(panel_size.x, panel_size.y);
+                tree_quad[3].texCoords = texture_coords + sf::Vector2f(0, panel_size.y);
+
+                verticies_index++;
+            }            
+        }
+
+        worldmap_mesh_tree.update(verticies_forest);
+        this->recalculate_tree_mesh = false;
+    }
+
+    sf::RenderStates states_panelmap;
+    states_panelmap.texture = &this->manager->resource.getTexture("panel_atlas");
+    this->manager->window.draw(worldmap_mesh_tile, states_panelmap);
+    gpu_draw_calls++;
+
+    sf::RenderStates states_forestmap;
+    states_forestmap.texture = &this->manager->resource.getTexture("panel_foliage_atlas");
+    this->manager->window.draw(worldmap_mesh_tree, states_forestmap);
+    gpu_draw_calls++;
+
+    this->draw_calls = gpu_draw_calls;
 }
 
 void Worldmap::selectPanel() {
@@ -532,6 +605,21 @@ void Worldmap::gamestateLoad() {
     this->mouse_moved   = false;
     this->mouse_drag    = false;
     this->mouse_pressed = false;
+
+    if(!regionmap) {
+        this->recalculate_mesh      = true;
+        this->recalculate_tree_mesh = true;
+        
+        const size_t verticies_worldmap  = 4 * this->manager->world.world_map.size() + 4 * this->manager->world.rivers.size();
+        const size_t verticies_forestmap = 4 * this->manager->world.forests.size();
+    
+        worldmap_mesh_tile.create(verticies_worldmap);
+        worldmap_mesh_tree.create(verticies_forestmap);
+    }
+}
+
+void Worldmap::gamestateClose() {
+    this->recalculate_tree_mesh = true;
 }
 
 int Worldmap::getDrawCalls() {

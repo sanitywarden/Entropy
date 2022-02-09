@@ -31,6 +31,25 @@ namespace iso {
         { "tile_tree_warm2"         , sf::Vector2f(64, 0)    },
         { "tile_tree_cold1"         , sf::Vector2f(128, 0)   },
         { "tile_tree_tropical1"     , sf::Vector2f(256, 0)   },
+        { "panel_grass_cold"        , sf::Vector2f(0, 0  )   },
+        { "panel_grass_warm"        , sf::Vector2f(64, 0 )   },
+        { "panel_grass_tropical"    , sf::Vector2f(128, 0)   },
+        { "panel_grass_subtropical" , sf::Vector2f(512, 0)   },
+        { "panel_ocean"             , sf::Vector2f(192, 0)   },
+        { "panel_sea"               , sf::Vector2f(256, 0)   },
+        { "panel_arctic"            , sf::Vector2f(320, 0)   },
+        { "panel_tundra"            , sf::Vector2f(384, 0)   },
+        { "panel_desert"            , sf::Vector2f(448, 0)   },
+        { "panel_tree_cold"         , sf::Vector2f(0, 0)     },
+        { "panel_tree_warm"         , sf::Vector2f(128, 0)   },
+        { "panel_tree_tropical"     , sf::Vector2f(64, 0)    },
+        { "panel_river_corner_tl"   , sf::Vector2f(0, 32)    },
+        { "panel_river_corner_tr"   , sf::Vector2f(64, 32)   },
+        { "panel_river_corner_bl"   , sf::Vector2f(0, 64)    },
+        { "panel_river_corner_br"   , sf::Vector2f(64, 64)   },
+        { "panel_river_horizontal"  , sf::Vector2f(128, 32)  },
+        { "panel_river_vertical"    , sf::Vector2f(128, 64)  },
+        { "*", sf::Vector2f(192, 0) },
     };
     
     struct UpdateUtility {
@@ -98,8 +117,6 @@ namespace iso {
             return ("[" + std::to_string(this->years) + "-" + std::to_string(this->months) + "-" + std::to_string(this->days) + ":" + std::to_string(this->hours) + "-" + std::to_string(this->seconds) + "]");
         }
     };
-
-    
 
     class SimulationManager : public entropy::Entropy {
         private:

@@ -1,8 +1,6 @@
 #include "regionmap.hpp"
 
 using namespace iso;
-sf::VertexBuffer mesh_tile(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
-sf::VertexBuffer mesh_tree(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
 
 Regionmap::Regionmap(SimulationManager* manager) : Gamestate(manager, "Regionmap") {
     this->manager = manager;
@@ -21,8 +19,6 @@ void Regionmap::initialise() {
     this->mouse_pressed         = false;
     this->mouse_moved           = false;
     this->mouse_drag            = false;
-    this->recalculate_mesh      = true;
-    this->recalculate_tree_mesh = true;
 
     this->current_index = -1;
     this->draw_calls    = 0;
@@ -313,6 +309,8 @@ void Regionmap::updateCamera() {
         this->zoomCamera();
 }
 
+sf::VertexBuffer regionmap_mesh_tile(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
+sf::VertexBuffer regionmap_mesh_tree(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
 void Regionmap::renderRegion() {    
     const auto findTexture = [this](const GameObject& object) -> sf::Vector2f {
         const auto& tile_texture = object.getTextureName();
@@ -336,10 +334,8 @@ void Regionmap::renderRegion() {
 
         sf::Vertex verticies_tiles[verticies_tilemap];
 
-        if(!mesh_tile.getVertexCount())
-            mesh_tile.create(verticies_tilemap);
-
-        
+        if(!regionmap_mesh_tile.getVertexCount())
+            regionmap_mesh_tile.create(verticies_tilemap);
 
         for(int index = 0; index < this->manager->world.getRegionSize(); index++) {
             /* There is no point in checking if this tile is in screen coordinates since this would only slow down the drawing process (due to a lot of stuff to compute).
@@ -382,7 +378,7 @@ void Regionmap::renderRegion() {
             }
         }
 
-        mesh_tile.update(verticies_tiles);
+        regionmap_mesh_tile.update(verticies_tiles);
         this->recalculate_mesh = false;
     }
 
@@ -391,8 +387,8 @@ void Regionmap::renderRegion() {
         
         sf::Vertex verticies_trees[verticies_treemap];
         
-        if(!mesh_tree.getVertexCount())
-            mesh_tree.create(verticies_treemap);
+        if(!regionmap_mesh_tree.getVertexCount())
+            regionmap_mesh_tree.create(verticies_treemap);
         
         for(int y = 0; y < this->manager->settings.region_size; y++) {
             for(int x = 0; x < this->manager->settings.region_size; x++) {
@@ -417,18 +413,18 @@ void Regionmap::renderRegion() {
             }
         }
 
-        mesh_tree.update(verticies_trees);
+        regionmap_mesh_tree.update(verticies_trees);
         this->recalculate_tree_mesh = false;
     }
 
     sf::RenderStates states_tiles;
     states_tiles.texture = &this->manager->resource.getTexture("tile_atlas"); 
-    this->manager->window.draw(mesh_tile, states_tiles);
+    this->manager->window.draw(regionmap_mesh_tile, states_tiles);
     gpu_draw_calls++;
 
     sf::RenderStates states_trees;
     states_trees.texture = &this->manager->resource.getTexture("tile_foliage_atlas");
-    this->manager->window.draw(mesh_tree, states_trees);
+    this->manager->window.draw(regionmap_mesh_tree, states_trees);
     gpu_draw_calls++;
 
     for(const auto& pair : this->region->buildings) {
@@ -721,13 +717,13 @@ void Regionmap::gamestateLoad() {
     const size_t verticies_tilemap = 4 * this->region->map.size() + 4 * side_vector_size;
     const size_t verticies_treemap = 4 * this->region->map.size();
 
-    mesh_tile.create(verticies_tilemap);
-    mesh_tree.create(verticies_treemap);
+    regionmap_mesh_tile.create(verticies_tilemap);
+    regionmap_mesh_tree.create(verticies_treemap);
 }
 
 void Regionmap::gamestateClose() {
     this->recalculate_mesh      = false;
     this->recalculate_tree_mesh = false;
-    mesh_tile.create(0);
-    mesh_tree.create(0);
+    regionmap_mesh_tile.create(0);
+    regionmap_mesh_tree.create(0);
 }

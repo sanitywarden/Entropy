@@ -34,7 +34,7 @@ SimulationManager::SimulationManager() {
     settings.world_gradient_persistence = 4;
     settings.world_gradient_bias        = 4;
     settings.world_gradient_multiplier  = 2.00f;
-    settings.region_size                = 200;
+    settings.region_size                = 100;
     settings.region_tile_size.x         = 64;           
     settings.region_tile_size.y         = 32;           
     settings.region_tile_offset.x       = 0; 
@@ -46,7 +46,7 @@ SimulationManager::SimulationManager() {
     this->window.setTitle("Entropy by Vivit");
 
     if(!this->performChecks()) {
-        std::cout << "[Simulation Manager][Initialisation]: Application checks failed.\n";
+        std::cout << "[Initialisation]: Application checks failed.\n";
         this->exitApplication(1);
     }
 

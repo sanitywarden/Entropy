@@ -57,8 +57,6 @@ namespace iso {
 
         public:
             RegionType regiontype;
-            GameObject forest;
-            GameObject river;
 
             Biome biome;
 
