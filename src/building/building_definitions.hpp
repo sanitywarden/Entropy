@@ -1,0 +1,34 @@
+#ifndef _BUILDING_DEFINITIONS_HPP_
+#define _BUILDING_DEFINITIONS_HPP_
+
+#include "building.hpp"
+#include "path_dirt.hpp"
+#include "path_stone.hpp"
+#include "house_small.hpp"
+#include "farmhouse.hpp"
+#include "quarry.hpp"
+#include "woodcutter.hpp"
+
+#include <vector>
+
+namespace iso {
+    const Building   BUILDING_EMPTY;       // ID 0.
+    const PathDirt   BUILDING_PATH_DIRT;   // ID 1.
+    const PathStone  BUILDING_PATH_STONE;  // ID 2.
+    const HouseSmall BUILDING_HOUSE_SMALL; // ID 3.
+    const Farmhouse  BUILDING_FARM;        // ID 4.
+    const Quarry     BUILDING_QUARRY;      // ID 5.
+    const Woodcutter BUILDING_WOODCUTTER;  // ID 6.
+
+    const static std::vector <Building> BUILDING_LOOKUP_TABLE = {
+        BUILDING_EMPTY,
+        BUILDING_PATH_DIRT,
+        BUILDING_PATH_STONE,
+        BUILDING_HOUSE_SMALL,
+        BUILDING_FARM,
+        BUILDING_QUARRY,
+        BUILDING_WOODCUTTER
+    };
+}
+
+#endif

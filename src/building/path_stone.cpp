@@ -1,0 +1,11 @@
+#include "path_stone.hpp"
+
+using namespace iso;
+
+PathStone::PathStone() : Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X32, "path_stone_point", "Stone path", 2, VECTOR1X1, ResourceCollection(0, 0, 0)) {
+    
+}
+
+PathStone::~PathStone() {
+
+}
