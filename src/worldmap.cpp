@@ -22,8 +22,9 @@ void Worldmap::initialise() {
     this->move_camera    = false;
     this->zoom_camera    = false;
 
-    this->current_index  = -1;
-    this->selected_index = -1;
+    this->current_index    = -1;
+    this->selected_index   = -1;
+    this->selected_unit_id = -1;
     this->draw_calls    = 0;
 
     this->draw_control_panel = false;
@@ -56,23 +57,26 @@ void Worldmap::initialise() {
 
 void Worldmap::loadResources() {
     this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_atlas");
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_highlight",             sf::IntRect(0, 288, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_cold",            sf::IntRect(0, 0, 64, 32   ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_warm",            sf::IntRect(64, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_tropical",        sf::IntRect(128, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_subtropical",     sf::IntRect(512, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_ocean",                 sf::IntRect(192, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_sea",                   sf::IntRect(256, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_arctic",                sf::IntRect(320, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_tundra",                sf::IntRect(384, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_desert",                sf::IntRect(448, 0, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_tl",       sf::IntRect(0, 32, 64, 32  ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_tr",       sf::IntRect(64, 32, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_bl",       sf::IntRect(0, 64, 64, 32  ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_br",       sf::IntRect(64, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_horizontal",      sf::IntRect(128, 32, 64, 32));
-    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_vertical",        sf::IntRect(128, 64, 64, 32));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_highlight",         sf::IntRect(0, 288, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_cold",        sf::IntRect(0, 0, 64, 32   ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_warm",        sf::IntRect(64, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_tropical",    sf::IntRect(128, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_grass_subtropical", sf::IntRect(512, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_ocean",             sf::IntRect(192, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_sea",               sf::IntRect(256, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_arctic",            sf::IntRect(320, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_tundra",            sf::IntRect(384, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_desert",            sf::IntRect(448, 0, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_tl",   sf::IntRect(0, 32, 64, 32  ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_tr",   sf::IntRect(64, 32, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_bl",   sf::IntRect(0, 64, 64, 32  ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_corner_br",   sf::IntRect(64, 64, 64, 32 ));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_horizontal",  sf::IntRect(128, 32, 64, 32));
+    this->manager->resource.loadTexture("./res/panels/panel_atlas.png", "panel_river_vertical",    sf::IntRect(128, 64, 64, 32));
     
+    this->manager->resource.loadTexture("./res/units/units_worldmap.png", "unit_worldmap_settler", sf::IntRect(0, 0, 32, 16 ));
+    this->manager->resource.loadTexture("./res/units/units_worldmap.png", "unit_worldmap_warrior", sf::IntRect(32, 0, 32, 16));
+
     this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_foliage_atlas");
     this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_cold",     sf::IntRect(0, 0, 64, 32   ));
     this->manager->resource.loadTexture("./res/panels/panel_foliage_atlas.png", "panel_tree_warm",     sf::IntRect(128, 0, 64, 32 ));
@@ -198,8 +202,7 @@ void Worldmap::update(float delta_time) {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
-    this->updateSelectedPanel();
-
+    
     this->updateUI();
 }
 
@@ -209,7 +212,6 @@ void Worldmap::render(float delta_time) {
 
     this->renderWorld();
     this->highlightPanel();
-    this->drawSelectedPanel();
 
     this->manager->window.getWindow()->setView(this->view_interface);
 
@@ -291,6 +293,28 @@ void Worldmap::handleInput() {
                     this->position_pressed = this->mouse_position_window;
                 }
                 
+                Region& current_region = this->manager->world.world_map[this->current_index];
+                const bool unit_exists = current_region.isUnitPresent();
+                if(this->controls.mouseLeftPressed()) {
+                    if(unit_exists && current_region.unit->contains(this->mouse_position_window)) {
+                        this->selectUnit();
+                        gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
+                        widget_region->show = false;
+                    }
+    
+                    else {
+                        this->selectPanel();
+                    }
+                }
+                
+                if(this->controls.mouseRightPressed()) {
+                    this->selectUnitGoal();
+
+                }
+                
+                this->unselectUnit();
+                this->unselectPanel();
+
                 break;
             }
 
@@ -367,6 +391,13 @@ void Worldmap::renderWorld() {
         
             const auto texture_coords = findTexture(this->manager->world.world_map[index]);
 
+            if(this->manager->world.world_map[index].getColour() != COLOUR_BLACK && this->manager->world.world_map[index].getColour() != COLOUR_WHITE) {
+                quad[0].color = this->manager->world.world_map[index].getColour();
+                quad[1].color = this->manager->world.world_map[index].getColour();
+                quad[2].color = this->manager->world.world_map[index].getColour();
+                quad[3].color = this->manager->world.world_map[index].getColour();
+            }
+
             quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
             quad[1].texCoords = texture_coords + sf::Vector2f(panel_size.x, 0);
             quad[2].texCoords = texture_coords + sf::Vector2f(panel_size.x, panel_size.y);
@@ -442,6 +473,14 @@ void Worldmap::renderWorld() {
     this->manager->window.draw(worldmap_mesh_tree, states_forestmap);
     gpu_draw_calls++;
 
+    for(const auto& player : this->manager->players) {
+        for(const auto& unit : player.seeUnits()) {
+            sf::RenderStates unit_states;
+            unit_states.texture = &this->manager->resource.getTexture(unit.getTextureName());
+            this->manager->window.draw(unit, unit_states);
+        }
+    }
+
     this->draw_calls = gpu_draw_calls;
 }
 
@@ -457,6 +496,8 @@ void Worldmap::selectPanel() {
 
         gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
             widget_region->show = true;
+
+        this->selected_unit_id = -1;
     }
 }
 
@@ -469,42 +510,14 @@ void Worldmap::unselectPanel() {
     }
 }
 
-void Worldmap::drawSelectedPanel() {
-    if(this->current_index != -1 && this->current_index < 0 && this->current_index > this->manager->settings.world_size * this->manager->settings.world_size) {
-        sf::Vector2f panel_position = this->manager->world.world_map[this->current_index].getPosition();
-
-        sf::VertexArray selection_indicator(sf::Quads, 4);
-
-        selection_indicator[0].position = panel_position;
-        selection_indicator[1].position = panel_position + sf::Vector2f(this->manager->settings.world_panel_size.x, 0);
-        selection_indicator[2].position = panel_position + sf::Vector2f(this->manager->settings.world_panel_size.x, this->manager->settings.world_panel_size.y);
-        selection_indicator[3].position = panel_position + sf::Vector2f(0, this->manager->settings.world_panel_size.y);
-    
-        selection_indicator[0].texCoords = sf::Vector2f(0, 0);
-        selection_indicator[1].texCoords = sf::Vector2f(this->manager->settings.world_panel_size.x, 0);
-        selection_indicator[2].texCoords = sf::Vector2f(this->manager->settings.world_panel_size.x, this->manager->settings.world_panel_size.y);
-        selection_indicator[3].texCoords = sf::Vector2f(0, this->manager->settings.world_panel_size.y);
-
-        sf::RenderStates states;
-        states.texture = &this->manager->resource.getTexture("panel_highlight");
-
-        this->manager->window.draw(selection_indicator, states);
-    }
-}
-
-void Worldmap::updateSelectedPanel() {
+void Worldmap::highlightPanel() {
     sf::Vector2i tile_grid = sf::Vector2i(
         this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
         this->mouse_position_window.y / this->manager->settings.world_panel_size.y
     );
     
     this->current_index = tile_grid.y * this->manager->settings.world_size + tile_grid.x;
-
-    this->selectPanel();
-    this->unselectPanel();
-}
-
-void Worldmap::highlightPanel() {
+    
     if(this->mouse_drag)
         return;
     
@@ -542,6 +555,9 @@ void Worldmap::createUI() {
 
     static gui::DebugPerformance widget_performance_worldmap(this->manager);
     this->interface.insert({ widget_performance_worldmap.getWidgetID(), &widget_performance_worldmap });
+
+    static gui::WidgetUnit widget_unit(this->manager);
+    this->interface.insert({ widget_unit.getWidgetID(), &widget_unit });
 }
 
 void Worldmap::renderUI() {
@@ -575,6 +591,7 @@ int Worldmap::getSelectedIndex() {
     return this->selected_index;
 }
 
+// If the player's mouse is placed on a GUI component.
 bool Worldmap::intersectsUI() {
     for(const auto& pair : this->interface) {
         const auto* component = pair.second;
@@ -624,4 +641,92 @@ void Worldmap::gamestateClose() {
 
 int Worldmap::getDrawCalls() {
     return this->draw_calls;
+}
+
+void Worldmap::updateScheduler() {
+    for(const auto& player : this->manager->players) {
+        for(auto& unit : player.getUnits()) {
+            if(unit.hasPath()) {
+                int current   = unit.current_index;
+                int next_move = unit.getNextMove();
+                unit.object_position = this->manager->world.world_map[next_move].object_position + sf::Vector2f(16, 8);
+                
+                // TODO: This line will be a problem, because 2 units can not stand on the same tile,
+                // but currently there is nothing that makes it impossible for two units to cross each other's paths. 
+                this->manager->world.world_map[next_move].unit = &unit;
+                this->manager->world.world_map[current].unit = nullptr;
+    
+                unit.current_index = next_move;
+            }
+        }
+    }
+}
+
+void Worldmap::selectUnit() {
+    Unit* pawn = this->manager->world.world_map[this->current_index].unit;
+    if(pawn) {
+        if(this->controls.mouseLeftPressed()) {
+            if(pawn->contains(this->mouse_position_window)) {
+                this->selected_unit_id = pawn->getID();
+    
+                gui::WidgetUnit* widget_unit = static_cast<gui::WidgetUnit*>(this->interface["component_widget_unit"]);
+                    widget_unit->show = true;
+            }
+        }
+    }
+}
+
+void Worldmap::unselectUnit() {
+    Unit* pawn = nullptr;
+    for(const auto& player : this->manager->players) {
+        for(auto& unit : player.getUnits()) {
+            if(unit.getID() == this->selected_unit_id) {
+                pawn = &unit;
+                break;
+            }
+        }
+    }
+
+    if(pawn) {
+        if(this->controls.mouseLeftPressed() && !this->intersectsUI() && !pawn->contains(this->mouse_position_window)) {
+            this->selected_unit_id = -1;
+        }
+    }
+
+    if(this->controls.mouseLeftPressed() && this->selected_unit_id == -1) {
+        gui::WidgetUnit* widget_unit = static_cast<gui::WidgetUnit*>(this->interface["component_widget_unit"]);
+            widget_unit->show = false;
+    }
+}
+
+void Worldmap::selectUnitGoal() {
+    if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
+        for(const auto& player : this->manager->players) {
+            Unit* pawn = nullptr;
+            for(auto& unit : player.getUnits()) {
+                if(this->selected_unit_id == unit.getID()) {
+                    pawn = &unit;
+                    break;
+                }
+            }
+    
+            if(pawn) {
+                pawn->goal = this->current_index;
+                auto path = this->manager->astar(pawn->current_index, pawn->goal);
+                pawn->setNewPath(path);
+            }
+        }
+    }
+}
+
+GameObject* Worldmap::getSelectedObject() {
+    Region* region = &this->manager->world.world_map[this->current_index];
+    if(region->isUnitPresent())
+        if(region->unit->contains(this->mouse_position_window))
+            return region->unit;
+    return region;
+}
+
+int Worldmap::getSelectedUnitID() {
+    return this->selected_unit_id;
 }

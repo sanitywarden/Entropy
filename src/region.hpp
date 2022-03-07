@@ -6,9 +6,9 @@
 #include "regionType.hpp"
 #include "gameObject.hpp"
 #include "player.hpp"
-#include "building.hpp"
+#include "./building/building.hpp"
 #include "generationSettings.hpp"
-#include "pawn.hpp"
+#include "./unit/unit.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -27,7 +27,8 @@ namespace iso {
 
     class Region : public GameObject {
         friend class WorldGenerator;
-        
+        friend class SimulationManager;
+
         protected:
             bool           _marked; 
             RiverDirection _direction;      
@@ -54,11 +55,12 @@ namespace iso {
             bool           placeBuildingCheck  (Building building, const GenerationSettings& settings, int index);
             void           removeBuilding      (int index);
             void           removeBuildingCost  (const Building& building);
+            bool           isUnitPresent       ();
 
         public:
             RegionType regiontype;
-
-            Biome biome;
+            Biome      biome;
+            Unit*      unit;
 
             bool visited;
 
@@ -66,11 +68,11 @@ namespace iso {
             std::map    <int, GameObject>              trees;
             std::map    <int, std::vector<GameObject>> sides;
             std::map    <int, Building>                buildings;
-            std::vector <Pawn>                         population;
+            std::vector <Unit>                         population;
 
             Player*            owner;     // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.
             ResourceCollection resources; // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.
-    };  
+    }; 
 }
 
 #endif

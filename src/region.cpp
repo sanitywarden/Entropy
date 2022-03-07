@@ -4,6 +4,8 @@
 using namespace iso;
 
 Region::Region() {
+    this->object_name = "region";
+
     this->_marked    = false;
     this->_direction = RiverDirection::RIVER_NONE;
 
@@ -14,6 +16,7 @@ Region::Region() {
     this->visited     = false;
     
     this->owner = nullptr;
+    this->unit  = nullptr;
 
     this->map.resize(0);
     this->population.resize(0);
@@ -61,13 +64,17 @@ void Region::addResource(ResourceType resource, int quantity) {
     switch(resource) {
         default:
             break;
-
+        
         case ResourceType::RESOURCE_WOOD:
             this->resources.wood += quantity;
             break;
 
         case ResourceType::RESOURCE_STONE:
             this->resources.stone += quantity;
+            break;
+
+        case ResourceType::RESOURCE_FOOD:
+            this->resources.food += quantity;
             break;
 
         case ResourceType::RESOURCE_GOLD:
@@ -158,4 +165,8 @@ void Region::removeBuilding(int index) {
         this->resources += building.getBuildingRefund();
         this->buildings.erase(index);
     }
+}
+
+bool Region::isUnitPresent() {
+    return this->unit != nullptr;
 }

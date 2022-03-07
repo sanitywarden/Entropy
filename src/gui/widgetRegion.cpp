@@ -34,10 +34,6 @@ void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const
     if(button_travel)
         target.draw(*button_travel);
 
-    auto* button_expand = static_cast<Button*>(this->interface.at("button_expand"));
-    if(button_expand)
-        target.draw(*button_expand);
-
     auto* label = static_cast<Label*>(this->interface.at("text_region_index"));
     if(label)
         target.draw(*label);
@@ -61,14 +57,8 @@ void WidgetRegion::createUI() {
         button_travel.setWidgetPosition(widget_position + widget_size - button_size);
         button_travel.label.setWidgetPosition(button_travel.getWidgetPosition() + sf::Vector2f(button_size.x / 2, button_size.y / 2));
 
-    static Button button_expand(this->manager, t_button_size, "Expand");
-        button_expand.setWidgetID("button_expand");
-        button_expand.setWidgetPosition(widget_position + widget_size - sf::Vector2f(button_size.x, 2 * button_size.y));
-        button_expand.label.setWidgetPosition(button_expand.getWidgetPosition() + sf::Vector2f(button_size.x / 2, button_size.y / 2));
-
     this->interface.insert({ widget_body.getWidgetID()  , &widget_body   });
     this->interface.insert({ button_travel.getWidgetID(), &button_travel });
-    this->interface.insert({ button_expand.getWidgetID(), &button_expand });
 }
 
 void WidgetRegion::updateUI() {
@@ -88,7 +78,7 @@ void WidgetRegion::updateUI() {
     std::string data;
     std::string forest = this->manager->world.forests.count(index) ? "True" : "False";
     std::string river  = this->manager->world.rivers.count(index)  ? "True" : "False";
-    std::string owned  = region.isOwned()       ? "True" : "False";
+    std::string owned  = region.isOwned() ? "True" : "False";
     data += "Index: "  + std::to_string(index)   + "\n";
     data += "Biome: "  + region.biome.biome_name + "\n";
     data += "Forest: " + forest + "\n";
@@ -104,11 +94,6 @@ void WidgetRegion::updateUI() {
         text_region_index.setWidgetPosition(widget_position + sf::Vector2f(0.05f * widget_size.x, 0.0375f * widget_size.y));
     
     this->interface.insert({ text_region_index.getWidgetID(), &text_region_index });
-
-    // Update button_expand visibility.
-
-    Button* button_expand = static_cast<Button*>(this->getComponent("button_expand"));
-    button_expand->show = this->buttonExpandShow(worldmap->getSelectedIndex());
 }
 
 void WidgetRegion::functionality() {
@@ -148,45 +133,4 @@ void WidgetRegion::functionality() {
         this->manager->gamestate.setGamestate("regionmap");
         return;
     }
-
-    Button* button_expand = static_cast<Button*>(this->getComponent("button_expand"));
-    if(worldmap->selected_index != -1 && worldmap->mouse_pressed && !worldmap->mouse_drag && button_expand->containsPoint(worldmap->mouse_position_interface) && this->buttonExpandShow(worldmap->selected_index)) {
-        Region& region = this->manager->world.world_map[worldmap->selected_index];
-
-        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
-            std::cout << "[Button Expand]: Requested to expand to a region not meant for owning.\n";
-            worldmap->selected_index = -1;
-            return;
-        }
-
-        this->manager->getHumanPlayer().addOwnedRegion(worldmap->selected_index);
-        region.object_colour = this->manager->getHumanPlayer().getTeamColour();
-        region.owner = &this->manager->getHumanPlayer();
-        return;
-    } 
-}
-
-bool WidgetRegion::buttonExpandShow(int index) {
-    if(index == -1)
-        return false;
-
-    const std::vector <int>& owned_regions = this->manager->getHumanPlayer().readOwnedRegions();
-    const Region&            region        = this->manager->world.world_map[index];
-
-    for(auto i : owned_regions) {
-        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
-            return false;
-            break;
-        }
-
-        if(index == i - 1 ||
-           index == i + 1 ||
-           index == i - this->manager->settings.world_size ||
-           index == i + this->manager->settings.world_size
-        ) {
-            return true;
-        }
-    }
-
-    return false;
 }

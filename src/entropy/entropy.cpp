@@ -6,21 +6,22 @@
 using namespace entropy;
 
 Entropy::Entropy() {
-    auto settings = this->settings.userSettings();
+    auto settings = this->config.userSettings();
 
     this->resource  = resourceManager(settings);
     this->gamestate = gamestateManager(settings);
     this->window    = windowManager(settings);
     
-    if(this->settings.userSettings().window_fullscreen) 
+    if(this->config.userSettings().window_fullscreen) 
         this->window.createFullscreenWindow();
     
     else 
-        this->window.createWindow(this->settings.userSettings().window_size);
+        this->window.createWindow(this->config.userSettings().window_size);
 
     this->window.setTitle("Entropy Application");
-    this->window.setVsync(this->settings.userSettings().window_vsync);
-    this->window.setMaxFramerate(this->settings.userSettings().window_refresh_rate);
+
+    this->window.setVsync(this->config.userSettings().window_vsync);
+    this->window.setMaxFramerate(this->config.userSettings().window_refresh_rate);
 
     std::cout << "[Entropy Engine]: Configuration finished.\n";
     std::cout << "[Entropy Engine]: Greetings from Entropy Game Engine.\n";   

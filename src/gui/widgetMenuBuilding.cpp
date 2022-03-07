@@ -53,21 +53,16 @@ void WidgetMenuBuilding::createUI() {
         image_building_woodcutter.setWidgetSize(64, 64);
         image_building_woodcutter.setWidgetPosition(widget_position + sf::Vector2f(192, 0));
 
-    static ImageHolder image_building_tent(this->manager, "building_primitive_house");
-        image_building_tent.setWidgetID("imageholder_building_tent");
-        image_building_tent.setWidgetSize(64, 64);
-        image_building_tent.setWidgetPosition(widget_position + sf::Vector2f(256, 0));
-
     static ImageHolder image_building_path_dirt(this->manager, "path_dirt_point");
         image_building_path_dirt.setWidgetID("imageholder_building_path_dirt");
         image_building_path_dirt.setWidgetSize(64, 64);
-        image_building_path_dirt.setWidgetPosition(widget_position + sf::Vector2f(320, 0));
+        image_building_path_dirt.setWidgetPosition(widget_position + sf::Vector2f(256, 0));
         image_building_path_dirt.setWidgetOffset(sf::Vector2f(0, 24));
 
     static ImageHolder image_building_path_stone(this->manager, "path_stone_point");
         image_building_path_stone.setWidgetID("imageholder_building_path_stone");
         image_building_path_stone.setWidgetSize(64, 64);
-        image_building_path_stone.setWidgetPosition(widget_position + sf::Vector2f(384, 0));
+        image_building_path_stone.setWidgetPosition(widget_position + sf::Vector2f(320, 0));
         image_building_path_stone.setWidgetOffset(sf::Vector2f(0, 24));
 
     this->interface.insert({ widget_body.getWidgetID()              , &widget_body               });
@@ -75,7 +70,6 @@ void WidgetMenuBuilding::createUI() {
     this->interface.insert({ image_building_farm.getWidgetID()      , &image_building_farm       });
     this->interface.insert({ image_building_quarry.getWidgetID()    , &image_building_quarry     });
     this->interface.insert({ image_building_woodcutter.getWidgetID(), &image_building_woodcutter });
-    this->interface.insert({ image_building_tent.getWidgetID()      , &image_building_tent       });
     this->interface.insert({ image_building_path_dirt.getWidgetID() , &image_building_path_dirt  });
     this->interface.insert({ image_building_path_stone.getWidgetID(), &image_building_path_stone });
 }

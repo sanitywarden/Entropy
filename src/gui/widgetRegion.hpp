@@ -8,8 +8,7 @@ namespace gui {
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             void createUI() override;
-        
-            bool buttonExpandShow(int index);
+
         public:
             WidgetRegion();
             WidgetRegion(iso::SimulationManager* manager);

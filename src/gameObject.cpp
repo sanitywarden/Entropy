@@ -27,6 +27,11 @@ bool GameObject::exists() const {
     return this->object_texture_name[0] != '*';
 }
 
+bool GameObject::contains(sf::Vector2f point) const {
+    sf::Rect object_rectangle(this->object_position, this->object_size);
+    return object_rectangle.contains(point);
+}
+
 std::string GameObject::getName() const {
     return this->object_name;
 }
@@ -59,6 +64,11 @@ void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     game_object[1].texCoords = sf::Vector2f(this->object_size.x, 0);
     game_object[2].texCoords = sf::Vector2f(this->object_size.x, this->object_size.y);
     game_object[3].texCoords = sf::Vector2f(0, this->object_size.y);
+
+    game_object[0].color = this->object_colour;
+    game_object[1].color = this->object_colour;
+    game_object[2].color = this->object_colour; 
+    game_object[3].color = this->object_colour;
 
     target.draw(game_object, states);
 }

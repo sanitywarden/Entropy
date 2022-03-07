@@ -8,9 +8,6 @@
 using namespace iso;
 using namespace entropy;
 
-static int LOOPS = 0; // Number of loops that the program has run.
-static int SUM   = 0; // Sum of the FPS. Used for averaging.
-
 SimulationManager::SimulationManager() {
     GenerationSettings settings;
     settings.world_size                 = 100;
@@ -18,8 +15,8 @@ SimulationManager::SimulationManager() {
     settings.world_margin_poles         = settings.world_size / 10;
     settings.world_river_quantity       = settings.world_size / 10;
     settings.world_river_scan_size      = settings.world_size / 20;
-    settings.world_noise_terrain        = 0.3f;
-    settings.world_noise_forest         = 0.7f;
+    settings.world_noise_terrain        = 0.30f;
+    settings.world_noise_forest         = 0.70f;
     settings.world_panel_size.x         = 64;
     settings.world_panel_size.y         = 32;
     settings.world_noise_octaves        = 16;
@@ -45,19 +42,13 @@ SimulationManager::SimulationManager() {
 
     this->window.setTitle("Entropy by Vivit");
 
-    if(!this->performChecks()) {
-        std::cout << "[Initialisation]: Application checks failed.\n";
-        this->exitApplication(1);
-    }
-
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
-
     this->world = WorldGenerator(&this->resource, this->settings);
-    
     this->prepare();
-
     this->gamestate.setGamestate("worldmap");
+
+    this->global_updates.insert({ "update_buildings", std::pair(0, 5) });
 }
 
 SimulationManager::~SimulationManager() {
@@ -91,16 +82,16 @@ void SimulationManager::loop() {
             this->m_measurement_clock.restart();
             this->m_time_since_start = sf::Time::Zero;
             
-            if(this->time.time_passed < INT_MAX) {
-                this->time.time_passed++;
+            if(this->time < INT_MAX)
+                this->time++;
 
-                SUM += updates;
-                LOOPS++;
-
-                this->average_fps = SUM / LOOPS;
-            }
-
-            this->time.calculateInGameDate();
+            Gamestate* gamestate = this->gamestate.getGamestate();
+            // Update gamestate-specific scheduler.
+            if(gamestate)
+                gamestate->updateScheduler();
+            
+            // Update global scheduler.
+            this->updateScheduler();
 
             updates = 0;
         }
@@ -114,19 +105,11 @@ void SimulationManager::internalLoop(float delta_time) {
         this->exitApplication(1);
     } 
 
-    // Does not matter what gamestate it is, player always decides before the AI.
+    // Player updates.
     gamestate->update(delta_time);
     gamestate->render(delta_time);
 
-    const std::string& gamestate_name = gamestate->state_id;
-    for(const auto& player : this->players) {
-        // Player updates are tied to gamestate updates.
-        if(player.isHuman())
-            continue;
-
-        /* Handle AI updates here. */
-        
-    }
+    // AI updates.
 }
 
 void SimulationManager::spawnPlayers() {    
@@ -145,8 +128,6 @@ void SimulationManager::spawnPlayers() {
                 claimed_spots.push_back(index);
                 
                 Region& region = this->world.world_map[index];
-                // this->world.generateRegion(index, region);
-
                 Player& player = this->players[current_player]; 
                 region.owner = &player;
 
@@ -160,12 +141,29 @@ void SimulationManager::spawnPlayers() {
         current_player++;
     }
 
-    for(auto& player : this->players) {
+    for(auto& player : this->players)
         this->world.world_map[player.getCapital()].object_colour = player.team_colour;
-    }
 
     this->players[0].setHuman(true);
     this->players[0].setCountryName("Sanity Wardens");
+    
+    for(auto& player : this->players) {
+        const int capital_index = player.getCapital();
+        auto&     region        = this->world.world_map[capital_index];
+
+        Unit pawn = Unit();
+        pawn.current_index = capital_index;
+        pawn.object_size = sf::Vector2f(32, 16);
+        pawn.object_texture_name = "unit_worldmap_settler";
+        pawn.object_name = "settler";
+        pawn.object_position = region.getPosition() + sf::Vector2f(16, 8);
+        pawn.object_colour = COLOUR_RED;
+        player.addUnit(pawn);
+
+        // Assign the unit already stored, and not the temporary variable.  
+        region.unit = player.getUnit(pawn.getID());
+    }
+
     std::cout << "[Simulation Manager]: Starting locations found.\n";    
 }
 
@@ -176,6 +174,13 @@ Player& SimulationManager::getHumanPlayer() {
 void SimulationManager::prepare() {
     this->world.generateWorld();
     this->spawnPlayers();
+
+    // Set the gamestate to worldmap to trigger the verticies calculation update.
+    // See gamestateLoad() for more information.
+    this->gamestate.setGamestate("worldmap");
+    auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestateByName("worldmap"));
+    worldmap->recalculate_mesh      = true;
+    worldmap->recalculate_tree_mesh = true;
 }
 
 struct AStarNode {
@@ -194,7 +199,7 @@ struct AStarNode {
 
 /* A* algorithm implementation. 
  * Returns a vector with indexes of tiles forming a path. */
-std::vector <int> SimulationManager::astar(int start_index, int end_index) {
+std::vector <int> SimulationManager::astar(int start_index, int end_index) const {
     const auto distance = [](AStarNode& node1, AStarNode& node2) -> int {
         return std::abs(node1.x - node2.x) + std::abs(node1.y - node2.y);
     };
@@ -208,7 +213,7 @@ std::vector <int> SimulationManager::astar(int start_index, int end_index) {
 
     std::queue  <AStarNode> list_to_check;
     std::vector <AStarNode> discovered_tiles(this->settings.region_size * this->settings.region_size);
-    std::vector <int>  solution;
+    std::vector <int>       solution;
 
     AStarNode node;
     for(int y = 0; y < this->settings.region_size; y++) {
@@ -217,12 +222,9 @@ std::vector <int> SimulationManager::astar(int start_index, int end_index) {
             node.x     = x;
             node.y     = y;
             node.index = index;
-            discovered_tiles[index] = node;
+            discovered_tiles[index] = node;   
         }
     }
-
-
-    solution.push_back(start_index);
 
     AStarNode& start = discovered_tiles[start_index];
     AStarNode& end   = discovered_tiles[end_index];    
@@ -238,7 +240,7 @@ std::vector <int> SimulationManager::astar(int start_index, int end_index) {
         if(list_to_check.empty())
             break;
     
-        if(counter == ASTAR_LIMIT) {
+        if(counter >= ASTAR_LIMIT) {
             std::cout << "[Simulation Manager][A*]: Astar limit reached.\n";
             break;
         }
@@ -255,13 +257,13 @@ std::vector <int> SimulationManager::astar(int start_index, int end_index) {
         if(current->index - 1 >= 0) {
             auto& neighbour = discovered_tiles[current->index - 1];
             if(current->y == neighbour.y)
-                current->neighbours.push_back(neighbour);
+            current->neighbours.push_back(neighbour);
         }
 
         if(current->index + 1 < this->world.getRegionSize()) {
             auto& neighbour = discovered_tiles[current->index + 1];
             if(current->y == neighbour.y)
-                current->neighbours.push_back(neighbour);
+            current->neighbours.push_back(neighbour);
         }
 
         if(current->index - this->settings.region_size >= 0) {
@@ -285,9 +287,9 @@ std::vector <int> SimulationManager::astar(int start_index, int end_index) {
 
             // Try to find the best possible tile to continue pathing through.
             if(!neighbour.visited && neighbour.cost_heuristic <= smallest_cost) {
-                smallest_cost     = neighbour.cost_heuristic;
-                index             = neighbour.index;
-                neighbour.visited = true;
+                smallest_cost      = neighbour.cost_heuristic;
+                index              = neighbour.index;
+                neighbour.visited  = true;
             }
 
             if(i == current->neighbours.size() - 1 && index != -1) {
@@ -302,37 +304,87 @@ std::vector <int> SimulationManager::astar(int start_index, int end_index) {
     return solution;
 }
 
-int SimulationManager::getAverageFramesPerSecond() {
-    return this->average_fps;
+void SimulationManager::updateScheduler() {
+    // Update buildigns across all regions.
+    
+    auto& update_buildings = this->global_updates.at("update_buildings");
+    if(update_buildings.first != update_buildings.second)
+        update_buildings.first++;
+    
+    if(update_buildings.first ==  update_buildings.second) {
+        this->updateBuildings();
+        update_buildings.first = 0;
+    }
 }
 
-bool SimulationManager::performChecks() {
-    #ifdef ENTROPYAPP_STACKSIZE
-    std::cout << "[Initialisation]: Max stack size allocation:   " << ENTROPYAPP_STACKSIZE / 1000000 << " MB\n";
+void SimulationManager::updateBuildings() {
+    for(int world_index = 0; world_index < this->world.world_map.size(); world_index++) {
+        auto& region = this->world.world_map[world_index];
 
-    const int tile_byte_size = sizeof(Tile);
-    std::cout << "[Initialisation]: Size of one tile instance:   " << tile_byte_size << " B\n";
-    
-    const int region_byte_size = sizeof(Region);
-    std::cout << "[Initialisation]: Size of one region instance: " << region_byte_size << " B\n";
+        if(region.buildings.size()) {
+            for(auto& pair : region.buildings) {
+                int   building_index = pair.first;  // Index of the tile on which a building stands.
+                auto& building       = pair.second; // Building itself.
 
-    const int regionmap_byte_size = settings.region_size * settings.region_size * tile_byte_size;
-    std::cout << "[Initialisation]: MB size of regionmap:        " << (float)regionmap_byte_size / 1000000 << " MB\n";
-    
-    const int worldmap_byte_size = settings.world_size * settings.world_size * region_byte_size;
-    std::cout << "[Initialisation]: MB size of worldmap:         " << (float)worldmap_byte_size / 1000000 << " MB\n";
+                switch(building.getNumericalType()) {
+                    default:
+                        break;
 
-    if(regionmap_byte_size > ENTROPYAPP_STACKSIZE) {
-        std::cout << "[Initialisation]: Memory size of region map is greater than the stack allocation limit: " << regionmap_byte_size / 1000000 << " / " << ENTROPYAPP_STACKSIZE;
-        return false;
+                    case 3: {
+                        // Add 1 gold for each person living in the house.
+
+                        region.addResource(ResourceType::RESOURCE_GOLD, 4);
+                        break;
+                    }
+
+                    case 4: {
+                        region.addResource(ResourceType::RESOURCE_FOOD, 10);
+                        break;
+                    }
+
+                    case 5: {
+                        // Quarry building.
+                        // A quarry's efficiency depends on the number of stone tiles surrounding it.
+                        
+                        const int stone_scan_size = 3;
+                        int       stone_tiles = 0;
+
+                        for(int y = -stone_scan_size; y <= stone_scan_size; y++) {
+                            for(int x = -stone_scan_size; x <= stone_scan_size; x++) {
+                                const int index = building_index + y * this->settings.region_size + x;
+
+                                if(region.map[index].object_texture_name == "tile_resource_stone")
+                                    stone_tiles++;
+                            }
+                        }
+
+                        region.addResource(ResourceType::RESOURCE_STONE, stone_tiles);
+                        break;
+                    }
+
+                    case 6: {               
+                        // Woodcutter building.
+                        // A woodcutter's efficiency depends on the number of trees surrounding it.
+
+                        const int tree_scan_size = 5;
+                        int       trees = 0;
+                        for(int y = -tree_scan_size; y <= tree_scan_size; y++) {
+                            for(int x = -tree_scan_size; x <= tree_scan_size; x++) {
+                                const int index = building_index + y * this->settings.region_size + x;
+                                
+                                if(region.trees.count(index))
+                                    trees++;
+                            }
+                        }
+
+                        Regionmap* regionmap = static_cast<Regionmap*> (this->gamestate.getGamestateByName("regionmap"));
+                        regionmap->recalculateMesh();
+
+                        region.addResource(ResourceType::RESOURCE_WOOD, trees);
+                        break;
+                    }
+                }
+            }
+        }
     }
-
-    if(worldmap_byte_size > ENTROPYAPP_STACKSIZE) {
-        std::cout << "[Initialisation]: Memory size of world map is greater than the stack allocation limit:  " << worldmap_byte_size / 1000000 << " / " << ENTROPYAPP_STACKSIZE;
-        return false;
-    }
-    #endif
-
-    return true;
 }
-

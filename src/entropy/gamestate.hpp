@@ -52,6 +52,8 @@ namespace entropy {
             virtual void moveCamera()           { return; }
             virtual void zoomCamera()           { return; }
             virtual void updateCamera()         { return; }
+
+            virtual void updateScheduler()      { return; }
     };
 }
 

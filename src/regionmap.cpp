@@ -44,8 +44,7 @@ void Regionmap::initialise() {
     this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
     this->controls.addKeyMappingCheck("key_toggle_buildmenu",    sf::Keyboard::Key::B);
 
-    UpdateUtility update_pawn_movement("update_pawn_movement", 1);
-        this->scheduler.insert({ update_pawn_movement.id, update_pawn_movement });
+    this->scheduler.insert({ "update_pawns", std::pair(0, 1) });   
 }
 
 void Regionmap::loadResources() {
@@ -64,6 +63,8 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_dirt",                      sf::IntRect(0, 32, 64, 32   ));
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_stone",                     sf::IntRect(64, 32, 64, 32  ));
     
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_resource_stone",                   sf::IntRect(0, 64, 64, 32   ));
+
     this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_foliage_atlas");
     this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",               sf::IntRect(0, 0, 64, 64   ));
     this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",               sf::IntRect(64, 0, 64, 64  ));
@@ -102,9 +103,6 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_top",   sf::IntRect(256, 96, 64, 32 ));
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 64, 64, 32 ));
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 96, 64, 32 ));
-
-
-    this->manager->resource.loadTexture("./res/actors/actor.png", "actor");
 }
 
 void Regionmap::update(float delta_time) {
@@ -112,13 +110,12 @@ void Regionmap::update(float delta_time) {
     this->handleInput();
     this->updateCamera();
 
-    this->updateScheduler();
     this->updateTile();
     this->updateUI();
 }
 
 void Regionmap::render(float delta_time) {
-    this->manager->window.getWindow()->clear(COLOUR_WHITE);    
+    this->manager->window.getWindow()->clear(COLOUR_BLACK);    
 
     this->manager->window.getWindow()->setView(this->view_game);
 
@@ -313,8 +310,15 @@ sf::VertexBuffer regionmap_mesh_tile(sf::Quads, sf::VertexBuffer::Usage::Dynamic
 sf::VertexBuffer regionmap_mesh_tree(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
 void Regionmap::renderRegion() {    
     const auto findTexture = [this](const GameObject& object) -> sf::Vector2f {
-        const auto& tile_texture = object.getTextureName();
-        return TEXTURE_LOOKUP_TABLE.at(tile_texture);
+        const auto& tile_texture = object.getTextureName();        
+        
+        try {
+            return TEXTURE_LOOKUP_TABLE.at(tile_texture);
+        }
+        catch(const std::exception& exception) {
+            std::cout << "[Regionmap]: No texture with ID " << tile_texture << " is present in texture table.\n";
+            throw exception;
+        }
     };
 
     const sf::Vector2f camera_size   = this->view_game.getSize();
@@ -680,29 +684,29 @@ int Regionmap::getDrawCalls() {
 }
 
 void Regionmap::updateScheduler() {
-    const auto nextMove = [this](Pawn& pawn) -> void {
+    const auto nextMove = [this](Unit& pawn) -> void {
         int index = pawn.getNextMove();
         pawn.object_position = this->region->map[index].getPosition();
     };
 
     // Update pawns movement.
-    auto& update_pawn = this->scheduler["update_pawn_movement"];
-    update_pawn.counter++;
-    const int fps_value = this->manager->getAverageFramesPerSecond() != 0 ? this->manager->getAverageFramesPerSecond() : this->manager->getFramesPerSecond();
+    auto& update_pawn = this->scheduler.at("update_pawns");
+    if(update_pawn.first != update_pawn.second)
+        update_pawn.first++;
     
-    if(update_pawn.counter >= update_pawn.interval * fps_value && this->region->population.size()) {
+    if(update_pawn.first ==  update_pawn.second) {
         for(auto& pawn : this->region->population) {
             if(!pawn.path.empty()) {
-                nextMove(pawn);
-                update_pawn.counter = 0;
+                pawn.object_position = this->region->map[pawn.getNextMove()].getPosition();
+                update_pawn.first = 0;
             }
         
-            else if(pawn.path.empty()) {    
-                int goal = std::rand() % this->manager->world.getRegionSize() - 1;                
+            else {
+                int goal = std::rand() % this->manager->world.getRegionSize() - 1;
                 auto path = this->manager->astar(pawn.current_index, goal);
                 pawn.setNewPath(path);
             }
-        }
+        }   
     }
 }
 
@@ -726,4 +730,9 @@ void Regionmap::gamestateClose() {
     this->recalculate_tree_mesh = false;
     regionmap_mesh_tile.create(0);
     regionmap_mesh_tree.create(0);
+}
+
+void Regionmap::recalculateMesh() {
+    this->recalculate_mesh      = true;
+    this->recalculate_tree_mesh = true;
 }

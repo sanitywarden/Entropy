@@ -4,7 +4,7 @@
 #include "entropy/gamestate.hpp"
 #include "simulationManager.hpp"
 #include "region.hpp"
-#include "building.hpp"
+#include "./building/building_definitions.hpp"
 
 #include "gui/widgetMenuBuilding.hpp"
 #include "gui/performance.hpp"
@@ -21,9 +21,9 @@ namespace iso {
         private:
             Region*            region;
             SimulationManager* manager;
+            Scheduler          scheduler;
 
             std::map <std::string, gui::InterfacePage*> interface;
-            std::map <std::string, UpdateUtility>       scheduler;
 
             bool mouse_pressed;
             bool mouse_moved;
@@ -44,21 +44,21 @@ namespace iso {
             int region_index;
             int draw_calls;
         private:
-            void handleInput()    override;
-            void initialise()     override;
-            void loadResources()  override;
-            void moveCamera()     override;
-            void zoomCamera()     override;
-            void updateCamera()   override;
-            void gamestateLoad()  override;
-            void gamestateClose() override;
+            void handleInput()     override;
+            void initialise()      override;
+            void loadResources()   override;
+            void moveCamera()      override;
+            void zoomCamera()      override;
+            void updateCamera()    override;
+            void gamestateLoad()   override;
+            void gamestateClose()  override;
+            void updateScheduler() override;;
 
             void renderRegion();
             void higlightTile();
 
             void updateTile();
             void updatePaths(int index);
-            void updateScheduler();
 
             void createUI();
             void renderUI();
@@ -78,6 +78,8 @@ namespace iso {
             int getCurrentIndex();
             int getDrawCalls();
             int getVertexIndex();
+
+            void recalculateMesh();
     };
 }
 

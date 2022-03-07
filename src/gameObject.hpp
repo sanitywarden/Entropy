@@ -21,7 +21,9 @@ namespace iso {
             GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name);
             ~GameObject();
             
-            bool         exists()         const;
+            bool exists() const;
+            bool contains(sf::Vector2f point) const;
+
             std::string  getName()        const; 
             sf::Vector2f getPosition()    const;
             sf::Vector2f getSize()        const;

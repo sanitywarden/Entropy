@@ -45,13 +45,12 @@ void WorldGenerator::generateWorld() {
 
             if(value > this->settings.world_noise_terrain) {
                 this->m_region.regiontype.set_terrain();
-                panel_quantity++;
             } else this->m_region.regiontype.set_ocean();
 
             if(value < 0.0f) value = 0.0f;
             if(value > 1.0f) value = 1.0f;
 
-            this->m_region.height            = value;
+            this->m_region.height            = std::ceil(value * 100) / 100;
             this->m_region.object_position.x = this->settings.world_panel_size.x * x; 
             this->m_region.object_position.y = this->settings.world_panel_size.y * y;
             this->m_region.object_size       = this->settings.world_panel_size;
@@ -811,6 +810,18 @@ void WorldGenerator::generateRegion(int index, Region& region) {
         }
     }
 
+    if(rand() % this->getWorldSize() < 0.4f * this->getWorldSize()) {
+        noiseSettings settings = noiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 16, 16, 4, 1.00f);
+        std::vector <float> noise_stone;
+        this->generateNoise(settings, noise_stone);
+    
+        for(int index = 0; index < noise_stone.size(); index++) { 
+            if(noise_stone[index] > 0.85f && !region.trees.count(index) && !region.map[index].tiletype.is_river()) {
+                region.map[index].object_texture_name = "tile_resource_stone";
+            }
+        }
+    }
+
     region.visited = true;
 
     std::cout.precision(3);
@@ -970,6 +981,10 @@ bool WorldGenerator::is_tundra(int region_index) {
 
 bool WorldGenerator::is_desert(int region_index) {
     return this->is_biome(region_index, BIOME_DESERT);
+}
+
+bool WorldGenerator::is_terrain(int region_index) const {
+    return region_index > this->settings.world_noise_terrain;
 }
 
 std::string WorldGenerator::getTreeTextureNameWorld(Biome biome) {

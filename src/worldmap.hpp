@@ -6,9 +6,11 @@
 #include "worldGenerator.hpp"
 #include "simulationManager.hpp"
 #include "regionmap.hpp"
+#include "./unit/unit.hpp"
 
 #include "gui/performance.hpp"
 #include "gui/widgetRegion.hpp"
+#include "gui/widgetUnit.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -23,9 +25,10 @@ namespace iso {
         public:
             Region             region;
             SimulationManager* manager;
+            std::vector <Unit> units;
 
             std::map <std::string, gui::InterfacePage*> interface;
-
+            
             bool mouse_pressed;
             bool mouse_moved;
             bool mouse_drag;
@@ -43,24 +46,24 @@ namespace iso {
 
             bool draw_control_panel;
 
+            int selected_unit_id;
             int current_index;
             int selected_index;
             int draw_calls;
         
         private:
-            void handleInput()    override;
-            void initialise()     override;
-            void loadResources()  override;
-            void moveCamera()     override;
-            void zoomCamera()     override;
-            void updateCamera()   override;
-            void gamestateLoad()  override;
-            void gamestateClose() override;
+            void handleInput()     override;
+            void initialise()      override;
+            void loadResources()   override;
+            void moveCamera()      override;
+            void zoomCamera()      override;
+            void updateCamera()    override;
+            void gamestateLoad()   override;
+            void gamestateClose()  override;
+            void updateScheduler() override;
 
             void selectPanel();
             void unselectPanel();
-            void updateSelectedPanel();
-            void drawSelectedPanel();
             void highlightPanel();
 
             void renderWorld();
@@ -69,6 +72,15 @@ namespace iso {
             void updateUI(); 
             void renderUI();
             bool intersectsUI();
+
+            void selectUnit();
+            void unselectUnit();
+            void selectUnitGoal();
+
+            // Unit's and region's hitbox may be on top of each other, making it difficult to distinguish between each other.
+            // This function returns a pointer to the object which is being clicked on.
+            GameObject* getSelectedObject();
+
         public:
             Worldmap(SimulationManager* manager);
             ~Worldmap();
@@ -78,6 +90,7 @@ namespace iso {
             
             int getCurrentIndex();
             int getSelectedIndex();
+            int getSelectedUnitID();
             int getDrawCalls();
     };
 }

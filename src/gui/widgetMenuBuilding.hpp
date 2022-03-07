@@ -2,7 +2,7 @@
 #define _GUI_WIDGET_MENU_BUILDING_HPP_
 
 #include "gui/base/interfacePage.hpp"
-#include "building.hpp"
+#include "./building/building_definitions.hpp"
 #include "globalutilities.hpp"
 
 namespace gui {

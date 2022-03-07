@@ -70,6 +70,7 @@ namespace iso {
             bool is_continental  (int index);
             bool is_tundra       (int index);
             bool is_desert       (int index);
+            bool is_terrain      (int index) const;
 
             int getWorldSize();
             int getRegionSize();

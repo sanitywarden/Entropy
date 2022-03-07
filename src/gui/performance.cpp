@@ -29,11 +29,9 @@ void DebugPerformance::createUI() {
 void DebugPerformance::updateUI() {
     const int fps         = this->manager->getFramesPerSecond();
     const int time        = this->manager->getTimePerFrame();
-    const int average_fps = this->manager->getAverageFramesPerSecond();
 
     std::string data;
     data += "Frames per second: " + std::to_string(fps)         + "\n";
-    data += "Average: "           + std::to_string(average_fps) + "\n";
     data += "Time per frame: "    + std::to_string(time)        + "ms\n";
 
     /*  Current gamestate.
@@ -41,10 +39,9 @@ void DebugPerformance::updateUI() {
     auto* gamestate = this->manager->gamestate.getGamestate();
     std::string gamestate_id = gamestate->state_id;
     
-    data += "Mouse position:  " + std::to_string((int)gamestate->mouse_position_window.x)    + " / " + std::to_string((int)gamestate->mouse_position_window.y)    + "\n"; 
+    data += "Mouse position: "  + std::to_string((int)gamestate->mouse_position_window.x)    + " / " + std::to_string((int)gamestate->mouse_position_window.y)    + "\n"; 
     data += "Mouse interface: " + std::to_string((int)gamestate->mouse_position_interface.x) + " / " + std::to_string((int)gamestate->mouse_position_interface.y) + "\n"; 
-    data += "Time passed: " + std::to_string(this->manager->time.time_passed) + "\n";
-    data += "Date: "        + this->manager->time.getInGameDateFormatted() + "\n";
+    data += "Time passed: "     + std::to_string(this->manager->time) + "\n";
 
     if(gamestate_id == "Worldmap") {
         auto* worldmap = static_cast<Worldmap*>(gamestate);
@@ -55,6 +52,7 @@ void DebugPerformance::updateUI() {
 
         data += "Current index:  " + std::to_string(current_index)  + "\n";
         data += "Selected index: " + std::to_string(selected_index) + "\n";
+        data += "Selected unit: "  + std::to_string(worldmap->selected_unit_id) + "\n";
         data += "Draw calls: "     + std::to_string(draw_calls) + "\n";
     }
 
@@ -71,6 +69,11 @@ void DebugPerformance::updateUI() {
         data += "Building quantity: "    + std::to_string(region->buildings.size())             + "\n";
         data += "Population quantitiy: " + std::to_string(region->population.size())            + "\n";
         data += "Tile elevation: "       + std::to_string(region->map[current_index].elevation) + "\n";
+
+        data += "Gold: "  + std::to_string(region->resources.gold)  + "\n";
+        data += "Wood: "  + std::to_string(region->resources.wood)  + "\n";
+        data += "Stone: " + std::to_string(region->resources.stone) + "\n";
+        data += "Food: "  + std::to_string(region->resources.food)  + "\n";
     }
 
     auto* text = static_cast<Label*>(this->interface.at("label_debug_performance"));

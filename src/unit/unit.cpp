@@ -1,32 +1,34 @@
-#include "pawn.hpp"
+#include "unit.hpp"
 
 #include <iostream>
 
 using namespace iso;
 
-Pawn::Pawn() {
-    this->object_name   = "pawn";
+int Unit::id_count = 0;
+Unit::Unit() {
+    this->object_name = "unit";
+    this->id = this->id_count;
+    this->id_count++;
+    
     this->current_index = 0;
+
     this->path.resize(0);
-
-    this->object_size         = sf::Vector2f(32, 32);
-    this->object_texture_name = "actor";
 }
 
-Pawn::~Pawn() {
+Unit::~Unit() {
 
 }
 
-const std::vector <int>& Pawn::getAStarPath() {
+const std::vector <int>& Unit::getAStarPath() {
     return this->path;
 }
 
-bool Pawn::hasPath() {
+bool Unit::hasPath() const {
     return !this->path.empty();
 }
 
 /* Returns next move of the pawn and deletes it from the list of moves. */
-int Pawn::getNextMove() {
+int Unit::getNextMove() {
     if(!this->path.size())
         return -1;
 
@@ -42,6 +44,10 @@ int Pawn::getNextMove() {
     return this->current_index;
 }
 
-void Pawn::setNewPath(std::vector <int> path) {
+void Unit::setNewPath(std::vector <int> path) {
     this->path = path;
+}
+
+int Unit::getID() const {
+    return this->id;
 }

@@ -53,3 +53,24 @@ void Player::setCountryName(std::string name) {
 const std::string& Player::getCountryName() {
     return this->country_name;
 }
+
+void Player::addUnit(Unit unit) {
+    this->units.push_back(unit);
+}
+
+Unit* Player::getUnit(int unit_id) {
+    for(auto& unit : this->units) {
+        if(unit.getID() == unit_id)
+            return &unit;
+    }
+
+    return nullptr;
+}
+
+const std::vector <Unit>& Player::seeUnits() const {
+    return this->units;
+}
+
+std::vector <Unit>& Player::getUnits() {
+    return this->units;
+}

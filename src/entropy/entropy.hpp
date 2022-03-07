@@ -27,7 +27,7 @@ namespace entropy {
             resourceManager     resource;
             gamestateManager    gamestate;
             windowManager       window;
-            applicationSettings settings;
+            applicationSettings config;
 
             virtual void loop();
             int getFramesPerSecond();
