@@ -92,8 +92,6 @@ void WidgetUnit::functionality() {
 
         region.owner = &human_player;
         region.object_colour = human_player.getTeamColour();
-
-        worldmap->recalculate_mesh = true;
     }
 }
 

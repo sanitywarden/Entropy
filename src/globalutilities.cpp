@@ -46,3 +46,19 @@ bool iso::containsWord(const std::string& str, const std::string& phrase) {
 
     return match == phrase.length();
 }
+
+std::string iso::toLower(const std::string& str) {
+    std::string str_lower = "";
+    for(int i = 0; i < str.length(); i++) {
+        const char character          = str.at(i);
+        int number_letter_value = (int)character;
+        
+        if(number_letter_value >= 65 && number_letter_value <= 90)
+            number_letter_value += 32;
+
+        const char replaced_character = (char)number_letter_value;
+        str_lower.append(1, replaced_character);
+    }
+
+    return str_lower;
+}

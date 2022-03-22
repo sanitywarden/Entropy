@@ -10,17 +10,17 @@ using namespace entropy;
 
 SimulationManager::SimulationManager() {
     GenerationSettings settings;
-    settings.world_size                 = 100;
+    settings.world_size                 = 50;
     settings.world_margin_island        = settings.world_size / 10;
     settings.world_margin_poles         = settings.world_size / 10;
     settings.world_river_quantity       = settings.world_size / 10;
     settings.world_river_scan_size      = settings.world_size / 20;
-    settings.world_noise_terrain        = 0.30f;
+    settings.world_noise_terrain        = 0.20f;
     settings.world_noise_forest         = 0.70f;
-    settings.world_panel_size.x         = 64;
-    settings.world_panel_size.y         = 32;
+    settings.world_panel_size.x         = 128;
+    settings.world_panel_size.y         = 128;
     settings.world_noise_octaves        = 16;
-    settings.world_noise_persistence    = 4;
+    settings.world_noise_persistence    = 10;
     settings.world_noise_bias           = 4;
     settings.world_noise_multiplier     = 1.25f;
     settings.world_moisture_octaves     = 8;
@@ -41,6 +41,7 @@ SimulationManager::SimulationManager() {
     // Settings for world generation set.
 
     this->window.setTitle("Entropy by Vivit");
+    this->window.setKeyHold(false);
 
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
@@ -113,6 +114,7 @@ void SimulationManager::internalLoop(float delta_time) {
 }
 
 void SimulationManager::spawnPlayers() {    
+    return;
     std::srand(std::time(0));
 
     const int number_of_players = TEAM_COLOURS.size();
@@ -124,20 +126,20 @@ void SimulationManager::spawnPlayers() {
         bool spot_found = false;
         while(!spot_found) {
             const int index = std::rand() % this->world.getWorldSize();
-            if(!this->world.is_arctic(index) && !this->world.is_ocean(index) && !this->world.is_sea(index)) {
+            if(!this->world.is_arctic(index) && !this->world.is_ocean(index) && !this->world.is_sea(index) && !this->world.is_coast(index)) {
                 claimed_spots.push_back(index);
                 
                 Region& region = this->world.world_map[index];
                 Player& player = this->players[current_player]; 
                 region.owner = &player;
+                player.addOwnedRegion(index);
+                player.team_colour = TEAM_COLOURS[current_player];
 
                 spot_found = true;
                 break;
             }
         }
         
-        this->players.at(current_player).team_colour = TEAM_COLOURS[current_player];
-        this->players.at(current_player).addOwnedRegion(claimed_spots.back());
         current_player++;
     }
 
@@ -172,15 +174,11 @@ Player& SimulationManager::getHumanPlayer() {
 }
 
 void SimulationManager::prepare() {
+    this->world.forests   = std::map <int, GameObject> ();
+    this->world.world_map = std::vector <Region> (this->world.getWorldSize());
+    this->world.rivers    = std::map <int, GameObject> ();
     this->world.generateWorld();
     this->spawnPlayers();
-
-    // Set the gamestate to worldmap to trigger the verticies calculation update.
-    // See gamestateLoad() for more information.
-    this->gamestate.setGamestate("worldmap");
-    auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestateByName("worldmap"));
-    worldmap->recalculate_mesh      = true;
-    worldmap->recalculate_tree_mesh = true;
 }
 
 struct AStarNode {

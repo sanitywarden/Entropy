@@ -6,6 +6,7 @@
 namespace iso {
     bool startsWith(const std::string& str, const std::string& phrase);
     bool containsWord(const std::string& str, const std::string& phrase);
+    std::string toLower(const std::string& str);
 }
 
 #endif

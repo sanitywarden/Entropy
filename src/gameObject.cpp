@@ -8,7 +8,7 @@ GameObject::GameObject() {
     this->object_position     = sf::Vector2f(0, 0);
     this->object_size         = sf::Vector2f(0, 0);
     this->object_texture_name = "*";
-    this->object_colour       = sf::Color(0, 0, 0);
+    this->object_colour       = sf::Color(255, 255, 255);
 }
 
 GameObject::GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name) {
@@ -16,7 +16,7 @@ GameObject::GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf
     this->object_position     = position + relative_position;
     this->object_size         = size;
     this->object_texture_name = texture_name;
-    this->object_colour       = sf::Color(0, 0, 0);
+    this->object_colour       = sf::Color(255, 255, 255);
 }
 
 GameObject::~GameObject() {

@@ -12,36 +12,48 @@
 #include <cmath>
 
 namespace iso {
+    typedef std::vector <float> NoiseContainer;
+    
     class WorldGenerator {
         private:
             Region m_region;
             Tile   m_tile;
 
             entropy::resourceManager* resource;
-            std::vector <float> m_noise;    
             std::vector <float> m_gradient; 
-            std::vector <float> m_tree_noise;
-
+        
         private:
-            void generateNoise(noiseSettings& settings, std::vector<float>& container);
-            bool is_biome(int index, Biome biome);            
+            void generateNoise(NoiseSettings& settings, std::vector<float>& container);
+            bool is_biome(int index, Biome biome) const;            
 
-            void generateNoiseMap();
-            void generateCircularGradient();
-            void generatePoles();
-            void generateLatititude();
-            void generateTemperature();
-            void generateMoistureMap();
-            void assignBiome();
-            void generateRivers();
-            void generateForests();
+            // Initial worldmap generation.
+            
+            void worldmapGenerateClimate();
+            void worldmapAssignBiome();
+            void worldmapGenerateForests();
+            void worldmapGenerateRivers();
 
+            // Worldmap API.
+            
+            std::string getWorldmapTile(int index) const;
+            std::string getTileVariation(const std::string& id) const;
+            std::string createBiomeSpecificTexture(const std::string& id, Biome biome) const;
+            std::string getWorldmapTreeTextureName(const Biome& biome) const;
+
+            // std::string getRiverTile(int index) const;
+            std::string getRiverTileVariation(const std::string& id) const;
+
+            std::string createColouredTexture(const std::string& id, const std::string& save_as, const sf::Color colour_main, const sf::Color colour_secondary) const;
+
+            // Regionmap API.
+            
+            // std::string getBiomeSpecificTileAtlas(const Biome& biome) const;
+    
             void regionGenerateHeight(int region_index);
             void regionGenerateRiver (int region_index);
             void regionGenerateForest(int region_index);
 
             std::string getBiomeTileTextureName (Biome biome); 
-            std::string getTreeTextureNameWorld (Biome biome);
             std::string getTreeTextureNameRegion(Biome biome);
 
         public:
@@ -61,21 +73,23 @@ namespace iso {
 
             GenerationSettings settings;
 
-            bool is_arctic       (int index);
-            bool is_ocean        (int index);
-            bool is_sea          (int index);
-            bool is_tropical     (int index);
-            bool is_mediterranean(int index);
-            bool is_temperate    (int index);
-            bool is_continental  (int index);
-            bool is_tundra       (int index);
-            bool is_desert       (int index);
+            bool is_arctic       (int index) const;
+            bool is_ocean        (int index) const;
+            bool is_sea          (int index) const;
+            bool is_tropical     (int index) const;
+            bool is_mediterranean(int index) const;
+            bool is_temperate    (int index) const;
+            bool is_continental  (int index) const;
+            bool is_tundra       (int index) const;
+            bool is_desert       (int index) const;
+            
             bool is_terrain      (int index) const;
+            bool is_coast        (int index) const;
 
-            int getWorldSize();
-            int getRegionSize();
-            int rCalculateIndex(int x, int y);
-            int wCalculateIndex(int x, int y);
+            int getWorldSize()  const;
+            int getRegionSize() const;
+            int rCalculateIndex(int x, int y) const;
+            int wCalculateIndex(int x, int y) const;
         public:
             std::vector <Region>          world_map; 
             std::map    <int, GameObject> forests;

@@ -3,12 +3,12 @@
 
 using namespace iso;
 
-Region::Region() {
+Region::Region() : GameObject(sf::Vector2f(0, 0), sf::Vector2f(0, 0), sf::Vector2f(0, 0), "*") {
     this->object_name = "region";
 
     this->_marked    = false;
     this->_direction = RiverDirection::RIVER_NONE;
-
+    
     this->height      = 0.0f;
     this->latitude    = 0.0f;
     this->moisture    = 0.0f;

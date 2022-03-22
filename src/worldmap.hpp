@@ -15,6 +15,7 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <map>
+#include <string>
 #include <iostream>
 #include <cmath>
 
@@ -34,8 +35,6 @@ namespace iso {
             bool mouse_drag;
             bool move_camera;
             bool zoom_camera;
-            bool recalculate_mesh;
-            bool recalculate_tree_mesh;
             
             sf::Vector2f position_pressed;
             sf::Vector2f position_released;

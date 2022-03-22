@@ -4,22 +4,12 @@
 #include <SFML/System/Vector2.hpp>
 
 namespace iso {
-    struct noiseSettings {
-        noiseSettings() {
-            this->size        = sf::Vector2f(0, 0);
-            this->octaves     = 0;
-            this->persistence = 0;
-            this->bias        = 0;
-            this->multiplier  = 0.0f;
-        }
+    struct NoiseSettings {
+        NoiseSettings()
+            : size(sf::Vector2f(0, 0)), octaves(0), persistence(0), bias(0), multiplier(0) {}
 
-        noiseSettings(sf::Vector2f size, int octaves, int persistence, int bias, float multiplier) {
-            this->size        = size;
-            this->octaves     = octaves;
-            this->persistence = persistence;
-            this->bias        = bias;
-            this->multiplier  = multiplier;
-        }
+        NoiseSettings(sf::Vector2f size, int octaves, int persistence, int bias, float multiplier) 
+            : size(size), octaves(octaves), persistence(persistence), bias(bias), multiplier(multiplier) {}
 
         int   octaves;
         int   persistence;

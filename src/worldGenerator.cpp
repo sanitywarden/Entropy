@@ -1,4 +1,5 @@
 #include "worldGenerator.hpp"
+#include "globalutilities.hpp"
 
 using namespace iso;
 
@@ -12,7 +13,6 @@ WorldGenerator::WorldGenerator(entropy::resourceManager* resource, GenerationSet
 
     auto world_size = this->getWorldSize();
 
-    this->m_noise.resize(world_size);
     this->m_gradient.resize(world_size);
     this->world_map.resize(world_size);
 
@@ -25,30 +25,115 @@ WorldGenerator::~WorldGenerator() {
 
 void WorldGenerator::generateWorld() {
     std::cout << "[World Generation]: Generating world.\n";
-    
+
+    this->m_region = Region();
+
     sf::Clock clock;
-    unsigned int panel_quantity = 0;
 
-    std::cout << "[World Generation]: Generating noise.\n";
+    // World size is x * y.
+    const int WORLD_SIZE = this->getWorldSize();
 
-    this->generateNoiseMap();
-    this->generateCircularGradient();
+    std::vector <float> worldmap_noise(WORLD_SIZE);
 
-    std::cout << "[World Generation]: Generating terrain.\n";
+    // Generate initial noise map.
+    {
+        std::vector <float> input(WORLD_SIZE);
+        for(int i = 0; i < WORLD_SIZE; i++) {
+            input[i] = (float)rand() / (float)RAND_MAX;    
+        }
 
+        float biggest_noise_recorded = 1.0f;
+
+        for(int y = 0; y < this->settings.world_size; y++) {
+            for(int x = 0; x < this->settings.world_size; x++) {
+                const int index = this->wCalculateIndex(x, y);
+
+                if(x < this->settings.world_margin_island || x > (this->settings.world_size - this->settings.world_margin_island) || y < this->settings.world_margin_island || y > (this->settings.world_size - this->settings.world_margin_island)) {
+                    worldmap_noise[index] = 0.0f;
+                    continue;
+                }
+
+                float noise = 0.0f;
+                float scale = 1.0f;
+                float scale_acc = 0.0f;
+
+                for(unsigned int o = 0; o < this->settings.world_noise_octaves; o++) {
+                    const int sampleX1 = (x / this->settings.world_noise_persistence) * this->settings.world_noise_persistence;
+                    const int sampleY1 = (y / this->settings.world_noise_persistence) * this->settings.world_noise_persistence;
+
+                    const int sampleX2 = (sampleX1 + this->settings.world_noise_persistence) % this->settings.world_size;					
+                    const int sampleY2 = (sampleY1 + this->settings.world_noise_persistence) % this->settings.world_size;
+
+                    const float blendX = (float)(x - sampleX1) / (float)this->settings.world_noise_persistence;
+                    const float blendY = (float)(y - sampleY1) / (float)this->settings.world_noise_persistence;
+
+                    const float sampleT = (1.0f - blendX) * input[sampleY1 * this->settings.world_size + sampleX1] + blendX * input[sampleY1 * this->settings.world_size + sampleX2];
+                    const float sampleB = (1.0f - blendX) * input[sampleY2 * this->settings.world_size + sampleX1] + blendX * input[sampleY2 * this->settings.world_size + sampleX2];
+
+                    scale_acc += scale;
+                    noise += (blendY * (sampleB - sampleT) + sampleT) * scale;
+                    scale = float(scale / this->settings.world_noise_bias);
+                }
+                
+                float noise_value = (noise / scale_acc) * this->settings.world_noise_multiplier;
+                
+                if(noise_value > biggest_noise_recorded) biggest_noise_recorded = noise_value;
+
+                noise_value *= biggest_noise_recorded;
+                if(noise_value > 1.0f) noise_value = 1.0f;
+
+                worldmap_noise[index] = noise_value;
+            }
+        }
+    }
+
+    // Generate circular gradient.
+    // When combining noise with this gradient the output will be island shaped terrain.
+    {
+        const sf::Vector2i centre = sf::Vector2i(
+            this->settings.world_size / 2,
+            this->settings.world_size / 2
+        );
+
+        for(int y = 0; y < this->settings.world_size; y++) {
+            for(int x = 0; x < this->settings.world_size; x++) {
+                const int index = this->wCalculateIndex(x, y);
+
+                if(x < this->settings.world_margin_island || x > (this->settings.world_size - this->settings.world_margin_island) || y < this->settings.world_margin_island || y > (this->settings.world_size - this->settings.world_margin_island)) {
+                    this->m_gradient[index] = 0.0f;
+                    continue;
+                }
+
+                const float distance_x = (centre.x - x) * (centre.x - x);
+                const float distance_y = (centre.y - y) * (centre.y - y);
+
+                // Both width and height of the map have a impact on distance.
+                float distance = (sqrt(distance_x + distance_y) / this->settings.world_size);
+
+                if(distance > 1.0f) distance = 1.0f;
+
+                // Distance is bigger when further away from the centre of the gradient.
+                this->m_gradient[index] = distance * this->settings.world_gradient_multiplier;
+            }
+        }
+    }
+
+    // Generate initial worldmap divided into water tiles and terrain tiles.
     for(int y = 0; y < this->settings.world_size; y++) {
         for(int x = 0; x < this->settings.world_size; x++) {                
             const int index      = this->wCalculateIndex(x, y);
-            const float noise    = this->m_noise[index]; 
+            const float noise    = worldmap_noise[index]; 
             const float gradient = this->m_gradient[index];
             float value          = noise - gradient;
 
-            if(value > this->settings.world_noise_terrain) {
-                this->m_region.regiontype.set_terrain();
-            } else this->m_region.regiontype.set_ocean();
-
             if(value < 0.0f) value = 0.0f;
             if(value > 1.0f) value = 1.0f;
+
+            if(value > this->settings.world_noise_terrain)
+                this->m_region.regiontype.set_terrain();
+        
+            else
+                this->m_region.regiontype.set_ocean();
 
             this->m_region.height            = std::ceil(value * 100) / 100;
             this->m_region.object_position.x = this->settings.world_panel_size.x * x; 
@@ -59,9 +144,8 @@ void WorldGenerator::generateWorld() {
         }
     }
 
-    this->generatePoles();
-
     // Find and mark coast tiles.
+    // This loop marks tiles from 8 cardinal directions.
     for(int y = 0; y < this->settings.world_size; y++) {
         for(int x = 0; x < this->settings.world_size; x++) {
             const int index = this->wCalculateIndex(x, y);
@@ -71,6 +155,10 @@ void WorldGenerator::generateWorld() {
                 const int index_down  = index + this->settings.world_size;
                 const int index_left  = index - 1;
                 const int index_right = index + 1;
+                const int index_tl    = index - 1 - this->settings.world_size;
+                const int index_tr    = index + 1 - this->settings.world_size;
+                const int index_bl    = index - 1 + this->settings.world_size;
+                const int index_br    = index + 1 + this->settings.world_size;
 
                 if(index_up > 0)
                     if(!this->world_map[index_up].regiontype.is_terrain()) 
@@ -87,155 +175,276 @@ void WorldGenerator::generateWorld() {
                 if(index_right < this->getWorldSize())
                     if(!this->world_map[index_right].regiontype.is_terrain()) 
                         this->world_map[index].regiontype.set_coast();
+
+                if(index_tl > 0)
+                    if(!this->world_map[index_tl].regiontype.is_terrain()) 
+                        this->world_map[index].regiontype.set_coast();
+
+                if(index_tr > 0)
+                    if(!this->world_map[index_tr].regiontype.is_terrain()) 
+                        this->world_map[index].regiontype.set_coast();
+
+                if(index_bl < this->getWorldSize())
+                    if(!this->world_map[index_bl].regiontype.is_terrain()) 
+                        this->world_map[index].regiontype.set_coast();
+
+                if(index_br < this->getWorldSize())
+                    if(!this->world_map[index_br].regiontype.is_terrain()) 
+                        this->world_map[index].regiontype.set_coast();
             }
         }
     }
 
-    std::cout << "[World Generation]: Simulating world climate.\n";
+    // Generate climate.
+    // This function calculates and assigns LATITUDE, TEMPERATURE and MOISTURE per region.
+    this->worldmapGenerateClimate();
+
+    // Assign biomes.
+    // Biomes are assigned based on LATITUDE, TEMPERATURE and MOISTURE.
+    // The distribution is similar to the one on earth.
+    this->worldmapAssignBiome();
+
+    // Make sure that there are no single full panel tiles.
+    // This loop does not delete island tiles.
+    for(int t = 0; t < 5; t++) {
+        for(int y = 0; y < this->settings.world_size; y++) {
+            for(int x = 0; x < this->settings.world_size; x++) {
+                const int index = this->wCalculateIndex(x, y);
+                auto& region = this->world_map[index];
+
+                if(region.regiontype.is_terrain()) {
+                    int terrain_tiles = 0;
     
-    this->generateLatititude();
-    this->generateTemperature();
-    this->generateMoistureMap();
-    this->assignBiome();
+                    if(index - 1 > 0)
+                        if(this->world_map[index - 1].regiontype.is_terrain())
+                            terrain_tiles++;
+    
+                    if(index + 1 < this->getWorldSize())
+                        if(this->world_map[index + 1].regiontype.is_terrain())
+                            terrain_tiles++; 
+    
+                    if(index - this->settings.world_size > 0)
+                        if(this->world_map[index - this->settings.world_size].regiontype.is_terrain())
+                            terrain_tiles++;
+    
+                    if(index + this->settings.world_size < this->getWorldSize())
+                        if(this->world_map[index + this->settings.world_size].regiontype.is_terrain())
+                            terrain_tiles++;
+                        
+                    if(terrain_tiles == 1) {
+                        region.regiontype.unset_coast();
+                        region.regiontype.set_ocean();;
+                        region.biome = BIOME_OCEAN;
+                        region.object_texture_name = this->createBiomeSpecificTexture("panel_full", BIOME_OCEAN); 
+                    }
+                }
+            }
+        }
+    }
+
+    // Assign pretty textures to coastal tiles.
+    for(int y = 0; y < this->settings.world_size; y++) {
+        for(int x = 0; x < this->settings.world_size; x++) {
+            const int index = this->wCalculateIndex(x, y);
+            auto& region    = this->world_map[index];
+
+            region.object_texture_name = this->getWorldmapTile(index);
+        }
+    }
 
     std::cout << "[World Generation]: Generating world features.\n";
 
-    this->generateRivers();
-    this->generateForests();
+    this->worldmapGenerateRivers();
+    
+    // // Assign pretty textures to river tiles.
+    // for(auto& pair : this->rivers) {
+    //     const int index = pair.first;
+    //     auto& river     = pair.second;
 
-    std::cout << "[World Generation]: World generated.\n";
-    std::cout << "[World Generation]: Terrain is " << panel_quantity  << " panels out of total " << this->getWorldSize() << " panels" << " (" << int(float(panel_quantity / float(this->getWorldSize())) * 100) << "%)." << "\n";
-    std::cout << "[World Generation]: " << this->getWorldSize() << " panels generated in " << clock.getElapsedTime().asSeconds() << " seconds.\n";
+    //     river.object_texture_name = this->getRiverTile(index);
+    // }
+
+    this->worldmapGenerateForests();
+
+    const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
+    std::cout << "[World Generation]: World generated in " << time_rounded << "s.\n";
 }
 
-void WorldGenerator::generateNoiseMap() {
-    std::vector <float> input(this->getWorldSize());
-    for(int i = 0; i < this->getWorldSize(); i++) {
-        input[i] = (float)rand() / (float)RAND_MAX;    
+void WorldGenerator::worldmapGenerateClimate() {
+    std::cout << "[World Generation]: Generating climate.\n";
+
+    // Calculate LATITUDE.
+    for(int y = 0; y < this->settings.world_size; y++) {
+        for(int x = 0; x < this->settings.world_size; x++) {       
+            const int index = this->wCalculateIndex(x, y);
+
+            // Latitude for the upper half.
+            if(y < this->settings.world_size / 2)
+                this->world_map[index].latitude = float(y + 1) / float(this->settings.world_size / 2);
+
+            // Latitude for the bottom half.
+            else {
+                const int i = y - this->settings.world_size / 2;
+                const int reversed_height = y - 2 * i;
+                this->world_map[index].latitude = float(reversed_height) / float(this->settings.world_size / 2);
+            }
+        }
+    }
+    
+    std::cout << "  [] Calculated latitude.\n";
+    
+    // Calculate TEMPERATURE.
+    for(int y = 0; y < this->settings.world_size; y++) {
+        for(int x = 0; x < this->settings.world_size; x++) {            
+            const int panel_index = this->wCalculateIndex(x, y);
+            Region& panel = this->world_map[panel_index];
+
+            // Panel temperature zone classification.
+            const bool PANEL_ARCTIC       = (y < this->settings.world_margin_poles || y > this->settings.world_size - this->settings.world_margin_poles - 1) ? true : false;
+            const bool PANEL_NEAR_POLE    = ((y < this->settings.world_margin_poles + this->settings.world_margin_island + 0.1f * (float)this->settings.world_size && y >= this->settings.world_margin_poles) || (y >= this->settings.world_size - (this->settings.world_margin_poles + this->settings.world_margin_island + 0.1f * (float)this->settings.world_size) && y < this->settings.world_size - this->settings.world_margin_poles)) ? true : false;
+            const bool PANEL_NEAR_EQUATOR = (y > this->settings.world_size / 2 - 1 - this->settings.world_margin_island && y <= this->settings.world_size / 2 + 1 + this->settings.world_margin_island) ? true : false;
+
+            if(PANEL_ARCTIC) {
+                panel.temperature = 0.05f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+            }
+
+            else if(PANEL_NEAR_POLE) {
+                panel.temperature = 0.1f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+            }
+            
+            else if(PANEL_NEAR_EQUATOR) {
+                panel.temperature = -0.1f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
+            }
+
+            else {
+                panel.temperature = 0.4f + ((float)rand() / (float)RAND_MAX / 2) * ((1.0f - panel.height) * panel.latitude);
+            }
+
+            if(panel.temperature > 1.0f) panel.temperature = 1.0f;
+        }
     }
 
+    std::cout << "  [] Calculated temperature.\n";
+
+    // Calculate MOISTURE.
+    std::vector <float> input(this->settings.world_size * this->settings.world_size);
+    for(int i = 0; i < this->settings.world_size * this->settings.world_size; i++) {
+        input[i] = (float)rand() / (float)RAND_MAX;
+    }
+    
     float biggest_noise_recorded = 1.0f;
 
     for(int y = 0; y < this->settings.world_size; y++) {
         for(int x = 0; x < this->settings.world_size; x++) {
             const int index = this->wCalculateIndex(x, y);
 
-            if(x < this->settings.world_margin_island || x > (this->settings.world_size - this->settings.world_margin_island) || y < this->settings.world_margin_island || y > (this->settings.world_size - this->settings.world_margin_island)) {
-                this->m_noise[index] = 0.0f;
-                continue;
-            }
+            if(!this->world_map[index].regiontype.is_terrain())
+                this->world_map[index].moisture = 1.0f;
 
-            float noise = 0.0f;
-            float scale = 1.0f;
-            float scale_acc = 0.0f;
+            else if(this->is_arctic(index))
+                this->world_map[index].moisture = 0.0f;
 
-            for(unsigned int o = 0; o < this->settings.world_noise_octaves; o++) {
-                const int sampleX1 = (x / this->settings.world_noise_persistence) * this->settings.world_noise_persistence;
-                const int sampleY1 = (y / this->settings.world_noise_persistence) * this->settings.world_noise_persistence;
+            else if(this->world_map[index].regiontype.is_terrain() && !this->is_arctic(index)) {
+                float noise = 0.0f;
+                float scale = 1.0f;
+                float scale_acc = 0.0f;
 
-                const int sampleX2 = (sampleX1 + this->settings.world_noise_persistence) % this->settings.world_size;					
-                const int sampleY2 = (sampleY1 + this->settings.world_noise_persistence) % this->settings.world_size;
+                for(unsigned int o = 0; o < this->settings.world_moisture_octaves; o++) {
+                    const int sampleX1 = (x / this->settings.world_moisture_persistence) * this->settings.world_moisture_persistence;
+                    const int sampleY1 = (y / this->settings.world_moisture_persistence) * this->settings.world_moisture_persistence;
 
-                const float blendX = (float)(x - sampleX1) / (float)this->settings.world_noise_persistence;
-                const float blendY = (float)(y - sampleY1) / (float)this->settings.world_noise_persistence;
+                    const int sampleX2 = (sampleX1 + this->settings.world_moisture_persistence) % (int)this->settings.world_size;					
+                    const int sampleY2 = (sampleY1 + this->settings.world_moisture_persistence) % (int)this->settings.world_size;
 
-                const float sampleT = (1.0f - blendX) * input[sampleY1 * this->settings.world_size + sampleX1] + blendX * input[sampleY1 * this->settings.world_size + sampleX2];
-                const float sampleB = (1.0f - blendX) * input[sampleY2 * this->settings.world_size + sampleX1] + blendX * input[sampleY2 * this->settings.world_size + sampleX2];
+                    const float blendX = (float)(x - sampleX1) / (float)this->settings.world_moisture_persistence;
+                    const float blendY = (float)(y - sampleY1) / (float)this->settings.world_moisture_persistence;
 
-                scale_acc += scale;
-                noise += (blendY * (sampleB - sampleT) + sampleT) * scale;
-                scale = float(scale / this->settings.world_noise_bias);
-            }
+                    const float sampleT = (1.0f - blendX) * input[sampleY1 * this->settings.world_size + sampleX1] + blendX * input[sampleY1 * this->settings.world_size + sampleX2];
+                    const float sampleB = (1.0f - blendX) * input[sampleY2 * this->settings.world_size + sampleX1] + blendX * input[sampleY2 * this->settings.world_size + sampleX2];
+
+                    scale_acc += scale;
+                    noise += (blendY * (sampleB - sampleT) + sampleT) * scale;
+                    scale = float(scale / this->settings.world_moisture_bias);
+                }
+                
+                float noise_value = (noise / scale_acc) * this->settings.world_moisture_multiplier;
+                
+                if(noise_value > biggest_noise_recorded) biggest_noise_recorded = noise_value;
+
+                noise_value *= biggest_noise_recorded;
             
-            float noise_value = (noise / scale_acc) * this->settings.world_noise_multiplier;
-            
-            if(noise_value > biggest_noise_recorded) biggest_noise_recorded = noise_value;
+                if(this->world_map[index].height > 0.85f)
+                    noise_value *= 0.1f + this->world_map[index].latitude * this->world_map[index].latitude * (1.0f - this->world_map[index].height);
 
-            noise_value *= biggest_noise_recorded;
-            if(noise_value > 1.0f) noise_value = 1.0f;
+                if(this->world_map[index].latitude < 0.55f) {
+                    noise_value *= this->world_map[index].latitude * noise_value;
+                    noise_value += 0.2f + (0.2f * noise_value);
+                }
 
-            this->m_noise[index] = noise_value;
+                else noise_value += 0.2f * this->world_map[index].moisture;
+
+                if(noise_value > 1.0f) 
+                    noise_value = 1.0f;
+
+                this->world_map[y * this->settings.world_size + x].moisture = noise_value;
+            }
         }
     }
+
+    std::cout << "  [] Calculated moisture.\n";
 }
 
-void WorldGenerator::generateCircularGradient() {
-    const sf::Vector2i centre = sf::Vector2i(
-        this->settings.world_size / 2,
-        this->settings.world_size / 2
-    );
-
-    for(int y = 0; y < this->settings.world_size; y++) {
-        for(int x = 0; x < this->settings.world_size; x++) {
-            const int index = this->wCalculateIndex(x, y);
-
-            if(x < this->settings.world_margin_island || x > (this->settings.world_size - this->settings.world_margin_island) || y < this->settings.world_margin_island || y > (this->settings.world_size - this->settings.world_margin_island)) {
-                this->m_noise[index] = 0.0f;
-                continue;
-            }
-
-            const float distance_x = (centre.x - x) * (centre.x - x);
-            const float distance_y = (centre.y - y) * (centre.y - y);
-
-            // Both width and height of the map have a impact on distance.
-            float distance = (sqrt(distance_x + distance_y) / this->settings.world_size);
-
-            if(distance > 1.0f) distance = 1.0f;
-
-            // Distance is bigger when further away from the centre of the gradient.
-            this->m_gradient[index] = distance * this->settings.world_gradient_multiplier;
-        }
-    }
-}
-
-void WorldGenerator::generatePoles() {
-    std::cout << "[World Generation]: Generating poles.\n";
+void WorldGenerator::worldmapAssignBiome() {
+    std::cout << "[World Generation]: Generating biomes.\n";
     
-    const float chance   = 1.0f;
-    const float modifier = 0.6f;
+    for(int index = 0; index < this->getWorldSize(); index++) {
+        Region& panel = this->world_map[index];
 
-    for(unsigned int x = 0; x < this->settings.world_size; x++) {
-        float pole_chance   = chance;
-        float pole_modifier = modifier;
-
-        for(unsigned int y = 0; y < this->settings.world_margin_poles; y++) {
-            const int   index = this->wCalculateIndex(x, y);
-            const float random_number1 = (float)rand();
-            const float random_number2 = (float)RAND_MAX * pole_chance;
-
-            if(random_number1 < random_number2) {
-                this->world_map[index].regiontype.set_terrain();
-                this->world_map[index].biome = BIOME_ARCTIC;
-            }
+        if(!panel.regiontype.is_terrain())
+            panel.biome = BIOME_OCEAN;
         
-            pole_chance *= pole_modifier;
-        }
-    }
-
-    for(unsigned int x = 0; x < this->settings.world_size; x++) { 
-        float pole_chance   = chance;
-        float pole_modifier = modifier;
-
-        for(unsigned int y = this->settings.world_size - 1; y > this->settings.world_size - 1 - this->settings.world_margin_poles; y--) {
-            const int   index = this->wCalculateIndex(x, y);
-            const float random_number1 = (float)rand();
-            const float random_number2 = (float)RAND_MAX * pole_chance;
-
-            if(random_number1 < random_number2) {
-                this->world_map[index].regiontype.set_terrain();
-                this->world_map[index].biome = BIOME_ARCTIC;
-            }
+        else if(this->is_arctic(index))
+            panel.biome = BIOME_ARCTIC;
+    
+        else if(panel.temperature < 0.45f && panel.latitude < 0.5f) {    
+            if(panel.moisture > 0.23f)
+                panel.biome = BIOME_CONTINENTAL;
             
-            pole_chance *= pole_modifier;
+            else
+                panel.biome = BIOME_TUNDRA;
         }
 
-        pole_chance   = chance;
-        pole_modifier = modifier;
+        else if(panel.temperature < 0.55f && panel.latitude < 0.55f) {
+            const int random_value = rand() % 10;
+
+            if(random_value > 5)
+                panel.biome = BIOME_TEMPERATE;
+
+            else if(random_value > 2)
+                panel.biome = BIOME_CONTINENTAL;
+            
+            else
+                panel.biome = BIOME_TUNDRA;
+        }
+
+        else if(panel.temperature < 0.7f)
+            panel.biome = BIOME_TEMPERATE;
+
+        else {
+            if(panel.moisture > 0.51f)
+                panel.biome = BIOME_TROPICAL;
+
+            else if(panel.moisture > 0.23f)
+                panel.biome = BIOME_MEADITERRANEAN;
+
+            else
+                panel.biome = BIOME_TEMPERATE;
+        } 
     }
 }
 
-void WorldGenerator::generateRivers() {
-    std::cout << "[World Generation]: Generating rivers.\n";
+void WorldGenerator::worldmapGenerateRivers() {
+    std::cout << "  [] Generating rivers.\n";
     
     // Number of rivers is a maximum amount of rivers.
     // It does not mean that there will be the specified amount.
@@ -270,7 +479,7 @@ void WorldGenerator::generateRivers() {
                 for(int x = 0 - area_around_origin; x <= 0 + area_around_origin; x++) {
                     const int index = possible_river_origin_index + this->wCalculateIndex(x, y);
 
-                    if(index != river_origin_index[scanned_river]) {
+                    if(index != river_origin_index[scanned_river] && !this->world_map[index].regiontype.is_river()) {
                         panels_verified++;
                         continue;
                     }
@@ -293,12 +502,13 @@ void WorldGenerator::generateRivers() {
             river_index = possible_river_origin_index;
             river_origin_index[river_number] = possible_river_origin_index;
         }
+
+        else 
+            continue;
         
         // Suitable position for a new river was not found; Ignore the rest of the algorithm and move on to the next river.
         if(river_index == -1)   
             continue;
-
-        std::cout << "[World Generation][River Generation]: River origin index: " << river_index << ".\n";
 
         // Create a path to the sea.
         bool coast_found = false;
@@ -332,7 +542,8 @@ void WorldGenerator::generateRivers() {
 
             const int current_move_value = current_move_direction - river_index_current;
 
-            RiverDirection direction = RiverDirection::RIVER_ORIGIN;
+            RiverDirection direction      = RiverDirection::RIVER_ORIGIN;
+            RiverDirection last_direction = direction;
 
             if(river_index_current != river_index_start) {
                 if(current_move_direction == index_up) {
@@ -415,50 +626,70 @@ void WorldGenerator::generateRivers() {
             const sf::Vector2f panel_offset   = sf::Vector2f(0, 0); 
             const sf::Vector2f panel_size     = this->settings.world_panel_size; 
 
+            const std::string panel_full = this->createColouredTexture("panel_full", "panel_full_lightblue", COLOUR_CYAN, COLOUR_TRANSPARENT);
             switch(direction) {
                 case RiverDirection::RIVER_NONE:
                     panel._direction = RiverDirection::RIVER_NONE;
                     break;
 
                 case RiverDirection::RIVER_ORIGIN:
-                    panel._direction = RiverDirection::RIVER_ORIGIN;
-                    river = GameObject(panel_position, panel_offset, panel_size, "panel_sea"); 
+                    panel._direction = RiverDirection::RIVER_ORIGIN; 
                     break;
                 
                 case RiverDirection::RIVER_NORTH_TO_EAST:
                     panel._direction = RiverDirection::RIVER_NORTH_TO_EAST;
-                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_bl"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_turn_bl")); 
                     break;
 
                 case RiverDirection::RIVER_NORTH_TO_WEST:
                     panel._direction = RiverDirection::RIVER_NORTH_TO_WEST;
-                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_br"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_turn_br")); 
                     break;
 
                 case RiverDirection::RIVER_SOUTH_TO_EAST:
                     panel._direction = RiverDirection::RIVER_SOUTH_TO_EAST;
-                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_tl"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_turn_tl")); 
                     break;
 
                 case RiverDirection::RIVER_SOUTH_TO_WEST:
                     panel._direction = RiverDirection::RIVER_SOUTH_TO_WEST;
-                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_corner_tr"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_turn_tr")); 
                     break;
 
                 case RiverDirection::RIVER_VERTICAL:
                     panel._direction = RiverDirection::RIVER_VERTICAL;
-                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_vertical"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_vertical")); 
                     break;
 
                 case RiverDirection::RIVER_HORIZONTAL:
                     panel._direction = RiverDirection::RIVER_HORIZONTAL;
-                    river = GameObject(panel_position, panel_offset, panel_size, "panel_river_horizontal"); 
+                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_horizontal")); 
                     break;
+            }
+
+            Region& start_panel = this->world_map[river_index_start];
+            if(last_direction == RiverDirection::RIVER_ORIGIN) {
+                if(river_index_current - 1 > 0)
+                    if(this->world_map[river_index_current - 1].regiontype.is_river())
+                        this->rivers[river_index_start] = GameObject(start_panel.getPosition(), sf::Vector2f(0, 0), start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_right"));
+
+                else if(river_index_current - this->settings.world_size > 0)
+                    if(this->world_map[river_index_current - this->settings.world_size].regiontype.is_river())
+                        this->rivers[river_index_start] = GameObject(start_panel.getPosition(), sf::Vector2f(0, 0), start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_down"));
+                
+                else if(river_index_current + 1 < this->getWorldSize())
+                    if(this->world_map[river_index_current + 1].regiontype.is_river())
+                        this->rivers[river_index_start] = GameObject(start_panel.getPosition(), sf::Vector2f(0, 0), start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_left"));
+                
+                else if(river_index_current + this->settings.world_size < this->getWorldSize())
+                    if(this->world_map[river_index_current + this->settings.world_size].regiontype.is_river())
+                        this->rivers[river_index_start] = GameObject(start_panel.getPosition(), sf::Vector2f(0, 0), start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_up"));
             }
 
             panel.regiontype.set_river();
             last_move_value     = current_move_value;
             river_index_current = current_move_direction;
+            last_direction      = direction;
 
             if(coast_found)
                 break;
@@ -469,230 +700,39 @@ void WorldGenerator::generateRivers() {
     }
 }
 
-void WorldGenerator::generateLatititude() {
-    std::cout << "[World Generation]: Calculating latitude.\n";
-    
-    for(int y = 0; y < this->settings.world_size; y++) {
-        for(int x = 0; x < this->settings.world_size; x++) {       
-            const int index = this->wCalculateIndex(x, y);
+void WorldGenerator::worldmapGenerateForests() {
+    std::cout << "  [] Generating forests.\n";
 
-            // Latitude for the upper half.
-            if(y < this->settings.world_size / 2)
-                this->world_map[index].latitude = float(y + 1) / float(this->settings.world_size / 2);
+    const int WORLD_SIZE = this->getWorldSize();
+    NoiseContainer noise_forest(WORLD_SIZE);
 
-            // Latitude for the bottom half.
-            else {
-                const int i = y - this->settings.world_size / 2;
-                const int reversed_height = y - 2 * i;
-                this->world_map[index].latitude = float(reversed_height) / float(this->settings.world_size / 2);
-            }
-        }
-    }
-}
-
-void WorldGenerator::generateTemperature() {
-    std::cout << "[World Generation]: Calculating temperature.\n";
-    
-    for(int y = 0; y < this->settings.world_size; y++) {
-        for(int x = 0; x < this->settings.world_size; x++) {            
-            const int panel_index = this->wCalculateIndex(x, y);
-            Region& panel = this->world_map[panel_index];
-
-            // Panel temperature zone classification.
-            const bool PANEL_ARCTIC       = (y < this->settings.world_margin_poles || y > this->settings.world_size - this->settings.world_margin_poles - 1) ? true : false;
-            const bool PANEL_NEAR_POLE    = ((y < this->settings.world_margin_poles + this->settings.world_margin_island + 0.1f * (float)this->settings.world_size && y >= this->settings.world_margin_poles) || (y >= this->settings.world_size - (this->settings.world_margin_poles + this->settings.world_margin_island + 0.1f * (float)this->settings.world_size) && y < this->settings.world_size - this->settings.world_margin_poles)) ? true : false;
-            const bool PANEL_NEAR_EQUATOR = (y > this->settings.world_size / 2 - 1 - this->settings.world_margin_island && y <= this->settings.world_size / 2 + 1 + this->settings.world_margin_island) ? true : false;
-
-            if(PANEL_ARCTIC) {
-                panel.temperature = 0.05f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
-            }
-
-            else if(PANEL_NEAR_POLE) {
-                panel.temperature = 0.1f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
-            }
-            
-            else if(PANEL_NEAR_EQUATOR) {
-                panel.temperature = -0.1f + panel.latitude * panel.latitude + 1.0f / (float)(rand() % 10 + 5);
-            }
-
-            else {
-                panel.temperature = 0.4f + ((float)rand() / (float)RAND_MAX / 2) * ((1.0f - panel.height) * panel.latitude);
-            }
-
-            if(panel.temperature > 1.0f) panel.temperature = 1.0f;
-        }
-    }
-}
-
-void WorldGenerator::generateMoistureMap() {
-    std::cout << "[World Generation]: Calculating moisture.\n";
-    
-    std::vector <float> input(this->settings.world_size * this->settings.world_size);
-    for(int i = 0; i < this->settings.world_size * this->settings.world_size; i++) {
-        input[i] = (float)rand() / (float)RAND_MAX;
-    }
-    
-    float biggest_noise_recorded = 1.0f;
-
-    for(int y = 0; y < this->settings.world_size; y++) {
-        for(int x = 0; x < this->settings.world_size; x++) {
-            const int index = this->wCalculateIndex(x, y);
-
-            if(!this->world_map[index].regiontype.is_terrain())
-                this->world_map[index].moisture = 1.0f;
-
-            else if(this->is_arctic(index))
-                this->world_map[index].moisture = 0.0f;
-
-            else if(this->world_map[index].regiontype.is_terrain() && !this->is_arctic(index)) {
-                float noise = 0.0f;
-                float scale = 1.0f;
-                float scale_acc = 0.0f;
-
-                for(unsigned int o = 0; o < this->settings.world_moisture_octaves; o++) {
-                    const int sampleX1 = (x / this->settings.world_moisture_persistence) * this->settings.world_moisture_persistence;
-                    const int sampleY1 = (y / this->settings.world_moisture_persistence) * this->settings.world_moisture_persistence;
-
-                    const int sampleX2 = (sampleX1 + this->settings.world_moisture_persistence) % (int)this->settings.world_size;					
-                    const int sampleY2 = (sampleY1 + this->settings.world_moisture_persistence) % (int)this->settings.world_size;
-
-                    const float blendX = (float)(x - sampleX1) / (float)this->settings.world_moisture_persistence;
-                    const float blendY = (float)(y - sampleY1) / (float)this->settings.world_moisture_persistence;
-
-                    const float sampleT = (1.0f - blendX) * input[sampleY1 * this->settings.world_size + sampleX1] + blendX * input[sampleY1 * this->settings.world_size + sampleX2];
-                    const float sampleB = (1.0f - blendX) * input[sampleY2 * this->settings.world_size + sampleX1] + blendX * input[sampleY2 * this->settings.world_size + sampleX2];
-
-                    scale_acc += scale;
-                    noise += (blendY * (sampleB - sampleT) + sampleT) * scale;
-                    scale = float(scale / this->settings.world_moisture_bias);
-                }
-                
-                float noise_value = (noise / scale_acc) * this->settings.world_moisture_multiplier;
-                
-                if(noise_value > biggest_noise_recorded) biggest_noise_recorded = noise_value;
-
-                noise_value *= biggest_noise_recorded;
-            
-                if(this->world_map[index].height > 0.85f)
-                    noise_value *= 0.1f + this->world_map[index].latitude * this->world_map[index].latitude * (1.0f - this->world_map[index].height);
-
-                if(this->world_map[index].latitude < 0.55f) {
-                    noise_value *= this->world_map[index].latitude * noise_value;
-                    noise_value += 0.2f + (0.2f * noise_value);
-                }
-
-                else noise_value += 0.2f * this->world_map[index].moisture;
-
-                if(noise_value > 1.0f) 
-                    noise_value = 1.0f;
-
-                this->world_map[y * this->settings.world_size + x].moisture = noise_value;
-            }
-        }
-    }
-}
-
-void WorldGenerator::assignBiome() {
-    std::cout << "[World Generation]: Generating biomes.\n";
-    
-    for(int index = 0; index < this->getWorldSize(); index++) {
-        Region& panel = this->world_map[index];
-
-        if(!panel.regiontype.is_terrain()) {
-            panel.object_texture_name = "panel_ocean";
-            panel.biome               = BIOME_OCEAN;
-        } 
-        
-        else if(this->is_arctic(index)) {
-            panel.object_texture_name = "panel_arctic";
-            panel.biome               = BIOME_ARCTIC;
-        } 
-    
-        else if(panel.temperature < 0.45f && panel.latitude < 0.5f) {    
-            if(panel.moisture > 0.23f) {
-                panel.object_texture_name = "panel_grass_cold";
-                panel.biome               = BIOME_CONTINENTAL;
-            }       
-            
-            else {
-                panel.object_texture_name = "panel_tundra";
-                panel.biome               = BIOME_TUNDRA;
-            } 
-        }
-
-        else if(panel.temperature < 0.55f && panel.latitude < 0.55f) {
-            const int tiletype = rand() % 10;
-
-            if(tiletype > 5) {
-                panel.object_texture_name = "panel_grass_warm";
-                panel.biome               = BIOME_TEMPERATE;
-            }   
-
-            else if(tiletype > 2) {
-                panel.object_texture_name = "panel_grass_cold";
-                panel.biome               = BIOME_CONTINENTAL;
-            }
-            
-            else {
-                panel.object_texture_name = "panel_tundra";
-                panel.biome               = BIOME_TUNDRA;
-            } 
-        }
-
-        else if(panel.temperature < 0.7f) {
-            panel.object_texture_name = "panel_grass_warm"; 
-            panel.biome               = BIOME_TEMPERATE;
-        }
-
-        else {
-            if(panel.moisture > 0.51f) {
-                panel.object_texture_name = "panel_grass_tropical";
-                panel.biome               = BIOME_TROPICAL;
-            }
-
-            else if(panel.moisture > 0.23f) {
-                panel.object_texture_name = "panel_grass_subtropical";    
-                panel.biome               = BIOME_MEADITERRANEAN;
-            }
-
-            // Currently there is no purpose for this biome, so why add it to the terrain generator?
-            // else if(panel->moisture > 0.04f && panel->moisture < 0.10f) {
-            //     panel->texture = this->m_engine->resource.getTexture("panel_desert");
-            //     panel->biome = BIOME_DESERT;
-            // } 
-
-            else {
-                panel.object_texture_name = "panel_grass_warm";
-                panel.biome               = BIOME_TEMPERATE;
-            }
-        } 
-    }
-}
-
-void WorldGenerator::generateForests() {
-    std::cout << "[World Generation]: Generating forests.\n";
-
-    noiseSettings settings;
+    NoiseSettings settings;
     settings.octaves     = 8;
     settings.bias        = 4;
     settings.persistence = 4;
     settings.multiplier  = 1.25f;
     settings.size        = sf::Vector2f(this->settings.world_size, this->settings.world_size);
 
-    this->generateNoise(settings, this->m_tree_noise);
+    this->generateNoise(settings, noise_forest);
 
-    for(int index = 0; index < this->m_tree_noise.size(); index++) {
-        const float value    = this->m_tree_noise[index];
-        const float noise    = (float)rand() / (float)RAND_MAX;
-        const float combined = value / 2 + noise / 2;
-        const float result   = (combined > 1.0f) ? 1.0f : combined;
+    for(int index = 0; index < noise_forest.size(); index++) {
+        const float noise  = noise_forest[index];
+        const float random = (float)rand() / (float)RAND_MAX;
+        const float value  = (noise + random) / 2;
 
         Region& region = this->world_map[index];
 
-        if(result > 0.7f && !this->is_arctic(index) && !this->is_desert(index) && !this->world_map[index].regiontype.is_river() && this->world_map[index].regiontype.is_terrain()) {
-            GameObject forest = GameObject(region.getPosition(), sf::Vector2f(0, 0), region.getSize(), this->getTreeTextureNameWorld(region.biome));
-	        this->forests[index] = forest;
-            region.regiontype.set_forest();
+        const bool is_ocean   = this->is_ocean(index);
+        const bool is_arctic  = this->is_arctic(index);
+        const bool is_desert  = this->is_desert(index);
+        const bool is_river   = region.regiontype.is_river();
+        const bool is_coast   = region.regiontype.is_coast();
+
+        // If noise is high enough and tile is valid, place a forest. 
+        if(value > 0.7f && !is_arctic && !is_desert && !is_ocean && !is_coast && !is_river) {
+            region.regiontype.set_forest();            
+            const std::string texture_name = this->getWorldmapTreeTextureName(region.biome);
+            this->forests[index] = GameObject(region.getPosition(), sf::Vector2f(0, 0), region.getSize(), texture_name);
         }
     }
 }
@@ -811,7 +851,7 @@ void WorldGenerator::generateRegion(int index, Region& region) {
     }
 
     if(rand() % this->getWorldSize() < 0.4f * this->getWorldSize()) {
-        noiseSettings settings = noiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 16, 16, 4, 1.00f);
+        NoiseSettings settings = NoiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 16, 16, 4, 1.00f);
         std::vector <float> noise_stone;
         this->generateNoise(settings, noise_stone);
     
@@ -829,7 +869,7 @@ void WorldGenerator::generateRegion(int index, Region& region) {
     std::cout.precision(6);
 }
 
-void WorldGenerator::generateNoise(noiseSettings& settings, std::vector<float>& storage) {
+void WorldGenerator::generateNoise(NoiseSettings& settings, std::vector<float>& storage) {
     // Generate a random input sequence.
     std::vector <float> input(settings.size.x * settings.size.y);
     for(int i = 0; i < input.size(); i++) {
@@ -941,45 +981,43 @@ sf::Vector2f WorldGenerator::tilePositionScreen(sf::Vector2f tile_position) {
     return this->tilePositionScreen(sf::Vector2i(tile_position.x, tile_position.y));
 }
 
-bool WorldGenerator::is_biome(int region_index, Biome biome) {
-    if(this->world_map[region_index].biome.biome_name == biome.biome_name)
-        return true;
-    return false;
+bool WorldGenerator::is_biome(int region_index, Biome biome) const {
+    return this->world_map[region_index].biome.biome_name == biome.biome_name;
 }
 
-bool WorldGenerator::is_arctic(int region_index) {
+bool WorldGenerator::is_arctic(int region_index) const {
     return this->is_biome(region_index, BIOME_ARCTIC);
 }
 
-bool WorldGenerator::is_ocean(int region_index) {
+bool WorldGenerator::is_ocean(int region_index) const {
     return this->is_biome(region_index, BIOME_OCEAN);
 }
 
-bool WorldGenerator::is_sea(int region_index) {
+bool WorldGenerator::is_sea(int region_index) const {
     return this->is_biome(region_index, BIOME_SEA);
 }
 
-bool WorldGenerator::is_tropical(int region_index) {
+bool WorldGenerator::is_tropical(int region_index) const {
     return this->is_biome(region_index, BIOME_TROPICAL);
 }
 
-bool WorldGenerator::is_mediterranean(int region_index) {
+bool WorldGenerator::is_mediterranean(int region_index) const {
     return this->is_biome(region_index, BIOME_MEADITERRANEAN);
 }
 
-bool WorldGenerator::is_temperate(int region_index) {
+bool WorldGenerator::is_temperate(int region_index) const {
     return this->is_biome(region_index, BIOME_TEMPERATE);
 }
 
-bool WorldGenerator::is_continental(int region_index) {
+bool WorldGenerator::is_continental(int region_index) const {
     return this->is_biome(region_index, BIOME_CONTINENTAL);
 }
 
-bool WorldGenerator::is_tundra(int region_index) {
+bool WorldGenerator::is_tundra(int region_index) const {
     return this->is_biome(region_index, BIOME_TUNDRA);
 }
 
-bool WorldGenerator::is_desert(int region_index) {
+bool WorldGenerator::is_desert(int region_index) const {
     return this->is_biome(region_index, BIOME_DESERT);
 }
 
@@ -987,17 +1025,8 @@ bool WorldGenerator::is_terrain(int region_index) const {
     return region_index > this->settings.world_noise_terrain;
 }
 
-std::string WorldGenerator::getTreeTextureNameWorld(Biome biome) {
-    if(biome.biome_name == "Temperate")
-        return "panel_tree_warm";
-    
-    if(biome.biome_name == "Continental" || biome.biome_name == "Tundra")
-        return "panel_tree_cold";
-
-    if(biome.biome_name == "Tropical" || biome.biome_name == "Mediterranean")
-        return "panel_tree_tropical";
-
-    else return "default";
+bool WorldGenerator::is_coast(int region_index) const {
+    return this->world_map.at(region_index).regiontype.is_coast();
 }
 
 std::string WorldGenerator::getTreeTextureNameRegion(Biome biome) {
@@ -1151,7 +1180,7 @@ void WorldGenerator::regionGenerateRiver(int region_index) {
                 }
 
                 case 'N': {
-                    noiseSettings settings;
+                    NoiseSettings settings;
                     settings.size        = sf::Vector2f(this->settings.region_size / 2, 1);
                     settings.bias        = 6;
                     settings.octaves     = 10;
@@ -1175,7 +1204,7 @@ void WorldGenerator::regionGenerateRiver(int region_index) {
                 }
                 
                 case 'S': {
-                    noiseSettings settings;
+                    NoiseSettings settings;
                     settings.size        = sf::Vector2f(this->settings.region_size / 2, 1);
                     settings.bias        = 6;
                     settings.octaves     = 10;
@@ -1199,7 +1228,7 @@ void WorldGenerator::regionGenerateRiver(int region_index) {
                 }
 
                 case 'W': {
-                    noiseSettings settings;
+                    NoiseSettings settings;
                     settings.size        = sf::Vector2f(this->settings.region_size / 2, 1);
                     settings.bias        = 6;
                     settings.octaves     = 10;
@@ -1223,7 +1252,7 @@ void WorldGenerator::regionGenerateRiver(int region_index) {
                 }
 
                 case 'E': {
-                    noiseSettings settings;
+                    NoiseSettings settings;
                     settings.size        = sf::Vector2f(this->settings.region_size / 2, 1);
                     settings.bias        = 6;
                     settings.octaves     = 10;
@@ -1251,7 +1280,7 @@ void WorldGenerator::regionGenerateRiver(int region_index) {
         }
     
         case RiverDirection::RIVER_HORIZONTAL: {        
-            noiseSettings settings;
+            NoiseSettings settings;
             settings.size        = sf::Vector2f(this->settings.region_size, 1);
             settings.bias        = 6;
             settings.octaves     = 10;
@@ -1275,7 +1304,7 @@ void WorldGenerator::regionGenerateRiver(int region_index) {
         }
 
         case RiverDirection::RIVER_VERTICAL: {
-            noiseSettings settings;
+            NoiseSettings settings;
             settings.size        = sf::Vector2f(this->settings.region_size, 1);
             settings.bias        = 6;
             settings.octaves     = 10;
@@ -1379,15 +1408,15 @@ void WorldGenerator::regionGenerateRiver(int region_index) {
 void WorldGenerator::regionGenerateForest(int region_index) {
     Region& region = this->world_map[region_index];
 
-    noiseSettings settings;
+    NoiseSettings settings;
 
     const bool dense = region.regiontype.is_forest();
 
     if(dense)
-        settings = noiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 12, 4, 1.25f);
+        settings = NoiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 12, 4, 1.25f);
     
     else
-        settings = noiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 4, 8, 4, 0.90f);
+        settings = NoiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 4, 8, 4, 0.90f);
     
     std::string forest_type = dense ? "dense" : "sparse";
     std::cout << "[World Generation][Region Generation]: Generating a " << forest_type << " forest.\n";
@@ -1412,7 +1441,7 @@ void WorldGenerator::regionGenerateHeight(int region_index) {
     // Height modifier for fancier terrain.
     const float height_modifier = 1.2f;
 
-    noiseSettings height_settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 16, 16, 4, height_modifier);
+    NoiseSettings height_settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 16, 16, 4, height_modifier);
     std::vector <float> height;
     this->generateNoise(height_settings, height);
 
@@ -1623,20 +1652,399 @@ void WorldGenerator::regionGenerateHeight(int region_index) {
         region.map[i].object_position = region.map[i].object_position + sf::Vector2f(0, -region.map[i].elevation * this->settings.region_tile_size.y / 2);
 }
 
-int WorldGenerator::getWorldSize() {
+int WorldGenerator::getWorldSize() const {
     return this->settings.world_size * this->settings.world_size;
 }
 
-int WorldGenerator::getRegionSize() {
+int WorldGenerator::getRegionSize() const {
     return this->settings.region_size * this->settings.region_size;
 }
 
 /* Calculate index required for regionmap tile. */
-int WorldGenerator::rCalculateIndex(int x, int y) {
+int WorldGenerator::rCalculateIndex(int x, int y) const {
     return y * this->settings.region_size + x;
 }
 
 /* Calculate index required for worldmap region. */
-int WorldGenerator::wCalculateIndex(int x, int y) {
+int WorldGenerator::wCalculateIndex(int x, int y) const {
     return y * this->settings.world_size + x;
+}
+
+// This function returns the name of the tile type under certain index.
+// Exact result is the name of a worldmap tile without type ID.
+// For example: "panel_island" instead of "panel_island_0";
+std::string WorldGenerator::getWorldmapTile(int index) const {
+    auto& region    = this->world_map[index];
+    auto is_terrain = region.regiontype.is_terrain();
+    auto is_ocean   = region.regiontype.is_ocean();
+    auto is_coast   = region.regiontype.is_coast();
+
+    Biome biome = this->world_map[index].biome;
+
+    if(!is_coast && (is_terrain || is_ocean)) {
+        auto base_name = "panel_full";
+        auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+        return biome_specific_name;
+    }
+
+    bool TOPLEFT     = false;
+    bool TOP         = false;
+    bool TOPRIGHT    = false;
+    bool LEFT        = false;
+    bool RIGHT       = false;
+    bool BOTTOMLEFT  = false;
+    bool BOTTOM      = false;
+    bool BOTTOMRIGHT = false;
+
+    auto world_size = this->getWorldSize();
+    const auto in_limits = [world_size](int index) -> bool {
+        return (index > 0 && index < world_size);
+    };
+
+    // LEFT
+    if(in_limits(index - 1)) {
+        if(this->world_map[index - 1].regiontype.is_terrain()) {
+            LEFT = true;
+        }
+    }
+
+    // RIGHT
+    if(in_limits(index + 1)) {
+        if(this->world_map[index + 1].regiontype.is_terrain()) {
+            RIGHT = true;
+        }
+    }
+
+    // TOP
+    if(in_limits(index - this->settings.world_size)) {
+        if(this->world_map[index - this->settings.world_size].regiontype.is_terrain()) {
+            TOP = true;
+        }
+    }
+
+    // TOP LEFT
+    if(in_limits(index - 1 - this->settings.world_size)) {
+        if(this->world_map[index - 1 - this->settings.world_size].regiontype.is_terrain()) {
+            TOPLEFT = true;
+        }
+    }
+    
+    // TOP RIGHT
+    if(in_limits(index + 1 - this->settings.world_size)) {
+        if(this->world_map[index + 1 - this->settings.world_size].regiontype.is_terrain()) {
+            TOPRIGHT = true;
+        }
+    }
+
+    // BOTTOM
+    if(in_limits(index + this->settings.world_size)) {
+        if(this->world_map[index + this->settings.world_size].regiontype.is_terrain()) {
+            BOTTOM = true;
+        }
+    }
+    
+    // BOTTOM LEFT
+    if(in_limits(index - 1 + this->settings.world_size)) {
+        if(this->world_map[index - 1 + this->settings.world_size].regiontype.is_terrain()) {
+            BOTTOMLEFT = true;
+        }
+    }
+    
+    // BOTTOM RIGHT
+    if(in_limits(index + 1 + this->settings.world_size)) {
+        if(this->world_map[index + 1 + this->settings.world_size].regiontype.is_terrain()) {
+            BOTTOMRIGHT = true;
+        }
+    }
+
+    if(is_coast) {
+        if(!LEFT && !TOP && !BOTTOM && !RIGHT && !TOPLEFT && !TOPRIGHT && !BOTTOMLEFT && !BOTTOMRIGHT) {
+            auto base_name = this->getTileVariation("panel_island");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+        
+        if(LEFT && TOP && BOTTOM && RIGHT && TOPLEFT && !BOTTOMRIGHT) {
+            auto base_name = this->getTileVariation("panel_coast_turn_tl");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;   
+        }
+
+        if(LEFT && TOP && BOTTOM && RIGHT && BOTTOMLEFT && !TOPRIGHT) {
+            auto base_name = this->getTileVariation("panel_coast_turn_bl");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+
+        if(LEFT && TOP && BOTTOM && RIGHT && TOPRIGHT && !BOTTOMLEFT) {
+            auto base_name = this->getTileVariation("panel_coast_turn_tr");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+
+        if(LEFT && TOP && BOTTOM && RIGHT && BOTTOMRIGHT && !TOPLEFT) {
+            auto base_name = this->getTileVariation("panel_coast_turn_br");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+        
+        if(!LEFT && !TOP && BOTTOM && RIGHT) {
+            auto base_name = this->getTileVariation("panel_coast_corner_tl");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+        
+        if(!LEFT && TOP && !BOTTOM && RIGHT) {
+            auto base_name = this->getTileVariation("panel_coast_corner_bl");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;  
+        }
+
+        if(LEFT && !TOP && BOTTOM && !RIGHT) {
+            auto base_name = this->getTileVariation("panel_coast_corner_tr");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name; 
+        }
+
+        if(LEFT && TOP && !BOTTOM && !RIGHT) {
+            auto base_name = this->getTileVariation("panel_coast_corner_br");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+        
+        if(BOTTOM && !TOP && LEFT && RIGHT) {
+            auto base_name = this->getTileVariation("panel_coast_up");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+
+        if(!BOTTOM && TOP && LEFT && RIGHT) {
+            auto base_name = this->getTileVariation("panel_coast_down");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+
+        if(!LEFT && RIGHT && BOTTOM && TOP) {
+            auto base_name = this->getTileVariation("panel_coast_left");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+
+        if(LEFT && !RIGHT && BOTTOM && TOP) {
+            auto base_name = this->getTileVariation("panel_coast_right");;
+            auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+            return biome_specific_name;
+        }
+    }
+
+    auto base_name = "panel_full";
+    auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
+    return biome_specific_name;
+}
+
+// Get a tile variation from "./res/worldmap/panel_atlas.png".
+std::string WorldGenerator::getTileVariation(const std::string& id) const {
+    // Default full panel does not have any texture variations at the moment.
+    if(id == "panel_full")
+        return "panel_full";
+
+    // Rest of the tiles have 3 variations each.
+    const int panel_type = rand() % 3;
+    
+    // Worldmap texture naming convention is: <panel_type><id>.
+    // So the function returns for example: "panel_island_0".
+    return id + "_" + std::to_string(panel_type);
+}
+
+// Use the texture templates from "./res/worldmap/panel_atlas.png" to create their biome specific variations.
+std::string WorldGenerator::createBiomeSpecificTexture(const std::string& id, Biome biome) const {
+    const std::string texture_id = id + "_" + toLower(biome.biome_name);
+
+    if(this->resource->checkTextureExists(texture_id))
+        return texture_id;
+
+    auto image   = this->resource->getTexture(id).copyToImage();
+    auto intrect = this->resource->getTextureIntRect(id);
+
+    for(int y = 0; y < image.getSize().y; y++) {
+        for(int x = 0; x < image.getSize().x; x++) {
+            // Fill in terrain pixel.
+            if(image.getPixel(x, y) == COLOUR_BLACK)
+                image.setPixel(x, y, biome.biome_colour);
+            
+            // Fill in water pixel.
+            else if(image.getPixel(x, y) == COLOUR_WHITE)
+                image.setPixel(x, y, COLOUR_BLUE_OCEAN);
+        }
+    }
+
+    sf::Texture texture;
+    texture.loadFromImage(image);
+    this->resource->addTexture(texture_id, texture, intrect);
+    return texture_id;
+}
+
+std::string WorldGenerator::getWorldmapTreeTextureName(const Biome& biome) const {
+    if(biome == BIOME_CONTINENTAL || biome == BIOME_TUNDRA)
+        return "panel_tree_continental_1";
+
+    if(biome == BIOME_TEMPERATE)
+        return "panel_tree_temperate_1";
+
+    if(biome == BIOME_MEADITERRANEAN || biome == BIOME_TROPICAL)
+        return "panel_tree_mediterranean_1";
+
+    return "default";
+}
+/*
+std::string WorldGenerator::getRiverTile(int index) const {
+    auto& region    = this->world_map[index];
+    const auto is_terrain = region.regiontype.is_terrain();
+    const auto is_ocean   = region.regiontype.is_ocean();
+    const auto is_coast   = region.regiontype.is_coast();
+    const auto is_forest  = region.regiontype.is_forest();
+
+    bool TOPLEFT     = false;
+    bool TOP         = false;
+    bool TOPRIGHT    = false;
+    bool LEFT        = false;
+    bool RIGHT       = false;
+    bool BOTTOMLEFT  = false;
+    bool BOTTOM      = false;
+    bool BOTTOMRIGHT = false;
+
+    auto world_size = this->getWorldSize();
+    const auto in_limits = [world_size](int index) -> bool {
+        return (index > 0 && index < world_size);
+    };
+
+    // LEFT
+    if(in_limits(index - 1)) {
+        if(this->world_map[index - 1].regiontype.is_river()) {
+            LEFT = true;
+        }
+    }
+
+    // RIGHT
+    if(in_limits(index + 1)) {
+        if(this->world_map[index + 1].regiontype.is_river()) {
+            RIGHT = true;
+        }
+    }
+
+    // TOP
+    if(in_limits(index - this->settings.world_size)) {
+        if(this->world_map[index - this->settings.world_size].regiontype.is_river()) {
+            TOP = true;
+        }
+    }
+
+    // TOP LEFT
+    if(in_limits(index - 1 - this->settings.world_size)) {
+        if(this->world_map[index - 1 - this->settings.world_size].regiontype.is_river()) {
+            TOPLEFT = true;
+        }
+    }
+    
+    // TOP RIGHT
+    if(in_limits(index + 1 - this->settings.world_size)) {
+        if(this->world_map[index + 1 - this->settings.world_size].regiontype.is_river()) {
+            TOPRIGHT = true;
+        }
+    }
+
+    // BOTTOM
+    if(in_limits(index + this->settings.world_size)) {
+        if(this->world_map[index + this->settings.world_size].regiontype.is_river()) {
+            BOTTOM = true;
+        }
+    }
+    
+    // BOTTOM LEFT
+    if(in_limits(index - 1 + this->settings.world_size)) {
+        if(this->world_map[index - 1 + this->settings.world_size].regiontype.is_river()) {
+            BOTTOMLEFT = true;
+        }
+    }
+    
+    // BOTTOM RIGHT
+    if(in_limits(index + 1 + this->settings.world_size)) {
+        if(this->world_map[index + 1 + this->settings.world_size].regiontype.is_river()) {
+            BOTTOMRIGHT = true;
+        }
+    }
+
+    if(TOP && LEFT && !RIGHT)
+        return this->getRiverTileVariation("panel_river_turn_br");
+
+    if(TOP && RIGHT && !LEFT)
+        return this->getRiverTileVariation("panel_river_turn_bl");
+
+    if(BOTTOM && LEFT && !RIGHT)
+        return this->getRiverTileVariation("panel_river_turn_tr");
+
+    if(BOTTOM && RIGHT && !LEFT)
+        return this->getRiverTileVariation("panel_river_turn_tl");
+
+    // If the horizontal or vertical tile is a coastal tile, 
+    // the texture returned will be a estuary to point out it's a river delta.
+    
+    if(LEFT && RIGHT)
+        return this->getRiverTileVariation("panel_river_horizontal");
+
+    if(in_limits(index - 1))
+        if(this->is_ocean(index - 1) && RIGHT)
+            return this->getRiverTileVariation("panel_river_estuary_left");
+        
+        if(in_limits(index + 1))
+            if(this->is_ocean(index + 1) && LEFT)
+                return this->getRiverTileVariation("panel_river_estuary_right");
+
+    if(TOP && BOTTOM)
+        return this->getRiverTileVariation("panel_river_vertical"); 
+    
+    if(in_limits(index - this->settings.world_size))
+        if(this->is_ocean(index - this->settings.world_size) && BOTTOM)
+            return this->getRiverTileVariation("panel_river_estuary_up");
+
+    if(in_limits(index + this->settings.world_size))
+        if(this->is_ocean(index + this->settings.world_size) && TOP)
+            return this->getRiverTileVariation("panel_river_estuary_down");
+ 
+    return "panel_full_lightblue";
+}
+*/
+
+std::string WorldGenerator::getRiverTileVariation(const std::string& id) const {
+    // Rest of the tiles have 3 variations each.
+    const int panel_type = rand() % 3;
+    
+    // Worldmap texture naming convention is: <panel_type><id>.
+    // So the function returns for example: "panel_river_horizontal_0".
+    return id + "_" + std::to_string(panel_type);
+}
+
+std::string WorldGenerator::createColouredTexture(const std::string& id, const std::string& save_as, const sf::Color colour_main, const sf::Color colour_secondary) const {
+    if(this->resource->checkTextureExists(save_as))
+        return save_as;
+
+    auto image   = this->resource->getTexture(id).copyToImage();
+    auto intrect = this->resource->getTextureIntRect(id);
+
+    for(int y = 0; y < image.getSize().y; y++) {
+        for(int x = 0; x < image.getSize().x; x++) {
+            // Fill in terrain pixel.
+            if(image.getPixel(x, y) == COLOUR_BLACK)
+                image.setPixel(x, y, colour_main);
+            
+            // Fill in water pixel.
+            else if(image.getPixel(x, y) == COLOUR_WHITE)
+                image.setPixel(x, y, colour_secondary);
+        }
+    }
+
+    sf::Texture texture;
+    texture.loadFromImage(image);
+    this->resource->addTexture(save_as, texture, intrect);
+    return save_as;
 }
