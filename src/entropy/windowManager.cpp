@@ -1,5 +1,4 @@
 #include "windowManager.hpp"
-
 #include <iostream>
 
 using namespace entropy;
@@ -75,6 +74,10 @@ void windowManager::close() {
 
 void windowManager::setVsync(bool on) {
     this->getWindow()->setVerticalSyncEnabled(on);
+}
+
+void windowManager::setKeyHold(bool on) {
+    this->getWindow()->setKeyRepeatEnabled(on);
 }
 
 void windowManager::setMaxFramerate(unsigned int framerate) {

@@ -5,7 +5,6 @@
 #include <string>
 #include <memory>
 
-
 #include "engineSettings.hpp"
 
 namespace entropy {
@@ -32,6 +31,7 @@ namespace entropy {
 
             void setTitle(std::string title);
             void setVsync(bool on = false);
+            void setKeyHold(bool on = false);
             void setMaxFramerate(unsigned int framerate);
 
             void clear(const sf::Color& clear_colour);
