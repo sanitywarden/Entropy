@@ -197,8 +197,8 @@ void Worldmap::moveCamera() {
     );
 
     // Multipliers for faster camera movement. 
-    const float x_multiplier = 6.0f;
-    const float y_multiplier = 6.0f;    
+    const float x_multiplier = (this->zoom + 1 * 5.00f);
+    const float y_multiplier = (this->zoom + 1 * 5.00f);    
 
     // Check the horizontal and vertical bounds of the screen.
     // This makes sure that you can not move past the world map.
@@ -358,7 +358,7 @@ void Worldmap::handleInput() {
                 this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
                 this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
                 
-                if(this->controls.mouseLeftPressed()) {
+                if(this->controls.mouseMiddlePressed()) {
                     this->mouse_pressed    = true;
                     this->position_pressed = this->mouse_position_window;
                 }

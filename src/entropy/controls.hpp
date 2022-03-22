@@ -30,6 +30,7 @@ namespace entropy {
 
             bool mouseLeftPressed();
             bool mouseRightPressed();
+            bool mouseMiddlePressed();
             bool mouseMiddleUp();
             bool mouseMiddleDown();
             bool keyState(std::string id);

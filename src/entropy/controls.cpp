@@ -51,6 +51,10 @@ bool Controls::mouseRightPressed() {
     return this->mouse_right;
 }
 
+bool Controls::mouseMiddlePressed() {
+    return this->mouse_middle;
+}
+
 bool Controls::mouseMiddleUp() {
     return this->mouse_middle_up;
 }
