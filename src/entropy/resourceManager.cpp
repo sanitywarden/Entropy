@@ -26,12 +26,19 @@ void resourceManager::loadTexture(const std::string filename, const std::string 
         return;
     }
 
-    this->m_textures[id] = texture;
+    this->m_dimensions[id] = area;
+    this->m_textures[id]   = texture;
+}
+
+void resourceManager::addTexture(const std::string& id, sf::Texture texture, const sf::IntRect area) {
+    this->m_dimensions[id] = area;
+    this->m_textures[id]   = texture;
 }
 
 void resourceManager::unloadTexture(const std::string id) {
     if(this->checkTextureExists(id)) {
         this->m_textures.erase(id);
+        this->m_dimensions.erase(id);
         return;
     }
 
@@ -44,6 +51,32 @@ bool resourceManager::checkTextureExists(const std::string id) {
 
 sf::Texture& resourceManager::getTexture(const std::string id) {
     return this->m_textures[id];
+}
+
+// If a texture was loaded from a bigger texture it can be used for drawing with Vertex Arrays.
+// Manually writing a table with positions of a texture would be boring and frustrating,
+// so you can reuse the infromation provided when loading the texture. 
+sf::Vector2f resourceManager::getTexturePosition(const std::string& id) {
+    sf::Vector2f position = sf::Vector2f(
+        this->m_dimensions.at(id).left,
+        this->m_dimensions.at(id).top
+    );
+
+    return position;
+} 
+
+sf::Vector2f resourceManager::getTextureSize(const std::string& id) {
+    sf::Vector2f position = sf::Vector2f(
+        this->m_dimensions.at(id).width,
+        this->m_dimensions.at(id).height
+    );
+    return position;
+}
+
+sf::IntRect resourceManager::getTextureIntRect(const std::string& id) {
+    if(this->m_dimensions.count(id))
+        return this->m_dimensions.at(id);
+    return sf::IntRect(0, 0, 0, 0);
 }
 
 const std::map <std::string, sf::Texture>& resourceManager::getTextureCollection() {

@@ -17,6 +17,7 @@ namespace entropy {
             Settings m_settings;
             
             std::map <std::string, sf::Texture> m_textures;
+            std::map <std::string, sf::IntRect> m_dimensions;
             std::map <std::string, sf::Font>    m_fonts;
         public:
             resourceManager();
@@ -24,9 +25,13 @@ namespace entropy {
             ~resourceManager();
 
             void loadTexture(const std::string filename, const std::string id, const sf::IntRect area = sf::IntRect());
+            void addTexture(const std::string& id, sf::Texture texture, const sf::IntRect area = sf::IntRect());
             void unloadTexture(const std::string id);
             bool checkTextureExists(const std::string id);
             sf::Texture& getTexture(const std::string id);
+            sf::Vector2f getTexturePosition(const std::string& id);
+            sf::Vector2f getTextureSize(const std::string& id);
+            sf::IntRect  getTextureIntRect(const std::string& id);
             const std::map <std::string, sf::Texture>& getTextureCollection();
 
             void loadFont(const std::string filename, const std::string id);
