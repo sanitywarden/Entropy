@@ -254,17 +254,26 @@ void WorldGenerator::generateWorld() {
 
     std::cout << "[World Generation]: Generating world features.\n";
 
-    this->worldmapGenerateRivers();
-    
-    // // Assign pretty textures to river tiles.
-    // for(auto& pair : this->rivers) {
-    //     const int index = pair.first;
-    //     auto& river     = pair.second;
-
-    //     river.object_texture_name = this->getRiverTile(index);
-    // }
-
+    this->worldmapGenerateRivers();    
     this->worldmapGenerateForests();
+
+    // Generate lakes.
+    // Generation is random.
+    for(int t = 0; t < this->settings.world_size / 10; t++) {
+        int index           = 0;
+        auto& region        = this->world_map[index];
+        bool conditions_met = false;
+
+        while(!conditions_met) {
+            index  = rand() % this->getWorldSize();
+            region = this->world_map[index];
+
+            if(!region.regiontype.is_ocean() && !region.regiontype.is_forest() && !region.regiontype.is_river() && !this->is_lake(index) && !region.regiontype.is_coast()) {
+                this->lakes[index] = GameObject(region.getPosition(), sf::Vector2f(0, 0), region.getSize(), this->getTileVariation("panel_lake"));
+                conditions_met = true;
+            }
+        }
+    }
 
     const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
     std::cout << "[World Generation]: World generated in " << time_rounded << "s.\n";
@@ -686,6 +695,24 @@ void WorldGenerator::worldmapGenerateRivers() {
                         this->rivers[river_index_start] = GameObject(start_panel.getPosition(), sf::Vector2f(0, 0), start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_up"));
             }
 
+            if(panel.regiontype.is_coast()) {
+                if(river_index_current - 1 > 0)
+                    if(this->world_map[river_index_current - 1].regiontype.is_river())
+                        this->rivers[river_index_current] = GameObject(panel.getPosition(), sf::Vector2f(0, 0), panel.getSize(), this->getRiverTileVariation("panel_river_estuary_right"));
+
+                if(river_index_current - this->settings.world_size > 0)
+                    if(this->world_map[river_index_current - this->settings.world_size].regiontype.is_river())
+                        this->rivers[river_index_current] = GameObject(panel.getPosition(), sf::Vector2f(0, 0), panel.getSize(), this->getRiverTileVariation("panel_river_estuary_down"));
+
+                if(river_index_current + 1 < this->getWorldSize())
+                    if(this->world_map[river_index_current + 1].regiontype.is_river())
+                        this->rivers[river_index_current] = GameObject(panel.getPosition(), sf::Vector2f(0, 0), panel.getSize(), this->getRiverTileVariation("panel_river_estuary_left"));
+
+                if(river_index_current + this->settings.world_size < this->getWorldSize())
+                    if(this->world_map[river_index_current + this->settings.world_size].regiontype.is_river())
+                        this->rivers[river_index_current] = GameObject(panel.getPosition(), sf::Vector2f(0, 0), panel.getSize(), this->getRiverTileVariation("panel_river_estuary_up"));
+            } 
+
             panel.regiontype.set_river();
             last_move_value     = current_move_value;
             river_index_current = current_move_direction;
@@ -735,138 +762,6 @@ void WorldGenerator::worldmapGenerateForests() {
             this->forests[index] = GameObject(region.getPosition(), sf::Vector2f(0, 0), region.getSize(), texture_name);
         }
     }
-}
-
-void WorldGenerator::generateRegion(int index, Region& region) {
-    sf::Clock clock;
-
-    std::cout << "[World Generation][Region Generation]: Beginning to generate region " << index << ".\n"; 
-    
-    // Do this because if at least one region was visitied,
-    // the m_tile property still holds value from the last region generation.
-    this->m_tile = Tile();
-
-    this->m_tile.object_size         = this->settings.region_tile_size;
-    this->m_tile.object_texture_name = this->getBiomeTileTextureName(region.biome);
-
-    // Create a flat map populated with tiles on the first elevation layer (0-th).
-    region.map.resize(this->getRegionSize());
-    for(int y = 0; y < this->settings.region_size; y++) {
-        for(int x = 0; x < this->settings.region_size; x++) {
-            const int index              = this->rCalculateIndex(x, y);
-            this->m_tile.object_position = this->tilePositionScreen(x, y);
-            region.map[index]            = this->m_tile;
-        }
-    }
-    
-    const bool region_terrain = region.regiontype.is_terrain();
-    if(region_terrain) {
-        this->regionGenerateRiver (index);   
-        this->regionGenerateHeight(index);
-        this->regionGenerateForest(index);
-    }
-
-    // Make sure that if the river exists, the tiles that are water are placed on the lowest elevation.
-    if(region_terrain && region.regiontype.is_river()) {
-        if(region._direction != RiverDirection::RIVER_NONE) {
-            for(int y = 0; y < this->settings.region_size; y++) {
-                for(int x = 0; x < this->settings.region_size; x++) {
-                    const int index = this->rCalculateIndex(x, y);
-    
-                    if(region.map[index].tiletype.is_river()) {
-                        region.map[index].elevation = 0;
-                        region.map[index].object_position = this->tilePositionScreen(x, y);
-                    }
-                }
-            }
-        }
-    }
-
-    // Make sure that high tiles have sides.
-    for(int y = 0; y < this->settings.region_size; y++) {
-        for(int x = 0; x < this->settings.region_size; x++) {
-            const int index = this->rCalculateIndex(x, y);
-
-            // Indexes to check.
-            const int index_bottom = index + this->settings.region_size;
-            const int index_right  = index + 1;
-            const int index_left   = index - 1;
-            
-            // To avoid blank spots, you only fill in the missing height, when the biggest slope was found.
-            int biggest_difference = 0;
-
-            if(index_bottom < this->getRegionSize()) {
-                if(region.map[index].elevation > region.map[index_bottom].elevation) {
-                    const int height_difference = std::abs(region.map[index].elevation - region.map[index_bottom].elevation);
-                    if(biggest_difference < height_difference)
-                        biggest_difference = height_difference;
-                }
-            }
-
-            if(index_right < this->getRegionSize()) {
-                if(region.map[index].elevation > region.map[index_right].elevation) {
-                    const int height_difference = std::abs(region.map[index].elevation - region.map[index_right].elevation);
-                    if(biggest_difference < height_difference)
-                        biggest_difference = height_difference;
-                }
-            }
-
-            if(index_left > 0) {
-                if(region.map[index].elevation > region.map[index_left].elevation) {
-                    const int height_difference = std::abs(region.map[index].elevation - region.map[index_left].elevation);
-                    if(biggest_difference < height_difference)
-                        biggest_difference = height_difference;
-                }
-            }
-
-            region.sides[index].resize(biggest_difference);
-            for(int i = 0; i < biggest_difference; i++) {
-                std::string tile = i > 2 ? "tile_height_stone" : "tile_height_dirt";
-                region.sides[index][i] = GameObject(region.map[index].getPosition(), sf::Vector2f(0, this->settings.region_tile_size.y / 2 + i * this->settings.region_tile_size.y / 2), this->settings.region_tile_size, tile);
-            }
-
-            // Make sure that the border tiles have depth.
-            // Tiles near the y edge.
-            if(y == this->settings.region_size - 1) {
-                const int height_difference = std::abs(0 - region.map[(this->settings.region_size - 1) * this->settings.region_size + x].elevation) + 1;
-                region.sides[index].resize(height_difference);
-                
-                for(int i = 0; i < height_difference; i++) {
-                    std::string tile = i > 2 ? "tile_height_stone" : "tile_height_dirt";
-                    region.sides[index][i] = GameObject(region.map[index].getPosition(), sf::Vector2f(0, this->settings.region_tile_size.y / 2 + i * this->settings.region_tile_size.y / 2), this->settings.region_tile_size, tile);
-                }
-            }
-
-            // Tiles near the x edge.
-            if(x == this->settings.region_size - 1) {
-                const int height_difference = std::abs(0 - region.map[y * this->settings.region_size + this->settings.region_size - 1].elevation) + 1;
-                region.sides[index].resize(height_difference);
-                
-                for(int i = 0; i < height_difference; i++) {
-                    std::string tile = i > 2 ? "tile_height_stone" : "tile_height_dirt";
-                    region.sides[index][i] = GameObject(region.map[index].getPosition(), sf::Vector2f(0, this->settings.region_tile_size.y / 2 + i * this->settings.region_tile_size.y / 2), this->settings.region_tile_size, tile);
-                }
-            }
-        }
-    }
-
-    if(rand() % this->getWorldSize() < 0.4f * this->getWorldSize()) {
-        NoiseSettings settings = NoiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 16, 16, 4, 1.00f);
-        std::vector <float> noise_stone;
-        this->generateNoise(settings, noise_stone);
-    
-        for(int index = 0; index < noise_stone.size(); index++) { 
-            if(noise_stone[index] > 0.85f && !region.trees.count(index) && !region.map[index].tiletype.is_river()) {
-                region.map[index].object_texture_name = "tile_resource_stone";
-            }
-        }
-    }
-
-    region.visited = true;
-
-    std::cout.precision(3);
-    std::cout << "[World Generation][Region Generation]: Region " << index << " generated in " << clock.getElapsedTime().asSeconds() << " seconds.\n";
-    std::cout.precision(6);
 }
 
 void WorldGenerator::generateNoise(NoiseSettings& settings, std::vector<float>& storage) {
@@ -935,37 +830,6 @@ void WorldGenerator::generateNoise(NoiseSettings& settings, std::vector<float>& 
     }
 }
 
-std::string WorldGenerator::getBiomeTileTextureName(Biome biome) {
-    if(biome.biome_name == "Continental")
-        return "tile_grass_cold";
-
-    else if(biome.biome_name == "Temperate")    
-        return "tile_grass_warm";
-        
-    else if(biome.biome_name == "Tropical")
-        return "tile_grass_tropical";
-
-    else if(biome.biome_name == "Mediterranean")
-        return "tile_grass_subtropical";
-
-    else if(biome.biome_name == "Ocean")
-        return "tile_ocean";
-
-    else if(biome.biome_name == "Sea")
-        return "tile_sea";
-
-    else if(biome.biome_name == "Tundra")
-        return "tile_tundra";
-
-    else if(biome.biome_name == "Arctic")
-        return "tile_arctic";
-
-    else if(biome.biome_name == "Desert")
-        return "tile_desert";
-
-    else return "default";
-}
-
 sf::Vector2f WorldGenerator::tilePositionScreen(int x, int y) {
     return sf::Vector2f(
         (this->settings.region_tile_offset.x * this->settings.region_tile_size.x) + (x - y) * (this->settings.region_tile_size.x / 2),
@@ -1029,22 +893,12 @@ bool WorldGenerator::is_coast(int region_index) const {
     return this->world_map.at(region_index).regiontype.is_coast();
 }
 
-std::string WorldGenerator::getTreeTextureNameRegion(Biome biome) {
-    if(biome.biome_name == "Temperate") {
-        int value = std::rand() % 2;
+bool WorldGenerator::is_lake(int region_index) const {
+    return this->lakes.count(region_index);
+}
 
-        return (value > 0) 
-        ? "tile_tree_warm1"
-        : "tile_tree_warm2";
-    }
-
-    else if(biome.biome_name == "Continental" || biome.biome_name == "Tundra")
-        return "tile_tree_cold1";
-
-    else if(biome.biome_name == "Tropical" || biome.biome_name == "Mediterranean")
-        return "tile_tree_tropical1";
-
-    else return "default";
+bool WorldGenerator::is_river(int region_index) const {
+    return this->rivers.count(region_index);
 }
 
 std::string WorldGenerator::getTilePixelColour(sf::Vector2i pixel) {
@@ -1106,550 +960,6 @@ int WorldGenerator::getTileIndex(sf::Vector2f mouse_position, Region& region) {
     
     else
         return tiles[1];
-}
-
-void WorldGenerator::regionGenerateRiver(int region_index) {    
-    Region& region = this->world_map[region_index];
-
-    if(!region.regiontype.is_river())
-        return;
-
-    std::cout << "[World Generation][Region Generation]: Generating river.\n";
-
-    const int river_size = this->settings.region_size / 10 / 2;
-    RiverDirection direction = region.riverDirection();
-
-    switch(direction) {
-        default: {
-            std::cout << "[Error][Region Generation]: Unsupported river direction.\n";
-            break;
-        }
-        
-        case RiverDirection::RIVER_NONE: {
-            std::cout << "[World Generation][Region Generation]: River does not have a adjacent river.\n";
-            break;
-        }
-        
-        case RiverDirection::RIVER_ORIGIN: {
-            char adjacent_region_direction = '!';
-
-            if(this->world_map[region_index + 1].regiontype.is_river()) {
-                adjacent_region_direction = 'E';
-            }
-
-            if(this->world_map[region_index - 1].regiontype.is_river()) {
-                adjacent_region_direction = 'W';
-            }
-
-            if(this->world_map[region_index + this->settings.region_size].regiontype.is_river()) {
-                adjacent_region_direction = 'S';
-            }
-
-            if(this->world_map[region_index - this->settings.region_size].regiontype.is_river()) {
-                adjacent_region_direction = 'N';
-            }
-
-            if(adjacent_region_direction == '!') {
-                std::cout << "[Error][Region Generation]: There is no adjacent region to river origin.\n";
-                return;
-            }
-
-            std::cout << "[World Generation][Region Generation]: River direction is '" << adjacent_region_direction << "'.\n"; 
-
-            const auto pond_radius = (this->settings.region_size + this->settings.region_size) / 2 / 10;
-            const auto pond_centre = sf::Vector2f(this->settings.region_size / 2, this->settings.region_size / 2);
-
-            // Draw the pond itself.
-            for(int x = 0; x < this->settings.region_size; x++) {
-                for(int y = 0; y < this->settings.region_size; y++) {
-                    const int  index = this->rCalculateIndex(x, y);
-                    const bool in_circle = (x - pond_centre.x) * (x - pond_centre.x) + (y - pond_centre.y) * (y - pond_centre.y) < pond_radius * pond_radius; 
-
-                    if(in_circle) {
-                        region.map[index].object_texture_name = "tile_sea";
-                        region.map[index].tiletype.set_river();
-                    }
-                }
-            }
-
-            // Draw the river "connecting" the pond with adjacent regions.
-            switch(adjacent_region_direction) {
-                default: {
-                    std::cout << "[Error][Region Generator]: Could not generate river connection.\n";
-                    break;                 
-                }
-
-                case 'N': {
-                    NoiseSettings settings;
-                    settings.size        = sf::Vector2f(this->settings.region_size / 2, 1);
-                    settings.bias        = 6;
-                    settings.octaves     = 10;
-                    settings.persistence = 12;
-                    settings.multiplier  = 1.25;
-
-                    std::vector <float> disortion;
-                    this->generateNoise(settings, disortion);
-
-                    for(int x = this->settings.region_size / 2 - river_size; x < this->settings.region_size / 2 + river_size; x++) {
-                        for(int y = 0; y < this->settings.region_size / 2; y++) {
-                            const int value = disortion[y] / 0.15f;
-                            const int index = (x + value) * this->settings.region_size + y;
-
-                            region.map[index].object_texture_name = "tile_sea";
-                            region.map[index].tiletype.set_river();
-                        }
-                    }
-
-                    break;
-                }
-                
-                case 'S': {
-                    NoiseSettings settings;
-                    settings.size        = sf::Vector2f(this->settings.region_size / 2, 1);
-                    settings.bias        = 6;
-                    settings.octaves     = 10;
-                    settings.persistence = 12;
-                    settings.multiplier  = 1.25;
-
-                    std::vector <float> disortion;
-                    this->generateNoise(settings, disortion);
-
-                    for(int x = this->settings.region_size / 2 - river_size; x < this->settings.region_size / 2 + river_size; x++) {
-                        for(int y = this->settings.region_size / 2; y < this->settings.region_size; y++) {
-                            const int value = disortion[y - this->settings.region_size / 2] / 0.15f;
-                            const int index = (x + value) * this->settings.region_size + y;
-
-                            region.map[index].object_texture_name = "tile_sea";;
-                            region.map[index].tiletype.set_river();                        
-                        }
-                    }
-
-                    break;
-                }
-
-                case 'W': {
-                    NoiseSettings settings;
-                    settings.size        = sf::Vector2f(this->settings.region_size / 2, 1);
-                    settings.bias        = 6;
-                    settings.octaves     = 10;
-                    settings.persistence = 12;
-                    settings.multiplier  = 1.25;
-        
-                    std::vector <float> disortion;
-                    this->generateNoise(settings, disortion);
-        
-                    for(int x = this->settings.region_size / 2; x < this->settings.region_size; x++) {
-                        for(int y = this->settings.region_size / 2 - river_size; y < this->settings.region_size / 2 + river_size; y++) {
-                            const int value = disortion[x - this->settings.region_size / 2] / 0.15f;
-                            const int index = x * this->settings.region_size + y + value;
-                            
-                            region.map[index].object_texture_name = "tile_sea";
-                            region.map[index].tiletype.set_river();
-                        }
-                    }
-                    
-                    break;
-                }
-
-                case 'E': {
-                    NoiseSettings settings;
-                    settings.size        = sf::Vector2f(this->settings.region_size / 2, 1);
-                    settings.bias        = 6;
-                    settings.octaves     = 10;
-                    settings.persistence = 12;
-                    settings.multiplier  = 1.25;
-        
-                    std::vector <float> disortion;
-                    this->generateNoise(settings, disortion);
-        
-                    for(int x = 0; x < this->settings.region_size / 2; x++) {
-                        for(int y = this->settings.region_size / 2 - river_size; y < this->settings.region_size / 2 + river_size; y++) {
-                            const int value = disortion[x] / 0.15f;
-                            const int index = x * this->settings.region_size + y + value;
-                            
-                            region.map[index].object_texture_name = "tile_sea";
-                            region.map[index].tiletype.set_river();
-                        }
-                    }
-
-                    break;
-                }
-            }
-
-            break;
-        }
-    
-        case RiverDirection::RIVER_HORIZONTAL: {        
-            NoiseSettings settings;
-            settings.size        = sf::Vector2f(this->settings.region_size, 1);
-            settings.bias        = 6;
-            settings.octaves     = 10;
-            settings.persistence = 12;
-            settings.multiplier  = 1.25;
-
-            std::vector <float> disortion(this->settings.region_size);
-            this->generateNoise(settings, disortion);
-
-            for(int x = 0; x < this->settings.region_size; x++) {
-                for(int y = this->settings.region_size / 2 - river_size; y < this->settings.region_size / 2 + river_size; y++) {
-                    const int value = disortion[x] / 0.15f;
-                    const int index = x * this->settings.region_size + y + value;
-                    
-                    region.map[index].object_texture_name = "tile_sea";
-                    region.map[index].tiletype.set_river();
-                }
-            }
-
-            break;
-        }
-
-        case RiverDirection::RIVER_VERTICAL: {
-            NoiseSettings settings;
-            settings.size        = sf::Vector2f(this->settings.region_size, 1);
-            settings.bias        = 6;
-            settings.octaves     = 10;
-            settings.persistence = 12;
-            settings.multiplier  = 1.25;
-
-            std::vector <float> disortion(this->settings.region_size);
-            this->generateNoise(settings, disortion);
-
-            for(int x = this->settings.region_size / 2 - river_size; x < this->settings.region_size / 2 + river_size; x++) {
-                for(int y = 0; y < this->settings.region_size; y++) {
-                    const int value = disortion[y] / 0.15f;
-                    const int index = (x + value) * this->settings.region_size + y;
-
-                    region.map[index].object_texture_name = "tile_sea";
-                    region.map[index].tiletype.set_river();
-                }
-            }
-
-            break;
-        }
-
-        case RiverDirection::RIVER_NORTH_TO_EAST: {            
-            const sf::Vector2i relative_point = sf::Vector2i(0, 0);
-            for(int x = 0; x < this->settings.region_size / 2; x++) {
-                for(int y = 0; y < this->settings.region_size / 2; y++) {
-                    const int   index = this->rCalculateIndex(x, y);
-                    const float distance_x = (relative_point.x - x) * (relative_point.x - x);
-                    const float distance_y = (relative_point.y - y) * (relative_point.y - y);
-                    const float distance = sqrt(distance_x + distance_y) / (this->settings.region_size / 4 * 2);
-
-                    if(distance > 0.85f && distance < 1.05f) {
-                        region.map[index].object_texture_name = "tile_sea";
-                        region.map[index].tiletype.set_river();
-                    }
-                }
-            }
-
-            break;
-        }
-
-        case RiverDirection::RIVER_NORTH_TO_WEST: {
-            const sf::Vector2i relative_point = sf::Vector2i(0, this->settings.region_size);
-            for(int x = 0; x < this->settings.region_size / 2; x++) {
-                for(int y = this->settings.region_size / 2; y < this->settings.region_size; y++) {
-                    const int   index = this->rCalculateIndex(x, y);
-                    const float distance_x = (relative_point.x - x) * (relative_point.x - x);
-                    const float distance_y = (relative_point.y - y) * (relative_point.y - y);
-                    const float distance = sqrt(distance_x + distance_y) / (this->settings.region_size / 4 * 2);
-
-                    if(distance > 0.85f && distance < 1.05f) {
-                        region.map[index].object_texture_name = "tile_sea";
-                        region.map[index].tiletype.set_river();
-                    }
-                }
-            }
-
-            break;
-        }
-
-        case RiverDirection::RIVER_SOUTH_TO_EAST: {
-            const sf::Vector2i relative_point = sf::Vector2i(this->settings.region_size, 0);
-            for(int x = this->settings.region_size / 2; x < this->settings.region_size; x++) {
-                for(int y = this->settings.region_size / 2; y >= 0; y--) {
-                    const int   index = this->rCalculateIndex(x, y);
-                    const float distance_x = (relative_point.x - x) * (relative_point.x - x);
-                    const float distance_y = (relative_point.y - y) * (relative_point.y - y);
-                    const float distance = sqrt(distance_x + distance_y) / (this->settings.region_size / 4 * 2);
-
-                    if(distance > 0.85f && distance < 1.05f) {
-                        region.map[index].object_texture_name = "tile_sea";
-                        region.map[index].tiletype.set_river();
-                    }
-                }
-            }
-            
-            break;
-        }
-
-        case RiverDirection::RIVER_SOUTH_TO_WEST: {
-            const sf::Vector2i relative_point = sf::Vector2i(this->settings.region_size, this->settings.region_size);
-            for(int x = this->settings.region_size - 1; x >= this->settings.region_size / 2; x--) {
-                for(int y = this->settings.region_size - 1; y >= this->settings.region_size / 2; y--) {
-                    const int   index = this->rCalculateIndex(x, y);
-                    const float distance_x = (relative_point.x - x) * (relative_point.x - x);
-                    const float distance_y = (relative_point.y - y) * (relative_point.y - y);
-                    const float distance = sqrt(distance_x + distance_y) / (this->settings.region_size / 4 * 2);
-
-                    if(distance > 0.85f && distance < 1.05f) {
-                        region.map[index].object_texture_name = "tile_sea";
-                        region.map[index].tiletype.set_river();
-                    }
-                }
-            }
-
-            break;
-        }
-    }
-}
-
-void WorldGenerator::regionGenerateForest(int region_index) {
-    Region& region = this->world_map[region_index];
-
-    NoiseSettings settings;
-
-    const bool dense = region.regiontype.is_forest();
-
-    if(dense)
-        settings = NoiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 12, 4, 1.25f);
-    
-    else
-        settings = NoiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 4, 8, 4, 0.90f);
-    
-    std::string forest_type = dense ? "dense" : "sparse";
-    std::cout << "[World Generation][Region Generation]: Generating a " << forest_type << " forest.\n";
-
-    std::vector <float> noise;
-    this->generateNoise(settings, noise);
-
-    for(int i = 0; i < noise.size(); i++) {
-        auto& tile = region.map[i];
-        if(!tile.tiletype.is_river() && noise[i] > 0.7f) {
-            std::pair <int, GameObject> pair(i, GameObject(tile.getPosition(), sf::Vector2f(0, 1.5f * -this->settings.region_tile_size.y), sf::Vector2f(this->settings.region_tile_size.x, 2 * this->settings.region_tile_size.y), this->getTreeTextureNameRegion(region.biome)));
-            region.trees.insert(pair);
-        }
-    }
-}
-
-void WorldGenerator::regionGenerateHeight(int region_index) {
-    Region& region = this->world_map[region_index];
-
-    std::cout << "[World Generation][Region Generation]: Generating flatlands.\n";
-
-    // Height modifier for fancier terrain.
-    const float height_modifier = 1.2f;
-
-    NoiseSettings height_settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 16, 16, 4, height_modifier);
-    std::vector <float> height;
-    this->generateNoise(height_settings, height);
-
-    const RiverDirection river_direction = region._direction;
-
-    for(int i = 0; i < region.map.size(); i++) {
-        region.map[i]._marked = false;
-    }
-
-    // How many tiles from the river should be smoothed to create a valley-like look.
-    const int terrain_slope = this->settings.region_size / 10;
-
-    const auto smaller_slope = [&](int slope) -> float {
-        return std::floor(std::abs(std::sqrt(slope) - 1));
-    };
-
-    for(int y = 0; y < this->settings.region_size; y++) {
-        for(int x = 0; x < this->settings.region_size; x++) {
-            const int index = this->rCalculateIndex(x, y);
-
-            // For tiles that follow a river the elevation should be similar to a valley.
-            if(region.map[index].tiletype.is_river()) {
-                if(river_direction == RiverDirection::RIVER_HORIZONTAL) {
-                    // For the southern coast.
-                    if(index - 1 >= 0) {
-                        if(!region.map[index - 1].tiletype.is_river()) {
-                            for(int slope_left = 0; slope_left < terrain_slope; slope_left++) {
-                                const int index_left = index - slope_left;
-                    
-                                if(index_left >= 0) {
-                                    if(!region.map[index_left].tiletype.is_river() && !region.map[index_left]._marked) {
-                                        const int elevation = smaller_slope(slope_left);  
-                                        region.map[index_left]._marked = true;
-                                        region.map[index_left].elevation = elevation;
-                                        region.map[index_left].tiletype.set_terrain();
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // For the northern coast.
-                    if(index + 1 < this->getRegionSize()) {
-                        if(!region.map[index + 1].tiletype.is_river()) {
-                            for(int slope_right = 0; slope_right < terrain_slope; slope_right++) {
-                                const int index_right = index + slope_right;
-    
-                                if(index_right < this->getRegionSize()) {
-                                    if(!region.map[index_right].tiletype.is_river() && !region.map[index_right]._marked) {
-                                        const int elevation = smaller_slope(slope_right); 
-                                        region.map[index_right]._marked = true;
-                                        region.map[index_right].elevation = elevation;
-                                        region.map[index_right].tiletype.set_terrain();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }                      
-
-                if(river_direction == RiverDirection::RIVER_VERTICAL) {
-                    // For the western coast.
-                    if(index - this->settings.region_size >= 0) {
-                        if(!region.map[index - this->settings.region_size].tiletype.is_river()) {
-                            for(int slope_top = 0; slope_top < terrain_slope; slope_top++) {
-                                const int index_top = index - slope_top * this->settings.region_size;
-
-                                if(index_top >= 0) {
-                                    if(!region.map[index_top].tiletype.is_river() && !region.map[index_top]._marked) {
-                                        const int elevation = smaller_slope(slope_top); 
-                                        region.map[index_top]._marked = true;
-                                        region.map[index_top].elevation = elevation;
-                                        region.map[index_top].tiletype.set_terrain();
-                                    }
-                                }
-                            }
-                        }
-                    } 
-
-                    // For the eastern coast.
-                    if(index + this->settings.region_size < this->getRegionSize()) {
-                        if(!region.map[index + this->settings.region_size].tiletype.is_river()) {
-                            for(int slope_bottom = 0; slope_bottom < terrain_slope; slope_bottom++) {
-                                const int index_bottom = index + slope_bottom * this->settings.region_size;
-
-                                if(index_bottom < this->getRegionSize()) {
-                                    if(!region.map[index_bottom].tiletype.is_river() && !region.map[index_bottom]._marked) {
-                                        const int elevation = smaller_slope(slope_bottom); 
-                                        region.map[index_bottom]._marked = true;
-                                        region.map[index_bottom].elevation = elevation;
-                                        region.map[index_bottom].tiletype.set_terrain();
-                                    }
-                                }                                
-                            }
-                        }
-                    }
-                } 
-            
-                if(river_direction == RiverDirection::RIVER_NORTH_TO_EAST || river_direction == RiverDirection::RIVER_NORTH_TO_WEST || river_direction == RiverDirection::RIVER_SOUTH_TO_EAST || river_direction == RiverDirection::RIVER_SOUTH_TO_WEST || river_direction == RiverDirection::RIVER_ORIGIN) {
-                    // For the western coast.
-                    if(index - 1 >= 0 && index - 1 >= y * this->settings.region_size) {
-                        if(!region.map[index - 1].tiletype.is_river()) {
-                            for(int slope_left = 0; slope_left < terrain_slope; slope_left++) {
-                                const int index_left = index - slope_left;
-
-                                if(index_left >= 0) {
-                                    if(!region.map[index_left].tiletype.is_river() && !region.map[index_left]._marked) {
-                                        const int elevation = smaller_slope(slope_left);
-                                        region.map[index_left]._marked = true;
-                                        region.map[index_left].elevation = elevation;
-                                        region.map[index_left].tiletype.set_terrain();
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // For the eastern coast.
-                    if(index + 1 < this->getRegionSize() && index + 1 < (y + 1) * this->settings.region_size) {
-                        if(!region.map[index + 1].tiletype.is_river()) {
-                            for(int slope_right = 0; slope_right < terrain_slope; slope_right++) {
-                                const int index_right = index + slope_right;
-
-                                if(index_right < this->getRegionSize()) {
-                                    if(!region.map[index_right].tiletype.is_river() && !region.map[index_right]._marked) {
-                                        const int elevation = smaller_slope(slope_right);
-                                        region.map[index_right]._marked = true;
-                                        region.map[index_right].elevation = elevation;
-                                        region.map[index_right].tiletype.set_terrain();
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // For the northern coast.
-                    if(index - this->settings.region_size >= 0) {
-                        if(!region.map[index - this->settings.region_size].tiletype.is_river()) {
-                            for(int slope_left = 0; slope_left < terrain_slope; slope_left++) {
-                                const int index_left = index - slope_left * this->settings.region_size;
-
-                                if(index_left >= 0) {
-                                    if(!region.map[index_left].tiletype.is_river() && !region.map[index_left]._marked) {
-                                        const int elevation = smaller_slope(slope_left);  
-                                        region.map[index_left]._marked = true;
-                                        region.map[index_left].elevation = elevation;
-                                        region.map[index_left].tiletype.set_terrain();
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // For the southern coast.
-                    if(index + this->settings.region_size < this->getRegionSize()) {
-                        if(!region.map[index + this->settings.region_size].tiletype.is_river()) {
-                            for(int slope_right = 0; slope_right < terrain_slope; slope_right++) {
-                                const int index_right = index + slope_right * this->settings.region_size;
-                                
-                                if(index_right < this->getRegionSize()) {
-                                    if(!region.map[index_right].tiletype.is_river() && !region.map[index_right]._marked) {
-                                        const int elevation = smaller_slope(slope_right);
-                                        region.map[index_right]._marked = true;
-                                        region.map[index_right].elevation = elevation;
-                                        region.map[index_right].tiletype.set_terrain();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Mark the river tiles.
-                region.map[index]._marked = true; 
-            }
-
-            // For tiles that are not placed along a river and are not the river itself.
-            if(!region.map[index]._marked && !region.map[index].tiletype.is_river()) {
-                // Terrain generation starts from the top left corner of the region
-                // and continues until it reaches the bottom right corner.
-                // That is why you only check only two cardinal directions, rather than four.
-                int elevation_top  = (index >= this->settings.region_size)         ? region.map[index - this->settings.region_size].elevation * height_modifier : 0;
-                int elevation_left = (index - 1 > 0)                               ? region.map[index - 1].elevation * height_modifier : 0;
-                int elevation      = (index >= 0 && index < this->getRegionSize()) ? height[index] / 0.20f : 0;        
-
-                int divisors  = 1;
-                if(elevation_top != 0) {
-                    elevation += elevation_top;
-                    divisors++;
-                }
-
-                if(elevation_left != 0) {
-                    elevation += elevation_left;
-                    divisors++;
-                }
-
-                // Calculate the average value of the elevation of the three tiles.
-                elevation /= divisors;
-                
-                region.map[index].elevation = elevation;
-                region.map[index].tiletype.set_terrain();
-            }   
-        }
-    }
-
-    // Correct the position of tiles due to change in elevation.
-    for(int i = 0; i < region.map.size(); i++) 
-        region.map[i].object_position = region.map[i].object_position + sf::Vector2f(0, -region.map[i].elevation * this->settings.region_tile_size.y / 2);
 }
 
 int WorldGenerator::getWorldSize() const {
@@ -1891,129 +1201,14 @@ std::string WorldGenerator::getWorldmapTreeTextureName(const Biome& biome) const
     if(biome == BIOME_TEMPERATE)
         return "panel_tree_temperate_1";
 
-    if(biome == BIOME_MEADITERRANEAN || biome == BIOME_TROPICAL)
+    if(biome == BIOME_MEADITERRANEAN)
         return "panel_tree_mediterranean_1";
+
+    if(biome == BIOME_TROPICAL)
+        return "panel_tree_tropical_1";
 
     return "default";
 }
-/*
-std::string WorldGenerator::getRiverTile(int index) const {
-    auto& region    = this->world_map[index];
-    const auto is_terrain = region.regiontype.is_terrain();
-    const auto is_ocean   = region.regiontype.is_ocean();
-    const auto is_coast   = region.regiontype.is_coast();
-    const auto is_forest  = region.regiontype.is_forest();
-
-    bool TOPLEFT     = false;
-    bool TOP         = false;
-    bool TOPRIGHT    = false;
-    bool LEFT        = false;
-    bool RIGHT       = false;
-    bool BOTTOMLEFT  = false;
-    bool BOTTOM      = false;
-    bool BOTTOMRIGHT = false;
-
-    auto world_size = this->getWorldSize();
-    const auto in_limits = [world_size](int index) -> bool {
-        return (index > 0 && index < world_size);
-    };
-
-    // LEFT
-    if(in_limits(index - 1)) {
-        if(this->world_map[index - 1].regiontype.is_river()) {
-            LEFT = true;
-        }
-    }
-
-    // RIGHT
-    if(in_limits(index + 1)) {
-        if(this->world_map[index + 1].regiontype.is_river()) {
-            RIGHT = true;
-        }
-    }
-
-    // TOP
-    if(in_limits(index - this->settings.world_size)) {
-        if(this->world_map[index - this->settings.world_size].regiontype.is_river()) {
-            TOP = true;
-        }
-    }
-
-    // TOP LEFT
-    if(in_limits(index - 1 - this->settings.world_size)) {
-        if(this->world_map[index - 1 - this->settings.world_size].regiontype.is_river()) {
-            TOPLEFT = true;
-        }
-    }
-    
-    // TOP RIGHT
-    if(in_limits(index + 1 - this->settings.world_size)) {
-        if(this->world_map[index + 1 - this->settings.world_size].regiontype.is_river()) {
-            TOPRIGHT = true;
-        }
-    }
-
-    // BOTTOM
-    if(in_limits(index + this->settings.world_size)) {
-        if(this->world_map[index + this->settings.world_size].regiontype.is_river()) {
-            BOTTOM = true;
-        }
-    }
-    
-    // BOTTOM LEFT
-    if(in_limits(index - 1 + this->settings.world_size)) {
-        if(this->world_map[index - 1 + this->settings.world_size].regiontype.is_river()) {
-            BOTTOMLEFT = true;
-        }
-    }
-    
-    // BOTTOM RIGHT
-    if(in_limits(index + 1 + this->settings.world_size)) {
-        if(this->world_map[index + 1 + this->settings.world_size].regiontype.is_river()) {
-            BOTTOMRIGHT = true;
-        }
-    }
-
-    if(TOP && LEFT && !RIGHT)
-        return this->getRiverTileVariation("panel_river_turn_br");
-
-    if(TOP && RIGHT && !LEFT)
-        return this->getRiverTileVariation("panel_river_turn_bl");
-
-    if(BOTTOM && LEFT && !RIGHT)
-        return this->getRiverTileVariation("panel_river_turn_tr");
-
-    if(BOTTOM && RIGHT && !LEFT)
-        return this->getRiverTileVariation("panel_river_turn_tl");
-
-    // If the horizontal or vertical tile is a coastal tile, 
-    // the texture returned will be a estuary to point out it's a river delta.
-    
-    if(LEFT && RIGHT)
-        return this->getRiverTileVariation("panel_river_horizontal");
-
-    if(in_limits(index - 1))
-        if(this->is_ocean(index - 1) && RIGHT)
-            return this->getRiverTileVariation("panel_river_estuary_left");
-        
-        if(in_limits(index + 1))
-            if(this->is_ocean(index + 1) && LEFT)
-                return this->getRiverTileVariation("panel_river_estuary_right");
-
-    if(TOP && BOTTOM)
-        return this->getRiverTileVariation("panel_river_vertical"); 
-    
-    if(in_limits(index - this->settings.world_size))
-        if(this->is_ocean(index - this->settings.world_size) && BOTTOM)
-            return this->getRiverTileVariation("panel_river_estuary_up");
-
-    if(in_limits(index + this->settings.world_size))
-        if(this->is_ocean(index + this->settings.world_size) && TOP)
-            return this->getRiverTileVariation("panel_river_estuary_down");
- 
-    return "panel_full_lightblue";
-}
-*/
 
 std::string WorldGenerator::getRiverTileVariation(const std::string& id) const {
     // Rest of the tiles have 3 variations each.
@@ -2047,4 +1242,112 @@ std::string WorldGenerator::createColouredTexture(const std::string& id, const s
     texture.loadFromImage(image);
     this->resource->addTexture(save_as, texture, intrect);
     return save_as;
+}
+
+void WorldGenerator::generateRegion(int region_index) {
+    auto& region = this->world_map[region_index];
+    
+    // Do not generate the region that was generated already.
+    if(region.visited)
+        return;
+
+    region.map.resize(this->getRegionSize());
+    
+    /* Region generation steps:
+     * 1. Read every pixel from the region texture. If the pixel is BLACK, place terrain. If the pixel is WHITE, place water.
+     * 2. If a river or lake exists in the region, read every pixel from the river texture and place them in the appropriate position on the region map.
+     * 3. If the region is forest, generate a noise map for the forest. If a tile is above a certain threshold, place a tree. 
+     * 4. Place other region resources. */
+
+    const auto& region_texture_name = region.getTextureName();
+    const auto& base_texture        = this->extractBaseTexture(region_texture_name, region.biome);     
+    const auto region_image         = this->resource->getTexture(base_texture).copyToImage();    
+    for(int y = 0; y < this->settings.region_size; y++) {
+        for(int x = 0; x < this->settings.region_size; x++) {
+            const int index   = this->rCalculateIndex(x, y);
+            const auto colour = region_image.getPixel(x, y);
+            
+            this->m_tile.object_position = this->tilePositionScreen(x, y);
+
+            // Read terrain data.
+            colour == COLOUR_WHITE
+                ? this->m_tile.tiletype.set_water()
+                : this->m_tile.tiletype.set_terrain();
+
+            // Read elevation data.
+            colour == COLOUR_WHITE
+                ? this->m_tile.elevation = 0
+                : this->m_tile.elevation = 1;
+        
+            if(this->m_tile.tiletype.is_terrain())
+                this->m_tile.object_texture_name = "tile_grass_warm";
+            else
+                this->m_tile.object_texture_name = "tile_ocean";
+
+            region.map[index] = this->m_tile;
+        }
+    }
+
+    const bool river_exists = this->is_river(region_index);
+    if(river_exists) {
+        const auto& river = this->rivers[region_index];
+        const auto river_image = this->resource->getTexture(river.getTextureName()).copyToImage();
+
+        for(int y = 0; y < this->settings.region_size; y++) {
+            for(int x = 0; x < this->settings.region_size; x++) {
+                const int index   = this->rCalculateIndex(x, y);
+                const auto colour = river_image.getPixel(x, y);
+                auto& tile        = region.map[index];
+
+                colour == COLOUR_BLUE_RIVER
+                    ? tile.tiletype.set_river()
+                    : tile.tiletype.set_terrain();
+
+                if(tile.tiletype.is_river())
+                    tile.object_texture_name = "tile_ocean";
+            }
+        }   
+    }
+
+    const bool lake_exists = this->is_lake(region_index);
+    if(lake_exists) {
+        const auto& lake = this->lakes[region_index];
+        const auto lake_image = this->resource->getTexture(lake.getTextureName()).copyToImage();
+
+        for(int y = 0; y < this->settings.region_size; y++) {
+            for(int x = 0; x < this->settings.region_size; x++) {
+                const int index   = this->rCalculateIndex(x, y);
+                const auto colour = lake_image.getPixel(x, y);
+                auto& tile        = region.map[index];
+
+                if(colour == COLOUR_BLUE_RIVER) {
+                    tile.tiletype.set_river();
+                    tile.object_texture_name = "tile_ocean";
+                }
+            }
+        }  
+    }
+
+    region.visited = true;
+}
+
+std::string WorldGenerator::getBiomeTile(const Biome& biome) const {
+    return "tile_grass_warm";
+}
+
+std::string WorldGenerator::getBiomeTree(const Biome& biome) const {
+    return "tile_tree_warm1";
+}
+
+std::string WorldGenerator::extractBaseTexture(const std::string& id, const Biome& biome) const {
+    const std::string biome_suffix = "_" + toLower(biome.biome_name);
+    
+    const int id_length           = id.length();
+    const int biome_suffix_length = biome_suffix.length();
+    const int end_index = id_length - biome_suffix_length;
+
+    std::string extract_string = "";
+    for(int i = 0; i < end_index; i++)
+        extract_string.append(1, id[i]);    
+    return extract_string;
 }

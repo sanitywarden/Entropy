@@ -16,7 +16,6 @@ Regionmap::~Regionmap() {
 }
 
 void Regionmap::initialise() {
-    this->mouse_pressed         = false;
     this->mouse_moved           = false;
     this->mouse_drag            = false;
 
@@ -197,10 +196,8 @@ void Regionmap::handleInput() {
                 this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
                 this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
                 
-                if(this->controls.mouseLeftPressed()) {
-                    this->mouse_pressed    = true;
+                if(this->controls.mouseMiddlePressed())
                     this->position_pressed = this->mouse_position_window;
-                }
                 
                 break;
             }
@@ -211,7 +208,6 @@ void Regionmap::handleInput() {
                 this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
                 
                 this->mouse_drag    = false;
-                this->mouse_pressed = false;
                 break;
             }
 
@@ -240,7 +236,7 @@ void Regionmap::handleInput() {
         }
     }
 
-    if(this->mouse_moved && this->mouse_pressed)
+    if(this->mouse_moved && this->controls.mouseMiddlePressed())
         this->mouse_drag = true;
 
     else {
@@ -313,7 +309,7 @@ void Regionmap::renderRegion() {
         const auto& tile_texture = object.getTextureName();        
         
         try {
-            return TEXTURE_LOOKUP_TABLE.at(tile_texture);
+            return REGIONMAP_TEXTURE_LOOKUP_TABLE.at(tile_texture);
         }
         catch(const std::exception& exception) {
             std::cout << "[Regionmap]: No texture with ID " << tile_texture << " is present in texture table.\n";
@@ -526,7 +522,7 @@ int Regionmap::getCurrentIndex() {
 
 void Regionmap::updateTile() {
     auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY && !this->intersectsUI() && this->mouse_pressed && !this->mouse_drag && building_menu->show) {
+    if(building_menu->getBuilding() != BUILDING_EMPTY && !this->intersectsUI() && !this->mouse_drag && building_menu->show) {
         Building building = building_menu->getBuilding();
         this->region->placeBuildingCheck(building, this->manager->settings, this->current_index);
         this->updatePaths(this->current_index);

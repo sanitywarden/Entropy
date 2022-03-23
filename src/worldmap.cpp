@@ -16,9 +16,8 @@ Worldmap::~Worldmap() {
 }
 
 void Worldmap::initialise() {
-    this->mouse_pressed  = false;
-    this->mouse_moved    = false;
     this->mouse_drag     = false;
+    this->mouse_moved    = false;
     this->move_camera    = false;
     this->zoom_camera    = false;
 
@@ -147,6 +146,7 @@ void Worldmap::loadResources() {
     this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_continental_1"  , sf::IntRect(0, 0, 128, 128));
     this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_temperate_1"    , sf::IntRect(128, 0, 128, 128));
     this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_mediterranean_1", sf::IntRect(256, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_tropical_1"     , sf::IntRect(384, 0, 128, 128));
 
     this->manager->resource.loadTexture("./res/units/units_worldmap.png", "unit_worldmap_settler", sf::IntRect(0, 0, 32, 16 ));
     this->manager->resource.loadTexture("./res/units/units_worldmap.png", "unit_worldmap_warrior", sf::IntRect(32, 0, 32, 16));
@@ -358,10 +358,8 @@ void Worldmap::handleInput() {
                 this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
                 this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
                 
-                if(this->controls.mouseMiddlePressed()) {
-                    this->mouse_pressed    = true;
+                if(this->controls.mouseMiddlePressed())
                     this->position_pressed = this->mouse_position_window;
-                }
                 
                 Region& current_region = this->manager->world.world_map[this->current_index];
                 const bool unit_exists = current_region.isUnitPresent();
@@ -394,7 +392,6 @@ void Worldmap::handleInput() {
                 this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
                 
                 this->mouse_drag    = false;
-                this->mouse_pressed = false;
                 break;
             }
 
@@ -423,12 +420,11 @@ void Worldmap::handleInput() {
         }
     }
 
-    if(this->mouse_moved && this->mouse_pressed)
+    if(this->mouse_moved && this->controls.mouseMiddlePressed())
         this->mouse_drag = true;
 
     else {
         this->mouse_drag  = false;
-        this->mouse_moved = false;
     }
 }
 
@@ -477,11 +473,24 @@ void Worldmap::renderWorld() {
         }
     }
 
+    for(const auto& pair : this->manager->world.lakes) {
+        const auto& lake = pair.second;
+
+        sf::Rect lake_screen_space(lake.getPosition(), lake.getSize());
+
+        if(camera_screen_area.intersects(lake_screen_space)) {
+            sf::RenderStates states;
+            states.texture = &this->manager->resource.getTexture(lake.getTextureName());
+            this->manager->window.draw(lake, states);
+            gpu_draw_calls++;
+        }
+    }
+
     this->draw_calls = gpu_draw_calls;
 }
 
 void Worldmap::selectPanel() {
-    if(this->controls.mouseLeftPressed() && !this->intersectsUI() && !this->mouse_moved && !this->mouse_drag) {
+    if(this->controls.mouseLeftPressed() && !this->intersectsUI()) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
             this->mouse_position_window.y / this->manager->settings.world_panel_size.y
@@ -498,7 +507,7 @@ void Worldmap::selectPanel() {
 }
 
 void Worldmap::unselectPanel() {
-    if(this->controls.mouseRightPressed() && !this->mouse_moved && !this->mouse_drag && this->selected_index != -1) {
+    if(this->controls.mouseRightPressed() && this->selected_index != -1) {
         this->selected_index = -1;
         
         gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
@@ -616,7 +625,6 @@ void Worldmap::gamestateLoad() {
 
     this->mouse_moved   = false;
     this->mouse_drag    = false;
-    this->mouse_pressed = false;
 }
 
 void Worldmap::gamestateClose() {

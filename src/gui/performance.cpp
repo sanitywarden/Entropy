@@ -56,6 +56,7 @@ void DebugPerformance::updateUI() {
         data += "Draw calls: "     + std::to_string(draw_calls) + "\n";
         data += "Terrain: "        + std::to_string(this->manager->world.world_map[current_index].regiontype.is_terrain()) + "\n";
         data += "Coast: "          + std::to_string(this->manager->world.world_map[current_index].regiontype.is_coast())   + "\n";
+        data += "Lake: "           + std::to_string(this->manager->world.is_lake(current_index)) + "\n";
     }
 
     if(gamestate_id == "Regionmap") {

@@ -85,7 +85,7 @@ void WidgetUnit::functionality() {
     const int region_index = unit->current_index;  
     auto&     region = this->manager->world.world_map[region_index];
 
-    if(this->canColonise(region_index) && this->unit && this->unit->getName() == "settler" && worldmap->mouse_pressed && button_colonise->containsPoint(worldmap->mouse_position_interface)) {
+    if(this->canColonise(region_index) && this->unit && this->unit->getName() == "settler" && worldmap->controls.mouseLeftPressed() && button_colonise->containsPoint(worldmap->mouse_position_interface)) {
         // Region to be added to the player's territory.
         auto& human_player = this->manager->getHumanPlayer();
         human_player.addOwnedRegion(region_index);

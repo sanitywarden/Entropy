@@ -14,6 +14,20 @@
 namespace iso {
     typedef std::vector <float> NoiseContainer;
     
+    // enum class RegionTerrain {
+    //     TERRAIN_FLAT,
+    //     TERRAIN_HILL,
+    //     TERRAIN_MOUNTAIN,
+    //     TERRAIN_MARSH
+    // };
+
+    // enum class RegionFeature {
+    //     FEATURE_NONE,
+    //     FEATURE_FOREST,
+    //     FEATURE_RIVER,
+    //     FEATURE_MARSH
+    // };
+
     class WorldGenerator {
         private:
             Region m_region;
@@ -39,30 +53,22 @@ namespace iso {
             std::string getTileVariation(const std::string& id) const;
             std::string createBiomeSpecificTexture(const std::string& id, Biome biome) const;
             std::string getWorldmapTreeTextureName(const Biome& biome) const;
-
-            // std::string getRiverTile(int index) const;
             std::string getRiverTileVariation(const std::string& id) const;
-
             std::string createColouredTexture(const std::string& id, const std::string& save_as, const sf::Color colour_main, const sf::Color colour_secondary) const;
+            std::string extractBaseTexture(const std::string& id, const Biome& biome) const;
 
             // Regionmap API.
             
-            // std::string getBiomeSpecificTileAtlas(const Biome& biome) const;
-    
-            void regionGenerateHeight(int region_index);
-            void regionGenerateRiver (int region_index);
-            void regionGenerateForest(int region_index);
-
-            std::string getBiomeTileTextureName (Biome biome); 
-            std::string getTreeTextureNameRegion(Biome biome);
+            std::string getBiomeTile(const Biome& biome) const;
+            std::string getBiomeTree(const Biome& biome) const;
 
         public:
             WorldGenerator();
             WorldGenerator(entropy::resourceManager* resource, GenerationSettings& settings);
             ~WorldGenerator();
-        
+
             void generateWorld();
-            void generateRegion(int index, Region& region);
+            void generateRegion(int region_index);
     
             sf::Vector2f tilePositionScreen(int x, int y);
             sf::Vector2f tilePositionScreen(sf::Vector2i grid_position);
@@ -85,6 +91,8 @@ namespace iso {
             
             bool is_terrain      (int index) const;
             bool is_coast        (int index) const;
+            bool is_lake         (int index) const;
+            bool is_river        (int index) const;
 
             int getWorldSize()  const;
             int getRegionSize() const;
@@ -94,6 +102,7 @@ namespace iso {
             std::vector <Region>          world_map; 
             std::map    <int, GameObject> forests;
             std::map    <int, GameObject> rivers;
+            std::map    <int, GameObject> lakes;
     };
 }
 

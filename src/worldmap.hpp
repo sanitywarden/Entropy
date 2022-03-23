@@ -30,7 +30,6 @@ namespace iso {
 
             std::map <std::string, gui::InterfacePage*> interface;
             
-            bool mouse_pressed;
             bool mouse_moved;
             bool mouse_drag;
             bool move_camera;

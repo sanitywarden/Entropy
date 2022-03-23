@@ -100,7 +100,7 @@ void WidgetRegion::functionality() {
     Worldmap* worldmap    = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
     Button* button_travel = static_cast<Button*>(this->getComponent("button_travel"));
 
-    if(worldmap->selected_index != -1 && worldmap->mouse_pressed && !worldmap->mouse_drag && button_travel->containsPoint(worldmap->mouse_position_interface)) {
+    if(worldmap->selected_index != -1 && worldmap->controls.mouseLeftPressed() && !worldmap->mouse_drag && button_travel->containsPoint(worldmap->mouse_position_interface)) {
         Region& region = this->manager->world.world_map[worldmap->selected_index]; 
 
         // You check for these things here to avoid calling functions responsible for world generation.
@@ -127,7 +127,7 @@ void WidgetRegion::functionality() {
     
         // You have to generate the region first, because setCurrentRegion() depends on it being generated.
         if(!region.visited)
-            this->manager->world.generateRegion(worldmap->selected_index, region);
+            this->manager->world.generateRegion(worldmap->selected_index);
 
         regionmap->setCurrentRegion(worldmap->selected_index);
         this->manager->gamestate.setGamestate("regionmap");

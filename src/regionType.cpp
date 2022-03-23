@@ -8,7 +8,7 @@ RegionType::RegionType() {
         { "terrain", false },
         { "coast"  , false },
         { "river"  , false },
-        { "forest" , false },
+        { "forest" , false }
     });
 }
 

@@ -17,7 +17,7 @@ SimulationManager::SimulationManager() {
     settings.world_river_scan_size      = settings.world_size / 20;
     settings.world_noise_terrain        = 0.20f;
     settings.world_noise_forest         = 0.70f;
-    settings.world_panel_size.x         = 128;
+    settings.world_panel_size.x         = 128; // TODO: Panel size should be an int, not Vector2f.
     settings.world_panel_size.y         = 128;
     settings.world_noise_octaves        = 16;
     settings.world_noise_persistence    = 10;
@@ -31,7 +31,7 @@ SimulationManager::SimulationManager() {
     settings.world_gradient_persistence = 4;
     settings.world_gradient_bias        = 4;
     settings.world_gradient_multiplier  = 2.00f;
-    settings.region_size                = 100;
+    settings.region_size                = settings.world_panel_size.x;
     settings.region_tile_size.x         = 64;           
     settings.region_tile_size.y         = 32;           
     settings.region_tile_offset.x       = 0; 
@@ -174,9 +174,10 @@ Player& SimulationManager::getHumanPlayer() {
 }
 
 void SimulationManager::prepare() {
-    this->world.forests   = std::map <int, GameObject> ();
     this->world.world_map = std::vector <Region> (this->world.getWorldSize());
+    this->world.forests   = std::map <int, GameObject> ();
     this->world.rivers    = std::map <int, GameObject> ();
+    this->world.lakes     = std::map <int, GameObject> ();
     this->world.generateWorld();
     this->spawnPlayers();
 }

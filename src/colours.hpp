@@ -14,13 +14,15 @@ namespace iso {
 
     // Biome specific colours.
 
-    const sf::Color COLOUR_GREEN_TROPICAL     (33, 181, 7);
+    const sf::Color COLOUR_GREEN_TROPICAL     (79, 154, 22); 
     const sf::Color COLOUR_GREEN_MEDITERRANEAN(132, 177, 29);
     const sf::Color COLOUR_GREEN_TEMPERATE    (46, 131, 31);
     const sf::Color COLOUR_GREEN_CONTINENTAL  (24, 77, 14);
     const sf::Color COLOUR_BROWN_TUNDRA       (77, 77, 30);
     const sf::Color COLOUR_BLUE_OCEAN         (67, 102, 228);
     
+    const sf::Color COLOUR_BLUE_RIVER(47, 154, 229);
+
     const sf::Color COLOUR_RED    (229, 20, 0, 255);
     const sf::Color COLOUR_BLUE   (0, 80, 239, 255);
     const sf::Color COLOUR_GREEN  (0, 138, 0, 255);
