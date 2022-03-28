@@ -354,8 +354,6 @@ void Worldmap::handleInput() {
             }
 
             case sf::Event::MouseButtonPressed: {
-                this->manager->w_astar(0, 60);
-
                 this->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
                 this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
                 this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
