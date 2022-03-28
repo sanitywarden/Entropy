@@ -19,7 +19,7 @@ bool TileType::is_terrain() const {
 }
 
 bool TileType::is_water() const {
-    return !this->is_type(0);
+    return (this->is_ocean() || this->is_river());
 }
 
 bool TileType::is_river() const {

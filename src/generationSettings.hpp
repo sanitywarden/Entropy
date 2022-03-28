@@ -8,7 +8,7 @@ namespace iso {
         NoiseSettings()
             : size(sf::Vector2f(0, 0)), octaves(0), persistence(0), bias(0), multiplier(0) {}
 
-        NoiseSettings(sf::Vector2f size, int octaves, int persistence, int bias, float multiplier) 
+        NoiseSettings(sf::Vector2f size, int octaves, int persistence, int bias, float multiplier)  
             : size(size), octaves(octaves), persistence(persistence), bias(bias), multiplier(multiplier) {}
 
         int   octaves;

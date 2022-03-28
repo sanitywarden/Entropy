@@ -18,7 +18,7 @@ namespace iso {
     class Regionmap : public entropy::Gamestate {
         friend class SimulationManager;
 
-        private:
+        public:
             Region*            region;
             SimulationManager* manager;
             Scheduler          scheduler;
@@ -42,6 +42,8 @@ namespace iso {
             int current_index;
             int region_index;
             int draw_calls;
+
+            
         private:
             void handleInput()     override;
             void initialise()      override;

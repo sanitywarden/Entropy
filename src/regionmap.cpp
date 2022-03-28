@@ -57,18 +57,20 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_desert",                           sf::IntRect(384, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_ocean",                            sf::IntRect(448, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                              sf::IntRect(512, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_highlight",                        sf::IntRect(0, 288, 64, 32  ));
+    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_black",                            sf::IntRect(0, 288, 64, 32  ));
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction",               sf::IntRect(64, 288, 64, 32 ));
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_dirt",                      sf::IntRect(0, 32, 64, 32   ));
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_stone",                     sf::IntRect(64, 32, 64, 32  ));
     
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_resource_stone",                   sf::IntRect(0, 64, 64, 32   ));
 
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_foliage_atlas");
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm1",               sf::IntRect(0, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_warm2",               sf::IntRect(64, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_cold1",               sf::IntRect(128, 0, 64, 64 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_foliage_atlas.png", "tile_tree_tropical1",           sf::IntRect(256, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_beech"   , sf::IntRect(0, 0, 64, 96   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_oak"     , sf::IntRect(64, 0, 64, 96  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_1", sf::IntRect(0, 96, 64, 96  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_2", sf::IntRect(64, 96, 64, 96 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_cypress" , sf::IntRect(0, 192, 64, 96 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_acacia"  , sf::IntRect(64, 192, 64, 96));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96 ));
 
     this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_atlas");
     this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_small_house",     sf::IntRect(0, 0, 64, 64   ));
@@ -102,6 +104,11 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_top",   sf::IntRect(256, 96, 64, 32 ));
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 64, 64, 32 ));
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 96, 64, 32 ));
+
+    // TODO: Create separate API to create textures at runtime.
+
+    auto copy_black_tile = this->manager->resource.getTexture("tile_black");
+    this->manager->world.createColouredTexture("tile_black", "tile_highlight", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
 }
 
 void Regionmap::update(float delta_time) {
@@ -114,7 +121,7 @@ void Regionmap::update(float delta_time) {
 }
 
 void Regionmap::render(float delta_time) {
-    this->manager->window.getWindow()->clear(COLOUR_BLACK);    
+    this->manager->window.clear(COLOUR_BLACK);    
 
     this->manager->window.getWindow()->setView(this->view_game);
 
@@ -207,7 +214,7 @@ void Regionmap::handleInput() {
                 this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
                 this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
                 
-                this->mouse_drag    = false;
+                this->mouse_drag = false;
                 break;
             }
 
@@ -312,7 +319,7 @@ void Regionmap::renderRegion() {
             return REGIONMAP_TEXTURE_LOOKUP_TABLE.at(tile_texture);
         }
         catch(const std::exception& exception) {
-            std::cout << "[Regionmap]: No texture with ID " << tile_texture << " is present in texture table.\n";
+            std::cout << "[Regionmap]: No texture with ID '" << tile_texture << "' is present in texture table.\n";
             throw exception;
         }
     };
@@ -338,15 +345,19 @@ void Regionmap::renderRegion() {
             regionmap_mesh_tile.create(verticies_tilemap);
 
         for(int index = 0; index < this->manager->world.getRegionSize(); index++) {
-            /* There is no point in checking if this tile is in screen coordinates since this would only slow down the drawing process (due to a lot of stuff to compute).
-            * Same goes for sides of the tile. */
+            auto& tile         = this->region->map.at(index);
+            auto tile_position = tile.getPosition();
+            sf::Vector2f tile_elevation_offset = sf::Vector2f(0, 0);
+            
+            if(tile.elevation != 0)
+                tile_elevation_offset.y = -(tile.elevation * tile.getSize().y / 2); 
 
             sf::Vertex* quad = &verticies_tiles[verticies_index * 4];
 
-            quad[0].position = this->region->map[index].getPosition() + sf::Vector2f(0, 0);
-            quad[1].position = this->region->map[index].getPosition() + sf::Vector2f(tile_size.x, 0);
-            quad[2].position = this->region->map[index].getPosition() + sf::Vector2f(tile_size.x, tile_size.y);
-            quad[3].position = this->region->map[index].getPosition() + sf::Vector2f(0, tile_size.y);
+            quad[0].position = tile_position + tile_elevation_offset + sf::Vector2f(0, 0);
+            quad[1].position = tile_position + tile_elevation_offset + sf::Vector2f(tile_size.x, 0);
+            quad[2].position = tile_position + tile_elevation_offset + sf::Vector2f(tile_size.x, tile_size.y);
+            quad[3].position = tile_position + tile_elevation_offset + sf::Vector2f(0, tile_size.y);
 
             const auto texture_coords = findTexture(this->region->map[index]);
 
@@ -354,7 +365,7 @@ void Regionmap::renderRegion() {
             quad[1].texCoords = texture_coords + sf::Vector2f(tile_size.x, 0);
             quad[2].texCoords = texture_coords + sf::Vector2f(tile_size.x, tile_size.y);
             quad[3].texCoords = texture_coords + sf::Vector2f(0, tile_size.y);
-        
+
             // Add one to the index because you add the tile.
             verticies_index++;  
 
@@ -372,7 +383,7 @@ void Regionmap::renderRegion() {
                 side_quad[1].texCoords = texture_coords + sf::Vector2f(tile_size.x, 0);
                 side_quad[2].texCoords = texture_coords + sf::Vector2f(tile_size.x, tile_size.y);
                 side_quad[3].texCoords = texture_coords + sf::Vector2f(0, tile_size.y);
-            
+
                 // Add one to the index because you add the side.
                 verticies_index++;
             }
@@ -475,27 +486,69 @@ void Regionmap::setCurrentRegion(int region_index) {
 }
 
 void Regionmap::higlightTile() {
-    const int index = this->manager->world.getTileIndex(this->mouse_position_window, *this->region);
-    if(index == -1)
-        return;
-
-    if(this->mouse_drag)
-        return;
-
-    this->current_index = index;
-
     auto tile_size   = this->manager->settings.region_tile_size;
     auto tile_offset = this->manager->settings.region_tile_offset;
     auto region_size = sf::Vector2f(this->manager->settings.region_size, this->manager->settings.region_size);
 
-    sf::Vector2f position_transformed = this->region->map[index].getPosition();
+    sf::Vector2i mouse_position(
+        this->mouse_position_window.x,
+        this->mouse_position_window.y
+    );
+
+    sf::Vector2i cell(
+        mouse_position.x / tile_size.x,
+        mouse_position.y / tile_size.y
+    );
+
+    // Offset withing the tile.
+    // Used to find pixel colour on the cheat-texture.
+    sf::Vector2i offset(
+        (int)mouse_position.x % (int)tile_size.x,
+        (int)mouse_position.y % (int)tile_size.y
+    );
+
+    sf::Vector2i selected(
+        (cell.y - tile_offset.y) + (cell.x - tile_offset.x),
+        (cell.y - tile_offset.y) - (cell.x - tile_offset.x)
+    );
+
+    auto colour_name = this->manager->world.getTilePixelColour(offset);
+    if(colour_name == "Red")
+        selected += sf::Vector2i(-1, 0);
+
+    if(colour_name == "Green")
+        selected += sf::Vector2i(1, 0);
+
+    if(colour_name == "Blue")
+        selected += sf::Vector2i(0, -1);
+    
+    if(colour_name == "Yellow")
+        selected += sf::Vector2i(1, 0);
+
+
+    int index = selected.y * this->manager->settings.region_size + selected.x;
+
+    if(index < 0 || index > this->manager->world.getRegionSize())
+        return;
+
+    this->current_index = index;
+
+    if(this->mouse_drag)
+        return;
+
+    const auto& tile           = this->region->map[index];
+    auto tile_position         = tile.getPosition();
+    auto tile_elevation_offset = sf::Vector2f(0, 0);
+
+    if(tile.elevation != 0)
+        tile_elevation_offset.y = -(tile.elevation * tile.getSize().y / 2); 
 
     sf::VertexArray highlight(sf::Quads, 4);
 
-    highlight[0].position = position_transformed; 
-    highlight[1].position = position_transformed + sf::Vector2f(tile_size.x, 0);
-    highlight[2].position = position_transformed + sf::Vector2f(tile_size.x, tile_size.y);
-    highlight[3].position = position_transformed + sf::Vector2f(0, tile_size.y);
+    highlight[0].position = tile_position + tile_elevation_offset; 
+    highlight[1].position = tile_position + tile_elevation_offset + sf::Vector2f(tile_size.x, 0);
+    highlight[2].position = tile_position + tile_elevation_offset + sf::Vector2f(tile_size.x, tile_size.y);
+    highlight[3].position = tile_position + tile_elevation_offset + sf::Vector2f(0, tile_size.y);
 
     highlight[0].texCoords = sf::Vector2f(0, 0);
     highlight[1].texCoords = sf::Vector2f(tile_size.x, 0);

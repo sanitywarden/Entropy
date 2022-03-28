@@ -182,127 +182,6 @@ void SimulationManager::prepare() {
     this->spawnPlayers();
 }
 
-struct AStarNode {
-    int x;
-    int y;
-    int index;
-    int cost_heuristic;
-    int cost_sincestart;
-    bool visited;
-
-    AStarNode* parent;
-    std::vector <AStarNode> neighbours;
-
-    AStarNode() : index(0), cost_heuristic(9999), cost_sincestart(9999), visited(false), parent(nullptr) {};
-};
-
-/* A* algorithm implementation. 
- * Returns a vector with indexes of tiles forming a path. */
-std::vector <int> SimulationManager::astar(int start_index, int end_index) const {
-    const auto distance = [](AStarNode& node1, AStarNode& node2) -> int {
-        return std::abs(node1.x - node2.x) + std::abs(node1.y - node2.y);
-    };
-
-    const auto heuristic = [distance](AStarNode& node1, AStarNode& node2) -> int {
-        return distance(node1, node2);
-    };
-
-    // One million.
-    const int ASTAR_LIMIT = 1000000;
-
-    std::queue  <AStarNode> list_to_check;
-    std::vector <AStarNode> discovered_tiles(this->settings.region_size * this->settings.region_size);
-    std::vector <int>       solution;
-
-    AStarNode node;
-    for(int y = 0; y < this->settings.region_size; y++) {
-        for(int x = 0; x < this->settings.region_size; x++) {
-            const int index = y * this->settings.region_size + x;
-            node.x     = x;
-            node.y     = y;
-            node.index = index;
-            discovered_tiles[index] = node;   
-        }
-    }
-
-    AStarNode& start = discovered_tiles[start_index];
-    AStarNode& end   = discovered_tiles[end_index];    
-
-    start.cost_sincestart = 0;
-    start.cost_heuristic  = heuristic(start, end);
-
-    list_to_check.push(start);
-    int counter = 0;
-
-    AStarNode* current = nullptr;
-    while(!list_to_check.empty()) {
-        if(list_to_check.empty())
-            break;
-    
-        if(counter >= ASTAR_LIMIT) {
-            std::cout << "[Simulation Manager][A*]: Astar limit reached.\n";
-            break;
-        }
-
-        current = &list_to_check.front();
-        current->visited = true;
-
-        list_to_check.pop();
-
-        if(current->index == end.index)
-            break;
-
-        // Find neighbours.
-        if(current->index - 1 >= 0) {
-            auto& neighbour = discovered_tiles[current->index - 1];
-            if(current->y == neighbour.y)
-            current->neighbours.push_back(neighbour);
-        }
-
-        if(current->index + 1 < this->world.getRegionSize()) {
-            auto& neighbour = discovered_tiles[current->index + 1];
-            if(current->y == neighbour.y)
-            current->neighbours.push_back(neighbour);
-        }
-
-        if(current->index - this->settings.region_size >= 0) {
-            auto& neighbour = discovered_tiles[current->index - this->settings.region_size];
-            current->neighbours.push_back(neighbour);
-        }
-
-        if(current->index + this->settings.region_size < this->world.getRegionSize()) {
-            auto& neighbour = discovered_tiles[current->index + this->settings.region_size];
-            current->neighbours.push_back(neighbour);
-        }
-        
-        int smallest_cost = 9999;
-        int index         = -1;
-
-        for(int i = 0; i < current->neighbours.size(); i++) {
-            auto& neighbour = current->neighbours[i];
-
-            neighbour.cost_sincestart = current->cost_sincestart + 1;
-            neighbour.cost_heuristic  = heuristic(neighbour, end);
-
-            // Try to find the best possible tile to continue pathing through.
-            if(!neighbour.visited && neighbour.cost_heuristic <= smallest_cost) {
-                smallest_cost      = neighbour.cost_heuristic;
-                index              = neighbour.index;
-                neighbour.visited  = true;
-            }
-
-            if(i == current->neighbours.size() - 1 && index != -1) {
-                list_to_check.push(discovered_tiles[index]);
-                solution.push_back(index);
-            }
-        }
-
-        counter++;
-    }
-
-    return solution;
-}
-
 void SimulationManager::updateScheduler() {
     // Update buildigns across all regions.
     
@@ -396,7 +275,7 @@ struct aNode {
     int h_cost;
 };
 
-void SimulationManager::w_astar(int start, int end) const {
+std::vector <int> SimulationManager::astar(int start, int end) const {
     const auto H = [](const aNode& node, const aNode& end) -> int {
         return std::abs(end.x - node.x) + std::abs(end.y - node.y);
     };
@@ -463,9 +342,8 @@ void SimulationManager::w_astar(int start, int end) const {
         const aNode& current_node = nodes[(frontier.top()).second];
         frontier.pop();
 
-        if(current_node.index == end) {
+        if(current_node.index == end)
             break;
-        }
 
         for(int index : neighbours(current_node.index)) {
             const aNode& neighbour = nodes[index];
@@ -481,7 +359,5 @@ void SimulationManager::w_astar(int start, int end) const {
         }
     }
 
-    auto v = reconstruct(start, end, came_from);
-    for(auto i : v)
-        std::cout << i << "\n";
+    return reconstruct(start, end, came_from);
 }

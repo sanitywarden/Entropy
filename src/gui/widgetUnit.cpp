@@ -100,15 +100,14 @@ bool WidgetUnit::canColonise(int index) {
         return false;
 
     const std::vector <int>& owned_regions = this->manager->getHumanPlayer().readOwnedRegions();
-    const Region&            region        = this->manager->world.world_map[index];
+    const Region& region = this->manager->world.world_map[index];
 
     if(region.owner)
         return false;
 
     for(auto i : owned_regions) {
-        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
+        if(region.biome == BIOME_OCEAN) {
             return false;
-            break;
         }
 
         if(index == i - 1 ||

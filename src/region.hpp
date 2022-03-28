@@ -1,7 +1,7 @@
 #ifndef _REGION_HPP_
 #define _REGION_HPP_
 
-#include "biome.hpp"
+#include "./biome/biome_definitions.hpp"
 #include "tile.hpp"
 #include "regionType.hpp"
 #include "gameObject.hpp"

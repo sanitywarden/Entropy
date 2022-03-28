@@ -64,8 +64,6 @@ namespace iso {
             Player& getHumanPlayer();
             std::vector <int> astar(int start, int end) const;
 
-            void w_astar(int start, int end) const;
-
             void prepare();
             void loop() override;
             std::string getInGameDateFormatted() const;

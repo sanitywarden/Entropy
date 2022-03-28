@@ -105,7 +105,7 @@ void WidgetRegion::functionality() {
 
         // You check for these things here to avoid calling functions responsible for world generation.
         // Biomes: arctic, ocean and sea do not have planned content.
-        if(region.biome.biome_name == BIOME_ARCTIC.biome_name || region.biome.biome_name == BIOME_OCEAN.biome_name || region.biome.biome_name == BIOME_SEA.biome_name) {
+        if(region.biome == BIOME_OCEAN) {
             std::cout << "[Button Visit Region]: Requested to generate a region not meant for visiting.\n";
             worldmap->selected_index = -1;
             return;
