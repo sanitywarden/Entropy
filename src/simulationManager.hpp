@@ -20,6 +20,8 @@ namespace iso {
     /* This table is used to find the position of a texture inside the tile atlas. 
      * Only textures that are used in sprite batching are here. */
     static std::map <std::string, sf::Vector2f> REGIONMAP_TEXTURE_LOOKUP_TABLE = {
+        { "default", sf::Vector2f(0, 0) },
+
         { "tile_grass_warm"            , sf::Vector2f(0, 0)     }, 
         { "tile_grass_cold"            , sf::Vector2f(64, 0)    }, 
         { "tile_grass_subtropical"     , sf::Vector2f(128, 0)   }, 
@@ -61,6 +63,8 @@ namespace iso {
 
             Player& getHumanPlayer();
             std::vector <int> astar(int start, int end) const;
+
+            void w_astar(int start, int end) const;
 
             void prepare();
             void loop() override;

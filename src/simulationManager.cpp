@@ -34,7 +34,7 @@ SimulationManager::SimulationManager() {
     settings.region_size                = settings.world_panel_size.x;
     settings.region_tile_size.x         = 64;           
     settings.region_tile_size.y         = 32;           
-    settings.region_tile_offset.x       = 0; 
+    settings.region_tile_offset.x       = 100; 
     settings.region_tile_offset.y       = 0; 
 
     this->settings = settings;
@@ -126,7 +126,7 @@ void SimulationManager::spawnPlayers() {
         bool spot_found = false;
         while(!spot_found) {
             const int index = std::rand() % this->world.getWorldSize();
-            if(!this->world.is_arctic(index) && !this->world.is_ocean(index) && !this->world.is_sea(index) && !this->world.is_coast(index)) {
+            if(!this->world.is_ocean(index) && !this->world.is_coast(index)) {
                 claimed_spots.push_back(index);
                 
                 Region& region = this->world.world_map[index];
@@ -386,4 +386,102 @@ void SimulationManager::updateBuildings() {
             }
         }
     }
+}
+
+
+struct aNode {
+    int x;
+    int y;
+    int index;
+    int h_cost;
+};
+
+void SimulationManager::w_astar(int start, int end) const {
+    const auto H = [](const aNode& node, const aNode& end) -> int {
+        return std::abs(end.x - node.x) + std::abs(end.y - node.y);
+    };
+
+    const int world_size = this->settings.world_size;
+    const auto neighbours = [world_size](int index) -> std::vector <int> {
+        std::vector <int> neighbours;
+        if(index - 1 >= 0)
+            neighbours.push_back(index - 1);
+
+        if(index + 1 < world_size * world_size)
+            neighbours.push_back(index + 1);
+
+        if(index - world_size >= 0)
+            neighbours.push_back(index - world_size);
+
+        if(index + world_size < world_size * world_size)
+            neighbours.push_back(index + world_size);
+
+        return neighbours;
+    };
+
+    std::vector <aNode> nodes(this->settings.world_size * this->settings.world_size);
+    
+    const auto& node_start = nodes[start];
+    const auto& node_end   = nodes[end];
+
+    for(int y = 0; y < this->settings.world_size; y++) {
+        for(int x = 0; x < this->settings.world_size; x++) {
+            const int index = y * this->settings.world_size + x;
+            aNode& node = nodes[index];
+
+            node.index = index;        
+            node.x = x;
+            node.y = y;
+        }
+    }
+
+    typedef std::pair<int, int> Intpair;
+    typedef std::priority_queue <Intpair, std::vector <Intpair>, std::greater <Intpair>> Frontier;
+
+    Frontier frontier;
+    std::vector <int> seen;
+    std::unordered_map <int, int> cost_so_far; // index, cost
+    std::unordered_map <int, int> came_from;   // index, index
+
+    const auto reconstruct = [](int start, int end, std::unordered_map <int, int> came_from) -> std::vector <int> {
+        std::vector <int> path;
+        int current = end;
+        while(current != start) {
+            path.push_back(current);
+            current = came_from[current];
+        }
+
+        path.push_back(start);
+        std::reverse(path.begin(), path.end());
+        return path;
+    };
+
+    frontier.push(Intpair(node_start.h_cost, node_start.index));
+    cost_so_far[node_start.index] = 0;
+
+    while(!frontier.empty()) {
+        const aNode& current_node = nodes[(frontier.top()).second];
+        frontier.pop();
+
+        if(current_node.index == end) {
+            break;
+        }
+
+        for(int index : neighbours(current_node.index)) {
+            const aNode& neighbour = nodes[index];
+            const int new_cost   = cost_so_far[current_node.index] + 1;
+
+            if(cost_so_far.find(index) == cost_so_far.end() || new_cost < cost_so_far[index]) {
+                cost_so_far[index] = new_cost;
+                came_from[index]   = current_node.index;
+                
+                const int priority = new_cost + H(neighbour, node_end);
+                frontier.push(Intpair(priority, index));
+            }
+        }
+    }
+
+    auto v = reconstruct(start, end, came_from);
+    for(auto i : v)
+        std::cout << i << "\n";
 }
