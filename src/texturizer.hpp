@@ -1,0 +1,24 @@
+#ifndef _TEXTURIZER_HPP_
+#define _TEXTURIZER_HPP_
+
+#include "./entropy/resourceManager.hpp"
+#include "colours.hpp"
+
+#include <SFML/Graphics/Image.hpp>
+#include <SFML/Graphics/Color.hpp>
+
+namespace iso {
+    class Texturizer {
+        private:
+            entropy::resourceManager* resource;
+        public:
+            Texturizer();
+            Texturizer(entropy::resourceManager* resource_manager);
+            ~Texturizer();
+
+            std::string createColouredWorldmapTexture(const std::string& id, const std::string& save_as, const sf::Color& replacement_black, const sf::Color& replacement_white);      
+            sf::Color   getRandomColour() const;
+    };
+}
+
+#endif
