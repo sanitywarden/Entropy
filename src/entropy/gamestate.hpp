@@ -14,13 +14,15 @@ namespace entropy {
         public:
             Entropy*     engine;
             Controls     controls;
+            
+            std::string  state_id;
+            sf::Event    event;
             sf::Vector2i mouse_position_desktop;
             sf::Vector2f mouse_position_window;
             sf::Vector2f mouse_position_interface;
-            sf::Event    event;
-            std::string  state_id;
             sf::View     view_game;
             sf::View     view_interface;
+            
         public:
             Gamestate();
             Gamestate(Entropy* engine, std::string state_id);

@@ -19,6 +19,8 @@ namespace iso {
 
             TileType tiletype;
             int elevation;
+
+            sf::Vector2f getTransformedPosition() const;
     };
 }
 

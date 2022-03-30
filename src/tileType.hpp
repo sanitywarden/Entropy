@@ -1,26 +1,20 @@
 #ifndef _TILE_TYPE_HPP_
 #define _TILE_TYPE_HPP_
 
-#include <bitset>
+#include <string>
+#include <map>
 
-// What does each bit mean?
-// 1 - 1 terrain, 0 water.
-// 2 - 1 river, 0 ocean.
-
-namespace iso {
-    typedef std::bitset <8> bitmask;
-        
-    // Bit representation of the type of a tile.
-    // Some of these bits are mutually exclusive.
+namespace iso {    
     class TileType {
         private:
-            bitmask m_type;
+            std::map <std::string, bool> type;
 
-            bool is_type(char bit) const;
-            void set_type(char bit, bool value = true);
+            bool is_type(std::string id) const;
+            void set_type(std::string id, bool value);
             
         public: 
-            bitmask& tileType();
+            TileType();
+            ~TileType();
 
             bool is_terrain() const;
             bool is_water()   const; // Returns true if the tile is of type river or ocean.
@@ -28,7 +22,6 @@ namespace iso {
             bool is_ocean()   const;
 
             void set_terrain();
-            void set_water();
             void set_river();
             void set_ocean();
     };     

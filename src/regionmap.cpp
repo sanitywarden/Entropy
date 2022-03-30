@@ -64,8 +64,10 @@ void Regionmap::loadResources() {
     
     this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_resource_stone",                   sf::IntRect(0, 64, 64, 32   ));
 
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_foliage_atlas");
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_beech"   , sf::IntRect(0, 0, 64, 96   ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_oak"     , sf::IntRect(64, 0, 64, 96  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_maple"   , sf::IntRect(128, 0, 64, 96 ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_1", sf::IntRect(0, 96, 64, 96  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_2", sf::IntRect(64, 96, 64, 96 ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_cypress" , sf::IntRect(0, 192, 64, 96 ));
@@ -105,10 +107,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 64, 64, 32 ));
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 96, 64, 32 ));
 
-    // TODO: Create separate API to create textures at runtime.
-
-    auto copy_black_tile = this->manager->resource.getTexture("tile_black");
-    this->manager->world.createColouredTexture("tile_black", "tile_highlight", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
+    this->manager->texturizer.createColouredWorldmapTexture("tile_black", "tile_highlight", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
 }
 
 void Regionmap::update(float delta_time) {
@@ -121,7 +120,7 @@ void Regionmap::update(float delta_time) {
 }
 
 void Regionmap::render(float delta_time) {
-    this->manager->window.clear(COLOUR_BLACK);    
+    this->manager->window.clear(COLOUR_WHITE);    
 
     this->manager->window.getWindow()->setView(this->view_game);
 
@@ -346,18 +345,14 @@ void Regionmap::renderRegion() {
 
         for(int index = 0; index < this->manager->world.getRegionSize(); index++) {
             auto& tile         = this->region->map.at(index);
-            auto tile_position = tile.getPosition();
-            sf::Vector2f tile_elevation_offset = sf::Vector2f(0, 0);
+            auto tile_position = tile.getTransformedPosition();
             
-            if(tile.elevation != 0)
-                tile_elevation_offset.y = -(tile.elevation * tile.getSize().y / 2); 
-
             sf::Vertex* quad = &verticies_tiles[verticies_index * 4];
 
-            quad[0].position = tile_position + tile_elevation_offset + sf::Vector2f(0, 0);
-            quad[1].position = tile_position + tile_elevation_offset + sf::Vector2f(tile_size.x, 0);
-            quad[2].position = tile_position + tile_elevation_offset + sf::Vector2f(tile_size.x, tile_size.y);
-            quad[3].position = tile_position + tile_elevation_offset + sf::Vector2f(0, tile_size.y);
+            quad[0].position = tile_position + sf::Vector2f(0, 0);
+            quad[1].position = tile_position + sf::Vector2f(tile_size.x, 0);
+            quad[2].position = tile_position + sf::Vector2f(tile_size.x, tile_size.y);
+            quad[3].position = tile_position + sf::Vector2f(0, tile_size.y);
 
             const auto texture_coords = findTexture(this->region->map[index]);
 
@@ -406,20 +401,23 @@ void Regionmap::renderRegion() {
                 const int  index       = this->manager->world.rCalculateIndex(x, y); 
                 const bool tree_exists = this->region->trees.count(index);
                 if(tree_exists) {
+                    // Tree position is the tile.getTransformedPosition().
                     const auto& tree = this->region->trees[index];                    
+                    const auto tree_position_offset = sf::Vector2f(0, -this->manager->settings.region_tile_size.y * 2);
+
                     sf::Vertex* quad = &verticies_trees[index * 4];
 
-                    quad[0].position = tree.getPosition() + sf::Vector2f(0, 0);
-                    quad[1].position = tree.getPosition() + sf::Vector2f(tile_size.x, 0);
-                    quad[2].position = tree.getPosition() + sf::Vector2f(tile_size.x, tile_size.y * 2);
-                    quad[3].position = tree.getPosition() + sf::Vector2f(0, tile_size.y * 2);
+                    quad[0].position = tree.getPosition() + tree_position_offset + sf::Vector2f(0, 0);
+                    quad[1].position = tree.getPosition() + tree_position_offset + sf::Vector2f(tree.getSize().x, 0);
+                    quad[2].position = tree.getPosition() + tree_position_offset + sf::Vector2f(tree.getSize().x, tree.getSize().y);
+                    quad[3].position = tree.getPosition() + tree_position_offset + sf::Vector2f(0, tree.getSize().y);
 
                     const auto texture_coords = findTexture(tree);
 
                     quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
-                    quad[1].texCoords = texture_coords + sf::Vector2f(tile_size.x, 0);
-                    quad[2].texCoords = texture_coords + sf::Vector2f(tile_size.x, tile_size.y * 2);
-                    quad[3].texCoords = texture_coords + sf::Vector2f(0, tile_size.y * 2);
+                    quad[1].texCoords = texture_coords + sf::Vector2f(tree.getSize().x, 0);
+                    quad[2].texCoords = texture_coords + sf::Vector2f(tree.getSize().x, tree.getSize().y);
+                    quad[3].texCoords = texture_coords + sf::Vector2f(0, tree.getSize().y);   
                 }
             }
         }
@@ -536,19 +534,15 @@ void Regionmap::higlightTile() {
     if(this->mouse_drag)
         return;
 
-    const auto& tile           = this->region->map[index];
-    auto tile_position         = tile.getPosition();
-    auto tile_elevation_offset = sf::Vector2f(0, 0);
-
-    if(tile.elevation != 0)
-        tile_elevation_offset.y = -(tile.elevation * tile.getSize().y / 2); 
+    const auto& tile   = this->region->map[index];
+    auto tile_position = tile.getTransformedPosition();
 
     sf::VertexArray highlight(sf::Quads, 4);
 
-    highlight[0].position = tile_position + tile_elevation_offset; 
-    highlight[1].position = tile_position + tile_elevation_offset + sf::Vector2f(tile_size.x, 0);
-    highlight[2].position = tile_position + tile_elevation_offset + sf::Vector2f(tile_size.x, tile_size.y);
-    highlight[3].position = tile_position + tile_elevation_offset + sf::Vector2f(0, tile_size.y);
+    highlight[0].position = tile_position; 
+    highlight[1].position = tile_position + sf::Vector2f(tile_size.x, 0);
+    highlight[2].position = tile_position + sf::Vector2f(tile_size.x, tile_size.y);
+    highlight[3].position = tile_position + sf::Vector2f(0, tile_size.y);
 
     highlight[0].texCoords = sf::Vector2f(0, 0);
     highlight[1].texCoords = sf::Vector2f(tile_size.x, 0);
@@ -733,30 +727,30 @@ int Regionmap::getDrawCalls() {
 }
 
 void Regionmap::updateScheduler() {
-    const auto nextMove = [this](Unit& pawn) -> void {
-        int index = pawn.getNextMove();
-        pawn.object_position = this->region->map[index].getPosition();
-    };
+    // const auto nextMove = [this](Unit& pawn) -> void {
+    //     int index = pawn.getNextMove();
+    //     pawn.object_position = this->region->map[index].getPosition();
+    // };
 
-    // Update pawns movement.
-    auto& update_pawn = this->scheduler.at("update_pawns");
-    if(update_pawn.first != update_pawn.second)
-        update_pawn.first++;
+    // // Update pawns movement.
+    // auto& update_pawn = this->scheduler.at("update_pawns");
+    // if(update_pawn.first != update_pawn.second)
+    //     update_pawn.first++;
     
-    if(update_pawn.first ==  update_pawn.second) {
-        for(auto& pawn : this->region->population) {
-            if(!pawn.path.empty()) {
-                pawn.object_position = this->region->map[pawn.getNextMove()].getPosition();
-                update_pawn.first = 0;
-            }
+    // if(update_pawn.first ==  update_pawn.second) {
+    //     for(auto& pawn : this->region->population) {
+    //         if(!pawn.path.empty()) {
+    //             pawn.object_position = this->region->map[pawn.getNextMove()].getPosition();
+    //             update_pawn.first = 0;
+    //         }
         
-            else {
-                int goal = std::rand() % this->manager->world.getRegionSize() - 1;
-                auto path = this->manager->astar(pawn.current_index, goal);
-                pawn.setNewPath(path);
-            }
-        }   
-    }
+    //         else {
+    //             int goal = std::rand() % this->manager->world.getRegionSize() - 1;
+    //             auto path = this->manager->astar(pawn.current_index, goal);
+    //             pawn.setNewPath(path);
+    //         }
+    //     }   
+    // }
 }
 
 void Regionmap::gamestateLoad() {

@@ -3,8 +3,9 @@
 
 #include "generationSettings.hpp"
 #include "entropy/entropy.hpp"
+#include "texturizer.hpp"
 #include "region.hpp"
-#include "./biome/biome_definitions.hpp"
+#include "biome.hpp"
 
 #include <SFML/System.hpp>
 #include <vector>
@@ -21,6 +22,7 @@ namespace iso {
             Tile   m_tile;
 
             entropy::resourceManager* resource;
+            Texturizer*               texturizer;
             std::vector <float> m_gradient; 
         
         private:
@@ -46,10 +48,8 @@ namespace iso {
             // Regionmap API.            
 
         public:
-            std::string createColouredTexture(const std::string& id, const std::string& save_as, const sf::Color colour_main, const sf::Color colour_secondary) const;
-
             WorldGenerator();
-            WorldGenerator(entropy::resourceManager* resource, GenerationSettings& settings);
+            WorldGenerator(entropy::resourceManager* resource, Texturizer* texturizer, GenerationSettings& settings);
             ~WorldGenerator();
 
             void generateWorld();

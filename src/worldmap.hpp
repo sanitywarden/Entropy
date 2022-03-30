@@ -42,8 +42,6 @@ namespace iso {
             int max_zoom_in;
             int max_zoom_out;
 
-            bool draw_control_panel;
-
             int selected_unit_id;
             int current_index;
             int selected_index;

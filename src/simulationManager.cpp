@@ -40,12 +40,15 @@ SimulationManager::SimulationManager() {
     this->settings = settings;
     // Settings for world generation set.
 
+    this->initialise();
+    this->texturizer = Texturizer(&this->resource);
+
     this->window.setTitle("Entropy by Vivit");
     this->window.setKeyHold(false);
 
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
-    this->world = WorldGenerator(&this->resource, this->settings);
+    this->world = WorldGenerator(&this->resource, &this->texturizer, this->settings);
     this->prepare();
     this->gamestate.setGamestate("worldmap");
 
@@ -113,62 +116,6 @@ void SimulationManager::internalLoop(float delta_time) {
     // AI updates.
 }
 
-void SimulationManager::spawnPlayers() {    
-    return;
-    std::srand(std::time(0));
-
-    const int number_of_players = TEAM_COLOURS.size();
-    this->players.resize(number_of_players);
-    std::cout << "[Simulation Manager]: Manager will prepare " << number_of_players << " starting locations.\n";
-    std::vector <int> claimed_spots(number_of_players); // Storage for already claimed spots, these will be the capitals of player countries.
-    int current_player = 0;
-    while(current_player != number_of_players) {
-        bool spot_found = false;
-        while(!spot_found) {
-            const int index = std::rand() % this->world.getWorldSize();
-            if(!this->world.is_ocean(index) && !this->world.is_coast(index)) {
-                claimed_spots.push_back(index);
-                
-                Region& region = this->world.world_map[index];
-                Player& player = this->players[current_player]; 
-                region.owner = &player;
-                player.addOwnedRegion(index);
-                player.team_colour = TEAM_COLOURS[current_player];
-
-                spot_found = true;
-                break;
-            }
-        }
-        
-        current_player++;
-    }
-
-    for(auto& player : this->players)
-        this->world.world_map[player.getCapital()].object_colour = player.team_colour;
-
-    this->players[0].setHuman(true);
-    this->players[0].setCountryName("Sanity Wardens");
-    
-    for(auto& player : this->players) {
-        const int capital_index = player.getCapital();
-        auto&     region        = this->world.world_map[capital_index];
-
-        Unit pawn = Unit();
-        pawn.current_index = capital_index;
-        pawn.object_size = sf::Vector2f(32, 16);
-        pawn.object_texture_name = "unit_worldmap_settler";
-        pawn.object_name = "settler";
-        pawn.object_position = region.getPosition() + sf::Vector2f(16, 8);
-        pawn.object_colour = COLOUR_RED;
-        player.addUnit(pawn);
-
-        // Assign the unit already stored, and not the temporary variable.  
-        region.unit = player.getUnit(pawn.getID());
-    }
-
-    std::cout << "[Simulation Manager]: Starting locations found.\n";    
-}
-
 Player& SimulationManager::getHumanPlayer() {
     return this->players[0];
 }
@@ -179,7 +126,7 @@ void SimulationManager::prepare() {
     this->world.rivers    = std::map <int, GameObject> ();
     this->world.lakes     = std::map <int, GameObject> ();
     this->world.generateWorld();
-    this->spawnPlayers();
+    this->initialiseWorld();
 }
 
 void SimulationManager::updateScheduler() {
@@ -360,4 +307,53 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
     }
 
     return reconstruct(start, end, came_from);
+}
+
+void SimulationManager::initialise() {
+    this->resource.loadTexture("./res/random_colour.png", "random_colour");
+}
+
+void SimulationManager::initialiseWorld() {
+    // Find spots suitable for settling.
+    // Spawn players.
+
+    std::cout << "[Simulation Manager]: Spawning players.\n";
+
+    std::vector <int> occupied_regions;
+
+    // In the future this setting could be set by the human player.
+    const int number_of_players = this->world.settings.world_size / 10;
+    this->players.resize(number_of_players);
+    for(int player_id = 0; player_id < number_of_players; player_id++) {
+        bool settle_spot_found = false;
+        int  settle_spot_index = -1;
+
+        while(!settle_spot_found) {
+            int index = rand() % this->world.getWorldSize();
+            const auto& region = this->world.world_map[index];
+            if(region.regiontype.is_terrain() && std::find(occupied_regions.begin(), occupied_regions.end(), index) == occupied_regions.end()) {
+                settle_spot_found = true;    
+                settle_spot_index = index;
+                occupied_regions.push_back(index);
+            }
+        }
+
+        auto& player = this->players[player_id];
+        auto& region = this->world.world_map[settle_spot_index];
+
+        // Temporary colour, generated randomly.
+        // In the future it could maybe be less random. That would better it's visibility.
+        const sf::Color generated_colour_full    = this->texturizer.getRandomColour();
+        const sf::Color colour_part_transparent  = sf::Color(generated_colour_full.r, generated_colour_full.g, generated_colour_full.b, 127);
+        const std::string generated_country_name = "Sanity Wardens";
+
+        std::cout << "  [] Player " << player_id << " spawned at " << settle_spot_index << " as " << generated_country_name << ".\n";
+
+        region.owner = &player;
+    
+        player.setCapital(settle_spot_index);
+        player.addOwnedRegion(settle_spot_index);
+        player.setTeamColour(colour_part_transparent);
+        player.setCountryName(generated_country_name);
+    }
 }

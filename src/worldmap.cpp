@@ -26,8 +26,6 @@ void Worldmap::initialise() {
     this->selected_unit_id = -1;
     this->draw_calls       = 0;
 
-    this->draw_control_panel = false;
-
     this->zoom = 3;
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
@@ -148,8 +146,8 @@ void Worldmap::loadResources() {
     this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_mediterranean_1", sf::IntRect(256, 0, 128, 128));
     this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_tropical_1"     , sf::IntRect(384, 0, 128, 128));
 
-    this->manager->resource.loadTexture("./res/units/units_worldmap.png", "unit_worldmap_settler", sf::IntRect(0, 0, 32, 16 ));
-    this->manager->resource.loadTexture("./res/units/units_worldmap.png", "unit_worldmap_warrior", sf::IntRect(32, 0, 32, 16));
+    this->manager->resource.loadTexture("./res/worldmap/unit_atlas.png", "unit_worldmap_settler", sf::IntRect(0, 0, 128, 128 ));
+    this->manager->resource.loadTexture("./res/worldmap/unit_atlas.png", "unit_worldmap_warrior", sf::IntRect(32, 0, 128, 128));
 
     this->manager->resource.loadTexture("./res/default.png", "default");
 
@@ -486,6 +484,25 @@ void Worldmap::renderWorld() {
         }
     }
 
+    // This is inefficient. You should not iterate through the world map two times.
+    for(const auto& region : this->manager->world.world_map) {
+        if(region.isOwned()) {
+            sf::VertexArray highlight(sf::Quads, 4);
+
+            highlight[0].position = region.getPosition() + sf::Vector2f(0, 0);
+            highlight[1].position = region.getPosition() + sf::Vector2f(region.getSize().x, 0);
+            highlight[2].position = region.getPosition() + sf::Vector2f(region.getSize().x, region.getSize().y);
+            highlight[3].position = region.getPosition() + sf::Vector2f(0, region.getSize().y);
+
+            highlight[0].color = region.owner->getTeamColour();
+            highlight[1].color = region.owner->getTeamColour();
+            highlight[2].color = region.owner->getTeamColour();
+            highlight[3].color = region.owner->getTeamColour();
+
+            this->manager->window.draw(highlight);
+        }
+    }
+
     this->draw_calls = gpu_draw_calls;
 }
 
@@ -692,6 +709,8 @@ void Worldmap::unselectUnit() {
 }
 
 void Worldmap::selectUnitGoal() {
+    return;
+
     if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
         for(const auto& player : this->manager->players) {
             Unit* pawn = nullptr;

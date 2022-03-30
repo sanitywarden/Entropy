@@ -39,14 +39,22 @@ bool Player::isHuman() const {
 }
 
 int Player::getCapital() {
-    return this->owned_regions[0];
+    return this->capital_region;
+}
+
+void Player::setCapital(int region_index) {
+    this->capital_region = region_index;
 }
 
 const sf::Color& Player::getTeamColour() {
     return this->team_colour;
 }
 
-void Player::setCountryName(std::string name) {
+void Player::setTeamColour(const sf::Color& team_colour) {
+    this->team_colour = team_colour;
+}
+
+void Player::setCountryName(const std::string& name) {
     this->country_name = name;
 }
 

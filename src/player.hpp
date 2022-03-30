@@ -13,7 +13,8 @@ namespace iso {
         friend class SimulationManager;
 
         protected:
-            std::vector <int>  owned_regions; // Indexes of the player owned regions. 
+            std::vector <int>  owned_regions;  // Indexes of the player owned regions. 
+            int                capital_region; // Index of the capital city.
             bool               is_human;
             sf::Color          team_colour;
             std::string        country_name;
@@ -27,10 +28,12 @@ namespace iso {
             void                      removeOwnedRegion(int region_index);
             const std::vector <int>&  readOwnedRegions();
             int                       getCapital();
+            void                      setCapital(int region_index);
             void                      setHuman(bool is_human);
             bool                      isHuman() const;
             const sf::Color&          getTeamColour();
-            void                      setCountryName(std::string name);
+            void                      setTeamColour(const sf::Color& team_colour);
+            void                      setCountryName(const std::string& name);
             const std::string&        getCountryName();
             void                      addUnit(Unit unit);
             Unit*                     getUnit(int unit_id);

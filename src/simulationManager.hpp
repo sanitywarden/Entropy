@@ -4,9 +4,9 @@
 #include "entropy/entropy.hpp"
 #include "player.hpp"
 #include "colours.hpp"
-
 #include "worldGenerator.hpp"
 #include "generationSettings.hpp"
+#include "texturizer.hpp"
 
 #include <SFML/System.hpp>
 #include <vector>
@@ -22,6 +22,7 @@ namespace iso {
     static std::map <std::string, sf::Vector2f> REGIONMAP_TEXTURE_LOOKUP_TABLE = {
         { "default", sf::Vector2f(0, 0) },
 
+        // Tiles.
         { "tile_grass_warm"            , sf::Vector2f(0, 0)     }, 
         { "tile_grass_cold"            , sf::Vector2f(64, 0)    }, 
         { "tile_grass_subtropical"     , sf::Vector2f(128, 0)   }, 
@@ -34,24 +35,40 @@ namespace iso {
         { "tile_height_dirt"           , sf::Vector2f(0, 32)    },
         { "tile_height_stone"          , sf::Vector2f(64, 32)   },
         { "tile_resource_stone"        , sf::Vector2f(0, 64)    },
-        { "tile_tree_warm1"            , sf::Vector2f(0, 0)     },
-        { "tile_tree_warm2"            , sf::Vector2f(64, 0)    },
-        { "tile_tree_cold1"            , sf::Vector2f(128, 0)   },
-        { "tile_tree_tropical1"        , sf::Vector2f(256, 0)   },
+        
+        // Trees.
+        // Tundra.
+        { "tile_tree_spruce1", sf::Vector2f(0, 96) },
+        { "tile_tree_spruce2", sf::Vector2f(64, 96)},
+        
+        // Temperate.
+        { "tile_tree_beech", sf::Vector2f(0, 0)    },
+        { "tile_tree_oak"  , sf::Vector2f(64, 0)   },
+        { "tile_tree_maple", sf::Vector2f(128, 0)  },
+        
+        // Mediterranean.
+        { "tile_tree_cypress", sf::Vector2f(0, 192)},
+        { "tile_tree_acacia" , sf::Vector2f(64, 192)},
+        
+        // Tropical.
+        { "tile_tree_palm"   , sf::Vector2f(0, 288)},
     };
 
     class SimulationManager : public entropy::Entropy {
         private:
             void internalLoop(float delta_time);
-            void spawnPlayers();
+
+            void initialise();
+            void initialiseWorld();
 
             void updateScheduler();
             void updateBuildings();
-
         private:
             Scheduler global_updates;
-        
+
         public:
+            Texturizer texturizer;
+
             GenerationSettings   settings;
             WorldGenerator       world;
             std::vector <Player> players;
@@ -66,7 +83,6 @@ namespace iso {
 
             void prepare();
             void loop() override;
-            std::string getInGameDateFormatted() const;
     };
 }
 

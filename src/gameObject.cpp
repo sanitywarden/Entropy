@@ -1,4 +1,6 @@
 #include "gameObject.hpp"
+#include "colours.hpp"
+
 #include <iostream>
 
 using namespace iso;
@@ -8,7 +10,7 @@ GameObject::GameObject() {
     this->object_position     = sf::Vector2f(0, 0);
     this->object_size         = sf::Vector2f(0, 0);
     this->object_texture_name = "*";
-    this->object_colour       = sf::Color(255, 255, 255);
+    this->object_colour       = COLOUR_BLACK;
 }
 
 GameObject::GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name) {
@@ -16,7 +18,7 @@ GameObject::GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf
     this->object_position     = position + relative_position;
     this->object_size         = size;
     this->object_texture_name = texture_name;
-    this->object_colour       = sf::Color(255, 255, 255);
+    this->object_colour       = COLOUR_BLACK;
 }
 
 GameObject::~GameObject() {
@@ -64,11 +66,14 @@ void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     game_object[1].texCoords = sf::Vector2f(this->object_size.x, 0);
     game_object[2].texCoords = sf::Vector2f(this->object_size.x, this->object_size.y);
     game_object[3].texCoords = sf::Vector2f(0, this->object_size.y);
-
-    game_object[0].color = this->object_colour;
-    game_object[1].color = this->object_colour;
-    game_object[2].color = this->object_colour; 
-    game_object[3].color = this->object_colour;
+    
+    auto colour = this->object_colour;
+    if(colour != COLOUR_BLACK) {
+        game_object[0].color = colour;
+        game_object[1].color = colour;
+        game_object[2].color = colour; 
+        game_object[3].color = colour;
+    }
 
     target.draw(game_object, states);
 }

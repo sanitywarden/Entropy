@@ -65,6 +65,7 @@ void DebugPerformance::updateUI() {
         const int current_index = regionmap->getCurrentIndex();
         const int draw_calls    = regionmap->getDrawCalls();
         const auto* region      = regionmap->getCurrentRegion();
+        const auto& current_tile = region->map[current_index];
 
         data += "Current index: "        + std::to_string(current_index)                        + "\n";
         data += "Draw calls: "           + std::to_string(draw_calls)                           + "\n";
@@ -72,8 +73,10 @@ void DebugPerformance::updateUI() {
         data += "Building quantity: "    + std::to_string(region->buildings.size())             + "\n";
         data += "Population quantitiy: " + std::to_string(region->population.size())            + "\n";
         data += "Tile elevation: "       + std::to_string(region->map[current_index].elevation) + "\n";
-        data += "mouse drag: " + std::to_string(regionmap->mouse_drag) + "\n";
-        data += "mouse move: " + std::to_string(regionmap->mouse_moved) + "\n";
+        data += "River: "   + std::to_string(current_tile.tiletype.is_river()) + "\n";
+        data += "Ocean: "   + std::to_string(current_tile.tiletype.is_ocean()) + "\n";
+        data += "Water: "   + std::to_string(current_tile.tiletype.is_water()) + "\n";
+        data += "Terrain: " + std::to_string(current_tile.tiletype.is_terrain()) + "\n";
 
         data += "Gold: "  + std::to_string(region->resources.gold)  + "\n";
         data += "Wood: "  + std::to_string(region->resources.wood)  + "\n";

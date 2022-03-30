@@ -7,9 +7,10 @@ WorldGenerator::WorldGenerator() {
 
 }
 
-WorldGenerator::WorldGenerator(entropy::resourceManager* resource, GenerationSettings& settings) {
-    this->settings = settings;
-    this->resource = resource;
+WorldGenerator::WorldGenerator(entropy::resourceManager* resource, Texturizer* texturizer, GenerationSettings& settings) {
+    this->settings   = settings;
+    this->resource   = resource;
+    this->texturizer = texturizer;
 
     auto world_size = this->getWorldSize();
 
@@ -631,7 +632,7 @@ void WorldGenerator::worldmapGenerateRivers() {
             const sf::Vector2f panel_offset   = sf::Vector2f(0, 0); 
             const sf::Vector2f panel_size     = this->settings.world_panel_size; 
 
-            const std::string panel_full = this->createColouredTexture("panel_full", "panel_full_lightblue", COLOUR_CYAN, COLOUR_TRANSPARENT);
+            this->texturizer->createColouredWorldmapTexture("panel_full", "panel_full_lightblue", COLOUR_CYAN, COLOUR_TRANSPARENT);
             switch(direction) {
                 case RiverDirection::RIVER_NONE:
                     panel._direction = RiverDirection::RIVER_NONE;
@@ -1156,31 +1157,6 @@ std::string WorldGenerator::getRiverTileVariation(const std::string& id) const {
     return id + "_" + std::to_string(panel_type);
 }
 
-std::string WorldGenerator::createColouredTexture(const std::string& id, const std::string& save_as, const sf::Color colour_main, const sf::Color colour_secondary) const {
-    if(this->resource->checkTextureExists(save_as))
-        return save_as;
-
-    auto image   = this->resource->getTexture(id).copyToImage();
-    auto intrect = this->resource->getTextureIntRect(id);
-
-    for(int y = 0; y < image.getSize().y; y++) {
-        for(int x = 0; x < image.getSize().x; x++) {
-            // Fill in terrain pixel.
-            if(image.getPixel(x, y) == COLOUR_BLACK)
-                image.setPixel(x, y, colour_main);
-            
-            // Fill in water pixel.
-            else if(image.getPixel(x, y) == COLOUR_WHITE)
-                image.setPixel(x, y, colour_secondary);
-        }
-    }
-
-    sf::Texture texture;
-    texture.loadFromImage(image);
-    this->resource->addTexture(save_as, texture, intrect);
-    return save_as;
-}
-
 void WorldGenerator::generateRegion(int region_index) {
     sf::Clock clock;
 
@@ -1225,19 +1201,17 @@ void WorldGenerator::generateRegion(int region_index) {
             this->m_tile.object_position = this->tilePositionScreen(x, y);
 
             // Read terrain data.
-            colour == COLOUR_WHITE
-                ? this->m_tile.tiletype.set_water()
-                : this->m_tile.tiletype.set_terrain();
-
-            // Read elevation data.
-            colour == COLOUR_WHITE
-                ? this->m_tile.elevation = 0
-                : this->m_tile.elevation = 1;
-        
-            if(this->m_tile.tiletype.is_terrain())
-                this->m_tile.object_texture_name = biome_tile;
-            else
+            if(colour == COLOUR_WHITE) {
+                this->m_tile.tiletype.set_ocean();
+                this->m_tile.elevation = 0;
                 this->m_tile.object_texture_name = "tile_ocean";
+            }
+
+            else if(colour == COLOUR_BLACK) {
+                this->m_tile.tiletype.set_terrain();
+                this->m_tile.elevation = 1;
+                this->m_tile.object_texture_name = biome_tile;
+            }
 
             region.map[index] = this->m_tile;
         }
@@ -1255,7 +1229,8 @@ void WorldGenerator::generateRegion(int region_index) {
                 auto& tile        = region.map[index];
 
                 if(colour == COLOUR_BLUE_RIVER) {
-                    tile.tiletype.set_river();
+                    if(!tile.tiletype.is_ocean())
+                        tile.tiletype.set_river();
                     tile.elevation = 0;
                     tile.object_texture_name = "tile_ocean";
                 }
@@ -1275,7 +1250,8 @@ void WorldGenerator::generateRegion(int region_index) {
                 auto& tile        = region.map[index];
 
                 if(colour == COLOUR_BLUE_RIVER) {
-                    tile.tiletype.set_river();
+                    if(!tile.tiletype.is_ocean())
+                        tile.tiletype.set_river();
                     tile.elevation = 0;
                     tile.object_texture_name = "tile_ocean";
                 }
@@ -1359,7 +1335,25 @@ void WorldGenerator::generateRegion(int region_index) {
                 const auto& tree_texture = region.biome.getTree();
                 auto tree_offset = sf::Vector2f(0, 0);
                 auto tree_size   = sf::Vector2f(64, 96);
-                region.trees[i]  = GameObject(tile.getPosition(), tree_offset, tree_size, tree_texture);
+                region.trees[i]  = GameObject(tile.getTransformedPosition(), tree_offset, tree_size, tree_texture);
+            }
+        }
+    }
+
+    else {
+        NoiseContainer tree_map_noise;
+        NoiseSettings  tree_noise_settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 8, 4, 1.00f);
+        this->generateNoise(tree_noise_settings, tree_map_noise);
+
+        for(int i = 0; i < tree_map_noise.size(); i++) {
+            auto& tile  = region.map[i];
+            float noise = tree_map_noise[i];
+            
+            if(noise > 0.75f && tile.tiletype.is_terrain()) {
+                const auto& tree_texture = region.biome.getTree();
+                auto tree_offset = sf::Vector2f(0, 0);
+                auto tree_size   = sf::Vector2f(64, 96);
+                region.trees[i]  = GameObject(tile.getTransformedPosition(), tree_offset, tree_size, tree_texture);
             }
         }
     }

@@ -42,11 +42,12 @@ void Region::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     worldmap_region[2].texCoords = sf::Vector2f(this->getSize().x, this->getSize().y);
     worldmap_region[3].texCoords = sf::Vector2f(0, this->getSize().y);
 
-    if(this->getColour() != COLOUR_BLACK && this->getColour() != COLOUR_WHITE) {
-        worldmap_region[0].color = this->getColour(); 
-        worldmap_region[1].color = this->getColour();
-        worldmap_region[2].color = this->getColour();
-        worldmap_region[3].color = this->getColour();
+    auto colour = this->getColour();
+    if(colour != COLOUR_BLACK) {
+        worldmap_region[0].color = colour; 
+        worldmap_region[1].color = colour;
+        worldmap_region[2].color = colour;
+        worldmap_region[3].color = colour;
     }
 
     target.draw(worldmap_region, states);
