@@ -220,6 +220,7 @@ struct aNode {
     int y;
     int index;
     int h_cost;
+    bool passable;
 };
 
 std::vector <int> SimulationManager::astar(int start, int end) const {
@@ -245,6 +246,11 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         return neighbours;
     };
 
+    const auto passable = [this](int index) -> bool {
+        const auto& region = this->world.world_map[index];
+        return !region.regiontype.is_ocean();
+    };
+
     std::vector <aNode> nodes(this->settings.world_size * this->settings.world_size);
     
     const auto& node_start = nodes[start];
@@ -258,6 +264,7 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
             node.index = index;        
             node.x = x;
             node.y = y;
+            node.passable = passable(index); 
         }
     }
 
@@ -296,6 +303,9 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
             const aNode& neighbour = nodes[index];
             const int new_cost   = cost_so_far[current_node.index] + 1;
 
+            if(!neighbour.passable)
+                continue;;
+
             if(cost_so_far.find(index) == cost_so_far.end() || new_cost < cost_so_far[index]) {
                 cost_so_far[index] = new_cost;
                 came_from[index]   = current_node.index;
@@ -316,8 +326,6 @@ void SimulationManager::initialise() {
 void SimulationManager::initialiseWorld() {
     // Find spots suitable for settling.
     // Spawn players.
-
-    std::cout << "[Simulation Manager]: Spawning players.\n";
 
     std::vector <int> occupied_regions;
 
@@ -345,12 +353,10 @@ void SimulationManager::initialiseWorld() {
         // In the future it could maybe be less random. That would better it's visibility.
         const sf::Color generated_colour_full    = this->texturizer.getRandomColour();
         const sf::Color colour_part_transparent  = sf::Color(generated_colour_full.r, generated_colour_full.g, generated_colour_full.b, 127);
-        const std::string generated_country_name = "Sanity Wardens";
-
-        std::cout << "  [] Player " << player_id << " spawned at " << settle_spot_index << " as " << generated_country_name << ".\n";
+        const std::string generated_country_name = "Country" + std::to_string(player_id);
 
         region.owner = &player;
-    
+
         player.setCapital(settle_spot_index);
         player.addOwnedRegion(settle_spot_index);
         player.setTeamColour(colour_part_transparent);

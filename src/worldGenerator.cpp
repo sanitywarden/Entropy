@@ -759,7 +759,7 @@ void WorldGenerator::worldmapGenerateForests() {
     }
 }
 
-void WorldGenerator::generateNoise(NoiseSettings& settings, std::vector<float>& storage) {
+void WorldGenerator::generateNoise(NoiseSettings& settings, NoiseContainer& storage) {
     // Generate a random input sequence.
     std::vector <float> input(settings.size.x * settings.size.y);
     for(int i = 0; i < input.size(); i++) {
@@ -817,7 +817,8 @@ void WorldGenerator::generateNoise(NoiseSettings& settings, std::vector<float>& 
 
             float buffer_noise = (noise / scale_check) * settings.multiplier;
             
-            if(buffer_noise > amplifier) amplifier = buffer_noise;
+            if(buffer_noise > amplifier) 
+                amplifier = buffer_noise;
             buffer_noise *= amplifier;
 
             storage[index] = (buffer_noise > 1.0f) ? 1.0f : buffer_noise; 
@@ -825,6 +826,43 @@ void WorldGenerator::generateNoise(NoiseSettings& settings, std::vector<float>& 
     }
 }
 
+// This function returns grid coordinate of a tile.
+// The range on these is from (for both x and y) (0, region_size).
+// Return value from this function is accepted by tilePositionScreen() to convert back to tile's original position.
+sf::Vector2i WorldGenerator::tileGridPosition(sf::Vector2f tile_position) {
+    sf::Vector2i cell(
+        tile_position.x / this->settings.region_tile_size.x,
+        tile_position.y / this->settings.region_tile_size.y
+    );
+
+    sf::Vector2i selected(
+        (cell.y - this->settings.region_tile_offset.y) + (cell.x - this->settings.region_tile_offset.x),
+        (cell.y - this->settings.region_tile_offset.y) - (cell.x - this->settings.region_tile_offset.x)
+    );
+
+    sf::Vector2i position_within_tile(
+        (int)tile_position.x % (int)this->settings.region_tile_size.x,
+        (int)tile_position.y % (int)this->settings.region_tile_size.y
+    );
+
+    auto colour_name = this->getTilePixelColour(position_within_tile);
+    if(colour_name == "Red")
+        selected += sf::Vector2i(-1, 0);
+
+    if(colour_name == "Green")
+        selected += sf::Vector2i(1, 0);
+
+    if(colour_name == "Blue")
+        selected += sf::Vector2i(0, -1);
+    
+    if(colour_name == "Yellow")
+        selected += sf::Vector2i(1, 0);
+
+    return selected;
+}
+
+// This function accepts coordinates of the tile in a grid - not the tile position.
+// The first tile's coordinates in a grid are (0,0), but the position might be (128, 128) or some other point based on the offset. 
 sf::Vector2f WorldGenerator::tilePositionScreen(int x, int y) {
     return sf::Vector2f(
         (this->settings.region_tile_offset.x * this->settings.region_tile_size.x) + (x - y) * (this->settings.region_tile_size.x / 2),
@@ -832,12 +870,12 @@ sf::Vector2f WorldGenerator::tilePositionScreen(int x, int y) {
     );
 }
 
-sf::Vector2f WorldGenerator::tilePositionScreen(sf::Vector2i tile_position) {
-    return this->tilePositionScreen(tile_position.x, tile_position.y);
+sf::Vector2f WorldGenerator::tilePositionScreen(sf::Vector2i grid_position) {
+    return this->tilePositionScreen(grid_position.x, grid_position.y);
 }
 
-sf::Vector2f WorldGenerator::tilePositionScreen(sf::Vector2f tile_position) {
-    return this->tilePositionScreen(sf::Vector2i(tile_position.x, tile_position.y));
+sf::Vector2f WorldGenerator::tilePositionScreen(sf::Vector2f grid_position) {
+    return this->tilePositionScreen(sf::Vector2i(grid_position.x, grid_position.y));
 }
 
 bool WorldGenerator::is_biome(int region_index, Biome biome) const {
@@ -1183,11 +1221,11 @@ void WorldGenerator::generateRegion(int region_index) {
 
     std::cout << "====================\n";
     std::cout << "[World Generation]: Generating region " << region_index << ".\n";
-    std::cout << "  [] Biome:  " << region.biome.biome_name << "\n";
-    std::cout << "  [] Coast:  " << is_coast  << "\n";
-    std::cout << "  [] Lake:   " << is_lake   << "\n";
-    std::cout << "  [] River:  " << is_river  << "\n";
-    std::cout << "  [] Forest: " << is_forest << "\n";
+    std::cout << "  [] Biome: \t" << region.biome.biome_name << "\n";
+    std::cout << "  [] Coast: \t" << is_coast  << "\n";
+    std::cout << "  [] Lake:  \t" << is_lake   << "\n";
+    std::cout << "  [] River: \t" << is_river  << "\n";
+    std::cout << "  [] Forest:\t" << is_forest << "\n";
 
     const auto& region_texture_name = region.getTextureName();
     const auto& base_texture        = this->extractBaseTexture(region_texture_name, region.biome);     
@@ -1260,103 +1298,162 @@ void WorldGenerator::generateRegion(int region_index) {
     }
     
     // Fill in blank spots created by tile elevation.
-    for(int y = 0; y < this->settings.region_size; y++) {
-        for(int x = 0; x < this->settings.region_size; x++) {
-            const int index = this->rCalculateIndex(x, y);
-            const auto& current_tile = region.map[index]; 
-            
-            // Elevation can not be lower than 0.
-            if(current_tile.elevation == 0)
-                continue;
-            
-            const int index_left   = index - 1;
-            const int index_right  = index + 1;
-            const int index_top    = index - this->settings.region_size;  
-            const int index_bottom = index + this->settings.region_size;  
+    {
+        for(int y = 0; y < this->settings.region_size; y++) {
+            for(int x = 0; x < this->settings.region_size; x++) {
+                const int index = this->rCalculateIndex(x, y);
+                const auto& current_tile = region.map[index]; 
+                
+                // Elevation can not be lower than 0.
+                if(current_tile.elevation == 0)
+                    continue;
+                
+                const int index_left   = index - 1;
+                const int index_right  = index + 1;
+                const int index_top    = index - this->settings.region_size;  
+                const int index_bottom = index + this->settings.region_size;  
 
-            // Check only for the tile to the right tile and the bottom tile, since the left and top elevation would not be visible.
+                // Check only for the tile to the right tile and the bottom tile, since the left and top elevation would not be visible.
 
-            int biggest_difference = 0;
-            if(this->isInRegionBounds(index_right)) {
-                const int height_difference = std::abs(current_tile.elevation - region.map[index_right].elevation);
-                if(biggest_difference < height_difference)
-                    biggest_difference = height_difference;
-            }
-
-            if(this->isInRegionBounds(index_bottom)) {
-                const int height_difference = std::abs(current_tile.elevation - region.map[index_bottom].elevation);
-                if(biggest_difference < height_difference)
-                    biggest_difference = height_difference;
-            }
-
-            region.sides[index].resize(biggest_difference);
-
-            // Make sure that tiles with varying elevations have a side texture filled in.
-            for(int i = 0; i < biggest_difference; i++) {
-                std::string side_texture = i > 2 ? "tile_height_stone" : "tile_height_dirt";
-                region.sides[index][i] = GameObject(current_tile.getPosition(), sf::Vector2f(0, 0), current_tile.getSize(), side_texture);  
-            }
-
-            // Make sure that tiles on the sides of the region have filled in elevation.
-            // Tiles along Y axis.
-            if(y == this->settings.region_size - 1) {
-                const int height_difference = region.map[index].elevation + 1;
-                region.sides[index].resize(height_difference);
-
-                for(int i = 0; i < height_difference; i++) {
-                    std::string side_texture = i > 2 ? "tile_height_stone" : "tile_height_dirt";
-                    region.sides[index][i] = GameObject(current_tile.getPosition(), sf::Vector2f(0, 0), current_tile.getSize(), side_texture);
+                int biggest_difference = 0;
+                if(this->isInRegionBounds(index_right)) {
+                    const int height_difference = std::abs(current_tile.elevation - region.map[index_right].elevation);
+                    if(biggest_difference < height_difference)
+                        biggest_difference = height_difference;
                 }
-            }
 
-            // Tiles along X axis.
-            if(x == this->settings.region_size - 1) {
-                const int height_difference = region.map[index].elevation + 1;
-                region.sides[index].resize(height_difference);
+                if(this->isInRegionBounds(index_bottom)) {
+                    const int height_difference = std::abs(current_tile.elevation - region.map[index_bottom].elevation);
+                    if(biggest_difference < height_difference)
+                        biggest_difference = height_difference;
+                }
 
-                for(int i = 0; i < height_difference; i++) {
+                region.sides[index].resize(biggest_difference);
+
+                // Make sure that tiles with varying elevations have a side texture filled in.
+                for(int i = 0; i < biggest_difference; i++) {
                     std::string side_texture = i > 2 ? "tile_height_stone" : "tile_height_dirt";
-                    region.sides[index][i] = GameObject(current_tile.getPosition(), sf::Vector2f(0, 0), current_tile.getSize(), side_texture);
+                    region.sides[index][i] = GameObject(current_tile.getPosition(), sf::Vector2f(0, 0), current_tile.getSize(), side_texture);  
+                }
+
+                // Make sure that tiles on the sides of the region have filled in elevation.
+                // Tiles along Y axis.
+                if(y == this->settings.region_size - 1) {
+                    const int height_difference = region.map[index].elevation + 1;
+                    region.sides[index].resize(height_difference);
+
+                    for(int i = 0; i < height_difference; i++) {
+                        std::string side_texture = i > 2 ? "tile_height_stone" : "tile_height_dirt";
+                        region.sides[index][i] = GameObject(current_tile.getPosition(), sf::Vector2f(0, 0), current_tile.getSize(), side_texture);
+                    }
+                }
+
+                // Tiles along X axis.
+                if(x == this->settings.region_size - 1) {
+                    const int height_difference = region.map[index].elevation + 1;
+                    region.sides[index].resize(height_difference);
+
+                    for(int i = 0; i < height_difference; i++) {
+                        std::string side_texture = i > 2 ? "tile_height_stone" : "tile_height_dirt";
+                        region.sides[index][i] = GameObject(current_tile.getPosition(), sf::Vector2f(0, 0), current_tile.getSize(), side_texture);
+                    }
                 }
             }
         }
     }
 
-    if(region.regiontype.is_forest()) {
-        NoiseContainer tree_map_noise;
-        NoiseSettings  tree_noise_settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 8, 4, 1.00f);
-        this->generateNoise(tree_noise_settings, tree_map_noise);
-    
-        for(int i = 0; i < tree_map_noise.size(); i++) {
-            auto& tile  = region.map[i];
-            float noise = tree_map_noise[i];
-            
+    // Generate region resources.
+    // Generate trees.
+    {
+        NoiseContainer container;
+        NoiseSettings settings;
+
+        region.regiontype.is_forest()
+            ? settings = NoiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 16, 4, 1.00f)
+            : settings = NoiseSettings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 16, 4, 0.70f);
+
+        this->generateNoise(settings, container);
+        for(int i = 0; i < container.size(); i++) {
+            auto& tile = region.map[i];
+            float noise = container[i];
+
             if(noise > 0.5f && tile.tiletype.is_terrain()) {
                 const auto& tree_texture = region.biome.getTree();
-                auto tree_offset = sf::Vector2f(0, 0);
+                auto tree_offset = sf::Vector2f(0, -this->settings.region_tile_size.y * 2);
                 auto tree_size   = sf::Vector2f(64, 96);
                 region.trees[i]  = GameObject(tile.getTransformedPosition(), tree_offset, tree_size, tree_texture);
             }
         }
     }
 
-    else {
-        NoiseContainer tree_map_noise;
-        NoiseSettings  tree_noise_settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 8, 4, 1.00f);
-        this->generateNoise(tree_noise_settings, tree_map_noise);
+    std::string has_stone = "False";
 
-        for(int i = 0; i < tree_map_noise.size(); i++) {
-            auto& tile  = region.map[i];
-            float noise = tree_map_noise[i];
+    // Generate stone.
+    {
+        const int range        = 100;
+        const int min_value    = 75;
+        const int random_value = rand() % range;
+        if(random_value > min_value) {
+            has_stone = "True";
             
-            if(noise > 0.75f && tile.tiletype.is_terrain()) {
-                const auto& tree_texture = region.biome.getTree();
-                auto tree_offset = sf::Vector2f(0, 0);
-                auto tree_size   = sf::Vector2f(64, 96);
-                region.trees[i]  = GameObject(tile.getTransformedPosition(), tree_offset, tree_size, tree_texture);
+            sf::Clock clock;
+
+            NoiseContainer container;
+            NoiseSettings  settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 16, 4, 1.50f);
+            this->generateNoise(settings, container);
+            
+            int random_index = -1;
+            while(true) {
+                random_index = rand() % this->getRegionSize();
+                if(region.map[random_index].tiletype.is_terrain())
+                    break;
             }
+
+            auto t1 = clock.restart().asSeconds();
+            const auto& tile_selected = region.map[random_index];
+            auto tile_selected_grid = this->tileGridPosition(tile_selected.getPosition());
+
+            const int radius = (this->settings.region_size / 32);
+
+            int angle = 0;
+            
+            // This is not REQUIRED.
+            // It may have been a loop that iterator over all of the tiles in the region, BUT:
+            // This solution takes significantly less time (from ~0.45s to < 0.10s).
+            for(int y = tile_selected_grid.y - radius * radius; y < tile_selected_grid.y + radius * radius; y++) {
+                for(int x = tile_selected_grid.x - radius * radius; x < tile_selected_grid.x + radius * radius; x++) {
+                    const int index = y * this->settings.region_size + x;
+                    auto& tile      = region.map[index];
+                    
+                    const auto tile_centre = tile_selected.getPosition();
+                    const auto tile_point  = tile.getPosition();
+                    const auto grid_centre = sf::Vector2f(
+                        this->tileGridPosition(tile_centre).x,
+                        this->tileGridPosition(tile_centre).y
+                    );
+
+                    const auto grid_point  = sf::Vector2f(
+                        this->tileGridPosition(tile_point).x,
+                        this->tileGridPosition(tile_point).y
+                    );
+                    
+                    const int radius_modified = radius * (1.00f + container[angle]);
+                    const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
+                    if(point_inside && tile.tiletype.is_terrain() && !region.tileIsTree(index)) {
+                        tile.object_texture_name = "tile_resource_stone";
+                        angle++;
+                    }
+                }
+            }
+
+            auto t2 = clock.restart().asSeconds();
+
+            // std::cout << t1 << "\n";
+            // std::cout << t2 << "\n";
         }
     }
+
+    std::cout << "  [] Has stone:\t" << has_stone << "\n";
 
     region.visited = true;
     

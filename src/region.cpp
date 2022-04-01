@@ -57,7 +57,7 @@ RiverDirection Region::riverDirection() {
     return this->_direction;
 }
 
-bool Region::isOwned() {
+bool Region::isOwned() const {
     return this->owner != nullptr;
 }
 
@@ -170,4 +170,8 @@ void Region::removeBuilding(int index) {
 
 bool Region::isUnitPresent() {
     return this->unit != nullptr;
+}
+
+bool Region::tileIsTree(int index) const {
+    return this->trees.count(index);
 }

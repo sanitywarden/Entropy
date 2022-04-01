@@ -45,17 +45,18 @@ namespace iso {
             ~Region();
             
             RiverDirection riverDirection();
-            bool           isOwned();
-            void           addResource         (ResourceType resource, int quantity);
-            void           addResources        (ResourceCollection resource);
-            int            getResourceQuantity (ResourceType resource);
-            bool           isBuildingAffordable(const Building& building) const;
-            bool           isPositionValid     (const Building& building, const GenerationSettings& settings, int index) const;
-            void           placeBuilding       (Building building, const GenerationSettings& settings, int index);
-            bool           placeBuildingCheck  (Building building, const GenerationSettings& settings, int index);
-            void           removeBuilding      (int index);
-            void           removeBuildingCost  (const Building& building);
-            bool           isUnitPresent       ();
+            bool isOwned             () const;
+            void addResource         (ResourceType resource, int quantity);
+            void addResources        (ResourceCollection resource);
+            int  getResourceQuantity (ResourceType resource);
+            bool isBuildingAffordable(const Building& building) const;
+            bool isPositionValid     (const Building& building, const GenerationSettings& settings, int index) const;
+            void placeBuilding       (Building building, const GenerationSettings& settings, int index);
+            bool placeBuildingCheck  (Building building, const GenerationSettings& settings, int index);
+            void removeBuilding      (int index);
+            void removeBuildingCost  (const Building& building);
+            bool isUnitPresent       ();
+            bool tileIsTree          (int index) const;
 
         public:
             RegionType regiontype;

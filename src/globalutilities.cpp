@@ -62,3 +62,7 @@ std::string iso::toLower(const std::string& str) {
 
     return str_lower;
 }
+
+bool iso::inCircle(const sf::Vector2f point, const sf::Vector2f centre, const int radius) {
+    return ((point.x - centre.x) * (point.x - centre.x)) + ((point.y - centre.y) * (point.y - centre.y)) < radius * radius;
+}

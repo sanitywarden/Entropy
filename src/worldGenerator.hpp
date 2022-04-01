@@ -26,7 +26,6 @@ namespace iso {
             std::vector <float> m_gradient; 
         
         private:
-            void generateNoise(NoiseSettings& settings, std::vector<float>& container);
             bool is_biome(int index, Biome biome) const;            
 
             // Initial worldmap generation.
@@ -55,6 +54,10 @@ namespace iso {
             void generateWorld();
             void generateRegion(int region_index);
     
+            void generateNoise(NoiseSettings& settings, NoiseContainer& container);
+
+            sf::Vector2i tileGridPosition(sf::Vector2f tile_position);
+
             sf::Vector2f tilePositionScreen(int x, int y);
             sf::Vector2f tilePositionScreen(sf::Vector2i grid_position);
             sf::Vector2f tilePositionScreen(sf::Vector2f grid_position);

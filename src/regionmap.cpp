@@ -47,22 +47,22 @@ void Regionmap::initialise() {
 }
 
 void Regionmap::loadResources() {
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_atlas");
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_warm",                       sf::IntRect(0, 0, 64, 32    ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_cold",                       sf::IntRect(64, 0, 64, 32   ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_subtropical",                sf::IntRect(128, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_grass_tropical",                   sf::IntRect(192, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_tundra",                           sf::IntRect(256, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_arctic",                           sf::IntRect(320, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_desert",                           sf::IntRect(384, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_ocean",                            sf::IntRect(448, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_sea",                              sf::IntRect(512, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_black",                            sf::IntRect(0, 288, 64, 32  ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_template_direction",               sf::IntRect(64, 288, 64, 32 ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_dirt",                      sf::IntRect(0, 32, 64, 32   ));
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_height_stone",                     sf::IntRect(64, 32, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_atlas");
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_warm",         sf::IntRect(0, 0, 64, 32    ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_cold",         sf::IntRect(64, 0, 64, 32   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_subtropical",  sf::IntRect(128, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tropical",     sf::IntRect(192, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_tundra",             sf::IntRect(256, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_arctic",             sf::IntRect(320, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_desert",             sf::IntRect(384, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_ocean",              sf::IntRect(448, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_sea",                sf::IntRect(512, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black",              sf::IntRect(0, 288, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_template_direction", sf::IntRect(64, 288, 64, 32 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_dirt",        sf::IntRect(0, 32, 64, 32   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_stone",       sf::IntRect(64, 32, 64, 32  ));
     
-    this->manager->resource.loadTexture("./res/tiles/tile_atlas.png", "tile_resource_stone",                   sf::IntRect(0, 64, 64, 32   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_stone",     sf::IntRect(0, 64, 64, 32   ));
 
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_foliage_atlas");
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_beech"   , sf::IntRect(0, 0, 64, 96   ));
@@ -403,14 +403,13 @@ void Regionmap::renderRegion() {
                 if(tree_exists) {
                     // Tree position is the tile.getTransformedPosition().
                     const auto& tree = this->region->trees[index];                    
-                    const auto tree_position_offset = sf::Vector2f(0, -this->manager->settings.region_tile_size.y * 2);
 
                     sf::Vertex* quad = &verticies_trees[index * 4];
 
-                    quad[0].position = tree.getPosition() + tree_position_offset + sf::Vector2f(0, 0);
-                    quad[1].position = tree.getPosition() + tree_position_offset + sf::Vector2f(tree.getSize().x, 0);
-                    quad[2].position = tree.getPosition() + tree_position_offset + sf::Vector2f(tree.getSize().x, tree.getSize().y);
-                    quad[3].position = tree.getPosition() + tree_position_offset + sf::Vector2f(0, tree.getSize().y);
+                    quad[0].position = tree.getPosition() + sf::Vector2f(0, 0);
+                    quad[1].position = tree.getPosition() + sf::Vector2f(tree.getSize().x, 0);
+                    quad[2].position = tree.getPosition() + sf::Vector2f(tree.getSize().x, tree.getSize().y);
+                    quad[3].position = tree.getPosition() + sf::Vector2f(0, tree.getSize().y);
 
                     const auto texture_coords = findTexture(tree);
 
