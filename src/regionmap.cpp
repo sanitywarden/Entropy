@@ -20,9 +20,8 @@ void Regionmap::initialise() {
     this->mouse_drag            = false;
 
     this->current_index = -1;
-    this->draw_calls    = 0;
 
-    this->zoom = 2;
+    this->default_zoom = 2;
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
     
@@ -285,14 +284,14 @@ void Regionmap::zoomCamera() {
     // If you scroll up   - zoom in.
     // If you scroll down - zoom out.
 
-    if((this->zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
+    if((this->default_zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->default_zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
         if(this->controls.mouseMiddleUp()) {
-            this->zoom = this->zoom - 1;
+            this->default_zoom = this->default_zoom - 1;
             this->view_game.zoom(0.5f);
         }
         
         else if(this->controls.mouseMiddleDown()) {
-            this->zoom = this->zoom + 1;
+            this->default_zoom = this->default_zoom + 1;
             this->view_game.zoom(2.f);
         }
     } 
@@ -435,31 +434,20 @@ void Regionmap::renderRegion() {
     this->manager->window.draw(regionmap_mesh_tree, states_trees);
     gpu_draw_calls++;
 
-    for(const auto& pair : this->region->buildings) {
-        const int   index    = pair.first;
-        const auto& building = pair.second;
+    for(auto& pair : this->region->buildings) {
+        const int index = pair.first;
+        auto  building  = pair.second;
 
-        sf::Rect building_screen_area(building.getPosition(), building.getSize());
+        sf::Rect building_screen_area(building->getPosition(), building->getSize());
         if(camera_screen_area.intersects(building_screen_area)) {
             sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture(building.getTextureName());
-            this->manager->window.draw(building, states);
+            states.texture = &this->manager->resource.getTexture(building->getTextureName());
+            this->manager->window.draw(*building, states);
             gpu_draw_calls++;
         }
     }
 
-    for(const auto& pawn : this->region->population) {
-        sf::Rect pawn_screen_area(pawn.getPosition(), pawn.getSize());
-        if(camera_screen_area.intersects(pawn_screen_area)) {
-            sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture(pawn.getTextureName());
-            this->manager->window.draw(pawn, states);
-
-            gpu_draw_calls++;
-        }
-    }
-
-    this->draw_calls = gpu_draw_calls;
+    this->manager->updateDrawCalls(gpu_draw_calls);
 }
 
 void Regionmap::setCurrentRegion(int region_index) {
@@ -568,7 +556,7 @@ int Regionmap::getCurrentIndex() {
 
 void Regionmap::updateTile() {
     auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY && !this->intersectsUI() && !this->mouse_drag && building_menu->show) {
+    if(building_menu->getBuilding() != BUILDING_EMPTY && !this->intersectsUI() && this->controls.mouseLeftPressed() && !this->mouse_drag && building_menu->show) {
         Building building = building_menu->getBuilding();
         this->region->placeBuildingCheck(building, this->manager->settings, this->current_index);
         this->updatePaths(this->current_index);
@@ -641,25 +629,32 @@ void Regionmap::updatePaths(int index) {
     };
 
     // Update the singular tile.
-    if(this->region->buildings[index] == BUILDING_PATH_DIRT || this->region->buildings[index] == BUILDING_PATH_STONE) {
-        Building& building = this->region->buildings[index];
-        
-        bool LEFT  = this->region->buildings.count(index - 1) ? true : false;
-        bool RIGHT = this->region->buildings.count(index + 1) ? true : false;
-        bool TOP   = this->region->buildings.count(index - this->manager->settings.region_size) ? true : false;
-        bool DOWN  = this->region->buildings.count(index + this->manager->settings.region_size) ? true : false;
-        
-        bool VERIFIED_LEFT  = LEFT  ? startsWith(this->region->buildings[index - 1].getTextureName(), "path") : false;
-        bool VERIFIED_RIGHT = RIGHT ? startsWith(this->region->buildings[index + 1].getTextureName(), "path") : false;
-        bool VERIFIED_TOP   = TOP   ? startsWith(this->region->buildings[index - this->manager->settings.region_size].getTextureName(), "path") : false;
-        bool VERIFIED_DOWN  = DOWN  ? startsWith(this->region->buildings[index + this->manager->settings.region_size].getTextureName(), "path") : false;
+    
+    auto building_at_index = this->region->getBuildingAt(index);
+    
+    // Check if the pointer exists.
+    // It might be a nullptr, and you do not want to derefence that.
+    if(building_at_index) {
+        if(*building_at_index == BUILDING_PATH_DIRT || *building_at_index == BUILDING_PATH_STONE) {
+            Building& building = *building_at_index;
 
-        directions(VERIFIED_LEFT, VERIFIED_RIGHT, VERIFIED_TOP, VERIFIED_DOWN, building);
+            bool LEFT  = this->region->buildings.count(index - 1) ? true : false;
+            bool RIGHT = this->region->buildings.count(index + 1) ? true : false;
+            bool TOP   = this->region->buildings.count(index - this->manager->settings.region_size) ? true : false;
+            bool DOWN  = this->region->buildings.count(index + this->manager->settings.region_size) ? true : false;
+            
+            bool VERIFIED_LEFT  = LEFT  ? startsWith(this->region->getBuildingAt(index - 1)->getTextureName(), "path") : false;
+            bool VERIFIED_RIGHT = RIGHT ? startsWith(this->region->getBuildingAt(index + 1)->getTextureName(), "path") : false;
+            bool VERIFIED_TOP   = TOP   ? startsWith(this->region->getBuildingAt(index - this->manager->settings.region_size)->getTextureName(), "path") : false;
+            bool VERIFIED_DOWN  = DOWN  ? startsWith(this->region->getBuildingAt(index + this->manager->settings.region_size)->getTextureName(), "path") : false;
+
+            directions(VERIFIED_LEFT, VERIFIED_RIGHT, VERIFIED_TOP, VERIFIED_DOWN, building);
+        }
     }
 
     // Update the tiles that might have been affected by the previous change.
     for(auto& pair : this->region->buildings) {
-        Building& building = pair.second;
+        Building& building = *(pair.second.get());
         const int i        = pair.first;
 
         if(building == BUILDING_PATH_DIRT || building == BUILDING_PATH_STONE) {
@@ -668,10 +663,10 @@ void Regionmap::updatePaths(int index) {
             bool TOP   = this->region->buildings.count(i - this->manager->settings.region_size) ? true : false;
             bool DOWN  = this->region->buildings.count(i + this->manager->settings.region_size) ? true : false;
             
-            bool VERIFIED_LEFT  = LEFT  ? startsWith(this->region->buildings[i - 1].getTextureName(), "path") : false;
-            bool VERIFIED_RIGHT = RIGHT ? startsWith(this->region->buildings[i + 1].getTextureName(), "path") : false;
-            bool VERIFIED_TOP   = TOP   ? startsWith(this->region->buildings[i - this->manager->settings.region_size].getTextureName(), "path") : false;
-            bool VERIFIED_DOWN  = DOWN  ? startsWith(this->region->buildings[i + this->manager->settings.region_size].getTextureName(), "path") : false;
+            bool VERIFIED_LEFT  = LEFT  ? startsWith(this->region->getBuildingAt(index - 1)->getTextureName(), "path") : false;
+            bool VERIFIED_RIGHT = RIGHT ? startsWith(this->region->getBuildingAt(index + 1)->getTextureName(), "path") : false;
+            bool VERIFIED_TOP   = TOP   ? startsWith(this->region->getBuildingAt(index - this->manager->settings.region_size)->getTextureName(), "path") : false;
+            bool VERIFIED_DOWN  = DOWN  ? startsWith(this->region->getBuildingAt(index + this->manager->settings.region_size)->getTextureName(), "path") : false;
 
             directions(VERIFIED_LEFT, VERIFIED_RIGHT, VERIFIED_TOP, VERIFIED_DOWN, building);
         }
@@ -719,10 +714,6 @@ bool Regionmap::intersectsUI() {
     }
     
     return false;
-}
-
-int Regionmap::getDrawCalls() {
-    return this->draw_calls;
 }
 
 void Regionmap::updateScheduler() {

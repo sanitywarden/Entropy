@@ -22,7 +22,12 @@ namespace entropy {
             sf::Vector2f mouse_position_interface;
             sf::View     view_game;
             sf::View     view_interface;
-            
+            bool         move_camera;
+            bool         zoom_camera;
+            int          default_zoom;
+            int          max_zoom_in;
+            int          max_zoom_out;
+
         public:
             Gamestate();
             Gamestate(Entropy* engine, std::string state_id);
@@ -56,6 +61,12 @@ namespace entropy {
             virtual void updateCamera()         { return; }
 
             virtual void updateScheduler()      { return; }
+
+            int getDefaultZoom()    const;
+            int getMaxZoomIn()      const;
+            int getMaxZoomOut()     const;
+            bool shouldCameraMove() const;
+            bool shouldCameraZoom() const;
     };
 }
 

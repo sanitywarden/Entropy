@@ -32,20 +32,13 @@ namespace iso {
             
             bool mouse_moved;
             bool mouse_drag;
-            bool move_camera;
-            bool zoom_camera;
             
             sf::Vector2f position_pressed;
             sf::Vector2f position_released;
 
-            int zoom;
-            int max_zoom_in;
-            int max_zoom_out;
-
             int selected_unit_id;
             int current_index;
             int selected_index;
-            int draw_calls;
         
         private:
             void handleInput()     override;
@@ -87,7 +80,6 @@ namespace iso {
             int getCurrentIndex();
             int getSelectedIndex();
             int getSelectedUnitID();
-            int getDrawCalls();
     };
 }
 

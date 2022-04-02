@@ -24,9 +24,8 @@ void Worldmap::initialise() {
     this->current_index    = -1;
     this->selected_index   = -1;
     this->selected_unit_id = -1;
-    this->draw_calls       = 0;
 
-    this->zoom = 3;
+    this->default_zoom = 3;
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 3;
 
@@ -36,8 +35,8 @@ void Worldmap::initialise() {
     ));
 
     this->view_game.setSize(sf::Vector2f(
-        this->manager->window.windowWidth()  * 2,
-        this->manager->window.windowHeight() * 2
+        this->manager->window.windowWidth()  * 4,
+        this->manager->window.windowHeight() * 4
     ));
 
     this->view_interface.setSize(this->manager->window.windowSize());
@@ -195,8 +194,8 @@ void Worldmap::moveCamera() {
     );
 
     // Multipliers for faster camera movement. 
-    const float x_multiplier = (this->zoom + 1 * 5.00f);
-    const float y_multiplier = (this->zoom + 1 * 5.00f);    
+    const float x_multiplier = (this->default_zoom + 1 * 5.00f);
+    const float y_multiplier = (this->default_zoom + 1 * 5.00f);    
 
     // Check the horizontal and vertical bounds of the screen.
     // This makes sure that you can not move past the world map.
@@ -215,14 +214,14 @@ void Worldmap::zoomCamera() {
     // If you scroll up   - zoom in.
     // If you scroll down - zoom out.
 
-    if((this->zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
+    if((this->default_zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->default_zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
         if(this->controls.mouseMiddleUp()) {
-            this->zoom = this->zoom - 1;
+            this->default_zoom = this->default_zoom - 1;
             this->view_game.zoom(0.5f);
         }
         
         if(this->controls.mouseMiddleDown()) {
-            this->zoom = this->zoom + 1;
+            this->default_zoom = this->default_zoom + 1;
             this->view_game.zoom(2.f);
         }
     } 
@@ -503,7 +502,7 @@ void Worldmap::renderWorld() {
         }
     }
 
-    this->draw_calls = gpu_draw_calls;
+    this->manager->updateDrawCalls(gpu_draw_calls);
 }
 
 void Worldmap::selectPanel() {
@@ -646,10 +645,6 @@ void Worldmap::gamestateLoad() {
 
 void Worldmap::gamestateClose() {
 
-}
-
-int Worldmap::getDrawCalls() {
-    return this->draw_calls;
 }
 
 void Worldmap::updateScheduler() {

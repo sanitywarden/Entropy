@@ -27,22 +27,14 @@ namespace iso {
 
             bool mouse_moved;
             bool mouse_drag;
-            bool move_camera;
-            bool zoom_camera;
             bool recalculate_mesh;
             bool recalculate_tree_mesh;
 
             sf::Vector2f position_pressed;
             sf::Vector2f position_released;
 
-            int zoom;
-            int max_zoom_in;
-            int max_zoom_out;
-
             int current_index;
             int region_index;
-            int draw_calls;
-
             
         private:
             void handleInput()     override;
@@ -77,7 +69,6 @@ namespace iso {
             Region* getCurrentRegion();
             int getRegionIndex();
             int getCurrentIndex();
-            int getDrawCalls();
             int getVertexIndex();
 
             void recalculateMesh();
