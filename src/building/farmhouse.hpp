@@ -10,6 +10,8 @@ namespace iso {
         public:
             Farmhouse();
             ~Farmhouse();
+
+            void update(GameObject* object, int building_index) override;
     };
 }
 

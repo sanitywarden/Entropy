@@ -10,6 +10,8 @@ namespace iso {
         public:
             Woodcutter();
             ~Woodcutter();
+
+            void update(GameObject* object, int building_index) override;
     };
 }
 

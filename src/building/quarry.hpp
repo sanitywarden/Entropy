@@ -10,6 +10,8 @@ namespace iso {
         public:
             Quarry();
             ~Quarry();
+            
+            void update(GameObject* object, int building_index) override;
     };
 }
 
