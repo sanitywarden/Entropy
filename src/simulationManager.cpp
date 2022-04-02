@@ -148,72 +148,14 @@ void SimulationManager::updateBuildings() {
 
         if(region.buildings.size()) {
             for(auto& pair : region.buildings) {
-                int   building_index = pair.first;  // Index of the tile on which a building stands.
-                auto& building       = pair.second; // Building itself.
+                int   building_index = pair.first;       // Index of the tile on which a building stands.
+                auto* building       = pair.second.get(); // Building itself.
 
-                switch(building.getNumericalType()) {
-                    default:
-                        break;
-
-                    case 3: {
-                        // Add 1 gold for each person living in the house.
-
-                        region.addResource(ResourceType::RESOURCE_GOLD, 4);
-                        break;
-                    }
-
-                    case 4: {
-                        region.addResource(ResourceType::RESOURCE_FOOD, 10);
-                        break;
-                    }
-
-                    case 5: {
-                        // Quarry building.
-                        // A quarry's efficiency depends on the number of stone tiles surrounding it.
-                        
-                        const int stone_scan_size = 3;
-                        int       stone_tiles = 0;
-
-                        for(int y = -stone_scan_size; y <= stone_scan_size; y++) {
-                            for(int x = -stone_scan_size; x <= stone_scan_size; x++) {
-                                const int index = building_index + y * this->settings.region_size + x;
-
-                                if(region.map[index].object_texture_name == "tile_resource_stone")
-                                    stone_tiles++;
-                            }
-                        }
-
-                        region.addResource(ResourceType::RESOURCE_STONE, stone_tiles);
-                        break;
-                    }
-
-                    case 6: {               
-                        // Woodcutter building.
-                        // A woodcutter's efficiency depends on the number of trees surrounding it.
-
-                        const int tree_scan_size = 5;
-                        int       trees = 0;
-                        for(int y = -tree_scan_size; y <= tree_scan_size; y++) {
-                            for(int x = -tree_scan_size; x <= tree_scan_size; x++) {
-                                const int index = building_index + y * this->settings.region_size + x;
-                                
-                                if(region.trees.count(index))
-                                    trees++;
-                            }
-                        }
-
-                        Regionmap* regionmap = static_cast<Regionmap*> (this->gamestate.getGamestateByName("regionmap"));
-                        regionmap->recalculateMesh();
-
-                        region.addResource(ResourceType::RESOURCE_WOOD, trees);
-                        break;
-                    }
-                }
+                building->update(&region, building_index);
             }
         }
     }
 }
-
 
 struct aNode {
     int x;
@@ -320,6 +262,8 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
 }
 
 void SimulationManager::initialise() {
+    this->draw_calls = 0;
+
     this->resource.loadTexture("./res/random_colour.png", "random_colour");
 }
 
@@ -362,4 +306,12 @@ void SimulationManager::initialiseWorld() {
         player.setTeamColour(colour_part_transparent);
         player.setCountryName(generated_country_name);
     }
+}
+
+int SimulationManager::getDrawCalls() const {
+    return this->draw_calls;
+}
+
+void SimulationManager::updateDrawCalls(int calls) {
+    this->draw_calls = calls;
 }

@@ -64,6 +64,8 @@ namespace iso {
             void updateScheduler();
             void updateBuildings();
         private:
+            int draw_calls;
+
             Scheduler global_updates;
 
         public:
@@ -77,6 +79,9 @@ namespace iso {
         public:
             SimulationManager();
             ~SimulationManager();
+
+            void updateDrawCalls(int calls);
+            int  getDrawCalls() const;
 
             Player& getHumanPlayer();
             std::vector <int> astar(int start, int end) const;
