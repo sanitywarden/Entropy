@@ -13,6 +13,14 @@ GameObject::GameObject() {
     this->object_colour       = COLOUR_BLACK;
 }
 
+GameObject::GameObject(const GameObject& gameobject) {
+    this->object_name         = gameobject.getName();
+    this->object_position     = gameobject.getPosition();
+    this->object_size         = gameobject.getSize();
+    this->object_texture_name = gameobject.getTextureName();
+    this->object_colour       = gameobject.getColour();
+}
+
 GameObject::GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name) {
     this->object_name         = "*";
     this->object_position     = position + relative_position;

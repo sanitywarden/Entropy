@@ -18,6 +18,7 @@ namespace iso {
 
         public:
             GameObject();
+            GameObject(const GameObject& gameobject);
             GameObject(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name);
             ~GameObject();
             
