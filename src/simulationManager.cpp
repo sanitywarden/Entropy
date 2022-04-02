@@ -148,7 +148,7 @@ void SimulationManager::updateBuildings() {
 
         if(region.buildings.size()) {
             for(auto& pair : region.buildings) {
-                int   building_index = pair.first;       // Index of the tile on which a building stands.
+                int   building_index = pair.first;        // Index of the tile on which a building stands.
                 auto* building       = pair.second.get(); // Building itself.
 
                 building->update(&region, building_index);

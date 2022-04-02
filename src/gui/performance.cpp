@@ -42,18 +42,17 @@ void DebugPerformance::updateUI() {
     data += "Mouse position: "  + std::to_string((int)gamestate->mouse_position_window.x)    + " / " + std::to_string((int)gamestate->mouse_position_window.y)    + "\n"; 
     data += "Mouse interface: " + std::to_string((int)gamestate->mouse_position_interface.x) + " / " + std::to_string((int)gamestate->mouse_position_interface.y) + "\n"; 
     data += "Time passed: "     + std::to_string(this->manager->time) + "\n";
+    data += "Draw calls: "      + std::to_string(this->manager->getDrawCalls()) + "\n";
 
     if(gamestate_id == "Worldmap") {
         auto* worldmap = static_cast<Worldmap*>(gamestate);
         
         const int current_index  = worldmap->getCurrentIndex();
         const int selected_index = worldmap->getSelectedIndex();
-        const int draw_calls     = worldmap->getDrawCalls();
 
         data += "Current index:  " + std::to_string(current_index)  + "\n";
         data += "Selected index: " + std::to_string(selected_index) + "\n";
         data += "Selected unit: "  + std::to_string(worldmap->selected_unit_id) + "\n";
-        data += "Draw calls: "     + std::to_string(draw_calls) + "\n";
         data += "Terrain: "        + std::to_string(this->manager->world.world_map[current_index].regiontype.is_terrain()) + "\n";
         data += "Coast: "          + std::to_string(this->manager->world.world_map[current_index].regiontype.is_coast())   + "\n";
         data += "Lake: "           + std::to_string(this->manager->world.is_lake(current_index)) + "\n";
@@ -63,7 +62,6 @@ void DebugPerformance::updateUI() {
         auto* regionmap = static_cast<Regionmap*>(gamestate);
 
         const int current_index = regionmap->getCurrentIndex();
-        const int draw_calls    = regionmap->getDrawCalls();
         const auto* region      = regionmap->getCurrentRegion();
         const auto& current_tile = region->map[current_index];
 
@@ -72,7 +70,6 @@ void DebugPerformance::updateUI() {
         data += "Current index: "        + std::to_string(current_index)                        + "\n";
         data += "Selected: "             + std::to_string(grid_position.x) + " " + std::to_string(grid_position.y) + "\n";
 
-        data += "Draw calls: "           + std::to_string(draw_calls)                           + "\n";
         data += "Tree quantity: "        + std::to_string(region->trees.size())                 + "\n";
         data += "Building quantity: "    + std::to_string(region->buildings.size())             + "\n";
         data += "Population quantitiy: " + std::to_string(region->population.size())            + "\n";

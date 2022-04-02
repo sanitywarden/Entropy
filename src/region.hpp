@@ -12,6 +12,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <memory>
 
 namespace iso {
     enum class RiverDirection {
@@ -57,6 +58,10 @@ namespace iso {
             void removeBuildingCost  (const Building& building);
             bool isUnitPresent       ();
             bool tileIsTree          (int index) const;
+            
+            // If building exists at provided index, return pointer.
+            // Else returns nullptr.
+            Building* getBuildingAt  (int index) const;
 
         public:
             RegionType regiontype;
@@ -65,11 +70,11 @@ namespace iso {
 
             bool visited;
 
-            std::vector <Tile>                         map;
-            std::map    <int, GameObject>              trees;
-            std::map    <int, std::vector<GameObject>> sides;
-            std::map    <int, Building>                buildings;
-            std::vector <Unit>                         population;
+            std::vector <Tile>                           map;
+            std::map    <int, GameObject>                trees;
+            std::map    <int, std::vector<GameObject>>   sides;
+            std::map    <int, std::shared_ptr<Building>> buildings;
+            std::vector <Unit>                           population;
 
             Player*            owner;     // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.
             ResourceCollection resources; // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.

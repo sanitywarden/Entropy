@@ -412,7 +412,7 @@ void WorldGenerator::worldmapAssignBiome() {
         if(!panel.regiontype.is_terrain())
             panel.biome = BIOME_OCEAN;
         
-        else if(panel.temperature < 0.45f && panel.latitude < 0.5f) {    
+        else if(panel.temperature < 0.45f && panel.latitude < 0.5f) {     
             if(panel.moisture > 0.23f)
                 panel.biome = BIOME_CONTINENTAL;
             
@@ -445,7 +445,7 @@ void WorldGenerator::worldmapAssignBiome() {
 
             else
                 panel.biome = BIOME_TEMPERATE;
-        } 
+        }
     }
 }
 

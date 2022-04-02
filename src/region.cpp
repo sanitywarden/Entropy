@@ -1,4 +1,5 @@
 #include "region.hpp"
+#include "./building/building_definitions.hpp"
 #include <iostream>
 
 using namespace iso;
@@ -140,14 +141,39 @@ bool Region::isPositionValid(const Building& building, const GenerationSettings&
 
 void Region::placeBuilding(Building building, const GenerationSettings& settings, int index) {
     const Tile& tile         = this->map[index];
-    building.object_position = tile.getPosition();
+    building.object_position = tile.getTransformedPosition();
 
     if(building.getSize().y != 32)
         building.object_position += sf::Vector2f(0, -building.getSize().y / 4 -settings.region_tile_size.y / 2);
-    
-    std::pair <int, Building> pair(index, building);
 
-    this->buildings.insert(pair);
+    std::shared_ptr <Building> sp_building = nullptr;
+    if(building == BUILDING_PATH_DIRT) {
+        sp_building = std::shared_ptr <Building> (new PathDirt());
+    }
+
+    if(building == BUILDING_PATH_STONE) {
+        sp_building = std::shared_ptr <Building> (new PathStone());
+    }
+
+    if(building == BUILDING_HOUSE_SMALL) {
+        sp_building = std::shared_ptr <Building> (new HouseSmall());
+    }
+
+    if(building == BUILDING_FARM) {
+        sp_building = std::shared_ptr <Building> (new Farmhouse());
+    }
+
+    if(building == BUILDING_QUARRY) {
+        sp_building = std::shared_ptr <Building> (new Quarry());
+    }
+
+    if(building == BUILDING_WOODCUTTER) {
+        sp_building = std::shared_ptr <Building> (new Woodcutter());
+    }
+    
+    sp_building.get()->setGenerationSettings(settings);
+    sp_building.get()->assignAllProperties(building);
+    this->buildings[index] = sp_building;
 }
 
 bool Region::placeBuildingCheck(Building building, const GenerationSettings& settings, int index) {
@@ -162,8 +188,8 @@ bool Region::placeBuildingCheck(Building building, const GenerationSettings& set
 
 void Region::removeBuilding(int index) {
     if(this->buildings.count(index)) {
-        const Building& building = this->buildings[index];   
-        this->resources += building.getBuildingRefund();
+        auto building   = this->buildings.at(index).get();
+        this->resources += building->getBuildingRefund();
         this->buildings.erase(index);
     }
 }
@@ -175,3 +201,9 @@ bool Region::isUnitPresent() {
 bool Region::tileIsTree(int index) const {
     return this->trees.count(index);
 }
+
+Building* Region::getBuildingAt(int index) const {
+    if(this->buildings.count(index))
+        return this->buildings.at(index).get();
+    return nullptr;    
+}   
