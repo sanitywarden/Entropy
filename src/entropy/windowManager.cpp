@@ -18,15 +18,20 @@ windowManager::~windowManager() {
 void windowManager::createFullscreenWindow() {
     if(this->m_settings.application_debug_mode)
         std::cout << "[Entropy Engine][Window Manager]: Window created in fullscreen mode.\n";
+
+    auto desktop_size = sf::VideoMode(
+        sf::VideoMode::getDesktopMode().width,
+        sf::VideoMode::getDesktopMode().height
+    );
     
-    this->m_window = std::shared_ptr <sf::RenderWindow> (new sf::RenderWindow(sf::VideoMode::getFullscreenModes()[0], "", sf::Style::Fullscreen));
+    this->m_window = std::make_shared <sf::RenderWindow> (sf::VideoMode(desktop_size), "", sf::Style::Fullscreen);
 }
 
 void windowManager::createWindow(sf::Vector2f window_size) {
     if(this->m_settings.application_debug_mode)
         std::cout << "[Entropy Engine][Window Manager]: Window created in custom size mode.\n";
 
-    this->m_window = std::shared_ptr <sf::RenderWindow> (new sf::RenderWindow(sf::VideoMode(window_size.x, window_size.y), ""));
+    this->m_window = std::make_shared <sf::RenderWindow> (sf::VideoMode(window_size.x, window_size.y), "");
 }
 
 sf::RenderWindow* windowManager::getWindow() {
