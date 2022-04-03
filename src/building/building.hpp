@@ -7,27 +7,36 @@
 
 const auto VECTOR0X0         = sf::Vector2f(0, 0);
 const auto VECTOR1X1         = sf::Vector2f(1, 1);
+const auto VECTOR3X3         = sf::Vector2f(3, 3);
 const auto BUILDINGSIZE64X64 = sf::Vector2f(64, 64);
 const auto BUILDINGSIZE64X32 = sf::Vector2f(64, 32);
 
 namespace iso {
     class Building : public GameObject {
         protected:
-            GenerationSettings generation_settings;
             int                numerical_type;
             sf::Vector2f       building_size;
             ResourceCollection building_cost;
+
+            // Certain buildings can produce stuff, wood, stone or other items.
+            // To produce a item, they need to be in proximity to a resource, and every instance of that resource increases the production rate.
+            // This variable makes sure that in a certain area there can not be the same type of building (or rather, that the production efficiency will be lower).
+            sf::Vector2f       building_proximity_area;
+        
+        public:
+            GenerationSettings generation_settings;
 
         public:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             
             Building();
-            Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, int numerical_type, sf::Vector2f building_size, ResourceCollection building_cost);
+            Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost);
             Building(const Building& building);
             ~Building();
 
             /* Get the area occupied by the building. */
             const sf::Vector2f getBuildingArea() const;
+            const sf::Vector2f getProductionArea() const;
 
             /* Get the cost of the building. */
             const ResourceCollection getBuildingCost() const;
@@ -58,7 +67,7 @@ namespace iso {
             // #include "region.hpp" in the implementation file.
 
             /* Implementation of the building's functionality. */
-            virtual void update(GameObject* region, int building_index) { return; }
+            virtual void update(GameObject* region, int building_index) { return; } 
     };
 }
 

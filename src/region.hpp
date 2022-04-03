@@ -58,10 +58,11 @@ namespace iso {
             void removeBuildingCost  (const Building& building);
             bool isUnitPresent       ();
             bool tileIsTree          (int index) const;
-            
+
             // If building exists at provided index, return pointer.
             // Else returns nullptr.
-            Building* getBuildingAt  (int index) const;
+            Building* getBuildingAt(int index) const;
+            int isBuildingInProximity(const Building& building, int building_index) const;
 
         public:
             RegionType regiontype;

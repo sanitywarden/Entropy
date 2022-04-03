@@ -207,3 +207,26 @@ Building* Region::getBuildingAt(int index) const {
         return this->buildings.at(index).get();
     return nullptr;    
 }   
+
+// Returns the number of buildings buildings in proximity.
+// Proximity is understood as the building's production area.
+int Region::isBuildingInProximity(const Building& building, int building_index) const {
+    const auto search_area = building.getProductionArea();
+    int buildings_in_proximity = 0;
+
+    for(int y = -search_area.y; y <= search_area.y; y++) {
+        for(int x = -search_area.x; x <= search_area.x; x++) {
+            const int index = building_index + y * building.generation_settings.region_size + x;
+
+            // Building or a nullptr.
+            auto tile_building = this->getBuildingAt(index);
+            if(tile_building) {
+                // If the building on this tile is the same building type.
+                if(tile_building->getName() == building.getName())
+                    buildings_in_proximity++; 
+            }
+        }
+    } 
+
+    return buildings_in_proximity;
+}

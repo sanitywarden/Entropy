@@ -5,7 +5,7 @@
 using namespace iso;
 
 Woodcutter::Woodcutter() 
-    : Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_woodcutter", "Woodcutter", 6, VECTOR1X1, ResourceCollection(0, 0, 0)) 
+    : Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_woodcutter", "Woodcutter", 6, VECTOR1X1, VECTOR3X3, ResourceCollection(0, 0, 0)) 
 {}
 
 Woodcutter::~Woodcutter() {
@@ -17,17 +17,21 @@ void Woodcutter::update(GameObject* object, int building_index) {
     // A woodcutter's efficiency depends on the number of trees surrounding it.
 
     auto region = static_cast<Region*>(object);
+    auto production_area = this->getProductionArea();
 
-    const int tree_scan_size = 5;
     int trees = 0;
-    for(int y = -tree_scan_size; y <= tree_scan_size; y++) {
-        for(int x = -tree_scan_size; x <= tree_scan_size; x++) {
+    for(int y = -production_area.y; y <= production_area.y; y++) {
+        for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + y * this->generation_settings.region_size + x;
             
-            if(region->trees.count(index))
+            if(region->tileIsTree(index))
                 trees++;
         }
     }
+
+    auto number_of_buildings = region->isBuildingInProximity(*this, building_index);
+    if(number_of_buildings)
+        trees /= number_of_buildings;
 
     region->addResource(ResourceType::RESOURCE_WOOD, trees);
 }
