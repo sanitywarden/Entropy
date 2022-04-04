@@ -38,6 +38,7 @@ void Regionmap::initialise() {
     this->controls.addKeyMappingCheck("arrow_down",  sf::Keyboard::Key::Down);
     this->controls.addKeyMappingCheck("arrow_up",    sf::Keyboard::Key::Up);
 
+    this->controls.addKeyMappingCheck("key_screenshot",          sf::Keyboard::Key::F12);
     this->controls.addKeyMappingCheck("key_remove_building",     sf::Keyboard::Key::D);
     this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
     this->controls.addKeyMappingCheck("key_toggle_buildmenu",    sf::Keyboard::Key::B);
@@ -69,6 +70,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_maple"   , sf::IntRect(128, 0, 64, 96 ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_1", sf::IntRect(0, 96, 64, 96  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_2", sf::IntRect(64, 96, 64, 96 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_pine"    , sf::IntRect(704, 0, 64, 192));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_cypress" , sf::IntRect(0, 192, 64, 96 ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_acacia"  , sf::IntRect(64, 192, 64, 96));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96 ));
@@ -163,6 +165,11 @@ void Regionmap::handleInput() {
                 if(this->controls.keyState("key_toggle_buildmenu")) {
                     auto widget_buildimenu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
                     widget_buildimenu->show = !widget_buildimenu->show;
+                }
+
+                if(this->controls.keyState("key_screenshot")) {
+                    auto screenshot_time = std::to_string(time(0));
+                    this->manager->window.getWindow()->capture().saveToFile("./res/screenshot/screenshot_" + screenshot_time + ".png");
                 }
 
                 if(this->controls.keyState("arrow_left"))
@@ -405,17 +412,22 @@ void Regionmap::renderRegion() {
 
                     sf::Vertex* quad = &verticies_trees[index * 4];
 
+                    // Size of the texture may vary.
+                    // Certain tree textures are 64x96, and some are 64x192.
+                    // To make sure that they are drawn properly, ask for the size here.
+                    const auto texture_size = this->manager->resource.getTextureSize(tree.getTextureName());
+
                     quad[0].position = tree.getPosition() + sf::Vector2f(0, 0);
-                    quad[1].position = tree.getPosition() + sf::Vector2f(tree.getSize().x, 0);
-                    quad[2].position = tree.getPosition() + sf::Vector2f(tree.getSize().x, tree.getSize().y);
-                    quad[3].position = tree.getPosition() + sf::Vector2f(0, tree.getSize().y);
+                    quad[1].position = tree.getPosition() + sf::Vector2f(texture_size.x, 0);
+                    quad[2].position = tree.getPosition() + sf::Vector2f(texture_size.x, texture_size.y);
+                    quad[3].position = tree.getPosition() + sf::Vector2f(0, texture_size.y);
 
                     const auto texture_coords = findTexture(tree);
 
                     quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
-                    quad[1].texCoords = texture_coords + sf::Vector2f(tree.getSize().x, 0);
-                    quad[2].texCoords = texture_coords + sf::Vector2f(tree.getSize().x, tree.getSize().y);
-                    quad[3].texCoords = texture_coords + sf::Vector2f(0, tree.getSize().y);   
+                    quad[1].texCoords = texture_coords + sf::Vector2f(texture_size.x, 0);
+                    quad[2].texCoords = texture_coords + sf::Vector2f(texture_size.x, texture_size.y);
+                    quad[3].texCoords = texture_coords + sf::Vector2f(0, texture_size.y);   
                 }
             }
         }

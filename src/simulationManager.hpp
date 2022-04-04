@@ -38,8 +38,9 @@ namespace iso {
         
         // Trees.
         // Tundra.
-        { "tile_tree_spruce1", sf::Vector2f(0, 96) },
-        { "tile_tree_spruce2", sf::Vector2f(64, 96)},
+        { "tile_tree_spruce_1", sf::Vector2f(0, 96) },
+        { "tile_tree_spruce_2", sf::Vector2f(64, 96)},
+        { "tile_tree_pine"   , sf::Vector2f(704, 0)},
         
         // Temperate.
         { "tile_tree_beech", sf::Vector2f(0, 0)    },

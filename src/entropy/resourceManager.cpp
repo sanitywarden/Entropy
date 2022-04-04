@@ -6,17 +6,14 @@
 using namespace entropy;
 
 resourceManager::resourceManager() {
-    sf::err().clear(std::ios::failbit);
 }
 
 resourceManager::resourceManager(const Settings& settings) {
-    sf::err().clear(std::ios::failbit);
-
     this->m_settings = settings;
 }
 
 resourceManager::~resourceManager() {
-    sf::err().clear();
+
 }
 
 void resourceManager::loadTexture(const std::string filename, const std::string id, const sf::IntRect area) {
@@ -57,20 +54,37 @@ sf::Texture& resourceManager::getTexture(const std::string id) {
 // Manually writing a table with positions of a texture would be boring and frustrating,
 // so you can reuse the infromation provided when loading the texture. 
 sf::Vector2f resourceManager::getTexturePosition(const std::string& id) const {
-    sf::Vector2f position = sf::Vector2f(
-        this->m_dimensions.at(id).left,
-        this->m_dimensions.at(id).top
-    );
+    try {
+        sf::Vector2f position = sf::Vector2f(
+            this->m_dimensions.at(id).left,
+            this->m_dimensions.at(id).top
+        );
 
-    return position;
+        return position;
+    }
+    catch(const std::out_of_range& exception) {
+        std::cout << "[Resource Manager]: getTexturePosition(): Texture with ID '" << id << "' does not exist.\n";
+        throw exception;
+    }
+
+    return sf::Vector2f(0, 0);
 } 
 
 sf::Vector2f resourceManager::getTextureSize(const std::string& id) const {
-    sf::Vector2f position = sf::Vector2f(
-        this->m_dimensions.at(id).width,
-        this->m_dimensions.at(id).height
-    );
-    return position;
+    try {
+        sf::Vector2f size = sf::Vector2f(
+            this->m_dimensions.at(id).width,
+            this->m_dimensions.at(id).height
+        );
+        return size;
+    }
+
+    catch(const std::out_of_range& exception) {
+        std::cout << "[Resource Manager]: getTextureSize(): Texture with ID '" << id << "' does not exist.\n";
+        throw exception;
+    }
+
+    return sf::Vector2f(0, 0);
 }
 
 sf::IntRect resourceManager::getTextureIntRect(const std::string& id) const {

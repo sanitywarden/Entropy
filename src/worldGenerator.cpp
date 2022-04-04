@@ -1379,9 +1379,10 @@ void WorldGenerator::generateRegion(int region_index) {
 
             if(noise > 0.5f && tile.tiletype.is_terrain()) {
                 const auto& tree_texture = region.biome.getTree();
-                auto tree_offset = sf::Vector2f(0, -this->settings.region_tile_size.y * 2);
-                auto tree_size   = sf::Vector2f(64, 96);
-                region.trees[i]  = GameObject(tile.getTransformedPosition(), tree_offset, tree_size, tree_texture);
+                const auto texture_size  = this->resource->getTextureSize(tree_texture);
+                const auto tree_offset   = sf::Vector2f(0, -texture_size.y + this->settings.region_tile_size.y);
+                const auto tree_size     = texture_size;
+                region.trees[i] = GameObject(tile.getTransformedPosition(), tree_offset, tree_size, tree_texture);
             }
         }
     }
