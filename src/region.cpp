@@ -147,28 +147,36 @@ void Region::placeBuilding(Building building, const GenerationSettings& settings
         building.object_position += sf::Vector2f(0, -building.getSize().y / 4 -settings.region_tile_size.y / 2);
 
     std::shared_ptr <Building> sp_building = nullptr;
-    if(building == BUILDING_PATH_DIRT) {
+    if(building == BUILDING_PATH_DIRT)
         sp_building = std::shared_ptr <Building> (new PathDirt());
-    }
 
-    if(building == BUILDING_PATH_STONE) {
+    else if(building == BUILDING_PATH_STONE)
         sp_building = std::shared_ptr <Building> (new PathStone());
-    }
 
-    if(building == BUILDING_HOUSE_SMALL) {
+    else if(building == BUILDING_HOUSE_SMALL) 
         sp_building = std::shared_ptr <Building> (new HouseSmall());
-    }
 
-    if(building == BUILDING_FARM) {
+    else if(building == BUILDING_FARM) 
         sp_building = std::shared_ptr <Building> (new Farmhouse());
-    }
 
-    if(building == BUILDING_QUARRY) {
+    else if(building == BUILDING_QUARRY)
         sp_building = std::shared_ptr <Building> (new Quarry());
-    }
 
-    if(building == BUILDING_WOODCUTTER) {
+    else if(building == BUILDING_WOODCUTTER) 
         sp_building = std::shared_ptr <Building> (new Woodcutter());
+    
+    else if(building == b2x2)
+        sp_building = std::shared_ptr <Building> (new Building());
+
+    for(int y = 0; y < building.getBuildingArea().y; y++) {
+        for(int x = 0; x < building.getBuildingArea().x; x++) {
+            const int i = index + y * settings.region_size + x;
+
+            // This could be done better.
+            // This is a filler so that when a building is bigger than 1x1,
+            // other building can not be placed on the building's adjacent tiles.
+            this->buildings[i] = std::shared_ptr <Building> (new Building());
+        }
     }
     
     sp_building.get()->setGenerationSettings(settings);
@@ -186,11 +194,17 @@ bool Region::placeBuildingCheck(Building building, const GenerationSettings& set
     return false;
 }
 
-void Region::removeBuilding(int index) {
+void Region::removeBuilding(int index, const GenerationSettings& settings) {
     if(this->buildings.count(index)) {
         auto building   = this->buildings.at(index).get();
         this->resources += building->getBuildingRefund();
-        this->buildings.erase(index);
+        
+        for(int y = 0; y < building->getBuildingArea().y; y++) {
+            for(int x = 0; x < building->getBuildingArea().x; x++) {
+                const int i = index + y * settings.region_size + x;
+                this->buildings.erase(i);
+            }
+        }
     }
 }
 

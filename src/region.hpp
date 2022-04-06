@@ -54,7 +54,7 @@ namespace iso {
             bool isPositionValid     (const Building& building, const GenerationSettings& settings, int index) const;
             void placeBuilding       (Building building, const GenerationSettings& settings, int index);
             bool placeBuildingCheck  (Building building, const GenerationSettings& settings, int index);
-            void removeBuilding      (int index);
+            void removeBuilding      (int index, const GenerationSettings& settings);
             void removeBuildingCost  (const Building& building);
             bool isUnitPresent       ();
             bool tileIsTree          (int index) const;

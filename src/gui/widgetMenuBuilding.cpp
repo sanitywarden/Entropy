@@ -65,6 +65,12 @@ void WidgetMenuBuilding::createUI() {
         image_building_path_stone.setWidgetPosition(widget_position + sf::Vector2f(320, 0));
         image_building_path_stone.setWidgetOffset(sf::Vector2f(0, 24));
 
+    static ImageHolder image_2x2(this->manager, "building2x2");
+        image_2x2.setWidgetID("imageholder_building2x2");
+        image_2x2.setWidgetSize(64, 64);
+        image_2x2.setWidgetPosition(widget_position + sf::Vector2f(384, 0));
+        image_2x2.setWidgetOffset(sf::Vector2f(0, 24));
+
     this->interface.insert({ widget_body.getWidgetID()              , &widget_body               });
     this->interface.insert({ image_building_house.getWidgetID()     , &image_building_house      });
     this->interface.insert({ image_building_farm.getWidgetID()      , &image_building_farm       });
@@ -72,6 +78,7 @@ void WidgetMenuBuilding::createUI() {
     this->interface.insert({ image_building_woodcutter.getWidgetID(), &image_building_woodcutter });
     this->interface.insert({ image_building_path_dirt.getWidgetID() , &image_building_path_dirt  });
     this->interface.insert({ image_building_path_stone.getWidgetID(), &image_building_path_stone });
+    this->interface.insert({ image_2x2.getWidgetID(), &image_2x2 });
 }
 
 void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states) const {

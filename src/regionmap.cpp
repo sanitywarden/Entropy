@@ -82,6 +82,8 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64 ));
     this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 64, 64, 64  ));
     
+    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building2x2", sf::IntRect(256, 0, 128, 128));
+
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_horizontal",     sf::IntRect(0, 0, 64, 32    ));
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_vertical",       sf::IntRect(0, 32, 64, 32   ));
     this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_cross",          sf::IntRect(64, 0, 64, 32   ));
@@ -576,7 +578,7 @@ void Regionmap::updateTile() {
 
     if(this->controls.keyState("key_remove_building")) {
         if(this->region->buildings.count(this->current_index)) {
-            this->region->removeBuilding(this->current_index);
+            this->region->removeBuilding(this->current_index, this->manager->settings);
             this->updatePaths(this->current_index);
         }
     }
