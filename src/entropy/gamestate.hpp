@@ -3,6 +3,9 @@
 
 #include "entropy.hpp"
 #include "controls.hpp"
+#include "gui/base/interfacePage.hpp"
+
+#include <map>
 
 namespace entropy {
     // Base class for gamestates.
@@ -12,9 +15,10 @@ namespace entropy {
         friend class Entropy;
 
         public:
-            Entropy*     engine;
-            Controls     controls;
-            
+            Entropy* engine;
+            Controls controls;
+            std::map <std::string, gui::InterfacePage*> interface;
+
             std::string  state_id;
             sf::Event    event;
             sf::Vector2i mouse_position_desktop;
@@ -59,14 +63,24 @@ namespace entropy {
             virtual void moveCamera()           { return; }
             virtual void zoomCamera()           { return; }
             virtual void updateCamera()         { return; }
-
             virtual void updateScheduler()      { return; }
+            virtual void createUI()             { return; } 
 
             int getDefaultZoom()    const;
             int getMaxZoomIn()      const;
             int getMaxZoomOut()     const;
             bool shouldCameraMove() const;
             bool shouldCameraZoom() const;
+
+            void renderUI() const;
+            void updateUI() const;
+            bool mouseIntersectsUI() const;
+            bool pointIntersectsUI(sf::Vector2f point) const;
+
+            void addInterfaceComponent(gui::InterfacePage* interface_component);
+            gui::InterfacePage* getInterfaceComponent(std::string interface_id);
+            bool checkComponentExist(std::string interface_id);
+            void toggleComponentVisibility(std::string interface_id);
     };
 }
 

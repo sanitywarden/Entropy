@@ -50,17 +50,13 @@ namespace iso {
             void gamestateLoad()   override;
             void gamestateClose()  override;
             void updateScheduler() override;
+            void createUI()        override;
 
             void selectPanel();
             void unselectPanel();
             void highlightPanel();
 
             void renderWorld();
-            
-            void createUI();
-            void updateUI(); 
-            void renderUI();
-            bool intersectsUI();
 
             void selectUnit();
             void unselectUnit();

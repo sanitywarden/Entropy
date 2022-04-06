@@ -156,8 +156,7 @@ void Regionmap::handleInput() {
                 }
 
                 if(this->controls.keyState("key_tilde")) {
-                    auto widget_debug = static_cast<gui::DebugPerformance*>(this->interface["component_debug_performance"]);
-                    widget_debug->show = !widget_debug->show;
+                    this->toggleComponentVisibility("component_debug_performance");
                 }
 
                 if(this->controls.keyState("key_escape")) {
@@ -165,8 +164,7 @@ void Regionmap::handleInput() {
                 }
 
                 if(this->controls.keyState("key_toggle_buildmenu")) {
-                    auto widget_buildimenu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-                    widget_buildimenu->show = !widget_buildimenu->show;
+                    this->toggleComponentVisibility("component_widget_menu_building");
                 }
 
                 if(this->controls.keyState("key_screenshot")) {
@@ -569,8 +567,8 @@ int Regionmap::getCurrentIndex() {
 }
 
 void Regionmap::updateTile() {
-    auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY && !this->intersectsUI() && this->controls.mouseLeftPressed() && !this->mouse_drag && building_menu->show) {
+    auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
+    if(building_menu->getBuilding() != BUILDING_EMPTY && !this->mouseIntersectsUI() && this->controls.mouseLeftPressed() && !this->mouse_drag && building_menu->isVisible()) {
         Building building = building_menu->getBuilding();
         this->region->placeBuildingCheck(building, this->manager->settings, this->current_index);
         this->updatePaths(this->current_index);
@@ -689,45 +687,10 @@ void Regionmap::updatePaths(int index) {
 
 void Regionmap::createUI() {
     static gui::WidgetMenuBuilding widget_menu_building(this->manager);
-    this->interface.insert({ widget_menu_building.getWidgetID(), &widget_menu_building });
+    static gui::DebugPerformance   widget_performance_regionmap(this->manager);
 
-    static gui::DebugPerformance widget_performance_regionmap(this->manager);
-    this->interface.insert({ widget_performance_regionmap.getWidgetID(), &widget_performance_regionmap });
-}
-
-void Regionmap::renderUI() {
-    for(const auto& pair : this->interface) {
-        auto* page = pair.second;
-        if(page) {
-            if(page->show) {
-                this->manager->window.draw(*page);   
-            }
-        }
-    }
-}
-
-void Regionmap::updateUI() {
-    for(const auto& pair : this->interface) {
-        auto* page = pair.second;
-        if(page) {
-            if(page->show) {
-                page->updateUI();
-                page->functionality();   
-            }
-        }
-    }
-}
-
-bool Regionmap::intersectsUI() {
-    for(const auto& pair : this->interface) {
-        const auto* component = pair.second;
-        if(component) {
-            if(component->intersectsUI(this->mouse_position_interface))
-                return true;
-        }
-    }
-    
-    return false;
+    this->addInterfaceComponent(&widget_menu_building);
+    this->addInterfaceComponent(&widget_performance_regionmap);
 }
 
 void Regionmap::updateScheduler() {

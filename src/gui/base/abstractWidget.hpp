@@ -47,6 +47,8 @@ namespace gui {
             AbstractWidget* getParent() const;
             bool attached() const;
 
+            bool isVisible() const;
+
             /* By default checks if the mouse is contained inside a widget in the shape of a square / rectangle. */
             virtual bool containsPoint(sf::Vector2f point) const;
 

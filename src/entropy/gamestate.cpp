@@ -54,3 +54,76 @@ bool Gamestate::shouldCameraMove() const {
 bool Gamestate::shouldCameraZoom() const {
     return this->zoom_camera;
 }
+
+void Gamestate::addInterfaceComponent(gui::InterfacePage* interface_component) {
+    std::string id = interface_component->getWidgetID();
+    this->interface[id] = interface_component;
+    interface_component->show = false;
+}
+
+gui::InterfacePage* Gamestate::getInterfaceComponent(std::string interface_id) {
+    if(this->checkComponentExist(interface_id)) {
+        auto interface_page = this->interface.at(interface_id);
+        return interface_page;
+    }
+
+    return nullptr;
+}
+
+bool Gamestate::checkComponentExist(std::string interface_id) {
+    return this->interface.count(interface_id);
+}
+
+void Gamestate::toggleComponentVisibility(std::string interface_id) {
+    if(this->checkComponentExist(interface_id)) {
+        auto interface_page = this->interface.at(interface_id);
+        interface_page->show = !interface_page->show;  
+    }
+}
+
+void Gamestate::renderUI() const {
+    for(const auto& pair : this->interface) {
+        auto* component = pair.second;
+
+        if(component)
+            if(component->isVisible())
+                this->engine->window.draw(*component);
+    }
+}
+
+void Gamestate::updateUI() const {
+    for(const auto& pair : this->interface) {
+        auto* component = pair.second;
+        
+        if(component) {
+            if(component->show) {
+                component->updateUI();
+                component->functionality();   
+            }
+        }
+    }
+}
+
+bool Gamestate::mouseIntersectsUI() const {
+    for(const auto& pair : this->interface) {
+        const auto* component = pair.second;
+        
+        if(component)
+            if(component->intersectsUI(this->mouse_position_interface))
+                return true;
+    }
+    
+    return false;
+}
+
+bool Gamestate::pointIntersectsUI(sf::Vector2f point) const {
+    for(const auto& pair : this->interface) {
+        const auto* component = pair.second;
+        
+        if(component)
+            if(component->intersectsUI(point))
+                return true;
+    }
+    
+    return false;
+}

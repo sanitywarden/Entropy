@@ -307,8 +307,7 @@ void Worldmap::handleInput() {
                 }
 
                 if(this->controls.keyState("key_tilde")) {
-                    auto widget_debug = static_cast<gui::DebugPerformance*>(this->interface["component_debug_performance"]);
-                    widget_debug->show = !widget_debug->show;
+                    this->toggleComponentVisibility("component_debug_performance");
                 }
 
                 if(this->controls.keyState("key_escape")) {
@@ -363,8 +362,7 @@ void Worldmap::handleInput() {
                 if(this->controls.mouseLeftPressed()) {
                     if(unit_exists && current_region.unit->contains(this->mouse_position_window)) {
                         this->selectUnit();
-                        gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
-                        widget_region->show = false;
+                        this->toggleComponentVisibility("component_widget_region");
                     }
     
                     else {
@@ -506,7 +504,7 @@ void Worldmap::renderWorld() {
 }
 
 void Worldmap::selectPanel() {
-    if(this->controls.mouseLeftPressed() && !this->intersectsUI()) {
+    if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI()) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / this->manager->settings.world_panel_size.x,
             this->mouse_position_window.y / this->manager->settings.world_panel_size.y
@@ -515,9 +513,7 @@ void Worldmap::selectPanel() {
         const int index = panel_grid_position.y * this->manager->settings.world_size + panel_grid_position.x;
         this->selected_index = index;
 
-        gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
-            widget_region->show = true;
-
+        this->toggleComponentVisibility("component_widget_region");
         this->selected_unit_id = -1;
     }
 }
@@ -526,8 +522,7 @@ void Worldmap::unselectPanel() {
     if(this->controls.mouseRightPressed() && this->selected_index != -1) {
         this->selected_index = -1;
         
-        gui::WidgetRegion* widget_region = static_cast<gui::WidgetRegion*>(this->interface["component_widget_region"]);
-            widget_region->show = false;
+        this->toggleComponentVisibility("component_widget_region");
     }
 }
 
@@ -569,56 +564,12 @@ void Worldmap::highlightPanel() {
 
 void Worldmap::createUI() {
     static gui::WidgetRegion widget_region(this->manager);
-    this->interface.insert({ widget_region.getWidgetID(), &widget_region });
-
     static gui::DebugPerformance widget_performance_worldmap(this->manager);
-    this->interface.insert({ widget_performance_worldmap.getWidgetID(), &widget_performance_worldmap });
-
     static gui::WidgetUnit widget_unit(this->manager);
-    this->interface.insert({ widget_unit.getWidgetID(), &widget_unit });
-}
 
-void Worldmap::renderUI() {
-    for(const auto& pair : this->interface) {
-        auto* page = pair.second;
-        if(page) {
-            if(page->show) {
-                this->manager->window.draw(*page);   
-            }
-        }
-    }
-}
-
-void Worldmap::updateUI() {
-    for(const auto& pair : this->interface) {
-        auto* page = pair.second;
-        if(page) {
-            if(page->show) {
-                page->updateUI();
-                page->functionality();   
-            }
-        }
-    }
-}
-
-int Worldmap::getCurrentIndex() {
-    return this->current_index;
-}
-
-int Worldmap::getSelectedIndex() {
-    return this->selected_index;
-}
-
-// If the player's mouse is placed on a GUI component.
-bool Worldmap::intersectsUI() {
-    for(const auto& pair : this->interface) {
-        const auto* component = pair.second;
-        if(component) {
-            if(component->intersectsUI(this->mouse_position_interface))
-                return true;
-        }
-    }
-    return false;
+    this->addInterfaceComponent(&widget_region);
+    this->addInterfaceComponent(&widget_performance_worldmap);
+    this->addInterfaceComponent(&widget_unit);
 }
 
 void Worldmap::gamestateLoad() {
@@ -673,8 +624,7 @@ void Worldmap::selectUnit() {
             if(pawn->contains(this->mouse_position_window)) {
                 this->selected_unit_id = pawn->getID();
     
-                gui::WidgetUnit* widget_unit = static_cast<gui::WidgetUnit*>(this->interface["component_widget_unit"]);
-                    widget_unit->show = true;
+                this->toggleComponentVisibility("component_widget_unit");
             }
         }
     }
@@ -692,14 +642,13 @@ void Worldmap::unselectUnit() {
     }
 
     if(pawn) {
-        if(this->controls.mouseLeftPressed() && !this->intersectsUI() && !pawn->contains(this->mouse_position_window)) {
+        if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI() && !pawn->contains(this->mouse_position_window)) {
             this->selected_unit_id = -1;
         }
     }
 
     if(this->controls.mouseLeftPressed() && this->selected_unit_id == -1) {
-        gui::WidgetUnit* widget_unit = static_cast<gui::WidgetUnit*>(this->interface["component_widget_unit"]);
-            widget_unit->show = false;
+        this->toggleComponentVisibility("component_widget_unit");
     }
 }
 
@@ -735,4 +684,12 @@ GameObject* Worldmap::getSelectedObject() {
 
 int Worldmap::getSelectedUnitID() {
     return this->selected_unit_id;
+}
+
+int Worldmap::getCurrentIndex() {
+    return this->current_index;
+}
+
+int Worldmap::getSelectedIndex() { 
+    return this->selected_index;
 }

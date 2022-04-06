@@ -79,11 +79,14 @@ void WidgetUnit::updateUI() {
 }
 
 void WidgetUnit::functionality() {
-    Worldmap* worldmap = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
-    Button* button_colonise = static_cast<Button*>(this->getComponent("button_colonise"));
+    if(!this->unit)
+        return;
 
-    const int region_index = unit->current_index;  
-    auto&     region = this->manager->world.world_map[region_index];
+    auto* worldmap = this->manager->gamestate.getGamestate();
+    auto* button_colonise = this->getComponent("button_colonise");
+
+    auto region_index = this->unit->current_index;  
+    auto& region      = this->manager->world.world_map[region_index];
 
     if(this->canColonise(region_index) && this->unit && this->unit->getName() == "settler" && worldmap->controls.mouseLeftPressed() && button_colonise->containsPoint(worldmap->mouse_position_interface)) {
         // Region to be added to the player's territory.

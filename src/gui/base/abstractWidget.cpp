@@ -92,3 +92,7 @@ void AbstractWidget::setWidgetOffset(float x, float y) {
 sf::Vector2f AbstractWidget::getWidgetOffset() const {
     return this->m_widget_offset;
 }
+
+bool AbstractWidget::isVisible() const {
+    return this->show;
+}

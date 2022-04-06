@@ -23,8 +23,6 @@ namespace iso {
             SimulationManager* manager;
             Scheduler          scheduler;
 
-            std::map <std::string, gui::InterfacePage*> interface;
-
             bool mouse_moved;
             bool mouse_drag;
             bool recalculate_mesh;
@@ -45,18 +43,14 @@ namespace iso {
             void updateCamera()    override;
             void gamestateLoad()   override;
             void gamestateClose()  override;
-            void updateScheduler() override;;
+            void updateScheduler() override;
+            void createUI()        override;
 
             void renderRegion();
             void higlightTile();
 
             void updateTile();
             void updatePaths(int index);
-
-            void createUI();
-            void renderUI();
-            void updateUI();
-            bool intersectsUI();
         public: 
             Regionmap(SimulationManager* manager);
             ~Regionmap();
