@@ -46,18 +46,20 @@ namespace iso {
             ~Region();
             
             RiverDirection riverDirection();
-            bool isOwned             () const;
-            void addResource         (ResourceType resource, int quantity);
-            void addResources        (ResourceCollection resource);
-            int  getResourceQuantity (ResourceType resource);
+            bool isOwned() const;
+            void addResource(ResourceType resource, int quantity);
+            void addResources(ResourceCollection resource);
+            int  getResourceQuantity(ResourceType resource);
             bool isBuildingAffordable(const Building& building) const;
-            bool isPositionValid     (const Building& building, const GenerationSettings& settings, int index) const;
-            void placeBuilding       (Building building, const GenerationSettings& settings, int index);
-            bool placeBuildingCheck  (Building building, const GenerationSettings& settings, int index);
-            void removeBuilding      (int index, const GenerationSettings& settings);
-            void removeBuildingCost  (const Building& building);
-            bool isUnitPresent       ();
-            bool tileIsTree          (int index) const;
+            bool isPositionValid(const Building& building, const GenerationSettings& settings, int index) const;
+            void placeBuilding(Building building, sf::Vector2f texture_size, const GenerationSettings& settings, int index);
+            bool placeBuildingCheck(Building building, sf::Vector2f texture_size, const GenerationSettings& settings, int index);
+            void removeBuilding(int index, const GenerationSettings& settings);
+            void removeBuildingCost(const Building& building);
+            
+            bool isUnitPresent();
+            bool isTree(int index) const;
+            bool isPath(int index) const;
 
             // If building exists at provided index, return pointer.
             // Else returns nullptr.

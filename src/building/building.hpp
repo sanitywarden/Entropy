@@ -9,9 +9,11 @@ const auto VECTOR0X0           = sf::Vector2f(0, 0);
 const auto VECTOR1X1           = sf::Vector2f(1, 1);
 const auto VECTOR2X2           = sf::Vector2f(2, 2);
 const auto VECTOR3X3           = sf::Vector2f(3, 3);
-const auto BUILDINGSIZE64X64   = sf::Vector2f(64, 64);
 const auto BUILDINGSIZE64X32   = sf::Vector2f(64, 32);
+const auto BUILDINGSIZE64X64   = sf::Vector2f(64, 64);
 const auto BUILDINGSIZE128X128 = sf::Vector2f(128, 128);
+const auto BUILDINGSIZE192X128 = sf::Vector2f(192, 128);
+const auto BUILDINGSIZE192X192 = sf::Vector2f(192, 192);
 
 namespace iso {
     class Building : public GameObject {
@@ -47,6 +49,7 @@ namespace iso {
             const ResourceCollection getBuildingRefund() const;
 
             const int getNumericalType() const;
+            sf::Vector2f calculateTextureOffset(sf::Vector2f texture_size) const;
 
             void setGenerationSettings(const GenerationSettings& settings);
 

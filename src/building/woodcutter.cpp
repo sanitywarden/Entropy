@@ -24,7 +24,7 @@ void Woodcutter::update(GameObject* object, int building_index) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + y * this->generation_settings.region_size + x;
             
-            if(region->tileIsTree(index))
+            if(region->isTree(index))
                 trees++;
         }
     }

@@ -46,6 +46,8 @@ namespace iso {
 
             // Regionmap API.            
 
+            bool regionGenerateResource(Region& region, const std::string& resource_tile_texture, int min_chance, int radius);
+
         public:
             WorldGenerator();
             WorldGenerator(entropy::resourceManager* resource, Texturizer* texturizer, GenerationSettings& settings);

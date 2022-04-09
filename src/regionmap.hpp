@@ -48,6 +48,7 @@ namespace iso {
 
             void renderRegion();
             void higlightTile();
+            void renderSelectedBuilding();
 
             void updateTile();
             void updatePaths(int index);

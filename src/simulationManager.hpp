@@ -28,14 +28,15 @@ namespace iso {
         { "tile_grass_subtropical"     , sf::Vector2f(128, 0)   }, 
         { "tile_grass_tropical"        , sf::Vector2f(192, 0)   }, 
         { "tile_tundra"                , sf::Vector2f(256, 0)   }, 
-        { "tile_arctic"                , sf::Vector2f(320, 0)   }, 
-        { "tile_desert"                , sf::Vector2f(384, 0)   }, 
-        { "tile_ocean"                 , sf::Vector2f(448, 0)   }, 
-        { "tile_sea"                   , sf::Vector2f(512, 0)   },
+        { "tile_ocean"                 , sf::Vector2f(320, 0)   }, 
+        { "tile_river"                 , sf::Vector2f(384, 0)   },
         { "tile_height_dirt"           , sf::Vector2f(0, 32)    },
         { "tile_height_stone"          , sf::Vector2f(64, 32)   },
-        { "tile_resource_stone"        , sf::Vector2f(0, 64)    },
         
+        // Resources.
+        { "tile_resource_stone"        , sf::Vector2f(0, 64)    },
+        { "tile_resource_flint"        , sf::Vector2f(64, 64)   },
+
         // Trees.
         // Tundra.
         { "tile_tree_spruce_1", sf::Vector2f(0, 96) },

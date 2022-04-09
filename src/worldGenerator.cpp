@@ -1260,6 +1260,9 @@ void WorldGenerator::generateRegion(int region_index) {
         const auto& river = this->rivers[region_index];
         const auto river_image = this->resource->getTexture(river.getTextureName()).copyToImage();
 
+        // Because rivers and oceans may be in the same region there will not be a seemless transition, because both tile types have different textures.
+        const std::string water_tile = this->extractBaseTexture(region.getTextureName(), region.biome) == "panel_full" ? "tile_river" : "tile_ocean";
+
         for(int y = 0; y < this->settings.region_size; y++) {
             for(int x = 0; x < this->settings.region_size; x++) {
                 const int index   = this->rCalculateIndex(x, y);
@@ -1268,9 +1271,13 @@ void WorldGenerator::generateRegion(int region_index) {
 
                 if(colour == COLOUR_BLUE_RIVER) {
                     if(!tile.tiletype.is_ocean())
-                        tile.tiletype.set_river();
-                    tile.elevation = 0;
+                        tile.tiletype.set_river();                    
+
+                    else
+                        tile.tiletype.set_ocean();
+
                     tile.object_texture_name = "tile_ocean";
+                    tile.elevation = 0;
                 }
             }
         }   
@@ -1291,7 +1298,7 @@ void WorldGenerator::generateRegion(int region_index) {
                     if(!tile.tiletype.is_ocean())
                         tile.tiletype.set_river();
                     tile.elevation = 0;
-                    tile.object_texture_name = "tile_ocean";
+                    tile.object_texture_name = "tile_river";
                 }
             }
         }  
@@ -1380,81 +1387,37 @@ void WorldGenerator::generateRegion(int region_index) {
             if(noise > 0.5f && tile.tiletype.is_terrain()) {
                 const auto& tree_texture = region.biome.getTree();
                 const auto texture_size  = this->resource->getTextureSize(tree_texture);
-                const auto tree_offset   = sf::Vector2f(0, -texture_size.y + this->settings.region_tile_size.y);
-                const auto tree_size     = texture_size;
+                
+                // Offset is for trees that are bigger than tile size.
+                auto tree_offset = sf::Vector2f(0, 0);
+                if(texture_size.y > this->settings.region_tile_size.y)
+                    tree_offset.y = -texture_size.y + this->settings.region_tile_size.y;
+
+                if(texture_size.x > this->settings.region_tile_size.x)
+                    tree_offset.x = -this->settings.region_tile_size.x / 2;
+                
+                const auto tree_size = texture_size;
                 region.trees[i] = GameObject(tile.getTransformedPosition(), tree_offset, tree_size, tree_texture);
             }
         }
     }
 
-    std::string has_stone = "False";
+    // Generate flint.
+    std::string has_flint = "False";
+    bool did_flint_generate = this->regionGenerateResource(region, "tile_resource_flint", 15, this->settings.region_size / 16);
+    if(did_flint_generate)
+        has_flint = "True";
+
+    std::cout << "  [] Has flint:\t" << has_flint << "\n";
 
     // Generate stone.
-    {
-        const int range        = 100;
-        const int min_value    = 75;
-        const int random_value = rand() % range;
-        if(random_value > min_value) {
-            has_stone = "True";
-            
-            sf::Clock clock;
-
-            NoiseContainer container;
-            NoiseSettings  settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 16, 4, 1.50f);
-            this->generateNoise(settings, container);
-            
-            int random_index = -1;
-            while(true) {
-                random_index = rand() % this->getRegionSize();
-                if(region.map[random_index].tiletype.is_terrain())
-                    break;
-            }
-
-            auto t1 = clock.restart().asSeconds();
-            const auto& tile_selected = region.map[random_index];
-            auto tile_selected_grid = this->tileGridPosition(tile_selected.getPosition());
-
-            const int radius = (this->settings.region_size / 32);
-
-            int angle = 0;
-            
-            // This is not REQUIRED.
-            // It may have been a loop that iterator over all of the tiles in the region, BUT:
-            // This solution takes significantly less time (from ~0.45s to < 0.10s).
-            for(int y = tile_selected_grid.y - radius * radius; y < tile_selected_grid.y + radius * radius; y++) {
-                for(int x = tile_selected_grid.x - radius * radius; x < tile_selected_grid.x + radius * radius; x++) {
-                    const int index = y * this->settings.region_size + x;
-                    auto& tile      = region.map[index];
-                    
-                    const auto tile_centre = tile_selected.getPosition();
-                    const auto tile_point  = tile.getPosition();
-                    const auto grid_centre = sf::Vector2f(
-                        this->tileGridPosition(tile_centre).x,
-                        this->tileGridPosition(tile_centre).y
-                    );
-
-                    const auto grid_point  = sf::Vector2f(
-                        this->tileGridPosition(tile_point).x,
-                        this->tileGridPosition(tile_point).y
-                    );
-                    
-                    const int radius_modified = radius * (1.00f + container[angle]);
-                    const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
-                    if(point_inside && tile.tiletype.is_terrain() && !region.tileIsTree(index)) {
-                        tile.object_texture_name = "tile_resource_stone";
-                        angle++;
-                    }
-                }
-            }
-
-            auto t2 = clock.restart().asSeconds();
-
-            // std::cout << t1 << "\n";
-            // std::cout << t2 << "\n";
-        }
-    }
+    std::string has_stone = "False";
+    bool did_stone_generate = this->regionGenerateResource(region, "tile_resource_stone", 75, this->settings.region_size / 32);
+    if(did_stone_generate)
+        has_stone = "True";
 
     std::cout << "  [] Has stone:\t" << has_stone << "\n";
+
 
     region.visited = true;
     
@@ -1478,4 +1441,68 @@ std::string WorldGenerator::extractBaseTexture(const std::string& id, const Biom
 
 int WorldGenerator::isInRegionBounds(int index) const {
     return (index >= 0 && index < this->getRegionSize());
+}
+
+// This function generates resources in patches.
+// Only one patch of a resource may be generated per region.
+bool WorldGenerator::regionGenerateResource(Region& region, const std::string& resource_tile_texture, int min_chance, int radius) {
+    const int range        = 100;
+    const int random_value = rand() % range;
+    if(random_value > min_chance) {
+        NoiseContainer container;
+        NoiseSettings  settings(sf::Vector2f(this->settings.region_size, this->settings.region_size), 8, 16, 4, 1.50f);
+        this->generateNoise(settings, container);
+        
+        int random_index = -1;
+        while(true) {
+            random_index = rand() % this->getRegionSize();
+            
+            if(this->isInRegionBounds(random_index))
+                if(region.map[random_index].tiletype.is_terrain())
+                    break;
+        }
+
+        const auto& tile_selected = region.map[random_index];
+        auto tile_selected_grid = this->tileGridPosition(tile_selected.getPosition());
+        int angle = 0;
+
+        // With this method, without control X and Y can be smaller than 0 or bigger than region size.
+        // Because of that you have to check the bounds.
+        // You can not do that inside the loop because it would make it infinite.
+
+        int min_x = tile_selected_grid.x - radius * radius < 0 ? 0 : tile_selected_grid.x - radius * radius;
+        int min_y = tile_selected_grid.y - radius * radius < 0 ? 0 : tile_selected_grid.y - radius * radius;
+        int max_x = tile_selected_grid.x + radius * radius >= this->settings.region_size ? this->settings.region_size : tile_selected_grid.x + radius * radius;
+        int max_y = tile_selected_grid.y + radius * radius >= this->settings.region_size ? this->settings.region_size : tile_selected_grid.y + radius * radius;
+
+        for(int y = min_y; y < max_y; y++) {
+            for(int x = min_x; x < max_x; x++) {        
+                const int index = this->rCalculateIndex(x, y);
+                auto& tile      = region.map[index];
+                
+                const auto tile_centre = tile_selected.getPosition();
+                const auto tile_point  = tile.getPosition();
+                const auto grid_centre = sf::Vector2f(
+                    this->tileGridPosition(tile_centre).x,
+                    this->tileGridPosition(tile_centre).y
+                );
+
+                const auto grid_point  = sf::Vector2f(
+                    this->tileGridPosition(tile_point).x,
+                    this->tileGridPosition(tile_point).y
+                );
+                
+                const int radius_modified = radius * (1.00f + container[angle]);
+                const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
+                if(point_inside && tile.tiletype.is_terrain() && !region.isTree(index)) {
+                    tile.object_texture_name = resource_tile_texture;
+                    angle++;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }

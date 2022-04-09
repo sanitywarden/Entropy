@@ -20,8 +20,6 @@ namespace iso {
     const Quarry     BUILDING_QUARRY;      // ID 5.
     const Woodcutter BUILDING_WOODCUTTER;  // ID 6.
 
-    const Building b2x2 = Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE128X128, "building2x2", "building2x2", 7, VECTOR2X2, VECTOR1X1, ResourceCollection(0, 0, 0));
-
     // If the building should be possible to place, add it here.
     const static std::vector <Building> BUILDING_LOOKUP_TABLE = {
         BUILDING_EMPTY,
@@ -31,7 +29,6 @@ namespace iso {
         BUILDING_FARM,
         BUILDING_QUARRY,
         BUILDING_WOODCUTTER,
-        b2x2
     };
 }
 

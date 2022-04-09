@@ -1,5 +1,7 @@
 #include "region.hpp"
 #include "./building/building_definitions.hpp"
+#include "globalutilities.hpp"
+
 #include <iostream>
 
 using namespace iso;
@@ -120,7 +122,7 @@ bool Region::isPositionValid(const Building& building, const GenerationSettings&
 
     for(int x = 0; x < building_size.x; x++) {
         for(int y = 0; y < building_size.y; y++) {
-            const int i = (y * settings.region_size) + index + x;
+            const int i = (y * settings.region_size + x) + index;
 
             if(this->map.at(i).elevation != foundation_tile_elevation)
                 return false;
@@ -139,12 +141,27 @@ bool Region::isPositionValid(const Building& building, const GenerationSettings&
     return true;
 }
 
-void Region::placeBuilding(Building building, const GenerationSettings& settings, int index) {
+void Region::placeBuilding(Building building, sf::Vector2f texture_size, const GenerationSettings& settings, int index) {
     const Tile& tile         = this->map[index];
     building.object_position = tile.getTransformedPosition();
 
-    if(building.getSize().y != 32)
-        building.object_position += sf::Vector2f(0, -building.getSize().y / 4 -settings.region_tile_size.y / 2);
+    const int a1_w = 0; 
+    const int a1_h = settings.region_tile_size.y; 
+    const int r_w  = settings.region_tile_size.x / 2;
+    const int r_h  = settings.region_tile_size.y;    
+    const int n    = building.getBuildingArea().x;                    
+    
+    // Here you adjust the origin of buildings with sizes of n > 0.
+    // Texture size scale are arithmetic series.
+    auto offset = sf::Vector2f(0, 0);  
+    if(n > 0) {
+        offset = sf::Vector2f(
+            -(a1_w + (n - 1) * r_w),
+            -(a1_h + (n - 1) * r_h)
+        );
+    }
+
+    building.object_position += offset;
 
     std::shared_ptr <Building> sp_building = nullptr;
     if(building == BUILDING_PATH_DIRT)
@@ -165,9 +182,6 @@ void Region::placeBuilding(Building building, const GenerationSettings& settings
     else if(building == BUILDING_WOODCUTTER) 
         sp_building = std::shared_ptr <Building> (new Woodcutter());
     
-    else if(building == b2x2)
-        sp_building = std::shared_ptr <Building> (new Building());
-
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             const int i = index + y * settings.region_size + x;
@@ -184,9 +198,9 @@ void Region::placeBuilding(Building building, const GenerationSettings& settings
     this->buildings[index] = sp_building;
 }
 
-bool Region::placeBuildingCheck(Building building, const GenerationSettings& settings, int index) {
+bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, const GenerationSettings& settings, int index) {
     if(this->isPositionValid(building, settings, index) && this->isBuildingAffordable(building)) {
-        this->placeBuilding(building, settings, index);
+        this->placeBuilding(building, texture_size, settings, index);
         this->removeBuildingCost(building);
         return true;
     }
@@ -212,7 +226,7 @@ bool Region::isUnitPresent() {
     return this->unit != nullptr;
 }
 
-bool Region::tileIsTree(int index) const {
+bool Region::isTree(int index) const {
     return this->trees.count(index);
 }
 
@@ -243,4 +257,15 @@ int Region::isBuildingInProximity(const Building& building, int building_index) 
     } 
 
     return buildings_in_proximity;
+}
+
+bool Region::isPath(int index) const {
+    auto* building = this->getBuildingAt(index);
+
+    if(building) {
+        const auto& texture_name = building->getTextureName();
+        return startsWith(texture_name, "path");
+    }
+
+    return false;
 }
