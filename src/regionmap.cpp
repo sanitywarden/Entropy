@@ -53,16 +53,16 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_subtropical",  sf::IntRect(128, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tropical",     sf::IntRect(192, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_tundra",             sf::IntRect(256, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_arctic",             sf::IntRect(320, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_desert",             sf::IntRect(384, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_ocean",              sf::IntRect(448, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_sea",                sf::IntRect(512, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_ocean",              sf::IntRect(320, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river",              sf::IntRect(384, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black",              sf::IntRect(0, 288, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black_empty",        sf::IntRect(0, 256, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_template_direction", sf::IntRect(64, 288, 64, 32 ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_dirt",        sf::IntRect(0, 32, 64, 32   ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_stone",       sf::IntRect(64, 32, 64, 32  ));
     
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_stone",     sf::IntRect(0, 64, 64, 32   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_flint",     sf::IntRect(64, 64, 64, 32  ));
 
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_foliage_atlas");
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_beech"   , sf::IntRect(0, 0, 64, 96   ));
@@ -72,7 +72,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_2", sf::IntRect(64, 96, 64, 96 ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_pine"    , sf::IntRect(704, 0, 64, 192));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_cypress" , sf::IntRect(0, 192, 64, 96 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_acacia"  , sf::IntRect(64, 192, 64, 96));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_acacia"  , sf::IntRect(64, 192, 128, 96));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96 ));
 
     this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_atlas");
@@ -82,33 +82,31 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64 ));
     this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 64, 64, 64  ));
     
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building2x2", sf::IntRect(256, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_horizontal",     sf::IntRect(0, 0, 64, 64    ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_vertical",       sf::IntRect(0, 64, 64, 64   ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_cross",          sf::IntRect(64, 0, 64, 64   ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_point",          sf::IntRect(64, 64, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_up",        sf::IntRect(128, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_down",      sf::IntRect(128, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_right",     sf::IntRect(192, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_left",      sf::IntRect(192, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_down",   sf::IntRect(256, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_top",    sf::IntRect(256, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_left",   sf::IntRect(320, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_right",  sf::IntRect(320, 64, 64, 64 ));
 
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_horizontal",     sf::IntRect(0, 0, 64, 32    ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_vertical",       sf::IntRect(0, 32, 64, 32   ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_cross",          sf::IntRect(64, 0, 64, 32   ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_point",          sf::IntRect(64, 32, 64, 32  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_up",        sf::IntRect(128, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_down",      sf::IntRect(128, 32, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_right",     sf::IntRect(192, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_left",      sf::IntRect(192, 32, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_down",   sf::IntRect(256, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_top",    sf::IntRect(256, 32, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_left",   sf::IntRect(320, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_right",  sf::IntRect(320, 32, 64, 32 ));
-    
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_horizontal",    sf::IntRect(0, 64, 64, 32   ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_vertical",      sf::IntRect(0, 96, 64, 32   ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_cross",         sf::IntRect(64, 64, 64, 32  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_point",         sf::IntRect(64, 96, 64, 32  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_up",       sf::IntRect(128, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_down",     sf::IntRect(128, 96, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_right",    sf::IntRect(192, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_left",     sf::IntRect(192, 96, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_down",  sf::IntRect(256, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_top",   sf::IntRect(256, 96, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 96, 64, 32 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_horizontal",    sf::IntRect(0, 128, 64, 64   ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_vertical",      sf::IntRect(0, 192, 64, 64   ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_cross",         sf::IntRect(64, 128, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_point",         sf::IntRect(64, 192, 64, 64  ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_up",       sf::IntRect(128, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_down",     sf::IntRect(128, 192, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_right",    sf::IntRect(192, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_left",     sf::IntRect(192, 192, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_down",  sf::IntRect(256, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_top",   sf::IntRect(256, 192, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 192, 64, 64 ));
 
     this->manager->texturizer.createColouredWorldmapTexture("tile_black", "tile_highlight", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
 }
@@ -128,6 +126,7 @@ void Regionmap::render(float delta_time) {
     this->manager->window.getWindow()->setView(this->view_game);
 
     this->renderRegion();
+    this->renderSelectedBuilding();
     this->higlightTile();
 
     this->manager->window.getWindow()->setView(this->view_interface);
@@ -317,18 +316,6 @@ void Regionmap::updateCamera() {
 sf::VertexBuffer regionmap_mesh_tile(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
 sf::VertexBuffer regionmap_mesh_tree(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
 void Regionmap::renderRegion() {    
-    const auto findTexture = [this](const GameObject& object) -> sf::Vector2f {
-        const auto& tile_texture = object.getTextureName();        
-        
-        try {
-            return REGIONMAP_TEXTURE_LOOKUP_TABLE.at(tile_texture);
-        }
-        catch(const std::exception& exception) {
-            std::cout << "[Regionmap]: No texture with ID '" << tile_texture << "' is present in texture table.\n";
-            throw exception;
-        }
-    };
-
     const sf::Vector2f camera_size   = this->view_game.getSize();
     const sf::Vector2f camera_centre = this->view_game.getCenter();
     const sf::Rect     camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
@@ -350,22 +337,23 @@ void Regionmap::renderRegion() {
             regionmap_mesh_tile.create(verticies_tilemap);
 
         for(int index = 0; index < this->manager->world.getRegionSize(); index++) {
-            auto& tile         = this->region->map.at(index);
-            auto tile_position = tile.getTransformedPosition();
-            
             sf::Vertex* quad = &verticies_tiles[verticies_index * 4];
+            
+            auto& tile          = this->region->map.at(index);
+            auto tile_position  = tile.getTransformedPosition();
+            const auto& texture = tile.getTextureName();
 
             quad[0].position = tile_position + sf::Vector2f(0, 0);
             quad[1].position = tile_position + sf::Vector2f(tile_size.x, 0);
             quad[2].position = tile_position + sf::Vector2f(tile_size.x, tile_size.y);
             quad[3].position = tile_position + sf::Vector2f(0, tile_size.y);
 
-            const auto texture_coords = findTexture(this->region->map[index]);
+            const auto tile_coords = this->manager->resource.getTexturePosition(texture); 
 
-            quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
-            quad[1].texCoords = texture_coords + sf::Vector2f(tile_size.x, 0);
-            quad[2].texCoords = texture_coords + sf::Vector2f(tile_size.x, tile_size.y);
-            quad[3].texCoords = texture_coords + sf::Vector2f(0, tile_size.y);
+            quad[0].texCoords = tile_coords + sf::Vector2f(0, 0);
+            quad[1].texCoords = tile_coords + sf::Vector2f(tile_size.x, 0);
+            quad[2].texCoords = tile_coords + sf::Vector2f(tile_size.x, tile_size.y);
+            quad[3].texCoords = tile_coords + sf::Vector2f(0, tile_size.y);
 
             // Add one to the index because you add the tile.
             verticies_index++;  
@@ -373,17 +361,21 @@ void Regionmap::renderRegion() {
             for(int side_index = 0; side_index < this->region->sides[index].size(); side_index++) {
                 sf::Vertex* side_quad = &verticies_tiles[verticies_index * 4];
 
-                side_quad[0].position = this->region->sides[index][side_index].getPosition() + sf::Vector2f(0, 0);
-                side_quad[1].position = this->region->sides[index][side_index].getPosition() + sf::Vector2f(tile_size.x, 0);
-                side_quad[2].position = this->region->sides[index][side_index].getPosition() + sf::Vector2f(tile_size.x, tile_size.y);
-                side_quad[3].position = this->region->sides[index][side_index].getPosition() + sf::Vector2f(0, tile_size.y);
+                const auto& side         = this->region->sides[index][side_index];
+                const auto side_position = side.getPosition();
 
-                const auto texture_coords = findTexture(this->region->sides[index][side_index]);
+                side_quad[0].position = side_position + sf::Vector2f(0, 0);
+                side_quad[1].position = side_position + sf::Vector2f(tile_size.x, 0);
+                side_quad[2].position = side_position + sf::Vector2f(tile_size.x, tile_size.y);
+                side_quad[3].position = side_position + sf::Vector2f(0, tile_size.y);
 
-                side_quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
-                side_quad[1].texCoords = texture_coords + sf::Vector2f(tile_size.x, 0);
-                side_quad[2].texCoords = texture_coords + sf::Vector2f(tile_size.x, tile_size.y);
-                side_quad[3].texCoords = texture_coords + sf::Vector2f(0, tile_size.y);
+                const auto& side_texture = side.getTextureName();
+                const auto side_coords   = this->manager->resource.getTexturePosition(side_texture);
+
+                side_quad[0].texCoords = side_coords + sf::Vector2f(0, 0);
+                side_quad[1].texCoords = side_coords + sf::Vector2f(tile_size.x, 0);
+                side_quad[2].texCoords = side_coords + sf::Vector2f(tile_size.x, tile_size.y);
+                side_quad[3].texCoords = side_coords + sf::Vector2f(0, tile_size.y);
 
                 // Add one to the index because you add the side.
                 verticies_index++;
@@ -408,7 +400,8 @@ void Regionmap::renderRegion() {
                 const bool tree_exists = this->region->trees.count(index);
                 if(tree_exists) {
                     // Tree position is the tile.getTransformedPosition().
-                    const auto& tree = this->region->trees[index];                    
+                    const auto& tree         = this->region->trees[index];                    
+                    const auto& tree_texture = tree.getTextureName();
 
                     sf::Vertex* quad = &verticies_trees[index * 4];
 
@@ -422,12 +415,12 @@ void Regionmap::renderRegion() {
                     quad[2].position = tree.getPosition() + sf::Vector2f(texture_size.x, texture_size.y);
                     quad[3].position = tree.getPosition() + sf::Vector2f(0, texture_size.y);
 
-                    const auto texture_coords = findTexture(tree);
+                    const auto tree_coords = this->manager->resource.getTexturePosition(tree_texture); 
 
-                    quad[0].texCoords = texture_coords + sf::Vector2f(0, 0);
-                    quad[1].texCoords = texture_coords + sf::Vector2f(texture_size.x, 0);
-                    quad[2].texCoords = texture_coords + sf::Vector2f(texture_size.x, texture_size.y);
-                    quad[3].texCoords = texture_coords + sf::Vector2f(0, texture_size.y);   
+                    quad[0].texCoords = tree_coords + sf::Vector2f(0, 0);
+                    quad[1].texCoords = tree_coords + sf::Vector2f(texture_size.x, 0);
+                    quad[2].texCoords = tree_coords + sf::Vector2f(texture_size.x, texture_size.y);
+                    quad[3].texCoords = tree_coords + sf::Vector2f(0, texture_size.y);   
                 }
             }
         }
@@ -570,7 +563,8 @@ void Regionmap::updateTile() {
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
     if(building_menu->getBuilding() != BUILDING_EMPTY && !this->mouseIntersectsUI() && this->controls.mouseLeftPressed() && !this->mouse_drag && building_menu->isVisible()) {
         Building building = building_menu->getBuilding();
-        this->region->placeBuildingCheck(building, this->manager->settings, this->current_index);
+        auto texture_size = this->manager->resource.getTextureSize(building.getTextureName());
+        this->region->placeBuildingCheck(building, texture_size, this->manager->settings, this->current_index);
         this->updatePaths(this->current_index);
     }
 
@@ -590,54 +584,55 @@ void Regionmap::updateTile() {
 }
 
 void Regionmap::updatePaths(int index) {
-    if(!this->region->buildings.count(index))
+    if(!this->region->getBuildingAt(index) || *this->region->getBuildingAt(index) == BUILDING_EMPTY)
         return;
 
     // Assigns appropriate path texture based on the path tile's surroundings.
     // Only update the paths if they are adjacent to other paths.
-    const auto directions = [&](bool LEFT, bool RIGHT, bool TOP, bool DOWN, Building& building) -> void {
-        const std::string path_type = (building == BUILDING_PATH_DIRT) ? "dirt" : "stone"; 
-        
+    const auto directions = [this](bool LEFT, bool RIGHT, bool TOP, bool DOWN, int index) -> void {
+        auto building = this->region->getBuildingAt(index);
+        const std::string path_type = (*building == BUILDING_PATH_DIRT) ? "dirt" : "stone"; 
+
         if(LEFT && RIGHT && !TOP && !DOWN)
-            building.object_texture_name = "path_" + path_type + "_horizontal";
+            building->object_texture_name = "path_" + path_type + "_horizontal";
 
         else if(!LEFT && !RIGHT && TOP && DOWN)
-            building.object_texture_name = "path_" + path_type + "_vertical";
+            building->object_texture_name = "path_" + path_type + "_vertical";
 
         else if(LEFT && RIGHT && TOP && DOWN)
-            building.object_texture_name = "path_" + path_type + "_cross";
+            building->object_texture_name = "path_" + path_type + "_cross";
 
         else if(LEFT && !RIGHT && TOP && !DOWN)
-            building.object_texture_name = "path_" + path_type + "_turn_up";
+            building->object_texture_name = "path_" + path_type + "_turn_up";
     
         else if(!LEFT && RIGHT && !TOP && DOWN)
-            building.object_texture_name = "path_" + path_type + "_turn_down";
+            building->object_texture_name = "path_" + path_type + "_turn_down";
 
         else if(!LEFT && RIGHT && TOP && !DOWN)
-            building.object_texture_name = "path_" + path_type + "_turn_right";
+            building->object_texture_name = "path_" + path_type + "_turn_right";
 
         else if(LEFT && !RIGHT && !TOP && DOWN)
-            building.object_texture_name = "path_" + path_type + "_turn_left";
+            building->object_texture_name = "path_" + path_type + "_turn_left";
 
         else if(LEFT && RIGHT && TOP && !DOWN)
-            building.object_texture_name = "path_" + path_type + "_without_down";
+            building->object_texture_name = "path_" + path_type + "_without_down";
 
         else if(LEFT && RIGHT && !TOP && DOWN)
-            building.object_texture_name = "path_" + path_type + "_without_top";
+            building->object_texture_name = "path_" + path_type + "_without_top";
 
         else if(LEFT && !RIGHT && TOP && DOWN)
-            building.object_texture_name = "path_" + path_type + "_without_right";
+            building->object_texture_name = "path_" + path_type + "_without_right";
 
         else if(!LEFT && RIGHT && TOP && DOWN)
-            building.object_texture_name = "path_" + path_type + "_without_left";
+            building->object_texture_name = "path_" + path_type + "_without_left";
     
         else if((LEFT && !RIGHT && !TOP && !DOWN) || (!LEFT && RIGHT && !TOP && !DOWN))
-            building.object_texture_name = "path_" + path_type + "_horizontal";
+            building->object_texture_name = "path_" + path_type + "_horizontal";
 
         else if((!LEFT && !RIGHT && !TOP && DOWN) || (!LEFT && !RIGHT && TOP && !DOWN))
-            building.object_texture_name = "path_" + path_type + "_vertical";
+            building->object_texture_name = "path_" + path_type + "_vertical";
         
-        else building.object_texture_name = "path_" + path_type + "_point";
+        else building->object_texture_name = "path_" + path_type + "_point";
     };
 
     // Update the singular tile.
@@ -648,39 +643,26 @@ void Regionmap::updatePaths(int index) {
     // It might be a nullptr, and you do not want to derefence that.
     if(building_at_index) {
         if(*building_at_index == BUILDING_PATH_DIRT || *building_at_index == BUILDING_PATH_STONE) {
-            Building& building = *building_at_index;
-
-            bool LEFT  = this->region->buildings.count(index - 1) ? true : false;
-            bool RIGHT = this->region->buildings.count(index + 1) ? true : false;
-            bool TOP   = this->region->buildings.count(index - this->manager->settings.region_size) ? true : false;
-            bool DOWN  = this->region->buildings.count(index + this->manager->settings.region_size) ? true : false;
+            bool LEFT  = this->region->isPath(index - 1);
+            bool RIGHT = this->region->isPath(index + 1);
+            bool TOP   = this->region->isPath(index - this->manager->settings.region_size);
+            bool DOWN  = this->region->isPath(index + this->manager->settings.region_size);
             
-            bool VERIFIED_LEFT  = LEFT  ? startsWith(this->region->getBuildingAt(index - 1)->getTextureName(), "path") : false;
-            bool VERIFIED_RIGHT = RIGHT ? startsWith(this->region->getBuildingAt(index + 1)->getTextureName(), "path") : false;
-            bool VERIFIED_TOP   = TOP   ? startsWith(this->region->getBuildingAt(index - this->manager->settings.region_size)->getTextureName(), "path") : false;
-            bool VERIFIED_DOWN  = DOWN  ? startsWith(this->region->getBuildingAt(index + this->manager->settings.region_size)->getTextureName(), "path") : false;
-
-            directions(VERIFIED_LEFT, VERIFIED_RIGHT, VERIFIED_TOP, VERIFIED_DOWN, building);
+            directions(LEFT, RIGHT, TOP, DOWN, index);
         }
     }
 
     // Update the tiles that might have been affected by the previous change.
     for(auto& pair : this->region->buildings) {
-        Building& building = *(pair.second.get());
-        const int i        = pair.first;
+        int i = pair.first;
 
-        if(building == BUILDING_PATH_DIRT || building == BUILDING_PATH_STONE) {
-            bool LEFT  = this->region->buildings.count(i - 1) ? true : false;
-            bool RIGHT = this->region->buildings.count(i + 1) ? true : false;
-            bool TOP   = this->region->buildings.count(i - this->manager->settings.region_size) ? true : false;
-            bool DOWN  = this->region->buildings.count(i + this->manager->settings.region_size) ? true : false;
+        if(this->region->isPath(i)) {
+            bool LEFT  = this->region->isPath(i - 1);
+            bool RIGHT = this->region->isPath(i + 1);
+            bool TOP   = this->region->isPath(i - this->manager->settings.region_size);
+            bool DOWN  = this->region->isPath(i + this->manager->settings.region_size);
             
-            bool VERIFIED_LEFT  = LEFT  ? startsWith(this->region->getBuildingAt(index - 1)->getTextureName(), "path") : false;
-            bool VERIFIED_RIGHT = RIGHT ? startsWith(this->region->getBuildingAt(index + 1)->getTextureName(), "path") : false;
-            bool VERIFIED_TOP   = TOP   ? startsWith(this->region->getBuildingAt(index - this->manager->settings.region_size)->getTextureName(), "path") : false;
-            bool VERIFIED_DOWN  = DOWN  ? startsWith(this->region->getBuildingAt(index + this->manager->settings.region_size)->getTextureName(), "path") : false;
-
-            directions(VERIFIED_LEFT, VERIFIED_RIGHT, VERIFIED_TOP, VERIFIED_DOWN, building);
+            directions(LEFT, RIGHT, TOP, DOWN, i);
         }
     }
 }
@@ -745,4 +727,57 @@ void Regionmap::gamestateClose() {
 void Regionmap::recalculateMesh() {
     this->recalculate_mesh      = true;
     this->recalculate_tree_mesh = true;
+}
+
+void Regionmap::renderSelectedBuilding() {
+    auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
+    if(building_menu->getBuilding() != BUILDING_EMPTY) {
+        auto tile = this->region->map[this->current_index];
+        
+        // Copy, do not take a reference.
+        Building building        = building_menu->getBuilding();
+        building.object_position = tile.getTransformedPosition();
+
+        const int a1_w = 0; 
+        const int a1_h = this->manager->settings.region_tile_size.y; 
+        const int r_w  = this->manager->settings.region_tile_size.x / 2;
+        const int r_h  = this->manager->settings.region_tile_size.y;    
+        const int n    = building.getBuildingArea().x;                    
+        
+        // Here you adjust the origin of buildings with sizes of n > 0.
+        // Texture size scale are arithmetic series.
+        auto offset = sf::Vector2f(0, 0);  
+        if(n > 0) {
+            offset = sf::Vector2f(
+                -(a1_w + (n - 1) * r_w),
+                -(a1_h + (n - 1) * r_h)
+            );
+        }
+
+        sf::VertexArray building_highlight(sf::Quads, 4);
+
+        building_highlight[0].position = building.getPosition() + offset;
+        building_highlight[1].position = building.getPosition() + offset + sf::Vector2f(building.getSize().x, 0);
+        building_highlight[2].position = building.getPosition() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); 
+        building_highlight[3].position = building.getPosition() + offset + sf::Vector2f(0, building.getSize().y);
+
+        building_highlight[0].texCoords = sf::Vector2f(0, 0);
+        building_highlight[1].texCoords = sf::Vector2f(building.getSize().x, 0); 
+        building_highlight[2].texCoords = sf::Vector2f(building.getSize().x, building.getSize().y); 
+        building_highlight[3].texCoords = sf::Vector2f(0, building.getSize().y);
+
+        auto invalid_position = !this->region->isPositionValid(building, this->manager->settings, this->current_index); 
+        if(invalid_position) {
+            building_highlight[0].color = COLOUR_RED;
+            building_highlight[1].color = COLOUR_RED;
+            building_highlight[2].color = COLOUR_RED;
+            building_highlight[3].color = COLOUR_RED;
+        }
+
+        const auto texture = building.getTextureName();
+
+        sf::RenderStates states;
+        states.texture = &this->manager->resource.getTexture(texture);
+        this->manager->window.draw(building_highlight, states);
+    }
 }
