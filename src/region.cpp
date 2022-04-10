@@ -1,6 +1,7 @@
 #include "region.hpp"
 #include "./building/building_definitions.hpp"
 #include "globalutilities.hpp"
+#include "generationSettings.hpp"
 
 #include <iostream>
 
@@ -116,13 +117,13 @@ void Region::removeBuildingCost(const Building& building) {
     this->resources -= building.getBuildingCost();
 }
 
-bool Region::isPositionValid(const Building& building, const GenerationSettings& settings, int index) const {
+bool Region::isPositionValid(const Building& building, int index) const {
     const auto building_size             = building.getBuildingArea();
     const auto foundation_tile_elevation = this->map[index].elevation; 
 
     for(int x = 0; x < building_size.x; x++) {
         for(int y = 0; y < building_size.y; y++) {
-            const int i = (y * settings.region_size + x) + index;
+            const int i = world_settings.calculateRegionIndex(x, y);
 
             if(this->map.at(i).elevation != foundation_tile_elevation)
                 return false;
@@ -141,14 +142,14 @@ bool Region::isPositionValid(const Building& building, const GenerationSettings&
     return true;
 }
 
-void Region::placeBuilding(Building building, sf::Vector2f texture_size, const GenerationSettings& settings, int index) {
+void Region::placeBuilding(Building building, sf::Vector2f texture_size, int index) {
     const Tile& tile         = this->map[index];
     building.object_position = tile.getTransformedPosition();
 
     const int a1_w = 0; 
-    const int a1_h = settings.region_tile_size.y; 
-    const int r_w  = settings.region_tile_size.x / 2;
-    const int r_h  = settings.region_tile_size.y;    
+    const int a1_h = world_settings.region_tile_size.y; 
+    const int r_w  = world_settings.region_tile_size.x / 2;
+    const int r_h  = world_settings.region_tile_size.y;    
     const int n    = building.getBuildingArea().x;                    
     
     // Here you adjust the origin of buildings with sizes of n > 0.
@@ -184,7 +185,7 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, const G
     
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
-            const int i = index + y * settings.region_size + x;
+            const int i = index + world_settings.calculateRegionIndex(x, y);
 
             // This could be done better.
             // This is a filler so that when a building is bigger than 1x1,
@@ -193,14 +194,13 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, const G
         }
     }
     
-    sp_building.get()->setGenerationSettings(settings);
     sp_building.get()->assignAllProperties(building);
     this->buildings[index] = sp_building;
 }
 
-bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, const GenerationSettings& settings, int index) {
-    if(this->isPositionValid(building, settings, index) && this->isBuildingAffordable(building)) {
-        this->placeBuilding(building, texture_size, settings, index);
+bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, int index) {
+    if(this->isPositionValid(building, index) && this->isBuildingAffordable(building)) {
+        this->placeBuilding(building, texture_size, index);
         this->removeBuildingCost(building);
         return true;
     }
@@ -208,14 +208,14 @@ bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, co
     return false;
 }
 
-void Region::removeBuilding(int index, const GenerationSettings& settings) {
+void Region::removeBuilding(int index) {
     if(this->buildings.count(index)) {
         auto building   = this->buildings.at(index).get();
         this->resources += building->getBuildingRefund();
         
         for(int y = 0; y < building->getBuildingArea().y; y++) {
             for(int x = 0; x < building->getBuildingArea().x; x++) {
-                const int i = index + y * settings.region_size + x;
+                const int i = index + world_settings.calculateRegionIndex(x, y);
                 this->buildings.erase(i);
             }
         }
@@ -244,7 +244,7 @@ int Region::isBuildingInProximity(const Building& building, int building_index) 
 
     for(int y = -search_area.y; y <= search_area.y; y++) {
         for(int x = -search_area.x; x <= search_area.x; x++) {
-            const int index = building_index + y * building.generation_settings.region_size + x;
+            const int index = building_index + world_settings.calculateRegionIndex(x, y);
 
             // Building or a nullptr.
             auto tile_building = this->getBuildingAt(index);

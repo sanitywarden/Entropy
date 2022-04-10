@@ -1,4 +1,5 @@
 #include "regionmap.hpp"
+#include "generationSettings.hpp"
 
 using namespace iso;
 
@@ -16,8 +17,8 @@ Regionmap::~Regionmap() {
 }
 
 void Regionmap::initialise() {
-    this->mouse_moved           = false;
-    this->mouse_drag            = false;
+    this->mouse_moved = false;
+    this->mouse_drag  = false;
 
     this->current_index = -1;
 
@@ -172,20 +173,20 @@ void Regionmap::handleInput() {
                 }
 
                 if(this->controls.keyState("arrow_left"))
-                    if(this->view_game.getCenter().x + this->manager->settings.region_tile_size.x >= -this->view_game.getSize().x / 2)
-                        this->view_game.move(-this->manager->settings.region_tile_size.x, 0);
+                    if(this->view_game.getCenter().x + world_settings.region_tile_size.x >= -this->view_game.getSize().x / 2)
+                        this->view_game.move(-world_settings.region_tile_size.x, 0);
 
                 if(this->controls.keyState("arrow_right"))
-                    if(this->view_game.getCenter().x + this->manager->settings.region_tile_size.x <= (this->manager->settings.region_size * this->manager->settings.region_tile_size.x) - this->view_game.getSize().x / 2)
-                        this->view_game.move(this->manager->settings.region_tile_size.x, 0);
+                    if(this->view_game.getCenter().x + world_settings.region_tile_size.x <= (world_settings.region_size * world_settings.region_tile_size.x) - this->view_game.getSize().x / 2)
+                        this->view_game.move(world_settings.region_tile_size.x, 0);
 
                 if(this->controls.keyState("arrow_down"))
-                    if(this->view_game.getCenter().y + this->manager->settings.region_tile_size.y <= (this->manager->settings.region_size * this->manager->settings.region_tile_size.y) - this->view_game.getSize().y / 2)
-                        this->view_game.move(0, this->manager->settings.region_tile_size.y);
+                    if(this->view_game.getCenter().y + world_settings.region_tile_size.y <= (world_settings.region_size * world_settings.region_tile_size.y) - this->view_game.getSize().y / 2)
+                        this->view_game.move(0, world_settings.region_tile_size.y);
 
                 if(this->controls.keyState("arrow_up"))
-                    if(this->view_game.getCenter().x + (this->manager->settings.region_tile_size.x) <= (this->manager->settings.region_size * this->manager->settings.region_tile_size.x) - this->view_game.getSize().x / 2)
-                        this->view_game.move(0, -this->manager->settings.region_tile_size.y);
+                    if(this->view_game.getCenter().x + (world_settings.region_tile_size.x) <= (world_settings.region_size * world_settings.region_tile_size.x) - this->view_game.getSize().x / 2)
+                        this->view_game.move(0, -world_settings.region_tile_size.y);
 
                 break;
             }
@@ -257,10 +258,9 @@ void Regionmap::handleInput() {
 }
 
 void Regionmap::moveCamera() {
-    auto division = this->manager->settings.region_tile_size.x + this->manager->settings.region_tile_size.y;
     auto distance = sf::Vector2f(
-        (this->position_pressed.x - this->position_released.x) / division,       
-        (this->position_pressed.y - this->position_released.y) / division
+        (this->position_pressed.x - this->position_released.x) / world_settings.region_tile_size.x,       
+        (this->position_pressed.y - this->position_released.y) / world_settings.region_tile_size.y
     );
 
     // Multipliers for faster camera movement. 
@@ -268,14 +268,14 @@ void Regionmap::moveCamera() {
     float y_multiplier = 6.0f;    
 
     auto top_tile    = this->region->map[0];
-    auto left_tile   = this->region->map[this->manager->world.getRegionSize() - this->manager->settings.region_size];
-    auto right_tile  = this->region->map[this->manager->settings.region_size - 1];
+    auto left_tile   = this->region->map[this->manager->world.getRegionSize() - world_settings.region_size];
+    auto right_tile  = this->region->map[world_settings.region_size - 1];
     auto bottom_tile = this->region->map[this->manager->world.getRegionSize() - 1];
 
     const int left_bound   = left_tile.getPosition().x;
-    const int right_bound  = right_tile.getPosition().x + this->manager->settings.region_tile_size.x;
+    const int right_bound  = right_tile.getPosition().x + world_settings.region_tile_size.x;
     const int top_bound    = top_tile.getPosition().y;
-    const int bottom_bound = bottom_tile.getPosition().y + this->manager->settings.region_tile_size.y;
+    const int bottom_bound = bottom_tile.getPosition().y + world_settings.region_tile_size.y;
 
     if(this->view_game.getCenter().x + distance.x * x_multiplier > left_bound - this->view_game.getSize().x / 4 && this->view_game.getCenter().x + distance.x * x_multiplier < right_bound + this->view_game.getSize().x / 4)
         this->view_game.move(distance.x * x_multiplier, 0);
@@ -319,7 +319,7 @@ void Regionmap::renderRegion() {
     const sf::Vector2f camera_size   = this->view_game.getSize();
     const sf::Vector2f camera_centre = this->view_game.getCenter();
     const sf::Rect     camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
-    const sf::Vector2f tile_size = this->manager->settings.region_tile_size;
+    const sf::Vector2f tile_size = world_settings.region_tile_size;
 
     int gpu_draw_calls = 0;
 
@@ -394,9 +394,9 @@ void Regionmap::renderRegion() {
         if(!regionmap_mesh_tree.getVertexCount())
             regionmap_mesh_tree.create(verticies_treemap);
         
-        for(int y = 0; y < this->manager->settings.region_size; y++) {
-            for(int x = 0; x < this->manager->settings.region_size; x++) {
-                const int  index       = this->manager->world.rCalculateIndex(x, y); 
+        for(int y = 0; y < world_settings.region_size; y++) {
+            for(int x = 0; x < world_settings.region_size; x++) {
+                const int  index       = world_settings.calculateRegionIndex(x, y); 
                 const bool tree_exists = this->region->trees.count(index);
                 if(tree_exists) {
                     // Tree position is the tile.getTransformedPosition().
@@ -462,7 +462,7 @@ void Regionmap::setCurrentRegion(int region_index) {
     // Here you can setup what to do when entering a region.
     // For example, centre the camera.
     sf::Vector2f first_tile_position = sf::Vector2f(
-        this->region->map[0].getPosition().x + this->manager->settings.region_tile_size.x / 2,
+        this->region->map[0].getPosition().x + world_settings.region_tile_size.x / 2,
         this->region->map[0].getPosition().y
     );
 
@@ -476,9 +476,9 @@ void Regionmap::setCurrentRegion(int region_index) {
 }
 
 void Regionmap::higlightTile() {
-    auto tile_size   = this->manager->settings.region_tile_size;
-    auto tile_offset = this->manager->settings.region_tile_offset;
-    auto region_size = sf::Vector2f(this->manager->settings.region_size, this->manager->settings.region_size);
+    auto tile_size   = world_settings.region_tile_size;
+    auto tile_offset = world_settings.region_tile_offset;
+    auto region_size = sf::Vector2f(world_settings.region_size, world_settings.region_size);
 
     sf::Vector2i mouse_position(
         this->mouse_position_window.x,
@@ -516,7 +516,7 @@ void Regionmap::higlightTile() {
         selected += sf::Vector2i(1, 0);
 
 
-    int index = selected.y * this->manager->settings.region_size + selected.x;
+    int index = selected.y * world_settings.region_size + selected.x;
 
     if(index < 0 || index > this->manager->world.getRegionSize())
         return;
@@ -564,13 +564,13 @@ void Regionmap::updateTile() {
     if(building_menu->getBuilding() != BUILDING_EMPTY && !this->mouseIntersectsUI() && this->controls.mouseLeftPressed() && !this->mouse_drag && building_menu->isVisible()) {
         Building building = building_menu->getBuilding();
         auto texture_size = this->manager->resource.getTextureSize(building.getTextureName());
-        this->region->placeBuildingCheck(building, texture_size, this->manager->settings, this->current_index);
+        this->region->placeBuildingCheck(building, texture_size, this->current_index);
         this->updatePaths(this->current_index);
     }
 
     if(this->controls.keyState("key_remove_building")) {
         if(this->region->buildings.count(this->current_index)) {
-            this->region->removeBuilding(this->current_index, this->manager->settings);
+            this->region->removeBuilding(this->current_index);
             this->updatePaths(this->current_index);
         }
     }
@@ -645,8 +645,8 @@ void Regionmap::updatePaths(int index) {
         if(*building_at_index == BUILDING_PATH_DIRT || *building_at_index == BUILDING_PATH_STONE) {
             bool LEFT  = this->region->isPath(index - 1);
             bool RIGHT = this->region->isPath(index + 1);
-            bool TOP   = this->region->isPath(index - this->manager->settings.region_size);
-            bool DOWN  = this->region->isPath(index + this->manager->settings.region_size);
+            bool TOP   = this->region->isPath(index - world_settings.region_size);
+            bool DOWN  = this->region->isPath(index + world_settings.region_size);
             
             directions(LEFT, RIGHT, TOP, DOWN, index);
         }
@@ -659,8 +659,8 @@ void Regionmap::updatePaths(int index) {
         if(this->region->isPath(i)) {
             bool LEFT  = this->region->isPath(i - 1);
             bool RIGHT = this->region->isPath(i + 1);
-            bool TOP   = this->region->isPath(i - this->manager->settings.region_size);
-            bool DOWN  = this->region->isPath(i + this->manager->settings.region_size);
+            bool TOP   = this->region->isPath(i - world_settings.region_size);
+            bool DOWN  = this->region->isPath(i + world_settings.region_size);
             
             directions(LEFT, RIGHT, TOP, DOWN, i);
         }
@@ -739,9 +739,9 @@ void Regionmap::renderSelectedBuilding() {
         building.object_position = tile.getTransformedPosition();
 
         const int a1_w = 0; 
-        const int a1_h = this->manager->settings.region_tile_size.y; 
-        const int r_w  = this->manager->settings.region_tile_size.x / 2;
-        const int r_h  = this->manager->settings.region_tile_size.y;    
+        const int a1_h = world_settings.region_tile_size.y; 
+        const int r_w  = world_settings.region_tile_size.x / 2;
+        const int r_h  = world_settings.region_tile_size.y;    
         const int n    = building.getBuildingArea().x;                    
         
         // Here you adjust the origin of buildings with sizes of n > 0.
@@ -766,7 +766,7 @@ void Regionmap::renderSelectedBuilding() {
         building_highlight[2].texCoords = sf::Vector2f(building.getSize().x, building.getSize().y); 
         building_highlight[3].texCoords = sf::Vector2f(0, building.getSize().y);
 
-        auto invalid_position = !this->region->isPositionValid(building, this->manager->settings, this->current_index); 
+        auto invalid_position = !this->region->isPositionValid(building, this->current_index); 
         if(invalid_position) {
             building_highlight[0].color = COLOUR_RED;
             building_highlight[1].color = COLOUR_RED;

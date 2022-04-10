@@ -2,44 +2,16 @@
 #include "entropy/gamestate.hpp"
 #include "worldmap.hpp"
 #include "regionmap.hpp"
+#include "generationSettings.hpp"
 
 #include <iostream>
 
 using namespace iso;
 using namespace entropy;
 
+WorldData world_settings;
+
 SimulationManager::SimulationManager() {
-    GenerationSettings settings;
-    settings.world_size                 = 50;
-    settings.world_margin_island        = settings.world_size / 10;
-    settings.world_margin_poles         = settings.world_size / 10;
-    settings.world_river_quantity       = settings.world_size / 10;
-    settings.world_river_scan_size      = settings.world_size / 20;
-    settings.world_noise_terrain        = 0.20f;
-    settings.world_noise_forest         = 0.70f;
-    settings.world_panel_size.x         = 128; // TODO: Panel size should be an int, not Vector2f.
-    settings.world_panel_size.y         = 128;
-    settings.world_noise_octaves        = 16;
-    settings.world_noise_persistence    = 10;
-    settings.world_noise_bias           = 4;
-    settings.world_noise_multiplier     = 1.25f;
-    settings.world_moisture_octaves     = 8;
-    settings.world_moisture_persistence = 8;
-    settings.world_moisture_bias        = 4;
-    settings.world_moisture_multiplier  = 0.90f;
-    settings.world_gradient_octaves     = 16;
-    settings.world_gradient_persistence = 4;
-    settings.world_gradient_bias        = 4;
-    settings.world_gradient_multiplier  = 2.00f;
-    settings.region_size                = settings.world_panel_size.x;
-    settings.region_tile_size.x         = 64;           
-    settings.region_tile_size.y         = 32;           
-    settings.region_tile_offset.x       = 100; 
-    settings.region_tile_offset.y       = 0; 
-
-    this->settings = settings;
-    // Settings for world generation set.
-
     this->initialise();
     this->texturizer = Texturizer(&this->resource);
 
@@ -48,7 +20,7 @@ SimulationManager::SimulationManager() {
 
     static Worldmap worldmap = Worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
-    this->world = WorldGenerator(&this->resource, &this->texturizer, this->settings);
+    this->world = WorldGenerator(&this->resource, &this->texturizer);
     this->prepare();
     this->gamestate.setGamestate("worldmap");
 
@@ -170,7 +142,7 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         return std::abs(end.x - node.x) + std::abs(end.y - node.y);
     };
 
-    const int world_size = this->settings.world_size;
+    const int world_size = world_settings.world_size;
     const auto neighbours = [world_size](int index) -> std::vector <int> {
         std::vector <int> neighbours;
         if(index - 1 >= 0)
@@ -193,14 +165,14 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         return !region.regiontype.is_ocean();
     };
 
-    std::vector <aNode> nodes(this->settings.world_size * this->settings.world_size);
+    std::vector <aNode> nodes(world_settings.world_size * world_settings.world_size);
     
     const auto& node_start = nodes[start];
     const auto& node_end   = nodes[end];
 
-    for(int y = 0; y < this->settings.world_size; y++) {
-        for(int x = 0; x < this->settings.world_size; x++) {
-            const int index = y * this->settings.world_size + x;
+    for(int y = 0; y < world_settings.world_size; y++) {
+        for(int x = 0; x < world_settings.world_size; x++) {
+            const int index = y * world_settings.world_size + x;
             aNode& node = nodes[index];
 
             node.index = index;        
@@ -269,19 +241,19 @@ void SimulationManager::initialise() {
 
 void SimulationManager::initialiseWorld() {
     // Find spots suitable for settling.
-    // Spawn players.
+    // Spawn players.   
 
     std::vector <int> occupied_regions;
 
     // In the future this setting could be set by the human player.
-    const int number_of_players = this->world.settings.world_size / 10;
+    const int number_of_players = world_settings.player_quantity;
     this->players.resize(number_of_players);
     for(int player_id = 0; player_id < number_of_players; player_id++) {
         bool settle_spot_found = false;
         int  settle_spot_index = -1;
 
         while(!settle_spot_found) {
-            int index = rand() % this->world.getWorldSize();
+            int index = rand() % world_settings.getWorldSize();
             const auto& region = this->world.world_map[index];
             if(region.regiontype.is_terrain() && std::find(occupied_regions.begin(), occupied_regions.end(), index) == occupied_regions.end()) {
                 settle_spot_found = true;    

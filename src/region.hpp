@@ -7,7 +7,6 @@
 #include "gameObject.hpp"
 #include "player.hpp"
 #include "./building/building.hpp"
-#include "generationSettings.hpp"
 #include "./unit/unit.hpp"
 
 #include <SFML/Graphics.hpp>
@@ -51,10 +50,10 @@ namespace iso {
             void addResources(ResourceCollection resource);
             int  getResourceQuantity(ResourceType resource);
             bool isBuildingAffordable(const Building& building) const;
-            bool isPositionValid(const Building& building, const GenerationSettings& settings, int index) const;
-            void placeBuilding(Building building, sf::Vector2f texture_size, const GenerationSettings& settings, int index);
-            bool placeBuildingCheck(Building building, sf::Vector2f texture_size, const GenerationSettings& settings, int index);
-            void removeBuilding(int index, const GenerationSettings& settings);
+            bool isPositionValid(const Building& building, int index) const;
+            void placeBuilding(Building building, sf::Vector2f texture_size, int index);
+            bool placeBuildingCheck(Building building, sf::Vector2f texture_size, int index);
+            void removeBuilding(int index);
             void removeBuildingCost(const Building& building);
             
             bool isUnitPresent();

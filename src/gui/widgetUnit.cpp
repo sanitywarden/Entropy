@@ -1,5 +1,6 @@
 #include "widgetUnit.hpp"
 #include "worldmap.hpp"
+#include "generationSettings.hpp"
 
 #include <iostream>
 
@@ -115,8 +116,8 @@ bool WidgetUnit::canColonise(int index) {
 
         if(index == i - 1 ||
            index == i + 1 ||
-           index == i - this->manager->settings.world_size ||
-           index == i + this->manager->settings.world_size
+           index == i - world_settings.world_size ||
+           index == i + world_settings.world_size
         ) {
             return true;
         }

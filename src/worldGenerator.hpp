@@ -1,11 +1,11 @@
 #ifndef _WORLD_GENERATOR_HPP_
 #define _WORLD_GENERATOR_HPP_
 
-#include "generationSettings.hpp"
 #include "entropy/entropy.hpp"
 #include "texturizer.hpp"
 #include "region.hpp"
 #include "biome.hpp"
+#include "noiseSettings.hpp"
 
 #include <SFML/System.hpp>
 #include <vector>
@@ -46,11 +46,11 @@ namespace iso {
 
             // Regionmap API.            
 
-            bool regionGenerateResource(Region& region, const std::string& resource_tile_texture, int min_chance, int radius);
+            bool regionGenerateResource(Region& region, const std::string& resource_tile_texture, float chance, int radius);
 
         public:
             WorldGenerator();
-            WorldGenerator(entropy::resourceManager* resource, Texturizer* texturizer, GenerationSettings& settings);
+            WorldGenerator(entropy::resourceManager* resource, Texturizer* texturizer);
             ~WorldGenerator();
 
             void generateWorld();
@@ -66,8 +66,6 @@ namespace iso {
             
             std::string getTilePixelColour(sf::Vector2i);
 
-            GenerationSettings settings;
-
             bool is_ocean        (int index) const;
             bool is_tropical     (int index) const;
             bool is_mediterranean(int index) const;
@@ -80,11 +78,8 @@ namespace iso {
             bool is_lake         (int index) const;
             bool is_river        (int index) const;
 
-            int isInRegionBounds(int index) const;
             int getWorldSize()  const;
             int getRegionSize() const;
-            int rCalculateIndex(int x, int y) const;
-            int wCalculateIndex(int x, int y) const;
         public:
             std::vector <Region>          world_map; 
             std::map    <int, GameObject> forests;

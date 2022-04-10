@@ -1,6 +1,6 @@
 #include "woodcutter.hpp"
 #include "region.hpp"
-#include <iostream>
+#include "generationSettings.hpp"
 
 using namespace iso;
 
@@ -22,7 +22,7 @@ void Woodcutter::update(GameObject* object, int building_index) {
     int trees = 0;
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
-            const int index = building_index + y * this->generation_settings.region_size + x;
+            const int index = building_index + world_settings.calculateRegionIndex(x, y);
             
             if(region->isTree(index))
                 trees++;

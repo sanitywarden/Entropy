@@ -5,15 +5,15 @@
 #include "player.hpp"
 #include "colours.hpp"
 #include "worldGenerator.hpp"
-#include "generationSettings.hpp"
 #include "texturizer.hpp"
+#include "noiseSettings.hpp"
 
 #include <SFML/System.hpp>
 #include <vector>
 #include <string>
 #include <queue>
 
-namespace iso {    
+namespace iso { 
     typedef std::map <std::string, std::pair <int, int>> Scheduler;
     typedef std::pair <int, int> ScheduledUpdate;
 
@@ -73,7 +73,6 @@ namespace iso {
         public:
             Texturizer texturizer;
 
-            GenerationSettings   settings;
             WorldGenerator       world;
             std::vector <Player> players;
             int                  time;

@@ -1,6 +1,7 @@
 #include "farmhouse.hpp"
 #include "globalutilities.hpp"
 #include "region.hpp"
+#include "generationSettings.hpp"
 
 using namespace iso;
 
@@ -22,7 +23,7 @@ void Farmhouse::update(GameObject* object, int building_index) {
     int grass_tiles = 0;
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
-            const int index = building_index + y * this->generation_settings.region_size + x;
+            const int index = building_index + world_settings.calculateRegionIndex(x, y);
 
             auto texture_name = region->map[index].getTextureName();
             if(startsWith(texture_name, "tile_grass"))

@@ -1,4 +1,5 @@
 #include "building.hpp"
+
 #include <iostream>
 
 using namespace iso;
@@ -24,10 +25,10 @@ Building::Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Ve
 Building::Building(const Building& building) 
     : GameObject(building) 
 {
-    this->object_name         = building.getName();
-    this->building_size       = building.getBuildingArea();
-    this->building_cost       = building.getBuildingCost();
-    this->numerical_type      = building.getNumericalType();
+    this->object_name    = building.getName();
+    this->building_size  = building.getBuildingArea();
+    this->building_cost  = building.getBuildingCost();
+    this->numerical_type = building.getNumericalType();
 }
 
 Building::~Building() {
@@ -56,10 +57,6 @@ const ResourceCollection Building::getBuildingRefund() const {
 
 const int Building::getNumericalType() const {
     return this->numerical_type;
-}
-
-void Building::setGenerationSettings(const GenerationSettings& settings) {
-    this->generation_settings = settings;
 }
 
 bool Building::operator== (const Building& building) {

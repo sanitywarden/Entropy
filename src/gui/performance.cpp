@@ -27,8 +27,8 @@ void DebugPerformance::createUI() {
 }
 
 void DebugPerformance::updateUI() {
-    const int fps         = this->manager->getFramesPerSecond();
-    const int time        = this->manager->getTimePerFrame();
+    const int fps  = this->manager->getFramesPerSecond();
+    const int time = this->manager->getTimePerFrame();
 
     std::string data;
     data += "Frames per second: " + std::to_string(fps)         + "\n";
@@ -61,8 +61,8 @@ void DebugPerformance::updateUI() {
     if(gamestate_id == "Regionmap") {
         auto* regionmap = static_cast<Regionmap*>(gamestate);
 
-        const int current_index = regionmap->getCurrentIndex();
-        const auto* region      = regionmap->getCurrentRegion();
+        const int current_index  = regionmap->getCurrentIndex();
+        const auto* region       = regionmap->getCurrentRegion();
         const auto& current_tile = region->map[current_index];
 
         auto grid_position = this->manager->world.tileGridPosition(gamestate->mouse_position_window);
