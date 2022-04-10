@@ -47,6 +47,37 @@ bool iso::containsWord(const std::string& str, const std::string& phrase) {
     return match == phrase.length();
 }
 
+std::string iso::readAfter(const std::string& str, char from, char to) {
+    // 1 is the length of a single char.
+    if(str.length() < 1)
+        return "";
+    
+    const int phrase_start = str.find(from) + 1; // We do not include the character from which we read.
+    const int phrase_end   = str.find(to);
+    std::string extract_string;
+
+    for(int i = phrase_start; i < phrase_end; i++) {
+        extract_string.append(1, str[i]);
+    }
+
+    return extract_string;
+}
+
+std::string iso::readBefore(const std::string& str, char to) {
+    // 1 is the length of a single char.
+    if(str.length() < 1)
+        return "";
+    
+    const int phrase_end = str.find(to);
+    std::string extract_string;
+
+    for(int i = 0; i < phrase_end; i++) {
+        extract_string.append(1, str[i]);
+    }
+
+    return extract_string;
+}
+
 std::string iso::toLower(const std::string& str) {
     std::string str_lower = "";
     for(int i = 0; i < str.length(); i++) {

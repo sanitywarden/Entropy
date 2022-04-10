@@ -78,8 +78,6 @@ namespace iso {
             bool is_lake         (int index) const;
             bool is_river        (int index) const;
 
-            int getWorldSize()  const;
-            int getRegionSize() const;
         public:
             std::vector <Region>          world_map; 
             std::map    <int, GameObject> forests;

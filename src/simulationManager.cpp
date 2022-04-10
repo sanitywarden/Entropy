@@ -9,8 +9,6 @@
 using namespace iso;
 using namespace entropy;
 
-WorldData world_settings;
-
 SimulationManager::SimulationManager() {
     this->initialise();
     this->texturizer = Texturizer(&this->resource);
@@ -93,7 +91,7 @@ Player& SimulationManager::getHumanPlayer() {
 }
 
 void SimulationManager::prepare() {
-    this->world.world_map = std::vector <Region> (this->world.getWorldSize());
+    this->world.world_map = std::vector <Region> (world_settings.getWorldSize());
     this->world.forests   = std::map <int, GameObject> ();
     this->world.rivers    = std::map <int, GameObject> ();
     this->world.lakes     = std::map <int, GameObject> ();
@@ -142,20 +140,19 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         return std::abs(end.x - node.x) + std::abs(end.y - node.y);
     };
 
-    const int world_size = world_settings.world_size;
-    const auto neighbours = [world_size](int index) -> std::vector <int> {
+    const auto neighbours = [this](int index) -> std::vector <int> {
         std::vector <int> neighbours;
-        if(index - 1 >= 0)
+        if(world_settings.inWorldBounds(index - 1))
             neighbours.push_back(index - 1);
 
-        if(index + 1 < world_size * world_size)
+        if(world_settings.inWorldBounds(index + 1))
             neighbours.push_back(index + 1);
 
-        if(index - world_size >= 0)
-            neighbours.push_back(index - world_size);
+        if(world_settings.inWorldBounds(index - world_settings.getWorldSize()))
+            neighbours.push_back(index - world_settings.getWorldSize());
 
-        if(index + world_size < world_size * world_size)
-            neighbours.push_back(index + world_size);
+        if(world_settings.inWorldBounds(index + world_settings.getWorldSize()))
+            neighbours.push_back(index + world_settings.getWorldSize());
 
         return neighbours;
     };
@@ -165,14 +162,14 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         return !region.regiontype.is_ocean();
     };
 
-    std::vector <aNode> nodes(world_settings.world_size * world_settings.world_size);
+    std::vector <aNode> nodes(world_settings.getWorldSize());
     
     const auto& node_start = nodes[start];
     const auto& node_end   = nodes[end];
 
-    for(int y = 0; y < world_settings.world_size; y++) {
-        for(int x = 0; x < world_settings.world_size; x++) {
-            const int index = y * world_settings.world_size + x;
+    for(int y = 0; y < world_settings.getWorldWidth(); y++) {
+        for(int x = 0; x < world_settings.getWorldWidth(); x++) {
+            const int index = world_settings.calculateWorldIndex(x, y);
             aNode& node = nodes[index];
 
             node.index = index;        
@@ -246,7 +243,7 @@ void SimulationManager::initialiseWorld() {
     std::vector <int> occupied_regions;
 
     // In the future this setting could be set by the human player.
-    const int number_of_players = world_settings.player_quantity;
+    const int number_of_players = world_settings.getPlayerQuantity();
     this->players.resize(number_of_players);
     for(int player_id = 0; player_id < number_of_players; player_id++) {
         bool settle_spot_found = false;

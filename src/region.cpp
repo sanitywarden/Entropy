@@ -147,9 +147,9 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, int ind
     building.object_position = tile.getTransformedPosition();
 
     const int a1_w = 0; 
-    const int a1_h = world_settings.region_tile_size.y; 
-    const int r_w  = world_settings.region_tile_size.x / 2;
-    const int r_h  = world_settings.region_tile_size.y;    
+    const int a1_h = world_settings.tileSize().y; 
+    const int r_w  = world_settings.tileSize().x / 2;
+    const int r_h  = world_settings.tileSize().y;    
     const int n    = building.getBuildingArea().x;                    
     
     // Here you adjust the origin of buildings with sizes of n > 0.

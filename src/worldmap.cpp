@@ -31,8 +31,8 @@ void Worldmap::initialise() {
     this->max_zoom_out = 3;
 
     this->view_game.setCenter(sf::Vector2f(
-        world_settings.world_panel_size * world_settings.world_size / 2,
-        world_settings.world_panel_size * world_settings.world_size / 2
+        world_settings.panelSize() * world_settings.getWorldWidth() / 2,
+        world_settings.panelSize() * world_settings.getWorldWidth() / 2
     ));
 
     this->view_game.setSize(sf::Vector2f(
@@ -190,8 +190,8 @@ void Worldmap::loadResources() {
 
 void Worldmap::moveCamera() {
     auto distance = sf::Vector2f(
-        (this->position_pressed.x - this->position_released.x) / world_settings.world_panel_size / 2,       
-        (this->position_pressed.y - this->position_released.y) / world_settings.world_panel_size / 2
+        (this->position_pressed.x - this->position_released.x) / world_settings.panelSize() / 2,       
+        (this->position_pressed.y - this->position_released.y) / world_settings.panelSize() / 2
     );
 
     // Multipliers for faster camera movement. 
@@ -200,11 +200,11 @@ void Worldmap::moveCamera() {
 
     // Check the horizontal and vertical bounds of the screen.
     // This makes sure that you can not move past the world map.
-    if(this->view_game.getCenter().x + (distance.x * x_multiplier) < (world_settings.world_size * world_settings.world_panel_size) - this->view_game.getSize().x / 2.f && this->view_game.getCenter().x + (distance.x * x_multiplier) > 0.f + this->view_game.getSize().x / 2.f) {
+    if(this->view_game.getCenter().x + (distance.x * x_multiplier) < (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().x / 2.f && this->view_game.getCenter().x + (distance.x * x_multiplier) > 0.f + this->view_game.getSize().x / 2.f) {
         this->view_game.move(x_multiplier * distance.x, 0.f);
     }
 
-    if(this->view_game.getCenter().y + (distance.y * y_multiplier) < (world_settings.world_size * world_settings.world_panel_size) - this->view_game.getSize().y / 2.f && this->view_game.getCenter().y + (distance.y * y_multiplier) > 0.f + this->view_game.getSize().y / 2.f) {
+    if(this->view_game.getCenter().y + (distance.y * y_multiplier) < (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().y / 2.f && this->view_game.getCenter().y + (distance.y * y_multiplier) > 0.f + this->view_game.getSize().y / 2.f) {
         this->view_game.move(0.f, y_multiplier * distance.y);
     }
 
@@ -252,14 +252,14 @@ void Worldmap::updateCamera() {
     }
 
     // Check if the camera is postioned badly on the right of the screen.
-    if(this->view_game.getCenter().x + this->view_game.getSize().x / 2 > world_settings.world_panel_size * world_settings.world_size) {
+    if(this->view_game.getCenter().x + this->view_game.getSize().x / 2 > world_settings.panelSize() * world_settings.getWorldWidth()) {
         float offset_x = -(this->view_game.getCenter().x + this->view_game.getSize().x / 2);
 
         this->view_game.move(offset_x, 0.f);
     } 
     
     // Check if the camera is positioned badly on the bottom of the screen.
-    if(this->view_game.getCenter().y + this->view_game.getSize().y / 2 > world_settings.world_panel_size * world_settings.world_size) {
+    if(this->view_game.getCenter().y + this->view_game.getSize().y / 2 > world_settings.panelSize() * world_settings.getWorldWidth()) {
         float offset_y = -(this->view_game.getCenter().y + this->view_game.getSize().y / 2);
 
         this->view_game.move(0.f, offset_y);
@@ -320,20 +320,20 @@ void Worldmap::handleInput() {
                 }
 
                 if(this->controls.keyState("arrow_left"))
-                    if(this->view_game.getCenter().x + world_settings.world_panel_size >= this->view_game.getSize().x / 2)
-                        this->view_game.move(-world_settings.world_panel_size, 0);
+                    if(this->view_game.getCenter().x + world_settings.panelSize() >= this->view_game.getSize().x / 2)
+                        this->view_game.move(-world_settings.panelSize(), 0);
 
                 if(this->controls.keyState("arrow_right"))
-                    if(this->view_game.getCenter().x + world_settings.world_panel_size <= (world_settings.world_size * world_settings.world_panel_size) - this->view_game.getSize().x / 2)
-                        this->view_game.move(world_settings.world_panel_size, 0);
+                    if(this->view_game.getCenter().x + world_settings.panelSize() <= (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().x / 2)
+                        this->view_game.move(world_settings.panelSize(), 0);
 
                 if(this->controls.keyState("arrow_down"))
-                    if(this->view_game.getCenter().y + world_settings.world_panel_size <= (world_settings.world_size * world_settings.world_panel_size) - this->view_game.getSize().y / 2)
-                        this->view_game.move(0, world_settings.world_panel_size);
+                    if(this->view_game.getCenter().y + world_settings.panelSize() <= (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().y / 2)
+                        this->view_game.move(0, world_settings.panelSize());
 
                 if(this->controls.keyState("arrow_up"))
-                    if(this->view_game.getCenter().x + (world_settings.world_panel_size) <= (world_settings.world_size * world_settings.world_panel_size) - this->view_game.getSize().x / 2)
-                        this->view_game.move(0, -world_settings.world_panel_size);
+                    if(this->view_game.getCenter().x + (world_settings.panelSize()) <= (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().x / 2)
+                        this->view_game.move(0, -world_settings.panelSize());
 
                 break;
             }
@@ -429,7 +429,7 @@ void Worldmap::renderWorld() {
 
     const sf::Vector2f camera_size   = this->view_game.getSize();
     const sf::Vector2f camera_centre = this->view_game.getCenter();
-    const sf::Vector2f panel_size    = sf::Vector2f(world_settings.world_panel_size, world_settings.world_panel_size);
+    const sf::Vector2f panel_size    = sf::Vector2f(world_settings.panelSize(), world_settings.panelSize());
     sf::Rect camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
 
     for(const auto& region : this->manager->world.world_map) {
@@ -507,11 +507,11 @@ void Worldmap::renderWorld() {
 void Worldmap::selectPanel() {
     if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI()) {
         sf::Vector2i panel_grid_position = sf::Vector2i(
-            this->mouse_position_window.x / world_settings.world_panel_size,
-            this->mouse_position_window.y / world_settings.world_panel_size
+            this->mouse_position_window.x / world_settings.panelSize(),
+            this->mouse_position_window.y / world_settings.panelSize()
         );
 
-        const int index = panel_grid_position.y * world_settings.world_size + panel_grid_position.x;
+        const int index = panel_grid_position.y * world_settings.getWorldWidth() + panel_grid_position.x;
         this->selected_index = index;
 
         this->toggleComponentVisibility("component_widget_region");
@@ -529,31 +529,31 @@ void Worldmap::unselectPanel() {
 
 void Worldmap::highlightPanel() {
     sf::Vector2i tile_grid = sf::Vector2i(
-        this->mouse_position_window.x / world_settings.world_panel_size,
-        this->mouse_position_window.y / world_settings.world_panel_size
+        this->mouse_position_window.x / world_settings.panelSize(),
+        this->mouse_position_window.y / world_settings.panelSize()
     );
     
-    this->current_index = tile_grid.y * world_settings.world_size + tile_grid.x;
+    this->current_index = tile_grid.y * world_settings.getWorldWidth() + tile_grid.x;
     
     if(this->mouse_drag)
         return;
     
     auto panel_grid_position = sf::Vector2i(
-        this->mouse_position_window.x / world_settings.world_panel_size,
-        this->mouse_position_window.y / world_settings.world_panel_size
+        this->mouse_position_window.x / world_settings.panelSize(),
+        this->mouse_position_window.y / world_settings.panelSize()
     );
 
     auto highlight_position = sf::Vector2f(
-        panel_grid_position.x * world_settings.world_panel_size,
-        panel_grid_position.y * world_settings.world_panel_size
+        panel_grid_position.x * world_settings.panelSize(),
+        panel_grid_position.y * world_settings.panelSize()
     );
 
     sf::VertexArray highlight(sf::Quads, 4);
 
     highlight[0].position = highlight_position;
-    highlight[1].position = highlight_position + sf::Vector2f(world_settings.world_panel_size, 0);
-    highlight[2].position = highlight_position + sf::Vector2f(world_settings.world_panel_size, world_settings.world_panel_size);
-    highlight[3].position = highlight_position + sf::Vector2f(0, world_settings.world_panel_size);
+    highlight[1].position = highlight_position + sf::Vector2f(world_settings.panelSize(), 0);
+    highlight[2].position = highlight_position + sf::Vector2f(world_settings.panelSize(), world_settings.panelSize());
+    highlight[3].position = highlight_position + sf::Vector2f(0, world_settings.panelSize());
 
     highlight[0].color = COLOUR_WHITE_TRANSPARENT_QUARTER;
     highlight[1].color = COLOUR_WHITE_TRANSPARENT_QUARTER;
@@ -587,7 +587,7 @@ void Worldmap::gamestateLoad() {
             : regionmap->getRegionIndex();
         
         const auto& tile    = this->manager->world.world_map[index];
-        const auto position = sf::Vector2f(tile.getPosition() + sf::Vector2f(world_settings.region_tile_size.x / 2, world_settings.region_tile_size.y / 2));
+        const auto position = sf::Vector2f(tile.getPosition() + sf::Vector2f(world_settings.tileSize().x / 2, world_settings.tileSize().y / 2));
         this->view_game.setCenter(position);
     }
 

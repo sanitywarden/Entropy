@@ -1,5 +1,6 @@
 #include "widgetRegion.hpp"
 #include "worldmap.hpp"
+#include "generationSettings.hpp"
 
 #include <iostream>
 
@@ -67,7 +68,7 @@ void WidgetRegion::updateUI() {
     Worldmap* worldmap = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
     int index = worldmap->getSelectedIndex();
 
-    if(index < 0 || index > this->manager->world.getWorldSize())
+    if(!world_settings.inWorldBounds(index))
         return;
 
     Region& region = this->manager->world.world_map[index];

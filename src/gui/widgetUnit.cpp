@@ -116,8 +116,8 @@ bool WidgetUnit::canColonise(int index) {
 
         if(index == i - 1 ||
            index == i + 1 ||
-           index == i - world_settings.world_size ||
-           index == i + world_settings.world_size
+           index == i - world_settings.getWorldWidth() ||
+           index == i + world_settings.getWorldWidth()
         ) {
             return true;
         }

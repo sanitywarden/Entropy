@@ -4,5 +4,6 @@
 /res
 /bin
 /config/config.ege
+/config/world_generation.config
 NOTES.txt
 TODO.txt
