@@ -38,14 +38,8 @@ entropy::applicationSettings::~applicationSettings() {
 }
 
 void entropy::applicationSettings::loadUserSettings() {
-    std::string filename = "./config/config.ege";
+    std::string filename = "./config/config.config";
     
-    // Check if the file has the correct extension.
-    int length = filename.length();
-    if(filename[length - 1] != 'e' && filename[length - 2] != 'g' && filename[length - 3] != 'e' && filename[length - 4] != '.') {
-        filename += ".ege";
-    }
-
     // Check if the file has been opened correctly, or if the file even exists.
     // If the file could not be opened, use default settings instead.
     std::fstream input_file(filename.c_str(), std::ios::in);
@@ -111,12 +105,7 @@ void entropy::applicationSettings::loadUserSettings() {
 }
 
 void entropy::applicationSettings::saveUserSettings() {
-    std::string filename = "./config/config.ege";
-
-    // Check if the file has the correct extension.
-    int length = filename.length();
-    if(filename[length - 1] != 'e' && filename[length - 2] != 'g' && filename[length - 3] != 'e' && filename[length - 4] != '.')
-        filename += ".ege";
+    std::string filename = "./config/config.config";
 
     // Check if the file has been opened correctly, or if the file even exists.
     // If the file could not be opened, do not save the settings.

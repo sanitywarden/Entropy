@@ -22,7 +22,7 @@ namespace gui {
             Button(iso::SimulationManager* manager, sf::Vector2i dimensions, std::string data);
             ~Button();
 
-            Label       label;
+            Label label;
     };
 }
 

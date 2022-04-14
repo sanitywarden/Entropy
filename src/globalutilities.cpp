@@ -17,6 +17,19 @@ bool iso::startsWith(const std::string& str, const std::string& phrase) {
     return match == phrase.length();
 }
 
+bool iso::endsWith(const std::string& str, const std::string& phrase) {
+    if(str.length() < phrase.length())
+        return false;
+
+    int match = 0;
+    for(int i = str.length() - phrase.length(); i < str.length() - 1; i++) {
+        if(str[i] == phrase[i])
+            match++;
+    }
+
+    return match == phrase.length();
+}
+
 bool iso::containsWord(const std::string& str, const std::string& phrase) {
     if(str.length() < phrase.length())
         return false;
