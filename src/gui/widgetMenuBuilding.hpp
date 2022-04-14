@@ -10,7 +10,7 @@ namespace gui {
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             void createUI() override;
-            void findBuilding();
+            void findBuilding();    
         private:
             std::string last_selected_building;
         
@@ -20,6 +20,7 @@ namespace gui {
             ~WidgetMenuBuilding();
 
             void updateUI() override;
+            void resetBuilding();
             iso::Building getBuilding();
     };
 }

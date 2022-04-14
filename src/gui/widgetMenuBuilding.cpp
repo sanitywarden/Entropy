@@ -15,7 +15,7 @@ WidgetMenuBuilding::WidgetMenuBuilding(SimulationManager* manager) : InterfacePa
     this->setWidgetID("component_widget_menu_building");
     this->createUI();
 
-    this->last_selected_building = "building_empty";
+    this->last_selected_building = "Empty";
 }
 
 WidgetMenuBuilding::~WidgetMenuBuilding() {
@@ -23,79 +23,81 @@ WidgetMenuBuilding::~WidgetMenuBuilding() {
 }
 
 void WidgetMenuBuilding::createUI() {
-    sf::Vector2i t_widget_size(10, 3);
+    sf::Vector2i t_widget_size(6, 10);
     int window_width  = this->manager->window.windowWidth();
     int window_height = this->manager->window.windowHeight();
 
-    static Widget widget_body(this->manager, t_widget_size);
-        sf::Vector2f widget_size = widget_body.getWidgetSize();
-        widget_body.setWidgetID("widget_menu_building");
-        widget_body.setWidgetPosition(window_width / 2 - widget_size.x / 2, window_height - widget_size.y);
-        sf::Vector2f widget_position = widget_body.getWidgetPosition();
+    auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
+        sf::Vector2f widget_size = widget_body.get()->getWidgetSize();
+        widget_body.get()->setWidgetID("widget_menu_building");
+        widget_body.get()->setWidgetPosition(window_width - widget_size.x, window_height - widget_size.y);
+        sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
 
-    static ImageHolder image_building_house(this->manager, "building_small_house");
-        image_building_house.setWidgetID("imageholder_building_house");
-        image_building_house.setWidgetSize(64, 64);
-        image_building_house.setWidgetPosition(widget_position);
+    this->addComponent(widget_body);
 
-    static ImageHolder image_building_quarry(this->manager, "building_quarry");
-        image_building_quarry.setWidgetID("imageholder_building_quarry");
-        image_building_quarry.setWidgetSize(64, 64);
-        image_building_quarry.setWidgetPosition(widget_position + sf::Vector2f(64, 0));
+    // TODO: Make minimap.
+    // Make this widget display under the minimap when drawn.
+    // Make the buildings drop down to another row, when current is full (textures_size.x >= widget_size.x)
 
-    static ImageHolder image_building_farm(this->manager, "building_farmland");
-        image_building_farm.setWidgetID("imageholder_building_farm");
-        image_building_farm.setWidgetSize(64, 64);
-        image_building_farm.setWidgetPosition(widget_position + sf::Vector2f(128, 0));
+    auto image_size = sf::Vector2f(48, 48);
+    auto offset     = sf::Vector2f(image_size.x / 2, image_size.y / 2);
+    int building_no = 0;
+    
+    // Calculate the number of icons possible to fit in this widget.
 
-    static ImageHolder image_building_woodcutter(this->manager, "building_woodcutter");
-        image_building_woodcutter.setWidgetID("imageholder_building_woodcutter");
-        image_building_woodcutter.setWidgetSize(64, 64);
-        image_building_woodcutter.setWidgetPosition(widget_position + sf::Vector2f(192, 0));
+    int row_size = 0;
+    for(const auto& building : BUILDING_LOOKUP_TABLE) {
+        int a1 = widget_position.x + offset.x;
+        int n  = row_size;
+        int r  = row_size * offset.x;
 
-    static ImageHolder image_building_path_dirt(this->manager, "path_dirt_point");
-        image_building_path_dirt.setWidgetID("imageholder_building_path_dirt");
-        image_building_path_dirt.setWidgetSize(64, 64);
-        image_building_path_dirt.setWidgetPosition(widget_position + sf::Vector2f(256, 0));
-        image_building_path_dirt.setWidgetOffset(sf::Vector2f(0, 24));
+        int lim = widget_position.x + widget_size.x - offset.x;
+        int term = (n == 0)
+            ? a1
+            : a1 + (n - 1) * r;
 
-    static ImageHolder image_building_path_stone(this->manager, "path_stone_point");
-        image_building_path_stone.setWidgetID("imageholder_building_path_stone");
-        image_building_path_stone.setWidgetSize(64, 64);
-        image_building_path_stone.setWidgetPosition(widget_position + sf::Vector2f(320, 0));
-        image_building_path_stone.setWidgetOffset(sf::Vector2f(0, 24));
+        if(term < lim)
+            row_size++;
 
-    static ImageHolder image_2x2(this->manager, "building2x2");
-        image_2x2.setWidgetID("imageholder_building2x2");
-        image_2x2.setWidgetSize(64, 64);
-        image_2x2.setWidgetPosition(widget_position + sf::Vector2f(384, 0));
-        image_2x2.setWidgetOffset(sf::Vector2f(0, 24));
+        else
+            break;  
+    }
 
-    this->interface.insert({ widget_body.getWidgetID()              , &widget_body               });
-    this->interface.insert({ image_building_house.getWidgetID()     , &image_building_house      });
-    this->interface.insert({ image_building_farm.getWidgetID()      , &image_building_farm       });
-    this->interface.insert({ image_building_quarry.getWidgetID()    , &image_building_quarry     });
-    this->interface.insert({ image_building_woodcutter.getWidgetID(), &image_building_woodcutter });
-    this->interface.insert({ image_building_path_dirt.getWidgetID() , &image_building_path_dirt  });
-    this->interface.insert({ image_building_path_stone.getWidgetID(), &image_building_path_stone });
-    this->interface.insert({ image_2x2.getWidgetID(), &image_2x2 });
+    for(const auto& building : BUILDING_LOOKUP_TABLE) {
+        if(building != BUILDING_EMPTY) {
+            auto image = ImageComponent(new ImageHolder(this->manager, building.getBuildingMenuIconName()));
+            image.get()->setWidgetID("imageholder_" + building.getTextureName());
+            
+            const int x = building_no % row_size;
+            const int y = building_no / row_size;
+
+            auto final_position = widget_position + offset + sf::Vector2f(x * image_size.x, y * image_size.y) + sf::Vector2f(x * offset.x, 0);
+
+            image.get()->setWidgetPosition(final_position);
+            image.get()->setWidgetSize(image_size);
+
+            this->addComponent(image);
+            
+            building_no++;
+        }
+    }
 }
 
 void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    if(this->manager == nullptr)
+    if(!this->manager)
         return;
 
     if(!this->show)
         return;
 
     // Draw the main widget first.
-    auto* main_widget = static_cast<Widget*>(this->interface.at("widget_menu_building"));
+    auto* main_widget = static_cast<Widget*>(this->getComponent("widget_menu_building"));
     if(main_widget)
         target.draw(*main_widget);
 
     // Draw all the images on top of the main widget.
     for(const auto& pair : this->interface) {
-        auto* component = pair.second;
+        auto* component = pair.second.get();
         if(component) {
             if(startsWith(component->getWidgetID(), "imageholder")) {
                 auto* image_holder = static_cast<ImageHolder*>(component);
@@ -113,12 +115,13 @@ void WidgetMenuBuilding::findBuilding() {
     auto mouse_position = regionmap->mouse_position_interface;
 
     for(const auto& pair : this->interface) {
-        auto* component = pair.second;
+        auto* component = pair.second.get();
         if(component) {
             if(startsWith(component->getWidgetID(), "imageholder")) {
                 if(component->containsPoint(mouse_position) && gamestate->controls.mouseLeftPressed()) {
                     auto* image_holder = static_cast<ImageHolder*>(component);
-                    auto  texture_name = image_holder->getTextureName();
+                    auto  widget_id    = image_holder->getWidgetID();
+                    auto  texture_name = read(widget_id, find(widget_id, "_") + 1, widget_id.length());                
                     this->last_selected_building = texture_name;
                 }
             }
@@ -132,12 +135,14 @@ void WidgetMenuBuilding::updateUI() {
 
 Building WidgetMenuBuilding::getBuilding() {
     const std::string& building_name = this->last_selected_building;
-    for(int index = 0; index < BUILDING_LOOKUP_TABLE.size(); index++) {
-        auto building = BUILDING_LOOKUP_TABLE[index];
-        
-        if(building_name == building.getTextureName())
+    for(const auto& building : BUILDING_LOOKUP_TABLE) {
+        if(building != BUILDING_EMPTY && building_name == building.getTextureName())
             return building;
     }
 
     return BUILDING_EMPTY;
 }
+
+void WidgetMenuBuilding::resetBuilding() {
+    this->last_selected_building = "Empty";
+} 
