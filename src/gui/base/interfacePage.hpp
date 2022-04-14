@@ -13,8 +13,15 @@
 #include <SFML/Graphics.hpp>
 #include <map>
 #include <string>
+#include <memory>
 
 namespace gui {
+    typedef std::shared_ptr <AbstractWidget> AbstractComponent; 
+    typedef std::shared_ptr <Button>         ButtonComponent;
+    typedef std::shared_ptr <Label>          LabelComponent;
+    typedef std::shared_ptr <ImageHolder>    ImageComponent;
+    typedef std::shared_ptr <Widget>         WidgetComponent;
+
     /*  This is a base class for GUI pages.
      *  GUI page is a high level GUI component ready to draw. It represents some interface in game.
      *  To create a new page you need to inherit from this class, override the virtual functions, and you are ready to go. */
@@ -23,8 +30,8 @@ namespace gui {
             virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const { return; }
             virtual void createUI() { return; }
         protected:
-            std::map <std::string, AbstractWidget*> interface;
-            iso::SimulationManager*                 manager;
+            std::map <std::string, std::shared_ptr<AbstractWidget>> interface;
+            iso::SimulationManager* manager;
         public:
             InterfacePage();
             InterfacePage(iso::SimulationManager* manager);
@@ -33,6 +40,7 @@ namespace gui {
             virtual void    updateUI()      { return; }
             virtual void    functionality() { return; }
             AbstractWidget* getComponent(std::string id) const;
+            void            addComponent(std::shared_ptr<AbstractWidget> component);
             bool            intersectsUI(sf::Vector2f point) const;
     };
 }

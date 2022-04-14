@@ -27,15 +27,15 @@ void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const
 
     // You always draw the main widget first,
     // so that there is no issue with components overlapping.
-    auto* widget = static_cast<Widget*>(this->interface.at("widget_region"));
+    auto* widget = static_cast<Widget*>(this->getComponent("widget_region"));
     if(widget)
         target.draw(*widget);
 
-    auto* button_travel = static_cast<Button*>(this->interface.at("button_travel"));
+    auto* button_travel = static_cast<Button*>(this->getComponent("button_travel"));
     if(button_travel)
         target.draw(*button_travel);
 
-    auto* label = static_cast<Label*>(this->interface.at("text_region_index"));
+    auto* label = static_cast<Label*>(this->getComponent("text_region_index"));
     if(label)
         target.draw(*label);
 }
@@ -46,20 +46,20 @@ void WidgetRegion::createUI() {
     int window_width  = this->manager->window.windowWidth();
     int window_height = this->manager->window.windowHeight();
 
-    static Widget widget_body(this->manager, t_widget_size);
-        sf::Vector2f widget_size = widget_body.getWidgetSize();
-        widget_body.setWidgetID("widget_region");
-        widget_body.setWidgetPosition(0, window_height - widget_size.y);
-        sf::Vector2f widget_position = widget_body.getWidgetPosition();
+    auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
+        sf::Vector2f widget_size = widget_body.get()->getWidgetSize();
+        widget_body.get()->setWidgetID("widget_region");
+        widget_body.get()->setWidgetPosition(0, window_height - widget_size.y);
+        sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
 
-    static Button button_travel(this->manager, t_button_size, "Visit");
-        sf::Vector2f button_size = button_travel.getWidgetSize();
-        button_travel.setWidgetID("button_travel");
-        button_travel.setWidgetPosition(widget_position + widget_size - button_size);
-        button_travel.label.setWidgetPosition(button_travel.getWidgetPosition() + sf::Vector2f(button_size.x / 2, button_size.y / 2));
+    auto button_travel = ButtonComponent(new Button(this->manager, t_button_size, "Visit"));
+        sf::Vector2f button_size = button_travel.get()->getWidgetSize();
+        button_travel.get()->setWidgetID("button_travel");
+        button_travel.get()->setWidgetPosition(widget_position + widget_size - button_size);
+        button_travel.get()->label.setWidgetPosition(button_travel.get()->getWidgetPosition() + sf::Vector2f(button_size.x / 2, button_size.y / 2));
 
-    this->interface.insert({ widget_body.getWidgetID()  , &widget_body   });
-    this->interface.insert({ button_travel.getWidgetID(), &button_travel });
+    this->addComponent(widget_body);
+    this->addComponent(button_travel);
 }
 
 void WidgetRegion::updateUI() {
@@ -89,12 +89,12 @@ void WidgetRegion::updateUI() {
     if(region.isOwned())
         data += "Owner: " + region.owner->getCountryName() + "\n";
 
-    static Label text_region_index(this->manager);
-        text_region_index.setWidgetID("text_region_index");
-        text_region_index.setString(data);
-        text_region_index.setWidgetPosition(widget_position + sf::Vector2f(0.05f * widget_size.x, 0.0375f * widget_size.y));
+    auto text_region_index = LabelComponent(new Label(this->manager));
+        text_region_index.get()->setWidgetID("text_region_index");
+        text_region_index.get()->setString(data);
+        text_region_index.get()->setWidgetPosition(widget_position + sf::Vector2f(0.05f * widget_size.x, 0.0375f * widget_size.y));
     
-    this->interface.insert({ text_region_index.getWidgetID(), &text_region_index });
+    this->addComponent(text_region_index);
 }
 
 void WidgetRegion::functionality() {

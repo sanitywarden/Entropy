@@ -19,11 +19,11 @@ DebugPerformance::~DebugPerformance() {
 }
 
 void DebugPerformance::createUI() {
-    static Label text(this->manager);
-        text.setWidgetID("label_debug_performance");
-        text.setWidgetPosition(0, 0);
+    auto text = LabelComponent(new Label(this->manager));
+        text.get()->setWidgetID("label_debug_performance");
+        text.get()->setWidgetPosition(0, 0);
 
-    this->interface.insert({ text.getWidgetID(), &text });
+    this->addComponent(text);
 }
 
 void DebugPerformance::updateUI() {
@@ -86,7 +86,7 @@ void DebugPerformance::updateUI() {
         data += "Food: "                 + std::to_string(region->resources.food)  + "\n";
     }
 
-    auto* text = static_cast<Label*>(this->interface.at("label_debug_performance"));
+    auto* text = static_cast<Label*>(this->getComponent("label_debug_performance"));
     text->setString(data);
 }
 
@@ -95,7 +95,7 @@ void DebugPerformance::draw(sf::RenderTarget& target, sf::RenderStates states) c
         return;
 
     for(const auto& pair : this->interface) {
-        auto* component = pair.second;
+        auto* component = pair.second.get();
 
         if(component)
             target.draw(*component);

@@ -43,6 +43,7 @@ void Regionmap::initialise() {
     this->controls.addKeyMappingCheck("key_remove_building",     sf::Keyboard::Key::D);
     this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
     this->controls.addKeyMappingCheck("key_toggle_buildmenu",    sf::Keyboard::Key::B);
+    this->controls.addKeyMappingCheck("key_toggle_minimap",      sf::Keyboard::Key::M);
 
     this->scheduler.insert({ "update_pawns", std::pair(0, 1) });   
 }
@@ -76,38 +77,43 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_acacia"  , sf::IntRect(64, 192, 128, 96));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96 ));
 
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_atlas");
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_small_house",     sf::IntRect(0, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_farmland",        sf::IntRect(64, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_quarry",          sf::IntRect(128, 0, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 64, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_atlas");
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_small_house",     sf::IntRect(0, 0, 64, 64   ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_farmland",        sf::IntRect(64, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry",          sf::IntRect(128, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 64, 64, 64  ));
     
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_horizontal",     sf::IntRect(0, 0, 64, 64    ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_vertical",       sf::IntRect(0, 64, 64, 64   ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_cross",          sf::IntRect(64, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_point",          sf::IntRect(64, 64, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_up",        sf::IntRect(128, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_down",      sf::IntRect(128, 64, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_right",     sf::IntRect(192, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_turn_left",      sf::IntRect(192, 64, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_down",   sf::IntRect(256, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_top",    sf::IntRect(256, 64, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_left",   sf::IntRect(320, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_dirt_without_right",  sf::IntRect(320, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_horizontal",     sf::IntRect(0, 0, 64, 64    ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_vertical",       sf::IntRect(0, 64, 64, 64   ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_cross",          sf::IntRect(64, 0, 64, 64   ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_point",          sf::IntRect(64, 64, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_turn_up",        sf::IntRect(128, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_turn_down",      sf::IntRect(128, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_turn_right",     sf::IntRect(192, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_turn_left",      sf::IntRect(192, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_without_down",   sf::IntRect(256, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_without_top",    sf::IntRect(256, 64, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_without_left",   sf::IntRect(320, 0, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_without_right",  sf::IntRect(320, 64, 64, 64 ));
 
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_horizontal",    sf::IntRect(0, 128, 64, 64   ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_vertical",      sf::IntRect(0, 192, 64, 64   ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_cross",         sf::IntRect(64, 128, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_point",         sf::IntRect(64, 192, 64, 64  ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_up",       sf::IntRect(128, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_down",     sf::IntRect(128, 192, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_right",    sf::IntRect(192, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_turn_left",     sf::IntRect(192, 192, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_down",  sf::IntRect(256, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_top",   sf::IntRect(256, 192, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 192, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_horizontal",    sf::IntRect(0, 128, 64, 64   ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_vertical",      sf::IntRect(0, 192, 64, 64   ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_cross",         sf::IntRect(64, 128, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_point",         sf::IntRect(64, 192, 64, 64  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_turn_up",       sf::IntRect(128, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_turn_down",     sf::IntRect(128, 192, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_turn_right",    sf::IntRect(192, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_turn_left",     sf::IntRect(192, 192, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_down",  sf::IntRect(256, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_top",   sf::IntRect(256, 192, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 128, 64, 64 ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 192, 64, 64 ));
+
+    this->manager->resource.loadTexture("./res/ui/template/icon_template.png" , "icon_default",            sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_path_dirt.png"         , "icon_path_dirt" ,         sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_path_stone.png"        , "icon_path_stone",         sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_farmhouse.png", "icon_building_farmhouse", sf::IntRect(0, 0, 48, 48));
 
     this->manager->texturizer.createColouredWorldmapTexture("tile_black", "tile_highlight", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
 }
@@ -127,8 +133,8 @@ void Regionmap::render(float delta_time) {
     this->manager->window.getWindow()->setView(this->view_game);
 
     this->renderRegion();
-    this->renderSelectedBuilding();
     this->higlightTile();
+    this->renderSelectedBuilding();
 
     this->manager->window.getWindow()->setView(this->view_interface);
 
@@ -159,12 +165,19 @@ void Regionmap::handleInput() {
                     this->toggleComponentVisibility("component_debug_performance");
                 }
 
+                if(this->controls.keyState("key_toggle_minimap")) {
+                    this->toggleComponentVisibility("component_minimap");
+                }
+
                 if(this->controls.keyState("key_escape")) {
                     this->manager->gamestate.setGamestate("worldmap");
                 }
 
                 if(this->controls.keyState("key_toggle_buildmenu")) {
                     this->toggleComponentVisibility("component_widget_menu_building");
+                    
+                    auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
+                    building_menu->resetBuilding();
                 }
 
                 if(this->controls.keyState("key_screenshot")) {
@@ -473,6 +486,9 @@ void Regionmap::setCurrentRegion(int region_index) {
         auto& pawn = this->region->population[i];
         pawn.object_position = this->region->map[0].getPosition();
     }
+
+    auto minimap = static_cast<gui::WidgetMinimap*>(this->getInterfaceComponent("component_minimap"));
+        minimap->should_redraw = true;
 }
 
 void Regionmap::higlightTile() {
@@ -560,7 +576,7 @@ int Regionmap::getCurrentIndex() {
 
 void Regionmap::updateTile() {
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY && !this->mouseIntersectsUI() && this->controls.mouseLeftPressed() && !this->mouse_drag && building_menu->isVisible()) {
+    if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
         Building building = building_menu->getBuilding();
         auto texture_size = this->manager->resource.getTextureSize(building.getTextureName());
         this->region->placeBuildingCheck(building, texture_size, this->current_index);
@@ -669,9 +685,11 @@ void Regionmap::updatePaths(int index) {
 void Regionmap::createUI() {
     static gui::WidgetMenuBuilding widget_menu_building(this->manager);
     static gui::DebugPerformance   widget_performance_regionmap(this->manager);
+    static gui::WidgetMinimap      widget_minimap(this->manager);
 
     this->addInterfaceComponent(&widget_menu_building);
     this->addInterfaceComponent(&widget_performance_regionmap);
+    this->addInterfaceComponent(&widget_minimap);
 }
 
 void Regionmap::updateScheduler() {
@@ -730,7 +748,7 @@ void Regionmap::recalculateMesh() {
 
 void Regionmap::renderSelectedBuilding() {
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY) {
+    if(building_menu->getBuilding() != BUILDING_EMPTY && building_menu->isVisible()) {
         auto tile = this->region->map[this->current_index];
         
         // Copy, do not take a reference.

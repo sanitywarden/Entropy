@@ -121,21 +121,25 @@ bool Region::isPositionValid(const Building& building, int index) const {
     const auto building_size             = building.getBuildingArea();
     const auto foundation_tile_elevation = this->map[index].elevation; 
 
-    for(int x = 0; x < building_size.x; x++) {
-        for(int y = 0; y < building_size.y; y++) {
-            const int i = world_settings.calculateRegionIndex(x, y);
+    for(int y = 0; y < building_size.y; y++) {
+        for(int x = 0; x < building_size.x; x++) {
+            const int i = index + world_settings.calculateRegionIndex(x, y);
 
-            if(this->map.at(i).elevation != foundation_tile_elevation)
+            if(this->map.at(i).elevation != foundation_tile_elevation) {
                 return false;
+            }
 
-            if(!this->map.at(i).tiletype.is_terrain())
+            if(!this->map.at(i).tiletype.is_terrain()) {
                 return false;
+            }
 
-            if(this->trees.count(i))
+            if(this->trees.count(i)) {
                 return false;
+            }
 
-            if(this->buildings.count(i))
+            if(this->buildings.count(i)) {
                 return false;
+            }
         }
     }
 

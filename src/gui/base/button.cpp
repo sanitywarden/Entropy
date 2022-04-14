@@ -10,11 +10,13 @@ Button::Button() {
     std::cout << "[GUI][Button]: Simulation manager is a nullptr.\n";
 }
 
-Button::Button(SimulationManager* manager, sf::Vector2i dimensions, std::string data) : label(manager, data) {
+Button::Button(SimulationManager* manager, sf::Vector2i dimensions, std::string data) {
     this->manager      = manager;
     this->m_dimensions = dimensions;
     this->m_blocks.resize(dimensions.x * dimensions.y);
     this->setWidgetSize(dimensions.x * 8, dimensions.y * 8);
+
+    this->label = Label(manager, data);
 }
 
 Button::~Button() {

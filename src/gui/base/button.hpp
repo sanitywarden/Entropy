@@ -5,6 +5,7 @@
 #include "label.hpp"
 #include "tileable.hpp"
 #include "simulationManager.hpp"
+#include "image.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <functional>
@@ -13,7 +14,6 @@ namespace gui {
     class Button : public AbstractWidget, public PropertyTileable {
         private:    
             iso::SimulationManager* manager;
-
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             std::string getBlockTexture(int x, int y, sf::Vector2i dimensions) const override;
@@ -22,7 +22,7 @@ namespace gui {
             Button(iso::SimulationManager* manager, sf::Vector2i dimensions, std::string data);
             ~Button();
 
-            Label label;
+            Label       label;
     };
 }
 

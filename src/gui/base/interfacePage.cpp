@@ -21,13 +21,21 @@ InterfacePage::~InterfacePage() {
 
 AbstractWidget* InterfacePage::getComponent(std::string id) const {
     return this->interface.count(id)
-        ? this->interface.at(id)
+        ? this->interface.at(id).get()
         : nullptr;
+}
+
+void InterfacePage::addComponent(std::shared_ptr <AbstractWidget> component) {
+    if(component == nullptr)
+        return;
+
+    auto id = component.get()->getWidgetID();
+    this->interface[id] = component;
 }
 
 bool InterfacePage::intersectsUI(sf::Vector2f point) const {
     for(const auto& pair : this->interface) {
-        auto* component = pair.second;
+        auto* component = pair.second.get();
 
         if(component->containsPoint(point))
             return true;

@@ -32,12 +32,12 @@ void WidgetUnit::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if(this->unit == nullptr)
         return;
 
-    auto* widget = static_cast<Widget*>(this->interface.at("widget_unit"));
+    auto* widget = static_cast<Widget*>(this->getComponent("widget_unit"));
     if(widget)
         target.draw(*widget);
 
     if(this->unit->getName() == "settler") {
-        auto* button_colonise = static_cast<Button*>(this->interface.at("button_colonise"));
+        auto* button_colonise = static_cast<Button*>(this->getComponent("button_colonise"));
         if(button_colonise)
             target.draw(*button_colonise);
     }
@@ -49,21 +49,21 @@ void WidgetUnit::createUI() {
     int window_width  = this->manager->window.windowWidth();
     int window_height = this->manager->window.windowHeight();
 
-    static Widget widget_body(this->manager, t_widget_size);
-        sf::Vector2f widget_size = widget_body.getWidgetSize();
+    auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
+        sf::Vector2f widget_size = widget_body.get()->getWidgetSize();
         sf::Vector2f window_size = sf::Vector2f(window_width, window_height);
-        widget_body.setWidgetID("widget_unit"); 
-        widget_body.setWidgetPosition(window_size - widget_size);
-        sf::Vector2f widget_position = widget_body.getWidgetPosition();
+        widget_body.get()->setWidgetID("widget_unit"); 
+        widget_body.get()->setWidgetPosition(window_size - widget_size);
+        sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
 
-    static Button button_colonise(this->manager, t_button_size, "Colonise");
-        sf::Vector2f button_size = button_colonise.getWidgetSize();
-        button_colonise.setWidgetID("button_colonise");
-        button_colonise.setWidgetPosition(widget_position + widget_size - sf::Vector2f(button_size.x, button_size.y));
-        button_colonise.label.setWidgetPosition(widget_position + widget_size - sf::Vector2f(button_size.x / 2, button_size.y / 2));
+    auto button_colonise = ButtonComponent(new Button(this->manager, t_button_size, "Colonise"));
+        sf::Vector2f button_size = button_colonise.get()->getWidgetSize();
+        button_colonise.get()->setWidgetID("button_colonise");
+        button_colonise.get()->setWidgetPosition(widget_position + widget_size - sf::Vector2f(button_size.x, button_size.y));
+        button_colonise.get()->label.setWidgetPosition(widget_position + widget_size - sf::Vector2f(button_size.x / 2, button_size.y / 2));
 
-    this->interface.insert({ widget_body.getWidgetID()    , &widget_body     });
-    this->interface.insert({ button_colonise.getWidgetID(), &button_colonise });
+    this->addComponent(widget_body);
+    this->addComponent(button_colonise);
 }
 
 void WidgetUnit::updateUI() {
