@@ -23,6 +23,11 @@ namespace iso {
     
     const sf::Color COLOUR_BLUE_RIVER(47, 154, 229);
 
+    // Resource colours.
+
+    const sf::Color COLOUR_GREY_STONE(103, 103, 103);
+    const sf::Color COLOUR_GREY_FLINT(82, 82, 82);
+
     const sf::Color COLOUR_RED    (229, 20, 0, 255);
     const sf::Color COLOUR_BLUE   (0, 80, 239, 255);
     const sf::Color COLOUR_GREEN  (0, 138, 0, 255);
