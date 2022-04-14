@@ -25,7 +25,6 @@ namespace iso {
         BUILDING_EMPTY,
         BUILDING_PATH_DIRT,
         BUILDING_PATH_STONE,
-        BUILDING_HOUSE_SMALL,
         BUILDING_FARM,
         BUILDING_QUARRY,
         BUILDING_WOODCUTTER,

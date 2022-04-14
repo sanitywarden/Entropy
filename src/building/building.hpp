@@ -20,6 +20,7 @@ class Building : public GameObject {
         int                numerical_type;
         sf::Vector2f       building_size;
         ResourceCollection building_cost;
+        std::string        building_menu_icon;
 
         // Certain buildings can produce stuff, wood, stone or other items.
         // To produce a item, they need to be in proximity to a resource, and every instance of that resource increases the production rate.
@@ -30,7 +31,7 @@ class Building : public GameObject {
         void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
         
         Building();
-        Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost);
+        Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost);
         Building(const Building& building);
         ~Building();
 
@@ -45,7 +46,7 @@ class Building : public GameObject {
         const ResourceCollection getBuildingRefund() const;
 
         const int getNumericalType() const;
-        sf::Vector2f calculateTextureOffset(sf::Vector2f texture_size) const;
+        std::string getBuildingMenuIconName() const;
 
         // Assign ONLY BUILDING CLASS properties to this building.
         // GameObject properties are left untouched.
@@ -57,8 +58,8 @@ class Building : public GameObject {
 
         // Equality and inequality operators return a value based on the building ID. 
         
-        bool operator == (const Building& building);      
-        bool operator != (const Building& building);
+        bool operator == (const Building& building) const;      
+        bool operator != (const Building& building) const;
 
         // The argument type is GameObject instead of Region, because unfortunately, this project's include structure does not allow it.
         // If you would #include "region.hpp" here, then the application would not compile.

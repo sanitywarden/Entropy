@@ -6,29 +6,33 @@ using namespace iso;
 
 Building::Building() : GameObject(VECTOR0X0, VECTOR0X0, VECTOR0X0, "*") {
     this->object_name             = "Empty";
+    this->building_menu_icon      = "default";
     this->building_size           = VECTOR0X0;
     this->building_cost           = ResourceCollection(0, 0, 0);
     this->numerical_type          = 0;
     this->building_proximity_area = VECTOR0X0;
 }
 
-Building::Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost) 
+Building::Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost) 
     : GameObject(position, relative_position, size, texture_name) 
 {
-    this->object_name    = building_name;
-    this->building_size  = building_size;
-    this->building_cost  = building_cost;
-    this->numerical_type = numerical_type;
+    this->object_name             = building_name;
+    this->building_menu_icon      = building_menu_icon;
+    this->building_size           = building_size;
+    this->building_cost           = building_cost;
+    this->numerical_type          = numerical_type;
     this->building_proximity_area = proximity;
 }
 
 Building::Building(const Building& building) 
     : GameObject(building) 
 {
-    this->object_name    = building.getName();
-    this->building_size  = building.getBuildingArea();
-    this->building_cost  = building.getBuildingCost();
-    this->numerical_type = building.getNumericalType();
+    this->object_name             = building.getName();
+    this->building_menu_icon      = building.getBuildingMenuIconName();
+    this->building_size           = building.getBuildingArea();
+    this->building_cost           = building.getBuildingCost();
+    this->numerical_type          = building.getNumericalType();
+    this->building_proximity_area = building.getProductionArea();
 }
 
 Building::~Building() {
@@ -59,11 +63,11 @@ const int Building::getNumericalType() const {
     return this->numerical_type;
 }
 
-bool Building::operator== (const Building& building) {
+bool Building::operator== (const Building& building) const {
     return this->numerical_type == building.getNumericalType();
 }
 
-bool Building::operator!= (const Building& building) {
+bool Building::operator!= (const Building& building) const {
     return !(*this == building);  
 }
 
@@ -97,4 +101,8 @@ void Building::assignAllProperties(const Building& building) {
     this->object_size         = building.getSize();
     this->object_texture_name = building.getTextureName();
     this->object_colour       = building.getColour();
+}
+
+std::string Building::getBuildingMenuIconName() const {
+    return this->building_menu_icon;
 }
