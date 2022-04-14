@@ -78,6 +78,15 @@ std::string iso::readBefore(const std::string& str, char to) {
     return extract_string;
 }
 
+std::string iso::read(const std::string& str, int incl_from, int to) {
+    std::string extract_string;
+    for(int i = incl_from; i < to; i++) {
+        extract_string.append(1, str[i]);
+    }
+
+    return extract_string;
+}
+
 std::string iso::toLower(const std::string& str) {
     std::string str_lower = "";
     for(int i = 0; i < str.length(); i++) {
@@ -96,4 +105,36 @@ std::string iso::toLower(const std::string& str) {
 
 bool iso::inCircle(const sf::Vector2f point, const sf::Vector2f centre, const int radius) {
     return ((point.x - centre.x) * (point.x - centre.x)) + ((point.y - centre.y) * (point.y - centre.y)) < radius * radius;
+}
+
+size_t iso::find(const std::string& str, const std::string& phrase) {
+    if(str.length() < phrase.length())
+        return false;
+
+    const int index = str.find(phrase[0]);
+    if(index == std::string::npos)
+        return false;
+
+    int match = 0;
+    size_t last_seen = std::string::npos;
+    for(int i = index; i < str.length(); i++) {
+        for(int j = 0; j < phrase.length(); j++) {
+            // If found, increment the counter.
+            if(str[i] == phrase[j]) {
+                match++;
+                last_seen = i;
+                break;
+            }
+
+            // Already found that the text exists inside the string.
+            if(match >= phrase.length())
+                return last_seen;
+
+            // If it's the end of the loop, and no characters are matching, reset the counter.
+            else if(j == phrase.length() - 1)
+                match = 0;
+        }
+    }    
+
+    return last_seen;
 }
