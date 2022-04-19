@@ -46,8 +46,12 @@ void Player::setCapital(int region_index) {
     this->capital_region = region_index;
 }
 
-const sf::Color& Player::getTeamColour() {
+const sf::Color Player::getTeamColourFull() const {
     return this->team_colour;
+}
+
+const sf::Color Player::getTeamColourTransparent() const {
+    return sf::Color(this->team_colour.r, this->team_colour.g, this->team_colour.b, 127);
 }
 
 void Player::setTeamColour(const sf::Color& team_colour) {
@@ -62,23 +66,25 @@ const std::string& Player::getCountryName() {
     return this->country_name;
 }
 
-void Player::addUnit(Unit unit) {
+void Player::addUnit(std::shared_ptr <Unit> unit) {
     this->units.push_back(unit);
 }
 
 Unit* Player::getUnit(int unit_id) {
     for(auto& unit : this->units) {
-        if(unit.getID() == unit_id)
-            return &unit;
+        if(unit.get()->getID() == unit_id)
+            return unit.get();
     }
 
     return nullptr;
 }
 
-const std::vector <Unit>& Player::seeUnits() const {
-    return this->units;
+void Player::removeUnit(int unit_id) {
+    for(auto it = this->units.begin(); it != units.end(); ++it)
+        if((*it).get()->getID() == unit_id)
+            this->units.erase(it);
 }
 
-std::vector <Unit>& Player::getUnits() {
-    return this->units;
+int Player::empireSize() const {
+    return this->owned_regions.size();
 }
