@@ -28,6 +28,7 @@ namespace iso {
         BUILDING_FARM,
         BUILDING_QUARRY,
         BUILDING_WOODCUTTER,
+        BUILDING_HOUSE_SMALL,
     };
 }
 
