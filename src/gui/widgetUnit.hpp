@@ -10,8 +10,9 @@ namespace gui {
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             void createUI() override;
 
-            bool canColonise(int index);
-        public:
+            void deleteCurrentUnit();
+            bool canColonise(int index) const;
+        private:
             // What unit type is this GUI for.
             iso::Unit* unit;
         
