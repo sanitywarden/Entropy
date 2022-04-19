@@ -1,4 +1,5 @@
 #include "./texturizer.hpp"
+#include "globalutilities.hpp"
 
 iso::Texturizer::Texturizer() 
     : resource(nullptr) {}

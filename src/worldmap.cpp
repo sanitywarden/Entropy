@@ -147,7 +147,7 @@ void Worldmap::loadResources() {
     this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_tropical_1"     , sf::IntRect(384, 0, 128, 128));
 
     this->manager->resource.loadTexture("./res/worldmap/unit_atlas.png", "unit_worldmap_settler", sf::IntRect(0, 0, 128, 128 ));
-    this->manager->resource.loadTexture("./res/worldmap/unit_atlas.png", "unit_worldmap_warrior", sf::IntRect(32, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/worldmap/unit_atlas.png", "unit_worldmap_warrior", sf::IntRect(0, 128, 128, 128));
 
     this->manager->resource.loadTexture("./res/default.png", "default");
 
@@ -362,8 +362,7 @@ void Worldmap::handleInput() {
                 const bool unit_exists = current_region.isUnitPresent();
                 if(this->controls.mouseLeftPressed()) {
                     if(unit_exists && current_region.unit->contains(this->mouse_position_window)) {
-                        this->selectUnit();
-                        this->toggleComponentVisibility("component_widget_region");
+                        this->selectUnit(); 
                     }
     
                     else {
@@ -371,9 +370,8 @@ void Worldmap::handleInput() {
                     }
                 }
                 
-                if(this->controls.mouseRightPressed()) {
+                if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
                     this->selectUnitGoal();
-
                 }
                 
                 this->unselectUnit();
@@ -492,12 +490,20 @@ void Worldmap::renderWorld() {
             highlight[2].position = region.getPosition() + sf::Vector2f(region.getSize().x, region.getSize().y);
             highlight[3].position = region.getPosition() + sf::Vector2f(0, region.getSize().y);
 
-            highlight[0].color = region.owner->getTeamColour();
-            highlight[1].color = region.owner->getTeamColour();
-            highlight[2].color = region.owner->getTeamColour();
-            highlight[3].color = region.owner->getTeamColour();
+            highlight[0].color = region.owner->getTeamColourTransparent();
+            highlight[1].color = region.owner->getTeamColourTransparent();
+            highlight[2].color = region.owner->getTeamColourTransparent();
+            highlight[3].color = region.owner->getTeamColourTransparent();
 
             this->manager->window.draw(highlight);
+        }
+    }
+
+    for(const auto& player : this->manager->players) {
+        for(const auto& unit : player.units) {
+            sf::RenderStates states;
+            states.texture = &this->manager->resource.getTexture(unit.get()->getTextureName());
+            this->manager->window.draw(*unit.get(), states);
         }
     }
 
@@ -514,7 +520,8 @@ void Worldmap::selectPanel() {
         const int index = panel_grid_position.y * world_settings.getWorldWidth() + panel_grid_position.x;
         this->selected_index = index;
 
-        this->toggleComponentVisibility("component_widget_region");
+        this->setVisibilityFalse("component_widget_unit");
+        this->setVisibilityTrue("component_widget_region");
         this->selected_unit_id = -1;
     }
 }
@@ -600,33 +607,18 @@ void Worldmap::gamestateClose() {
 }
 
 void Worldmap::updateScheduler() {
-    for(const auto& player : this->manager->players) {
-        for(auto& unit : player.getUnits()) {
-            if(unit.hasPath()) {
-                int current   = unit.current_index;
-                int next_move = unit.getNextMove();
-                unit.object_position = this->manager->world.world_map[next_move].object_position + sf::Vector2f(16, 8);
-                
-                // TODO: This line will be a problem, because 2 units can not stand on the same tile,
-                // but currently there is nothing that makes it impossible for two units to cross each other's paths. 
-                this->manager->world.world_map[next_move].unit = &unit;
-                this->manager->world.world_map[current].unit = nullptr;
-    
-                unit.current_index = next_move;
-            }
-        }
-    }
+
 }
 
 void Worldmap::selectUnit() {
-    Unit* pawn = this->manager->world.world_map[this->current_index].unit;
-    if(pawn) {
-        if(this->controls.mouseLeftPressed()) {
-            if(pawn->contains(this->mouse_position_window)) {
-                this->selected_unit_id = pawn->getID();
-    
-                this->toggleComponentVisibility("component_widget_unit");
-            }
+    const auto& region = this->manager->world.world_map[this->current_index];
+    auto* unit = region.unit;
+
+    if(unit) {
+        if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && unit->owner_id == this->manager->getHumanPlayer().player_id) {
+            this->selected_unit_id = unit->getID();
+            this->setVisibilityTrue("component_widget_unit");
+            this->setVisibilityFalse("component_widget_region");
         }
     }
 }
@@ -634,9 +626,9 @@ void Worldmap::selectUnit() {
 void Worldmap::unselectUnit() {
     Unit* pawn = nullptr;
     for(const auto& player : this->manager->players) {
-        for(auto& unit : player.getUnits()) {
-            if(unit.getID() == this->selected_unit_id) {
-                pawn = &unit;
+        for(auto& unit : player.units) {
+            if(unit.get()->getID() == this->selected_unit_id) {
+                pawn = unit.get();
                 break;
             }
         }
@@ -649,26 +641,24 @@ void Worldmap::unselectUnit() {
     }
 
     if(this->controls.mouseLeftPressed() && this->selected_unit_id == -1) {
-        this->toggleComponentVisibility("component_widget_unit");
+        this->setVisibilityFalse("component_widget_unit");
     }
 }
 
 void Worldmap::selectUnitGoal() {
-    return;
-
     if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
         for(const auto& player : this->manager->players) {
             Unit* pawn = nullptr;
-            for(auto& unit : player.getUnits()) {
-                if(this->selected_unit_id == unit.getID()) {
-                    pawn = &unit;
+            for(auto& unit : player.units) {
+                if(this->selected_unit_id == unit.get()->getID()) {
+                    pawn = unit.get();
                     break;
                 }
             }
     
             if(pawn) {
-                pawn->goal = this->current_index;
-                auto path = this->manager->astar(pawn->current_index, pawn->goal);
+                pawn->goal = this->current_index;                
+                auto path  = this->manager->astar(pawn->current_index, pawn->goal);
                 pawn->setNewPath(path);
             }
         }

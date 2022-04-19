@@ -65,6 +65,7 @@ namespace iso {
 
             void updateScheduler();
             void updateBuildings();
+            void updateUnits();
         private:
             int draw_calls;
 
@@ -85,6 +86,8 @@ namespace iso {
             int  getDrawCalls() const;
 
             Player& getHumanPlayer();
+            bool    isHumanPlayer(int player_id) const;
+            Unit*   getUnit(int unit_id);
             std::vector <int> astar(int start, int end) const;
 
             void prepare();

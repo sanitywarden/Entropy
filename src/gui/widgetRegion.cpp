@@ -41,21 +41,21 @@ void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const
 }
 
 void WidgetRegion::createUI() {
-    sf::Vector2i t_widget_size(3, 2);
-    sf::Vector2i t_button_size(8, 4);
+    sf::Vector2i t_widget_size(1, 1);
+    sf::Vector2i t_button_size(4, 4);
     int window_width  = this->manager->window.windowWidth();
     int window_height = this->manager->window.windowHeight();
 
     auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
         sf::Vector2f widget_size = widget_body.get()->getWidgetSize();
         widget_body.get()->setWidgetID("widget_region");
-        widget_body.get()->setWidgetPosition(0, window_height - widget_size.y);
+        widget_body.get()->setWidgetPosition(0, 0);
         sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
 
     auto button_travel = ButtonComponent(new Button(this->manager, t_button_size, "Visit"));
         sf::Vector2f button_size = button_travel.get()->getWidgetSize();
         button_travel.get()->setWidgetID("button_travel");
-        button_travel.get()->setWidgetPosition(widget_position + widget_size - button_size);
+        button_travel.get()->setWidgetPosition(widget_position + sf::Vector2f(0, (widget_size.y - button_size.y) / 2));
         button_travel.get()->label.setWidgetPosition(button_travel.get()->getWidgetPosition() + sf::Vector2f(button_size.x / 2, button_size.y / 2));
 
     this->addComponent(widget_body);
@@ -63,38 +63,7 @@ void WidgetRegion::createUI() {
 }
 
 void WidgetRegion::updateUI() {
-    // Update button_travel text.
-    
-    Worldmap* worldmap = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
-    int index = worldmap->getSelectedIndex();
 
-    if(!world_settings.inWorldBounds(index))
-        return;
-
-    Region& region = this->manager->world.world_map[index];
-    Widget& widget = *(static_cast<Widget*>(this->getComponent("widget_region")));
-    sf::Vector2f widget_position = widget.getWidgetPosition();
-    sf::Vector2f widget_size     = widget.getWidgetSize();
-
-    std::string data;
-    std::string forest = this->manager->world.forests.count(index) ? "True" : "False";
-    std::string river  = this->manager->world.rivers.count(index)  ? "True" : "False";
-    std::string owned  = region.isOwned() ? "True" : "False";
-    data += "Index: "  + std::to_string(index)   + "\n";
-    data += "Biome: "  + region.biome.biome_name + "\n";
-    data += "Forest: " + forest + "\n";
-    data += "River: "  + river  + "\n";
-    data += "Owned: "  + owned  + "\n";
-    
-    if(region.isOwned())
-        data += "Owner: " + region.owner->getCountryName() + "\n";
-
-    auto text_region_index = LabelComponent(new Label(this->manager));
-        text_region_index.get()->setWidgetID("text_region_index");
-        text_region_index.get()->setString(data);
-        text_region_index.get()->setWidgetPosition(widget_position + sf::Vector2f(0.05f * widget_size.x, 0.0375f * widget_size.y));
-    
-    this->addComponent(text_region_index);
 }
 
 void WidgetRegion::functionality() {

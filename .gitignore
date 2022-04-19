@@ -3,7 +3,6 @@
 
 /res
 /bin
-/config/config.ege
-/config/world_generation.config
+/config
 NOTES.txt
 TODO.txt

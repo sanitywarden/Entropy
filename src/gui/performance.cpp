@@ -55,6 +55,7 @@ void DebugPerformance::updateUI() {
         data += "Selected unit: "  + std::to_string(worldmap->selected_unit_id) + "\n";
         data += "Terrain: "        + std::to_string(this->manager->world.world_map[current_index].regiontype.is_terrain()) + "\n";
         data += "Coast: "          + std::to_string(this->manager->world.world_map[current_index].regiontype.is_coast())   + "\n";
+        data += "Forest: "         + std::to_string(this->manager->world.forests.count(current_index)) + "\n";
         data += "Lake: "           + std::to_string(this->manager->world.is_lake(current_index)) + "\n";
     }
 

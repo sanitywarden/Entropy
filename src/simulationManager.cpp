@@ -22,7 +22,10 @@ SimulationManager::SimulationManager() {
     this->prepare();
     this->gamestate.setGamestate("worldmap");
 
+    // Global updates.
+
     this->global_updates.insert({ "update_buildings", std::pair(0, 5) });
+    this->global_updates.insert({ "update_units",     std::pair(0, 1) });
 }
 
 SimulationManager::~SimulationManager() {
@@ -87,7 +90,7 @@ void SimulationManager::internalLoop(float delta_time) {
 }
 
 Player& SimulationManager::getHumanPlayer() {
-    return this->players[0];
+    return this->players.at(0);
 }
 
 void SimulationManager::prepare() {
@@ -95,6 +98,7 @@ void SimulationManager::prepare() {
     this->world.forests   = std::map <int, GameObject> ();
     this->world.rivers    = std::map <int, GameObject> ();
     this->world.lakes     = std::map <int, GameObject> ();
+    this->players         = std::vector <Player> ();
     this->world.generateWorld();
     this->initialiseWorld();
 }
@@ -106,9 +110,20 @@ void SimulationManager::updateScheduler() {
     if(update_buildings.first != update_buildings.second)
         update_buildings.first++;
     
-    if(update_buildings.first ==  update_buildings.second) {
+    if(update_buildings.first == update_buildings.second) {
         this->updateBuildings();
         update_buildings.first = 0;
+    }
+
+    // Update units on the worldmap.
+
+    auto& update_units = this->global_updates.at("update_units");
+    if(update_units.first != update_units.second)
+        update_units.first++;
+
+    if(update_units.first == update_units.second) {
+        this->updateUnits();
+        update_units.first = 0;
     }
 }
 
@@ -122,6 +137,27 @@ void SimulationManager::updateBuildings() {
                 auto* building       = pair.second.get(); // Building itself.
 
                 building->update(&region, building_index);
+            }
+        }
+    }
+}
+
+void SimulationManager::updateUnits() {
+    for(const auto& player : this->players) {
+        for(auto& unit : player.units) {
+            if(unit.get()->hasPath()) {
+                auto current   = unit.get()->current_index;
+                auto next_move = unit.get()->getNextMove();
+                
+                const auto& region = this->world.world_map[next_move];
+                unit.get()->object_position = region.getPosition();
+
+                // TODO: This line will be a problem, because 2 units can not stand on the same tile,
+                // but currently there is nothing that makes it impossible for two units to cross each other's paths. 
+                this->world.world_map[next_move].unit = unit.get();
+                this->world.world_map[current].unit   = nullptr;
+    
+                unit.get()->current_index = next_move;
             }
         }
     }
@@ -148,25 +184,32 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         if(world_settings.inWorldBounds(index + 1))
             neighbours.push_back(index + 1);
 
-        if(world_settings.inWorldBounds(index - world_settings.getWorldSize()))
-            neighbours.push_back(index - world_settings.getWorldSize());
+        if(world_settings.inWorldBounds(index - world_settings.getWorldWidth()))
+            neighbours.push_back(index - world_settings.getWorldWidth());
 
-        if(world_settings.inWorldBounds(index + world_settings.getWorldSize()))
-            neighbours.push_back(index + world_settings.getWorldSize());
+        if(world_settings.inWorldBounds(index + world_settings.getWorldWidth()))
+            neighbours.push_back(index + world_settings.getWorldWidth());
 
         return neighbours;
     };
 
     const auto passable = [this](int index) -> bool {
         const auto& region = this->world.world_map[index];
-        return !region.regiontype.is_ocean();
+        if(region.regiontype.is_ocean())
+            return false;
+
+        auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestate());
+        auto* unit     = this->getUnit(worldmap->selected_unit_id);
+        if(unit && region.unit) {
+            if(*unit != *region.unit)
+                return false;
+        }
+
+        return true;
     };
 
     std::vector <aNode> nodes(world_settings.getWorldSize());
     
-    const auto& node_start = nodes[start];
-    const auto& node_end   = nodes[end];
-
     for(int y = 0; y < world_settings.getWorldWidth(); y++) {
         for(int x = 0; x < world_settings.getWorldWidth(); x++) {
             const int index = world_settings.calculateWorldIndex(x, y);
@@ -178,6 +221,12 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
             node.passable = passable(index); 
         }
     }
+
+    const auto& node_start = nodes[start];
+    const auto& node_end   = nodes[end];
+
+    if(!node_end.passable)
+        return std::vector<int> ();
 
     typedef std::pair<int, int> Intpair;
     typedef std::priority_queue <Intpair, std::vector <Intpair>, std::greater <Intpair>> Frontier;
@@ -215,7 +264,7 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
             const int new_cost   = cost_so_far[current_node.index] + 1;
 
             if(!neighbour.passable)
-                continue;;
+                continue;
 
             if(cost_so_far.find(index) == cost_so_far.end() || new_cost < cost_so_far[index]) {
                 cost_so_far[index] = new_cost;
@@ -232,7 +281,6 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
 
 void SimulationManager::initialise() {
     this->draw_calls = 0;
-
     this->resource.loadTexture("./res/random_colour.png", "random_colour");
 }
 
@@ -262,17 +310,25 @@ void SimulationManager::initialiseWorld() {
         auto& player = this->players[player_id];
         auto& region = this->world.world_map[settle_spot_index];
 
+        if(player_id == 0)
+            player.is_human = true;
+
         // Temporary colour, generated randomly.
         // In the future it could maybe be less random. That would better it's visibility.
-        const sf::Color generated_colour_full    = this->texturizer.getRandomColour();
-        const sf::Color colour_part_transparent  = sf::Color(generated_colour_full.r, generated_colour_full.g, generated_colour_full.b, 127);
-        const std::string generated_country_name = "Country" + std::to_string(player_id);
+        const auto generated_colour_full  = this->texturizer.getRandomColour();
+        const auto generated_country_name = "Country" + std::to_string(player_id);
 
-        region.owner = &player;
+        auto unit = std::shared_ptr <Unit> (new Unit("unit_settler"));
+        unit.get()->object_texture_name = "unit_worldmap_settler";
+        unit.get()->object_size         = region.getSize();
+        unit.get()->object_position     = region.getPosition();
+        unit.get()->current_index       = settle_spot_index;
+        unit.get()->owner_id            = player_id;
+        player.addUnit(unit);
 
-        player.setCapital(settle_spot_index);
-        player.addOwnedRegion(settle_spot_index);
-        player.setTeamColour(colour_part_transparent);
+        region.unit = player.getUnit(unit.get()->getID());
+
+        player.setTeamColour(generated_colour_full);
         player.setCountryName(generated_country_name);
     }
 }
@@ -283,4 +339,20 @@ int SimulationManager::getDrawCalls() const {
 
 void SimulationManager::updateDrawCalls(int calls) {
     this->draw_calls = calls;
+}
+
+bool SimulationManager::isHumanPlayer(int player_id) const {
+    return this->getHumanPlayer().player_id == player_id;
+}
+
+Unit* SimulationManager::getUnit(int unit_id) {
+    for(Player& player : this->players) {
+        for(auto& unit_sp : player.units) {
+            auto* unit = unit_sp.get();
+            if(unit->getID() == unit_id)
+                return unit;
+        }
+    }
+
+    return nullptr;
 }
