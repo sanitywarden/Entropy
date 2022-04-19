@@ -81,6 +81,8 @@ namespace entropy {
             gui::InterfacePage* getInterfaceComponent(std::string interface_id);
             bool checkComponentExist(std::string interface_id);
             void toggleComponentVisibility(std::string interface_id);
+            void setVisibilityTrue(std::string interface_id);
+            void setVisibilityFalse(std::string interface_id);
     };
 }
 

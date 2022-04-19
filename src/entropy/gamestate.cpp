@@ -81,6 +81,20 @@ void Gamestate::toggleComponentVisibility(std::string interface_id) {
     }
 }
 
+void Gamestate::setVisibilityTrue(std::string interface_id) {
+    if(this->checkComponentExist(interface_id)) {
+        auto interface_page = this->interface.at(interface_id);
+        interface_page->show = true;
+    }
+}
+
+void Gamestate::setVisibilityFalse(std::string interface_id) {
+    if(this->checkComponentExist(interface_id)) {
+        auto interface_page = this->interface.at(interface_id);
+        interface_page->show = false;
+    }
+}
+
 void Gamestate::renderUI() const {
     for(const auto& pair : this->interface) {
         auto* component = pair.second;
