@@ -8,6 +8,8 @@
 #include "farmhouse.hpp"
 #include "quarry.hpp"
 #include "woodcutter.hpp"
+#include "hunter.hpp"
+#include "animal_spot.hpp"
 
 #include <vector>
 
@@ -19,6 +21,8 @@ namespace iso {
     const Farmhouse  BUILDING_FARM;        // ID 4.
     const Quarry     BUILDING_QUARRY;      // ID 5.
     const Woodcutter BUILDING_WOODCUTTER;  // ID 6.
+    const Hunter     BUILDING_HUNTER;      // ID 7.
+    const AnimalSpot BUILDING_ANIMAL_SPOT; // ID 8. Not listed, world generation specific building.
 
     // If the building should be possible to place, add it here.
     const static std::vector <Building> BUILDING_LOOKUP_TABLE = {
@@ -29,6 +33,7 @@ namespace iso {
         BUILDING_QUARRY,
         BUILDING_WOODCUTTER,
         BUILDING_HOUSE_SMALL,
+        BUILDING_HUNTER,
     };
 }
 

@@ -1,11 +1,12 @@
 #include "quarry.hpp"
 #include "region.hpp"
 #include "generationSettings.hpp"
+#include <iostream>
 
 using namespace iso;
 
 Quarry::Quarry() 
-    : Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "building_quarry", "Quarry", "icon_building_quarry", 5, VECTOR1X1, VECTOR3X3, ResourceCollection(0, 0, 0))
+    : Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE128X128, "building_quarry", "Quarry", "icon_building_quarry", 5, VECTOR2X2, VECTOR3X3, ResourceCollection(0, 0, 0))
 {}
 
 Quarry::~Quarry() {
