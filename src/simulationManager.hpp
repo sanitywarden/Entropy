@@ -37,7 +37,7 @@ namespace iso {
 
             WorldGenerator       world;
             std::vector <Player> players;
-            int                  time;
+            int                  time;    // Time passed since game started in real time seconds.
 
         public:
             SimulationManager();
@@ -47,7 +47,8 @@ namespace iso {
             int  getDrawCalls() const;
 
             Player& getHumanPlayer();
-            bool    isHumanPlayer(int player_id) const;
+            bool isHumanPlayer(int player_id) const;
+            std::string getDateFormatted() const;
             Unit*   getUnit(int unit_id);
             std::vector <int> astar(int start, int end) const;
 

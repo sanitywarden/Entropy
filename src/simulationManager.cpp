@@ -69,6 +69,7 @@ void SimulationManager::loop() {
             
             // Update global scheduler.
             this->updateScheduler();
+            this->getDateFormatted();
 
             updates = 0;
         }
@@ -355,4 +356,38 @@ Unit* SimulationManager::getUnit(int unit_id) {
     }
 
     return nullptr;
+}
+
+std::string SimulationManager::getDateFormatted() const {
+    // Copy value.
+    int time_passed = this->time;
+    constexpr int seconds_per_hour  = 12;
+    constexpr int seconds_per_day   = seconds_per_hour  * 12;
+    constexpr int seconds_per_month = seconds_per_day   * 30;
+    constexpr int seconds_per_year  = seconds_per_month * 12; 
+
+    /* Time scale:
+        12 irl seconds = 1 ig hour
+        12 ig hours    = 1 ig day
+        30 ig days     = 1 ig month
+        12 ig months   = 1 ig year
+    */
+
+    int seconds_left = 0;
+    int years = time_passed / seconds_per_year;
+    seconds_left = time_passed % seconds_per_year;
+ 
+    int months = seconds_left / seconds_per_month;
+    seconds_left = seconds_left % seconds_per_month;
+  
+    int days = seconds_left / seconds_per_day;
+    seconds_left = seconds_left % seconds_per_day;
+
+    std::string date;
+    date += std::to_string(days)   + " "; 
+    date += std::to_string(months) + " "; 
+    date += std::to_string(years); 
+
+    // Example date (D/M/Y): "11 12 54".
+    return date;
 }
