@@ -1,6 +1,7 @@
 #include "worldGenerator.hpp"
 #include "globalutilities.hpp"
 #include "generationSettings.hpp"
+#include "./building/building_definitions.hpp"
 
 using namespace iso;
 
@@ -1378,7 +1379,7 @@ void WorldGenerator::generateRegion(int region_index) {
     if(did_flint_generate)
         has_flint = "True";
 
-    std::cout << "  [] Has flint:\t" << has_flint << "\n";
+    std::cout << "  [] Flint:\t" << has_flint << "\n";
 
     // Generate stone.
     std::string has_stone = "False";
@@ -1386,10 +1387,30 @@ void WorldGenerator::generateRegion(int region_index) {
     if(did_stone_generate)
         has_stone = "True";
 
-    std::cout << "  [] Has stone:\t" << has_stone << "\n";
+    std::cout << "  [] Stone:\t" << has_stone << "\n";
+
+    std::string did_animal_generate = "False";
+    bool did_animal_spot_generate = (rand() % 100) > 10;
+    if(did_animal_spot_generate) {
+        did_animal_generate = "True";
+
+        bool animal_spot_valid = false;
+        while(!animal_spot_valid) {
+            int index = rand() % world_settings.getRegionSize();
+
+            if(region.isPositionValid(BUILDING_ANIMAL_SPOT, index)) {
+                auto texture_name = BUILDING_ANIMAL_SPOT.getTextureName();
+                auto texture_size = this->resource->getTextureSize(texture_name);
+                region.placeBuilding(BUILDING_ANIMAL_SPOT, texture_size, index);
+                animal_spot_valid = true;
+            }
+        }
+    } 
+
+    std::cout << "  [] Animals:\t" << did_animal_generate << "\n";
 
     region.visited = true;
-    
+
     const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
     std::cout << "[World Generation]: Region generated in " << time_rounded << "s.\n"; 
     std::cout << "====================\n";

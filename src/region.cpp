@@ -187,6 +187,12 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, int ind
     else if(building == BUILDING_WOODCUTTER) 
         sp_building = std::shared_ptr <Building> (new Woodcutter());
     
+    else if(building == BUILDING_HUNTER)
+        sp_building = std::shared_ptr <Building> (new Hunter());
+
+    else if(building == BUILDING_ANIMAL_SPOT)
+        sp_building = std::shared_ptr <Building> (new AnimalSpot());
+
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             const int i = index + world_settings.calculateRegionIndex(x, y);

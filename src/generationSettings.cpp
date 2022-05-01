@@ -19,9 +19,6 @@ WorldData::WorldData() {
     this->world_river_quantity  = this->world_size / 8;
     this->world_river_scan_size = this->world_size / 8;
 
-    this->resource_flint_radius = this->region_size / 16;
-    this->resource_stone_radius = this->region_size / 32;
-
     this->player_quantity = this->world_size / 10;
 
     this->world_noise.size    = sf::Vector2f(this->world_size, this->world_size);
@@ -45,10 +42,10 @@ void WorldData::loadSettingsFromFile() {
 
     std::cout << "[Generation Settings]: Reading world generation properties.\n";
 
-    const char line_delimiter    = ','; // What char marks that a line ends.
-    const char read_value_from   = ':'; // What char marks that value is afterwards.
-    const char comment_indicator = '#'; // What char marks a comment.
-    const int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
+    std::string line_delimiter  = ",";   // What char marks that a line ends.
+    std::string read_value_from = ":";   // What char marks that value is afterwards.
+    char comment_indicator = '#';        // What char marks a comment.
+    int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
     
     std::string line_content;
 
@@ -56,12 +53,12 @@ void WorldData::loadSettingsFromFile() {
         if(line_content[0] == comment_indicator || (int)line_content[0] == ascii_empty_line_indicator)
             continue;
 
+        auto index = find(line_content, read_value_from);
         std::string property_name  = readBefore(line_content, read_value_from);  
-        std::string property_value = readAfter(line_content, read_value_from, line_delimiter); 
-    
+        std::string property_value = read(line_content, index + 1, line_content.length() - 1);
+
         // Well, this is bad.
-        // Perhaps you could hold names, and values of properties in a map, and retrieve them by specific functions on demand,
-        // but this would require a lot more work.
+        // Perhaps you could hold names, and values of properties in a map, and retrieve them by specific functions on demand.
 
         if(property_name == "WORLDSIZE") {
             this->world_size = std::stoi(property_value);
@@ -92,6 +89,16 @@ void WorldData::loadSettingsFromFile() {
             this->resource_stone_chance = std::stof(property_value);
             continue;
         } 
+
+        if(property_name == "REGION_RESOURCE_RADIUS_DIV_FLINT") {
+            this->resource_flint_radius = this->region_size / std::stoi(property_value);
+            continue;
+        }
+
+        if(property_name == "REGION_RESOURCE_RADIUS_DIV_STONE") {
+            this->resource_stone_radius = this->region_size / std::stoi(property_value);
+            continue;
+        }
 
         if(property_name == "REGION_RESOURCE_MINIMUM_WOOD") {
             this->tree_noise_minimum = std::stof(property_value);

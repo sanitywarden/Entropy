@@ -121,7 +121,7 @@ void WidgetMenuBuilding::findBuilding() {
                 if(component->containsPoint(mouse_position) && gamestate->controls.mouseLeftPressed()) {
                     auto* image_holder = static_cast<ImageHolder*>(component);
                     auto  widget_id    = image_holder->getWidgetID();
-                    auto  texture_name = read(widget_id, find(widget_id, "_") + 1, widget_id.length());                
+                    auto  texture_name = readAfter(widget_id, "imageholder_");     
                     this->last_selected_building = texture_name;
                 }
             }

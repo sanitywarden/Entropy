@@ -1,6 +1,8 @@
 #include "regionmap.hpp"
 #include "generationSettings.hpp"
 
+#include <filesystem>
+
 using namespace iso;
 
 Regionmap::Regionmap(SimulationManager* manager) : Gamestate(manager, "Regionmap") {
@@ -80,10 +82,14 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_atlas");
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_small_house",     sf::IntRect(0, 0, 64, 64   ));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_farmland",        sf::IntRect(64, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry",          sf::IntRect(128, 0, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_woodcutter",      sf::IntRect(192, 0, 64, 64 ));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 64, 64, 64  ));
     
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_hunter"     , sf::IntRect(128, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_woodcutter" , sf::IntRect(256, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry"     , sf::IntRect(384, 0, 128, 128));
+
+    this->manager->resource.loadTexture("./res/regionmap/buildings/animalspot_deer.png", "animalspot_deer", sf::IntRect(0, 0, 128, 128));
+
     this->manager->resource.loadTexture("./res/regionmap/buildings/building_house_2x2_1.png", "building_thatch_tent", sf::IntRect(0, 0, 128, 128));
     
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_horizontal",     sf::IntRect(0, 0, 64, 64    ));
@@ -117,7 +123,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/ui/icon_path_stone.png"         , "icon_path_stone",          sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/icon_building_farmhouse.png" , "icon_building_farmhouse",  sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/icon_building_woodcutter.png", "icon_building_woodcutter", sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_quarry.png"    , "icon_building_quarry", sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_quarry.png"    , "icon_building_quarry",     sf::IntRect(0, 0, 48, 48));
 
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_1x1", sf::IntRect(0,   0, 64,  32 ));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_2x2", sf::IntRect(64,  0, 128, 64 ));
@@ -784,6 +790,40 @@ void Regionmap::renderSelectedBuilding() {
                 -(a1_h + (n - 1) * r_h)
             );
         }
+
+        // First draw the border of the building.
+        // Afterwards, draw the building highlight itself.
+
+        // Border.
+
+        sf::VertexArray building_surround_highlight(sf::Lines, 8);
+        
+        auto building_area = building.getBuildingArea().x;
+        auto tile_size     = world_settings.tileSize(); 
+        auto br = building.getPosition() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); ;
+        auto br_corrected = br + sf::Vector2f(-building_area / 2 * tile_size.x, 0);
+
+        building_surround_highlight[0].position = br_corrected + sf::Vector2f(0, -building_area * tile_size.y);
+        building_surround_highlight[1].position = br + sf::Vector2f(0, -building_area / 2 * tile_size.y);
+        building_surround_highlight[2].position = br_corrected;
+        building_surround_highlight[3].position = br + sf::Vector2f(0, -building_area / 2 * tile_size.y);
+        building_surround_highlight[4].position = br + sf::Vector2f(-building_area * tile_size.x, -building_area / 2 * tile_size.y);
+        building_surround_highlight[5].position = br_corrected;
+        building_surround_highlight[6].position = br + sf::Vector2f(-building_area * tile_size.x, -building_area / 2 * tile_size.y);
+        building_surround_highlight[7].position = br_corrected + sf::Vector2f(0, -building_area * tile_size.y);
+
+        building_surround_highlight[0].color = COLOUR_BLUE_RIVER;
+        building_surround_highlight[1].color = COLOUR_BLUE_RIVER;
+        building_surround_highlight[2].color = COLOUR_BLUE_RIVER;
+        building_surround_highlight[3].color = COLOUR_BLUE_RIVER;
+        building_surround_highlight[4].color = COLOUR_BLUE_RIVER;
+        building_surround_highlight[5].color = COLOUR_BLUE_RIVER;
+        building_surround_highlight[6].color = COLOUR_BLUE_RIVER;
+        building_surround_highlight[7].color = COLOUR_BLUE_RIVER;
+
+        this->manager->window.draw(building_surround_highlight);
+
+        // Highlight.
 
         sf::VertexArray building_highlight(sf::Quads, 4);
 

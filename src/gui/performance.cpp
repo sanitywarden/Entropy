@@ -39,10 +39,16 @@ void DebugPerformance::updateUI() {
     auto* gamestate = this->manager->gamestate.getGamestate();
     std::string gamestate_id = gamestate->state_id;
     
+    auto view_world     = gamestate->view_game;
+    auto view_interface = gamestate->view_interface;
+
     data += "Mouse position: "  + std::to_string((int)gamestate->mouse_position_window.x)    + " / " + std::to_string((int)gamestate->mouse_position_window.y)    + "\n"; 
     data += "Mouse interface: " + std::to_string((int)gamestate->mouse_position_interface.x) + " / " + std::to_string((int)gamestate->mouse_position_interface.y) + "\n"; 
     data += "Time passed: "     + std::to_string(this->manager->time) + "\n";
+    data += "Date DMY: "        + this->manager->getDateFormatted() + "\n";
     data += "Draw calls: "      + std::to_string(this->manager->getDrawCalls()) + "\n";
+    data += "View interface: "  + std::to_string((int)view_interface.getSize().x) + " " + std::to_string((int)view_interface.getSize().y) + "\n";
+    data += "View game: "       + std::to_string((int)view_world.getSize().x)     + " " + std::to_string((int)view_world.getSize().y) + "\n";
 
     if(gamestate_id == "Worldmap") {
         auto* worldmap = static_cast<Worldmap*>(gamestate);
@@ -67,9 +73,13 @@ void DebugPerformance::updateUI() {
         const auto& current_tile = region->map[current_index];
 
         auto grid_position = this->manager->world.tileGridPosition(gamestate->mouse_position_window);
+        
+        auto* widget_menu = static_cast<WidgetMenuBuilding*>(regionmap->getInterfaceComponent("component_widget_menu_building"));
+        auto selected_building = widget_menu->getBuilding().getName();
 
         data += "Current index: "        + std::to_string(current_index)                        + "\n";
         data += "Selected: "             + std::to_string(grid_position.x) + " " + std::to_string(grid_position.y) + "\n";
+        data += "Selected building: "    + selected_building + "\n";
 
         data += "Tree quantity: "        + std::to_string(region->trees.size())                 + "\n";
         data += "Building quantity: "    + std::to_string(region->buildings.size())             + "\n";

@@ -31,13 +31,13 @@ void Worldmap::initialise() {
     this->max_zoom_out = 3;
 
     this->view_game.setCenter(sf::Vector2f(
-        world_settings.panelSize() * world_settings.getWorldWidth() / 2,
-        world_settings.panelSize() * world_settings.getWorldWidth() / 2
+        world_settings.panelSize() * world_settings.getWorldWidth(),
+        world_settings.panelSize() * world_settings.getWorldWidth()
     ));
 
     this->view_game.setSize(sf::Vector2f(
-        this->manager->window.windowWidth()  * 4,
-        this->manager->window.windowHeight() * 4
+        this->manager->window.windowWidth()  * 2,
+        this->manager->window.windowHeight() * 2
     ));
 
     this->view_interface.setSize(this->manager->window.windowSize());
@@ -584,6 +584,7 @@ void Worldmap::gamestateLoad() {
     /* Centre the camera on current tile.
      * Current tile is the capital (when first loaded in) or a tile the player was visiting. */
     
+    #if 0
     auto* regionmap = this->manager->gamestate.getGamestateByName("regionmap")
         ? static_cast<Regionmap*>(this->manager->gamestate.getGamestateByName("regionmap"))
         : nullptr;
@@ -597,6 +598,7 @@ void Worldmap::gamestateLoad() {
         const auto position = sf::Vector2f(tile.getPosition() + sf::Vector2f(world_settings.tileSize().x / 2, world_settings.tileSize().y / 2));
         this->view_game.setCenter(position);
     }
+    #endif
 
     this->mouse_moved = false;
     this->mouse_drag  = false;

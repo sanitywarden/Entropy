@@ -4,6 +4,8 @@
  * If the implementation does not have iso namespace then the compiler will not associate the definitions with this implementation. 
  * The code would not compile without specifying the namespace. */
 
+#include <iostream>
+
 bool iso::startsWith(const std::string& str, const std::string& phrase) {
     if(str.length() < phrase.length())
         return false;
@@ -22,8 +24,8 @@ bool iso::endsWith(const std::string& str, const std::string& phrase) {
         return false;
 
     int match = 0;
-    for(int i = str.length() - phrase.length(); i < str.length() - 1; i++) {
-        if(str[i] == phrase[i])
+    for(int i = str.length() - phrase.length(), c = 0; i < str.length(); i++, c++) {
+        if(str[i] == phrase[c])
             match++;
     }
 
@@ -60,31 +62,66 @@ bool iso::containsWord(const std::string& str, const std::string& phrase) {
     return match == phrase.length();
 }
 
-std::string iso::readAfter(const std::string& str, char from, char to) {
-    // 1 is the length of a single char.
-    if(str.length() < 1)
+std::string iso::readAfter(const std::string& str, const std::string& phrase) {
+    if(!str.length())
         return "";
     
-    const int phrase_start = str.find(from) + 1; // We do not include the character from which we read.
-    const int phrase_end   = str.find(to);
-    std::string extract_string;
+    size_t phrase_start = iso::find(str, phrase);
+    if(phrase_start == std::string::npos)
+        return "";
 
-    for(int i = phrase_start; i < phrase_end; i++) {
+    if(phrase.length() > 1)
+        phrase_start += phrase.length();
+
+    std::string extract_string;
+    for(int i = phrase_start; i < str.length(); i++) {
         extract_string.append(1, str[i]);
     }
 
     return extract_string;
 }
 
-std::string iso::readBefore(const std::string& str, char to) {
+std::string iso::readBefore(const std::string& str, const std::string& phrase) {
     // 1 is the length of a single char.
     if(str.length() < 1)
         return "";
     
-    const int phrase_end = str.find(to);
-    std::string extract_string;
+    const size_t index = str.find(phrase[0]);
+    if(index == std::string::npos)
+        return "";
 
-    for(int i = 0; i < phrase_end; i++) {
+    if(!iso::containsWord(str, phrase))
+        return "";
+
+    // Because there can be multiple same characters your phrase starts with, you need to check each of these.
+    // The index of the current character is saved here. 
+    size_t occurence = index;
+    int match = 0;
+
+    // While there are characters you are searching for in the string, repeat the process.
+    while(str.find(phrase[0], occurence + 1) != std::string::npos) {
+        for(int i = occurence; i < str.length(); i++) {
+            for(int j = 0; j < phrase.length(); j++) {
+                if(str[i] == phrase[j]) {
+                    match++;
+                }
+    
+                if(match >= phrase.length())
+                    return iso::read(str, 0, occurence);
+    
+                if(j == phrase.length() - 1)
+                    match = 0;
+            }
+    
+        }
+
+        // Because string after the first character did not match the phrased you search for,
+        // find the next occurence of the first character.
+        occurence = str.find(phrase[0], occurence + 1);
+    }
+
+    std::string extract_string;
+    for(int i = 0; i < occurence; i++) {
         extract_string.append(1, str[i]);
     }
 
@@ -101,53 +138,87 @@ std::string iso::read(const std::string& str, int incl_from, int to) {
 }
 
 std::string iso::toLower(const std::string& str) {
-    std::string str_lower = "";
+    std::string str_lower;
     for(int i = 0; i < str.length(); i++) {
-        const char character          = str.at(i);
-        int number_letter_value = (int)character;
+        const char character = str.at(i);
+        int ascii_value = (int)character;
         
-        if(number_letter_value >= 65 && number_letter_value <= 90)
-            number_letter_value += 32;
+        if(ascii_value >= 65 && ascii_value <= 90)
+            ascii_value += 32;
 
-        const char replaced_character = (char)number_letter_value;
+        const char replaced_character = (char)ascii_value;
         str_lower.append(1, replaced_character);
     }
 
     return str_lower;
 }
 
+std::string iso::toHigher(const std::string& str) {
+    std::string str_higher;
+    for(int i = 0; i < str.length(); i++) {
+        const char character = str.at(i);
+        int ascii_value = (int)character;
+
+        if(ascii_value >= 97 && ascii_value <= 122)
+            ascii_value -= 32;
+        
+        const char replaced_character = (char)ascii_value;
+        str_higher.append(1, replaced_character);
+    }
+
+    return str_higher;
+}
+
 bool iso::inCircle(const sf::Vector2f point, const sf::Vector2f centre, const int radius) {
     return ((point.x - centre.x) * (point.x - centre.x)) + ((point.y - centre.y) * (point.y - centre.y)) < radius * radius;
 }
 
+/* If the phrase is found, returns the index of the first character of the phrase.
+ * Example: when searching for "_is" in "this_utility_is_useful" function will return the position of "_" - index 12.
+ */
 size_t iso::find(const std::string& str, const std::string& phrase) {
     if(str.length() < phrase.length())
-        return false;
+        return std::string::npos;
 
-    const int index = str.find(phrase[0]);
+    if(!iso::containsWord(str, phrase))
+        return std::string::npos;
+
+    size_t index = str.find(phrase[0]);
     if(index == std::string::npos)
-        return false;
+        return std::string::npos;
 
     int match = 0;
-    size_t last_seen = std::string::npos;
+    size_t occurence = 0;
     for(int i = index; i < str.length(); i++) {
         for(int j = 0; j < phrase.length(); j++) {
             // If found, increment the counter.
             if(str[i] == phrase[j]) {
                 match++;
-                last_seen = i;
-                break;
             }
 
             // Already found that the text exists inside the string.
-            if(match >= phrase.length())
-                return last_seen;
+            if(match >= phrase.length()) {
+                occurence = phrase.length() > 1
+                    ? i - phrase.length() // You delete the indexes that you passed when matching a word. 
+                    : i;                  // If the phrase's length is 1, you do not need to delete the length, because the occurence index is the index of the whole phrase.
+                return occurence;
+            }
 
             // If it's the end of the loop, and no characters are matching, reset the counter.
             else if(j == phrase.length() - 1)
                 match = 0;
         }
-    }    
+    }
 
-    return last_seen;
+    return occurence;
+}
+
+std::string iso::trimWhitespace(const std::string& str) {
+    std::string trimmed_string;
+    for(int i = 0; i < str.length(); i++) {
+        if(str[i] != ' ')
+            trimmed_string.append(1, str[i]);
+    }
+
+    return trimmed_string;
 }
