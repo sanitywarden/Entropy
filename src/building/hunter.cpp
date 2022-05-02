@@ -8,7 +8,7 @@
 using namespace iso;
 
 Hunter::Hunter()
-    : Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE128X128, "building_hunter", "Hunter", "icon_default", 7, VECTOR2X2, VECTOR3X3, ResourceCollection(0, 0, 0))
+    : Building(BUILDINGSIZE128X128, "building_hunter", "Hunter", "icon_default", 7, VECTOR2X2, VECTOR3X3, ResourceCollection(0, 0, 0))
 {}
 
 Hunter::~Hunter() {

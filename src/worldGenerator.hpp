@@ -60,9 +60,9 @@ namespace iso {
 
             sf::Vector2i tileGridPosition(sf::Vector2f tile_position);
 
-            sf::Vector2f tilePositionScreen(int x, int y);
-            sf::Vector2f tilePositionScreen(sf::Vector2i grid_position);
-            sf::Vector2f tilePositionScreen(sf::Vector2f grid_position);
+            sf::Vector3f tilePositionScreen(int x, int y);
+            sf::Vector3f tilePositionScreen(sf::Vector2i grid_position);
+            sf::Vector3f tilePositionScreen(sf::Vector2f grid_position);
             
             std::string getTilePixelColour(sf::Vector2i);
 

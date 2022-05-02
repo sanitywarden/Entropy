@@ -5,6 +5,7 @@
 #include "resources.hpp"
 
 const auto VECTOR0X0           = sf::Vector2f(0, 0);
+const auto VECTOR0X0X0         = sf::Vector3f(0, 0, 0);
 const auto VECTOR1X1           = sf::Vector2f(1, 1);
 const auto VECTOR2X2           = sf::Vector2f(2, 2);
 const auto VECTOR3X3           = sf::Vector2f(3, 3);
@@ -31,7 +32,7 @@ class Building : public GameObject {
         void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
         
         Building();
-        Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost);
+        Building(sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost);
         Building(const Building& building);
         ~Building();
 

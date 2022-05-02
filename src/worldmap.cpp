@@ -431,7 +431,7 @@ void Worldmap::renderWorld() {
     sf::Rect camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
 
     for(const auto& region : this->manager->world.world_map) {
-        sf::Rect region_screen_space(region.getPosition(), region.getSize());
+        sf::Rect region_screen_space(region.getPosition2D(), region.getSize());
         
         if(camera_screen_area.intersects(region_screen_space)) {
             sf::RenderStates states;
@@ -444,7 +444,7 @@ void Worldmap::renderWorld() {
     for(const auto& pair : this->manager->world.forests) {
         const auto& forest = pair.second;
         
-        sf::Rect forest_screen_space(forest.getPosition(), forest.getSize());
+        sf::Rect forest_screen_space(forest.getPosition2D(), forest.getSize());
 
         if(camera_screen_area.intersects(forest_screen_space)) {
             sf::RenderStates states;
@@ -457,7 +457,7 @@ void Worldmap::renderWorld() {
     for(const auto& pair : this->manager->world.rivers) {
         const auto& river = pair.second;
 
-        sf::Rect river_screen_space(river.getPosition(), river.getSize());
+        sf::Rect river_screen_space(river.getPosition2D(), river.getSize());
 
         if(camera_screen_area.intersects(river_screen_space)) {
             sf::RenderStates states;
@@ -470,7 +470,7 @@ void Worldmap::renderWorld() {
     for(const auto& pair : this->manager->world.lakes) {
         const auto& lake = pair.second;
 
-        sf::Rect lake_screen_space(lake.getPosition(), lake.getSize());
+        sf::Rect lake_screen_space(lake.getPosition2D(), lake.getSize());
 
         if(camera_screen_area.intersects(lake_screen_space)) {
             sf::RenderStates states;
@@ -485,10 +485,10 @@ void Worldmap::renderWorld() {
         if(region.isOwned()) {
             sf::VertexArray highlight(sf::Quads, 4);
 
-            highlight[0].position = region.getPosition() + sf::Vector2f(0, 0);
-            highlight[1].position = region.getPosition() + sf::Vector2f(region.getSize().x, 0);
-            highlight[2].position = region.getPosition() + sf::Vector2f(region.getSize().x, region.getSize().y);
-            highlight[3].position = region.getPosition() + sf::Vector2f(0, region.getSize().y);
+            highlight[0].position = region.getPosition2D() + sf::Vector2f(0, 0);
+            highlight[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0);
+            highlight[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y);
+            highlight[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
 
             highlight[0].color = region.owner->getTeamColourTransparent();
             highlight[1].color = region.owner->getTeamColourTransparent();

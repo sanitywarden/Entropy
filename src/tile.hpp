@@ -18,10 +18,10 @@ namespace iso {
             ~Tile();
 
             TileType tiletype;
-            int elevation;
 
-            sf::Vector2f getTransformedPosition() const;
-    };
+            void setElevation(int elevation);
+            int getElevation() const;
+    };  
 }
 
 #endif

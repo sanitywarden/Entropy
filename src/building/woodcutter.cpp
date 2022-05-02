@@ -5,7 +5,7 @@
 using namespace iso;
 
 Woodcutter::Woodcutter() 
-    : Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE128X128, "building_woodcutter", "Woodcutter", "icon_building_woodcutter", 6, VECTOR2X2, VECTOR3X3, ResourceCollection(0, 0, 0)) 
+    : Building(BUILDINGSIZE128X128, "building_woodcutter", "Woodcutter", "icon_building_woodcutter", 6, VECTOR2X2, VECTOR3X3, ResourceCollection(0, 0, 0)) 
 {}
 
 Woodcutter::~Woodcutter() {

@@ -11,6 +11,7 @@ namespace iso {
 
     const sf::Color COLOUR_WHITE_TRANSPARENT_HALF   (255, 255, 255, 127);
     const sf::Color COLOUR_WHITE_TRANSPARENT_QUARTER(255, 255, 255, 63);
+    const sf::Color COLOUR_BLACK_TRANSPARENT_HALF   (0, 0, 0, 127);
 
     // Biome specific colours.
 
@@ -34,16 +35,6 @@ namespace iso {
     const sf::Color COLOUR_PURPLE (106, 0, 255, 255);
     const sf::Color COLOUR_YELLOW (227, 200, 0, 255);
     const sf::Color COLOUR_CYAN   (27, 161, 226, 255);
-    
-
-    const std::vector <sf::Color> TEAM_COLOURS = {
-        COLOUR_RED, 
-        COLOUR_BLUE, 
-        COLOUR_GREEN,
-        COLOUR_PURPLE,
-        COLOUR_YELLOW,
-        COLOUR_CYAN
-    };
 }
 
 #endif

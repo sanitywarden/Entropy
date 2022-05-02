@@ -7,9 +7,9 @@
 
 using namespace iso;
 
-Region::Region() : GameObject(sf::Vector2f(0, 0), sf::Vector2f(0, 0), sf::Vector2f(0, 0), "*") {
-    this->object_name = "region";
-
+Region::Region() 
+    : GameObject(VECTOR0X0X0, VECTOR0X0X0, VECTOR0X0, "*", "Region") 
+{
     this->_marked    = false;
     this->_direction = RiverDirection::RIVER_NONE;
     
@@ -28,33 +28,6 @@ Region::Region() : GameObject(sf::Vector2f(0, 0), sf::Vector2f(0, 0), sf::Vector
 
 Region::~Region() {
 
-}
-
-// Remember that you can implement fog of war by colouring the regions texture (sf::Color).
-void Region::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    sf::VertexArray worldmap_region(sf::Quads, 4);
-
-    const sf::Vector2f position = this->getPosition();
-
-    worldmap_region[0].position = position;
-    worldmap_region[1].position = position + sf::Vector2f(this->getSize().x, 0);
-    worldmap_region[2].position = position + sf::Vector2f(this->getSize().x, this->getSize().y);
-    worldmap_region[3].position = position + sf::Vector2f(0, this->getSize().y);
-    
-    worldmap_region[0].texCoords = sf::Vector2f(0, 0);
-    worldmap_region[1].texCoords = sf::Vector2f(this->getSize().x, 0);
-    worldmap_region[2].texCoords = sf::Vector2f(this->getSize().x, this->getSize().y);
-    worldmap_region[3].texCoords = sf::Vector2f(0, this->getSize().y);
-
-    auto colour = this->getColour();
-    if(colour != COLOUR_BLACK) {
-        worldmap_region[0].color = colour; 
-        worldmap_region[1].color = colour;
-        worldmap_region[2].color = colour;
-        worldmap_region[3].color = colour;
-    }
-
-    target.draw(worldmap_region, states);
 }
 
 RiverDirection Region::riverDirection() {
@@ -119,13 +92,13 @@ void Region::removeBuildingCost(const Building& building) {
 
 bool Region::isPositionValid(const Building& building, int index) const {
     const auto building_size             = building.getBuildingArea();
-    const auto foundation_tile_elevation = this->map[index].elevation; 
+    const auto foundation_tile_elevation = this->map[index].getElevation(); 
 
     for(int y = 0; y < building_size.y; y++) {
         for(int x = 0; x < building_size.x; x++) {
             const int i = index + world_settings.calculateRegionIndex(x, y);
 
-            if(this->map.at(i).elevation != foundation_tile_elevation) {
+            if(this->map.at(i).getElevation() != foundation_tile_elevation) {
                 return false;
             }
 
@@ -148,7 +121,7 @@ bool Region::isPositionValid(const Building& building, int index) const {
 
 void Region::placeBuilding(Building building, sf::Vector2f texture_size, int index) {
     const Tile& tile         = this->map[index];
-    building.object_position = tile.getTransformedPosition();
+    building.object_position = tile.getPosition();
 
     const int a1_w = 0; 
     const int a1_h = world_settings.tileSize().y; 
@@ -158,11 +131,12 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, int ind
     
     // Here you adjust the origin of buildings with sizes of n > 0.
     // Texture size scale are arithmetic series.
-    auto offset = sf::Vector2f(0, 0);  
+    auto offset = sf::Vector3f(0, 0, 0);  
     if(n > 0) {
-        offset = sf::Vector2f(
+        offset = sf::Vector3f(
             -(a1_w + (n - 1) * r_w),
-            -(a1_h + (n - 1) * r_h)
+            -(a1_h + (n - 1) * r_h),
+            0
         );
     }
 
@@ -232,7 +206,7 @@ void Region::removeBuilding(int index) {
     }
 }
 
-bool Region::isUnitPresent() {
+bool Region::isUnitPresent() const {
     return this->unit != nullptr;
 }
 

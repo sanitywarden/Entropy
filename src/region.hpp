@@ -37,9 +37,6 @@ namespace iso {
             float          temperature;
             float          latitude;
 
-        private:
-            void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-
         public:
             Region();
             ~Region();
@@ -56,7 +53,7 @@ namespace iso {
             void removeBuilding(int index);
             void removeBuildingCost(const Building& building);
             
-            bool isUnitPresent();
+            bool isUnitPresent()   const;
             bool isTree(int index) const;
             bool isPath(int index) const;
 

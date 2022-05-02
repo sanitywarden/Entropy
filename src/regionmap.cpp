@@ -46,6 +46,7 @@ void Regionmap::initialise() {
     this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
     this->controls.addKeyMappingCheck("key_toggle_buildmenu",    sf::Keyboard::Key::B);
     this->controls.addKeyMappingCheck("key_toggle_minimap",      sf::Keyboard::Key::M);
+    this->controls.addKeyMappingCheck("key_centre_view",         sf::Keyboard::Key::Space);
 
     this->scheduler.insert({ "update_pawns", std::pair(0, 1) });   
 }
@@ -80,18 +81,13 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96 ));
 
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_atlas");
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_small_house",     sf::IntRect(0, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_farmland",        sf::IntRect(64, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_primitive_house", sf::IntRect(0, 64, 64, 64  ));
-    
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_hunter"     , sf::IntRect(128, 0, 128, 128));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_woodcutter" , sf::IntRect(256, 0, 128, 128));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry"     , sf::IntRect(384, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_house"      , sf::IntRect(0, 0, 128, 128  ));
 
     this->manager->resource.loadTexture("./res/regionmap/buildings/animalspot_deer.png", "animalspot_deer", sf::IntRect(0, 0, 128, 128));
 
-    this->manager->resource.loadTexture("./res/regionmap/buildings/building_house_2x2_1.png", "building_thatch_tent", sf::IntRect(0, 0, 128, 128));
-    
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_horizontal",     sf::IntRect(0, 0, 64, 64    ));
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_vertical",       sf::IntRect(0, 64, 64, 64   ));
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_cross",          sf::IntRect(64, 0, 64, 64   ));
@@ -146,7 +142,7 @@ void Regionmap::update(float delta_time) {
 }
 
 void Regionmap::render(float delta_time) {
-    this->manager->window.clear(COLOUR_WHITE);    
+    this->manager->window.clear(COLOUR_BLACK);    
 
     this->manager->window.getWindow()->setView(this->view_game);
 
@@ -189,6 +185,19 @@ void Regionmap::handleInput() {
 
                 if(this->controls.keyState("key_escape")) {
                     this->manager->gamestate.setGamestate("worldmap");
+                }
+
+                if(this->controls.keyState("key_centre_view")) {
+                    auto tile_index = world_settings.calculateRegionIndex(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2);
+
+                    // Here you can setup what to do when entering a region.
+                    // For example, centre the camera.
+                    sf::Vector2f first_tile_position = sf::Vector2f(
+                        this->region->map[tile_index].getPosition().x + world_settings.tileSize().x / 2,
+                        this->region->map[tile_index].getPosition().y
+                    );
+
+                    this->view_game.setCenter(first_tile_position);
                 }
 
                 if(this->controls.keyState("key_toggle_buildmenu")) {
@@ -371,7 +380,7 @@ void Regionmap::renderRegion() {
             sf::Vertex* quad = &verticies_tiles[verticies_index * 4];
             
             auto& tile          = this->region->map.at(index);
-            auto tile_position  = tile.getTransformedPosition();
+            auto tile_position  = tile.getPosition2D();
             const auto& texture = tile.getTextureName();
 
             quad[0].position = tile_position + sf::Vector2f(0, 0);
@@ -393,7 +402,7 @@ void Regionmap::renderRegion() {
                 sf::Vertex* side_quad = &verticies_tiles[verticies_index * 4];
 
                 const auto& side         = this->region->sides[index][side_index];
-                const auto side_position = side.getPosition();
+                const auto side_position = side.getPosition2D();
 
                 side_quad[0].position = side_position + sf::Vector2f(0, 0);
                 side_quad[1].position = side_position + sf::Vector2f(tile_size.x, 0);
@@ -440,11 +449,12 @@ void Regionmap::renderRegion() {
                     // Certain tree textures are 64x96, and some are 64x192.
                     // To make sure that they are drawn properly, ask for the size here.
                     const auto texture_size = this->manager->resource.getTextureSize(tree.getTextureName());
+                    auto tree_position2d = tree.getPosition2D();
 
-                    quad[0].position = tree.getPosition() + sf::Vector2f(0, 0);
-                    quad[1].position = tree.getPosition() + sf::Vector2f(texture_size.x, 0);
-                    quad[2].position = tree.getPosition() + sf::Vector2f(texture_size.x, texture_size.y);
-                    quad[3].position = tree.getPosition() + sf::Vector2f(0, texture_size.y);
+                    quad[0].position = tree_position2d + sf::Vector2f(0, 0);
+                    quad[1].position = tree_position2d + sf::Vector2f(texture_size.x, 0);
+                    quad[2].position = tree_position2d + sf::Vector2f(texture_size.x, texture_size.y);
+                    quad[3].position = tree_position2d + sf::Vector2f(0, texture_size.y);
 
                     const auto tree_coords = this->manager->resource.getTexturePosition(tree_texture); 
 
@@ -474,7 +484,7 @@ void Regionmap::renderRegion() {
         const int index = pair.first;
         auto  building  = pair.second;
 
-        sf::Rect building_screen_area(building->getPosition(), building->getSize());
+        sf::Rect building_screen_area(building->getPosition2D(), building->getSize());
         if(camera_screen_area.intersects(building_screen_area)) {
             sf::RenderStates states;
             states.texture = &this->manager->resource.getTexture(building->getTextureName());
@@ -490,11 +500,14 @@ void Regionmap::setCurrentRegion(int region_index) {
     this->region       = &this->manager->world.world_map[region_index];
     this->region_index = region_index;
 
+    // Tile index on which you centre the camera.
+    auto tile_index = world_settings.calculateRegionIndex(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2);
+
     // Here you can setup what to do when entering a region.
     // For example, centre the camera.
     sf::Vector2f first_tile_position = sf::Vector2f(
-        this->region->map[0].getPosition().x + world_settings.tileSize().x / 2,
-        this->region->map[0].getPosition().y
+        this->region->map[tile_index].getPosition().x + world_settings.tileSize().x / 2,
+        this->region->map[tile_index].getPosition().y
     );
 
     this->view_game.setCenter(first_tile_position);
@@ -558,12 +571,15 @@ void Regionmap::higlightTile() {
     if(this->mouse_drag)
         return;
 
+    if(!this->controls.mouseRightPressed())
+        return;
+
     auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
     if(building_menu->getBuilding() != BUILDING_EMPTY)
         return;
 
     const auto& tile   = this->region->map[index];
-    auto tile_position = tile.getTransformedPosition();
+    auto tile_position = tile.getPosition2D();
 
     sf::VertexArray highlight(sf::Quads, 4);
 
@@ -771,9 +787,8 @@ void Regionmap::renderSelectedBuilding() {
     if(building_menu->getBuilding() != BUILDING_EMPTY && building_menu->isVisible()) {
         auto tile = this->region->map[this->current_index];
         
-        // Copy, do not take a reference.
         Building building        = building_menu->getBuilding();
-        building.object_position = tile.getTransformedPosition();
+        building.object_position = tile.getPosition();
 
         const int a1_w = 0; 
         const int a1_h = world_settings.tileSize().y; 
@@ -800,8 +815,8 @@ void Regionmap::renderSelectedBuilding() {
         
         auto building_area = building.getBuildingArea().x;
         auto tile_size     = world_settings.tileSize(); 
-        auto br = building.getPosition() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); ;
-        auto br_corrected = br + sf::Vector2f(-building_area / 2 * tile_size.x, 0);
+        auto br            = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); ;
+        auto br_corrected  = br + sf::Vector2f(-building_area / 2 * tile_size.x, 0);
 
         building_surround_highlight[0].position = br_corrected + sf::Vector2f(0, -building_area * tile_size.y);
         building_surround_highlight[1].position = br + sf::Vector2f(0, -building_area / 2 * tile_size.y);
@@ -827,10 +842,10 @@ void Regionmap::renderSelectedBuilding() {
 
         sf::VertexArray building_highlight(sf::Quads, 4);
 
-        building_highlight[0].position = building.getPosition() + offset;
-        building_highlight[1].position = building.getPosition() + offset + sf::Vector2f(building.getSize().x, 0);
-        building_highlight[2].position = building.getPosition() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); 
-        building_highlight[3].position = building.getPosition() + offset + sf::Vector2f(0, building.getSize().y);
+        building_highlight[0].position = building.getPosition2D() + offset;
+        building_highlight[1].position = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, 0);
+        building_highlight[2].position = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); 
+        building_highlight[3].position = building.getPosition2D() + offset + sf::Vector2f(0, building.getSize().y);
 
         building_highlight[0].texCoords = sf::Vector2f(0, 0);
         building_highlight[1].texCoords = sf::Vector2f(building.getSize().x, 0); 

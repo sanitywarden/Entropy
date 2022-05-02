@@ -2,9 +2,9 @@
 
 using namespace iso;
 
-PathDirt::PathDirt() : Building(VECTOR0X0, VECTOR0X0, BUILDINGSIZE64X64, "path_dirt_point", "Dirt path", "icon_path_dirt", 1, VECTOR1X1, VECTOR1X1, ResourceCollection(0, 0, 0)) {
-    
-}
+PathDirt::PathDirt() 
+    : Building(BUILDINGSIZE64X64, "path_dirt_point", "Dirt path", "icon_path_dirt", 1, VECTOR1X1, VECTOR1X1, ResourceCollection(0, 0, 0)) 
+{}
 
 PathDirt::~PathDirt() {
 

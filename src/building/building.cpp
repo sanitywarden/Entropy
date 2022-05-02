@@ -4,8 +4,9 @@
 
 using namespace iso;
 
-Building::Building() : GameObject(VECTOR0X0, VECTOR0X0, VECTOR0X0, "*") {
-    this->object_name             = "Empty";
+Building::Building() 
+    : GameObject(VECTOR0X0X0, VECTOR0X0X0, VECTOR0X0, "*", "Empty") 
+{
     this->building_menu_icon      = "default";
     this->building_size           = VECTOR0X0;
     this->building_cost           = ResourceCollection(0, 0, 0);
@@ -13,10 +14,9 @@ Building::Building() : GameObject(VECTOR0X0, VECTOR0X0, VECTOR0X0, "*") {
     this->building_proximity_area = VECTOR0X0;
 }
 
-Building::Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost) 
-    : GameObject(position, relative_position, size, texture_name) 
+Building::Building(sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost) 
+    : GameObject(VECTOR0X0X0, VECTOR0X0X0, size, texture_name, building_name) 
 {
-    this->object_name             = building_name;
     this->building_menu_icon      = building_menu_icon;
     this->building_size           = building_size;
     this->building_cost           = building_cost;
@@ -27,7 +27,6 @@ Building::Building(sf::Vector2f position, sf::Vector2f relative_position, sf::Ve
 Building::Building(const Building& building) 
     : GameObject(building) 
 {
-    this->object_name             = building.getName();
     this->building_menu_icon      = building.getBuildingMenuIconName();
     this->building_size           = building.getBuildingArea();
     this->building_cost           = building.getBuildingCost();
@@ -74,15 +73,18 @@ bool Building::operator!= (const Building& building) const {
 void Building::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     sf::VertexArray game_object(sf::Quads, 4);
 
-    game_object[0].position = this->object_position;    
-    game_object[1].position = this->object_position + sf::Vector2f(this->object_size.x, 0);
-    game_object[2].position = this->object_position + sf::Vector2f(this->object_size.x, this->object_size.y);
-    game_object[3].position = this->object_position + sf::Vector2f(0, this->object_size.y);
+    auto position2d = this->getPosition2D();
+    auto size       = this->getSize();
+
+    game_object[0].position = position2d;    
+    game_object[1].position = position2d + sf::Vector2f(size.x, 0);
+    game_object[2].position = position2d + sf::Vector2f(size.x, size.y);
+    game_object[3].position = position2d + sf::Vector2f(0, size.y);
 
     game_object[0].texCoords = sf::Vector2f(0, 0);
-    game_object[1].texCoords = sf::Vector2f(this->object_size.x, 0);
-    game_object[2].texCoords = sf::Vector2f(this->object_size.x, this->object_size.y);
-    game_object[3].texCoords = sf::Vector2f(0, this->object_size.y);
+    game_object[1].texCoords = sf::Vector2f(size.x, 0);
+    game_object[2].texCoords = sf::Vector2f(size.x, size.y);
+    game_object[3].texCoords = sf::Vector2f(0, size.y);
     
     target.draw(game_object, states);
 }
