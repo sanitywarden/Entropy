@@ -22,7 +22,7 @@ Long term goals include:
 
 For compiling I use the command located inside `~/app.bat` file.
 
-### Screenshots
+## Screenshots
 
 Here you can see a few screenshots of how the game looks like.
 
