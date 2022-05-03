@@ -58,6 +58,10 @@ void Region::addResource(ResourceType resource, int quantity) {
         case ResourceType::RESOURCE_GOLD:
             this->resources.gold += quantity;
             break;
+
+        case ResourceType::RESOURCE_FLINT:
+            this->resources.flint += quantity;
+            break;
     }
 }
 
@@ -166,6 +170,9 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, int ind
 
     else if(building == BUILDING_ANIMAL_SPOT)
         sp_building = std::shared_ptr <Building> (new AnimalSpot());
+
+    else if(building == BUILDING_FLINT_COLLECTOR)
+        sp_building = std::shared_ptr <Building> (new FlintCollector());
 
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {

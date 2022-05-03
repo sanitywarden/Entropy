@@ -81,10 +81,11 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96 ));
 
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_atlas");
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_hunter"     , sf::IntRect(128, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_woodcutter" , sf::IntRect(256, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry"     , sf::IntRect(384, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_house"      , sf::IntRect(0, 0, 128, 128  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_house"          , sf::IntRect(0, 0, 128, 128  ));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_hunter"         , sf::IntRect(128, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_woodcutter"     , sf::IntRect(256, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry"         , sf::IntRect(384, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_flint_collector", sf::IntRect(512, 0, 128, 128));
 
     this->manager->resource.loadTexture("./res/regionmap/buildings/animalspot_deer.png", "animalspot_deer", sf::IntRect(0, 0, 128, 128));
 
@@ -789,7 +790,7 @@ void Regionmap::renderSelectedBuilding() {
         
         Building building        = building_menu->getBuilding();
         building.object_position = tile.getPosition();
-
+        
         const int a1_w = 0; 
         const int a1_h = world_settings.tileSize().y; 
         const int r_w  = world_settings.tileSize().x / 2;
@@ -861,7 +862,7 @@ void Regionmap::renderSelectedBuilding() {
         }
 
         const auto texture = building.getTextureName();
-
+        
         sf::RenderStates states;
         states.texture = &this->manager->resource.getTexture(texture);
         this->manager->window.draw(building_highlight, states);

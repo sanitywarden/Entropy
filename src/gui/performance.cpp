@@ -75,11 +75,11 @@ void DebugPerformance::updateUI() {
         auto grid_position = this->manager->world.tileGridPosition(gamestate->mouse_position_window);
         
         auto* widget_menu = static_cast<WidgetMenuBuilding*>(regionmap->getInterfaceComponent("component_widget_menu_building"));
-        auto selected_building = widget_menu->getBuilding().getName();
+        auto selected_building = widget_menu->getBuilding();
 
         data += "Current index: "        + std::to_string(current_index)                        + "\n";
         data += "Selected: "             + std::to_string(grid_position.x) + " " + std::to_string(grid_position.y) + "\n";
-        data += "Selected building: "    + selected_building + "\n";
+        data += "Selected building: "    + selected_building.getName() + "\n";
 
         data += "Tree quantity: "        + std::to_string(region->trees.size())                 + "\n";
         data += "Building quantity: "    + std::to_string(region->buildings.size())             + "\n";

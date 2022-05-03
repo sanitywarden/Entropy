@@ -7,7 +7,8 @@ namespace iso {
         RESOURCE_WOOD,
         RESOURCE_STONE,
         RESOURCE_FOOD,
-        RESOURCE_GOLD
+        RESOURCE_GOLD,
+        RESOURCE_FLINT,
     };
 
     class ResourceCollection {
@@ -16,10 +17,11 @@ namespace iso {
             int stone;
             int food;
             int gold;
+            int flint;
 
         public:
-            ResourceCollection() : wood(0), stone(0), food(0), gold(0) {}
-            ResourceCollection(int wood, int stone, int gold) : wood(wood), stone(stone), gold(gold), food(0) {}
+            ResourceCollection() : wood(0), stone(0), food(0), gold(0), flint(0) {}
+            ResourceCollection(int wood, int stone, int gold) : wood(wood), stone(stone), gold(gold), food(0), flint(0) {}
 
             ResourceCollection& operator -= (const ResourceCollection& cost);
             ResourceCollection  operator -  (const ResourceCollection& cost);  
