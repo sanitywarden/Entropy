@@ -22,6 +22,7 @@ class Building : public GameObject {
         sf::Vector2f       building_size;
         ResourceCollection building_cost;
         std::string        building_menu_icon;
+        std::string        building_name;      // Human-readable building name.
 
         // Certain buildings can produce stuff, wood, stone or other items.
         // To produce a item, they need to be in proximity to a resource, and every instance of that resource increases the production rate.
@@ -48,6 +49,7 @@ class Building : public GameObject {
 
         const int getNumericalType() const;
         std::string getBuildingMenuIconName() const;
+        std::string getBuildingName() const;
 
         // Assign ONLY BUILDING CLASS properties to this building.
         // GameObject properties are left untouched.

@@ -355,7 +355,7 @@ void Regionmap::updateCamera() {
 }
 
 sf::VertexBuffer regionmap_mesh_tile(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
-sf::VertexBuffer regionmap_mesh_tree(sf::Quads, sf::VertexBuffer::Usage::Dynamic);
+std::vector<GameObject> draw_order;
 void Regionmap::renderRegion() {    
     const sf::Vector2f camera_size   = this->view_game.getSize();
     const sf::Vector2f camera_centre = this->view_game.getCenter();
@@ -427,11 +427,14 @@ void Regionmap::renderRegion() {
         this->recalculate_mesh = false;
     }
 
+    /*
     if(this->recalculate_tree_mesh) {
         const size_t verticies_treemap = 4 * this->region->map.size();
         
         sf::Vertex verticies_trees[verticies_treemap];
         
+        std::map <int, int> m;
+
         if(!regionmap_mesh_tree.getVertexCount())
             regionmap_mesh_tree.create(verticies_treemap);
         
@@ -443,6 +446,9 @@ void Regionmap::renderRegion() {
                     // Tree position is the tile.getTransformedPosition().
                     const auto& tree         = this->region->trees[index];                    
                     const auto& tree_texture = tree.getTextureName();
+
+                    auto sum = tree.getPosition().x + tree.getPosition().y + tree.getPosition().z;
+                    m[sum]++;
 
                     sf::Vertex* quad = &verticies_trees[index * 4];
 
@@ -467,8 +473,36 @@ void Regionmap::renderRegion() {
             }
         }
 
+        for(auto& p : m)
+            std::cout << p.first << " " << p.second << "\n";
+
         regionmap_mesh_tree.update(verticies_trees);
         this->recalculate_tree_mesh = false;
+    }
+    */
+
+    if(this->rmesh) {
+        draw_order = std::vector<GameObject>();
+
+        for(int i = 0; i < world_settings.getRegionSize(); i++) {
+            if(this->region->trees.count(i))
+                draw_order.push_back(this->region->trees[i]);
+            
+            if(this->region->buildings.count(i)) {
+                if(*this->region->buildings[i] != BUILDING_EMPTY)
+                    draw_order.push_back(*this->region->buildings[i]);
+            }
+        }
+
+        auto compare = [](const GameObject& o1, const GameObject& o2) {
+            if((o1.getPosition2D().y < o2.getPosition2D().y) && (o1.getPosition2D().x < o2.getPosition2D().x)) return true;
+            if(o1.getPosition2D().y < o2.getPosition2D().y) return true;
+            return false;
+        };
+
+        std::sort(draw_order.begin(), draw_order.end(), compare);
+
+        this->rmesh = false;
     }
 
     sf::RenderStates states_tiles;
@@ -476,22 +510,29 @@ void Regionmap::renderRegion() {
     this->manager->window.draw(regionmap_mesh_tile, states_tiles);
     gpu_draw_calls++;
 
-    sf::RenderStates states_trees;
-    states_trees.texture = &this->manager->resource.getTexture("tile_foliage_atlas");
-    this->manager->window.draw(regionmap_mesh_tree, states_trees);
-    gpu_draw_calls++;
+    for(const auto& object : draw_order) {
+        sf::RenderStates states;
+        states.texture = &this->manager->resource.getTexture(object.getTextureName());
 
-    for(auto& pair : this->region->buildings) {
-        const int index = pair.first;
-        auto  building  = pair.second;
+        if(!this->manager->inScreenSpace(object))
+            continue;
 
-        sf::Rect building_screen_area(building->getPosition2D(), building->getSize());
-        if(camera_screen_area.intersects(building_screen_area)) {
-            sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture(building->getTextureName());
-            this->manager->window.draw(*building, states);
-            gpu_draw_calls++;
-        }
+        sf::VertexArray game_object(sf::Quads, 4);
+        auto position2d = object.getPosition2D();
+        auto size       = object.getSize();
+
+        game_object[0].position = position2d;    
+        game_object[1].position = position2d + sf::Vector2f(size.x, 0);
+        game_object[2].position = position2d + sf::Vector2f(size.x, size.y);
+        game_object[3].position = position2d + sf::Vector2f(0, size.y);
+
+        game_object[0].texCoords = sf::Vector2f(0, 0);
+        game_object[1].texCoords = sf::Vector2f(size.x, 0);
+        game_object[2].texCoords = sf::Vector2f(size.x, size.y);
+        game_object[3].texCoords = sf::Vector2f(0, size.y);
+        
+        this->manager->window.draw(game_object, states);
+        gpu_draw_calls++;
     }
 
     this->manager->updateDrawCalls(gpu_draw_calls);
@@ -618,12 +659,14 @@ void Regionmap::updateTile() {
         auto texture_size = this->manager->resource.getTextureSize(building.getTextureName());
         this->region->placeBuildingCheck(building, texture_size, this->current_index);
         this->updatePaths(this->current_index);
+        this->rmesh = true;
     }
 
     if(this->controls.keyState("key_remove_building")) {
         if(this->region->buildings.count(this->current_index)) {
             this->region->removeBuilding(this->current_index);
             this->updatePaths(this->current_index);
+            this->rmesh = true;
         }
     }
 
@@ -759,23 +802,21 @@ void Regionmap::updateScheduler() {
 void Regionmap::gamestateLoad() {
     this->recalculate_mesh      = true;
     this->recalculate_tree_mesh = true;
-    
+    this->rmesh = true;
+
     int side_vector_size = 0;
     for(int i = 0; i < this->region->sides.size(); i++)
         side_vector_size += this->region->sides[i].size();
 
     const size_t verticies_tilemap = 4 * this->region->map.size() + 4 * side_vector_size;
-    const size_t verticies_treemap = 4 * this->region->map.size();
 
     regionmap_mesh_tile.create(verticies_tilemap);
-    regionmap_mesh_tree.create(verticies_treemap);
 }
 
 void Regionmap::gamestateClose() {
     this->recalculate_mesh      = false;
     this->recalculate_tree_mesh = false;
     regionmap_mesh_tile.create(0);
-    regionmap_mesh_tree.create(0);
 }
 
 void Regionmap::recalculateMesh() {

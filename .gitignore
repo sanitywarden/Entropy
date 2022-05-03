@@ -3,6 +3,6 @@
 
 /res
 /bin
-/config
+/config/*.*
 NOTES.txt
 TODO.txt

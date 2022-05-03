@@ -5,23 +5,25 @@
 using namespace iso;
 
 Building::Building() 
-    : GameObject(VECTOR0X0X0, VECTOR0X0X0, VECTOR0X0, "*", "Empty") 
+    : GameObject(VECTOR0X0X0, VECTOR0X0X0, VECTOR0X0, "*", "Building") 
 {
     this->building_menu_icon      = "default";
     this->building_size           = VECTOR0X0;
     this->building_cost           = ResourceCollection(0, 0, 0);
     this->numerical_type          = 0;
     this->building_proximity_area = VECTOR0X0;
+    this->building_name           = "Empty";
 }
 
 Building::Building(sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost) 
-    : GameObject(VECTOR0X0X0, VECTOR0X0X0, size, texture_name, building_name) 
+    : GameObject(VECTOR0X0X0, VECTOR0X0X0, size, texture_name, "Building") 
 {
     this->building_menu_icon      = building_menu_icon;
     this->building_size           = building_size;
     this->building_cost           = building_cost;
     this->numerical_type          = numerical_type;
     this->building_proximity_area = proximity;
+    this->building_name           = building_name;
 }
 
 Building::Building(const Building& building) 
@@ -32,6 +34,7 @@ Building::Building(const Building& building)
     this->building_cost           = building.getBuildingCost();
     this->numerical_type          = building.getNumericalType();
     this->building_proximity_area = building.getProductionArea();
+    this->building_name           = building.getBuildingName();
 }
 
 Building::~Building() {
@@ -107,4 +110,8 @@ void Building::assignAllProperties(const Building& building) {
 
 std::string Building::getBuildingMenuIconName() const {
     return this->building_menu_icon;
+}
+
+std::string Building::getBuildingName() const {
+    return this->building_name;
 }

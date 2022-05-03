@@ -45,6 +45,7 @@ namespace iso {
 
             void updateDrawCalls(int calls);
             int  getDrawCalls() const;
+            bool inScreenSpace(const GameObject& object) const;
 
             Player& getHumanPlayer();
             bool isHumanPlayer(int player_id) const;

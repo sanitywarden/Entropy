@@ -391,3 +391,14 @@ std::string SimulationManager::getDateFormatted() const {
     // Example date (D/M/Y): "11 12 54".
     return date;
 }
+
+bool SimulationManager::inScreenSpace(const GameObject& object) const {
+    auto* gamestate = this->gamestate.getGamestate();
+    auto  view = gamestate->view_game;
+    auto  view_centre = view.getCenter();
+    auto  view_size   = view.getSize();
+    sf::Rect view_box(view_centre - sf::Vector2f(view_size.x / 2, view_size.y / 2), view_size);
+    sf::Rect object_box(object.getPosition2D(), object.getSize());
+    
+    return view_box.intersects(object_box);
+}
