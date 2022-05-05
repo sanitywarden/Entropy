@@ -45,10 +45,12 @@ void Regionmap::initialise() {
     this->controls.addKeyMappingCheck("key_remove_building",     sf::Keyboard::Key::D);
     this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
     this->controls.addKeyMappingCheck("key_toggle_buildmenu",    sf::Keyboard::Key::B);
+    this->controls.addKeyMappingCheck("key_toggle_storage",      sf::Keyboard::Key::I);
     this->controls.addKeyMappingCheck("key_toggle_minimap",      sf::Keyboard::Key::M);
     this->controls.addKeyMappingCheck("key_centre_view",         sf::Keyboard::Key::Space);
 
-    this->scheduler.insert({ "update_pawns", std::pair(0, 1) });   
+    this->scheduler.insert({ "update_pawns",   std::pair(0, 1) });   
+    this->scheduler.insert({ "update_storage", std::pair(0, 4) });
 }
 
 void Regionmap::loadResources() {
@@ -75,7 +77,6 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_maple"   , sf::IntRect(128, 0, 64, 96 ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_1", sf::IntRect(0, 96, 64, 96  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_2", sf::IntRect(64, 96, 64, 96 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_pine"    , sf::IntRect(704, 0, 64, 192));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_cypress" , sf::IntRect(0, 192, 64, 96 ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_acacia"  , sf::IntRect(64, 192, 128, 96));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96 ));
@@ -115,12 +116,15 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 128, 64, 64 ));
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 192, 64, 64 ));
 
-    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"  , "icon_default",             sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_path_dirt.png"          , "icon_path_dirt" ,          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_path_stone.png"         , "icon_path_stone",          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_farmhouse.png" , "icon_building_farmhouse",  sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_woodcutter.png", "icon_building_woodcutter", sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_quarry.png"    , "icon_building_quarry",     sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"   , "icon_default",             sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_path_dirt.png"           , "icon_path_dirt" ,          sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_path_stone.png"          , "icon_path_stone",          sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_farmhouse.png"  , "icon_building_farmhouse",  sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_woodcutter.png" , "icon_building_woodcutter", sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_quarry.png"     , "icon_building_quarry",     sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_house.png"      , "icon_building_house",      sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_flint.png"      , "icon_building_flint",      sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_hunter.png"     , "icon_building_hunter",     sf::IntRect(0, 0, 48, 48));
 
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_1x1", sf::IntRect(0,   0, 64,  32 ));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_2x2", sf::IntRect(64,  0, 128, 64 ));
@@ -182,6 +186,12 @@ void Regionmap::handleInput() {
 
                 if(this->controls.keyState("key_toggle_minimap")) {
                     this->toggleComponentVisibility("component_minimap");
+                }
+
+                if(this->controls.keyState("key_toggle_storage")) {
+                    this->toggleComponentVisibility("component_widget_region_storage");
+                    auto* widget_region_storage = static_cast<gui::WidgetRegionStorage*>(this->getInterfaceComponent("component_widget_region_storage"));
+                    widget_region_storage->refresh();
                 }
 
                 if(this->controls.keyState("key_escape")) {
@@ -426,60 +436,6 @@ void Regionmap::renderRegion() {
         regionmap_mesh_tile.update(verticies_tiles);
         this->recalculate_mesh = false;
     }
-
-    /*
-    if(this->recalculate_tree_mesh) {
-        const size_t verticies_treemap = 4 * this->region->map.size();
-        
-        sf::Vertex verticies_trees[verticies_treemap];
-        
-        std::map <int, int> m;
-
-        if(!regionmap_mesh_tree.getVertexCount())
-            regionmap_mesh_tree.create(verticies_treemap);
-        
-        for(int y = 0; y < world_settings.getRegionWidth(); y++) {
-            for(int x = 0; x < world_settings.getRegionWidth(); x++) {
-                const int  index       = world_settings.calculateRegionIndex(x, y); 
-                const bool tree_exists = this->region->trees.count(index);
-                if(tree_exists) {
-                    // Tree position is the tile.getTransformedPosition().
-                    const auto& tree         = this->region->trees[index];                    
-                    const auto& tree_texture = tree.getTextureName();
-
-                    auto sum = tree.getPosition().x + tree.getPosition().y + tree.getPosition().z;
-                    m[sum]++;
-
-                    sf::Vertex* quad = &verticies_trees[index * 4];
-
-                    // Size of the texture may vary.
-                    // Certain tree textures are 64x96, and some are 64x192.
-                    // To make sure that they are drawn properly, ask for the size here.
-                    const auto texture_size = this->manager->resource.getTextureSize(tree.getTextureName());
-                    auto tree_position2d = tree.getPosition2D();
-
-                    quad[0].position = tree_position2d + sf::Vector2f(0, 0);
-                    quad[1].position = tree_position2d + sf::Vector2f(texture_size.x, 0);
-                    quad[2].position = tree_position2d + sf::Vector2f(texture_size.x, texture_size.y);
-                    quad[3].position = tree_position2d + sf::Vector2f(0, texture_size.y);
-
-                    const auto tree_coords = this->manager->resource.getTexturePosition(tree_texture); 
-
-                    quad[0].texCoords = tree_coords + sf::Vector2f(0, 0);
-                    quad[1].texCoords = tree_coords + sf::Vector2f(texture_size.x, 0);
-                    quad[2].texCoords = tree_coords + sf::Vector2f(texture_size.x, texture_size.y);
-                    quad[3].texCoords = tree_coords + sf::Vector2f(0, texture_size.y);   
-                }
-            }
-        }
-
-        for(auto& p : m)
-            std::cout << p.first << " " << p.second << "\n";
-
-        regionmap_mesh_tree.update(verticies_trees);
-        this->recalculate_tree_mesh = false;
-    }
-    */
 
     if(this->rmesh) {
         draw_order = std::vector<GameObject>();
@@ -763,13 +719,15 @@ void Regionmap::updatePaths(int index) {
 }
 
 void Regionmap::createUI() {
-    static gui::WidgetMenuBuilding widget_menu_building(this->manager);
-    static gui::DebugPerformance   widget_performance_regionmap(this->manager);
-    static gui::WidgetMinimap      widget_minimap(this->manager);
+    static gui::WidgetMenuBuilding  widget_menu_building(this->manager);
+    static gui::DebugPerformance    widget_performance_regionmap(this->manager);
+    static gui::WidgetMinimap       widget_minimap(this->manager);
+    static gui::WidgetRegionStorage widget_region_storage(this->manager);
 
     this->addInterfaceComponent(&widget_menu_building);
     this->addInterfaceComponent(&widget_performance_regionmap);
     this->addInterfaceComponent(&widget_minimap);
+    this->addInterfaceComponent(&widget_region_storage);
 }
 
 void Regionmap::updateScheduler() {
@@ -797,6 +755,18 @@ void Regionmap::updateScheduler() {
     //         }
     //     }   
     // }
+
+    // Update item display in storage.
+
+    auto& update_storage = this->scheduler.at("update_storage");
+    if(update_storage.first != update_storage.second)
+        update_storage.first++;
+
+    if(update_storage.first == update_storage.second) {
+        auto* widget_region_storage = static_cast<gui::WidgetRegionStorage*>(this->getInterfaceComponent("component_widget_region_storage"));
+        widget_region_storage->refresh();
+        update_storage.first = 0;
+    }
 }
 
 void Regionmap::gamestateLoad() {

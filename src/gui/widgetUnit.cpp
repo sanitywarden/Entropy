@@ -83,8 +83,8 @@ void WidgetUnit::updateUI() {
     int selected_unit_id = worldmap->getSelectedUnitID();
 
     if(selected_unit_id != -1) {
-        auto& human_player  = this->manager->getHumanPlayer();
-        auto* selected_unit = human_player.getUnit(selected_unit_id);
+        auto* human_player  = this->manager->getHumanPlayer();
+        auto* selected_unit = human_player->getUnit(selected_unit_id);
         this->unit = selected_unit;
     }
     
@@ -119,16 +119,16 @@ void WidgetUnit::functionality() {
             
             if(this->canColonise(region_index) && worldmap->controls.mouseLeftPressed() && button_colonise->containsPoint(worldmap->mouse_position_interface)) {
                 // Region to be added to the player's territory.
-                auto& human_player = this->manager->getHumanPlayer();
+                auto* human_player = this->manager->getHumanPlayer();
                 
                 // Does not yet have a settlement.
-                if(!human_player.empireSize()) {
-                    human_player.setCapital(region_index);
+                if(!human_player->empireSize()) {
+                    human_player->setCapital(region_index);
                 }
                 
-                region.owner = &human_player;
-                human_player.addOwnedRegion(region_index);
-                auto colour_transparent = human_player.getTeamColourTransparent();
+                region.owner = human_player;
+                human_player->addOwnedRegion(region_index);
+                auto colour_transparent = human_player->getTeamColourTransparent();
                 region.object_colour = colour_transparent;
 
                 // After colonising, it should be deleted.
@@ -142,7 +142,7 @@ bool WidgetUnit::canColonise(int index) const {
     if(index == -1)
         return false;
 
-    const auto& owned_regions = this->manager->getHumanPlayer().readOwnedRegions();
+    const auto& owned_regions = this->manager->getHumanPlayer()->readOwnedRegions();
     const auto& region = this->manager->world.world_map[index];
 
     for(const auto& owned_index : owned_regions) {
@@ -160,8 +160,8 @@ bool WidgetUnit::canColonise(int index) const {
 }
 
 void WidgetUnit::deleteCurrentUnit() {
-    auto& human_player = this->manager->getHumanPlayer();
-    auto& units        = human_player.units;
+    auto* human_player = this->manager->getHumanPlayer();
+    auto& units        = human_player->units;
     auto region_index  = this->unit->current_index;  
     auto& region       = this->manager->world.world_map[region_index];
     auto* worldmap     = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());

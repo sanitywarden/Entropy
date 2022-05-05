@@ -617,7 +617,7 @@ void Worldmap::selectUnit() {
     auto* unit = region.unit;
 
     if(unit) {
-        if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && unit->owner_id == this->manager->getHumanPlayer().player_id) {
+        if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && this->manager->isHumanPlayer(unit->owner_id)) {
             this->selected_unit_id = unit->getID();
             this->setVisibilityTrue("component_widget_unit");
             this->setVisibilityFalse("component_widget_region");

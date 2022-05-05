@@ -88,3 +88,7 @@ void Player::removeUnit(int unit_id) {
 int Player::empireSize() const {
     return this->owned_regions.size();
 }
+
+int Player::getID() const {
+    return this->player_id;
+}

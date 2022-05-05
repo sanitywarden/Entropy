@@ -9,18 +9,16 @@ Building::Building()
 {
     this->building_menu_icon      = "default";
     this->building_size           = VECTOR0X0;
-    this->building_cost           = ResourceCollection(0, 0, 0);
     this->numerical_type          = 0;
     this->building_proximity_area = VECTOR0X0;
     this->building_name           = "Empty";
 }
 
-Building::Building(sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost) 
+Building::Building(sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity) 
     : GameObject(VECTOR0X0X0, VECTOR0X0X0, size, texture_name, "Building") 
 {
     this->building_menu_icon      = building_menu_icon;
     this->building_size           = building_size;
-    this->building_cost           = building_cost;
     this->numerical_type          = numerical_type;
     this->building_proximity_area = proximity;
     this->building_name           = building_name;
@@ -31,7 +29,6 @@ Building::Building(const Building& building)
 {
     this->building_menu_icon      = building.getBuildingMenuIconName();
     this->building_size           = building.getBuildingArea();
-    this->building_cost           = building.getBuildingCost();
     this->numerical_type          = building.getNumericalType();
     this->building_proximity_area = building.getProductionArea();
     this->building_name           = building.getBuildingName();
@@ -49,17 +46,17 @@ const sf::Vector2f Building::getProductionArea() const {
     return this->building_proximity_area;
 }
 
-const ResourceCollection Building::getBuildingCost() const {
-    return this->building_cost;
-}
+// const ResourceCollection Building::getBuildingCost() const {
+//     return this->building_cost;
+// }
 
-const ResourceCollection Building::getBuildingRefund() const {
-    return ResourceCollection(
-        this->building_cost.wood  * 0.9f,
-        this->building_cost.stone * 0.9f,
-        this->building_cost.gold  * 0.9f
-    );
-}
+// const ResourceCollection Building::getBuildingRefund() const {
+    // return ResourceCollection(
+        // this->building_cost.wood  * 0.9f,
+        // this->building_cost.stone * 0.9f,
+        // this->building_cost.gold  * 0.9f
+    // );
+// }
 
 const int Building::getNumericalType() const {
     return this->numerical_type;
@@ -95,7 +92,6 @@ void Building::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 void Building::assignBuildingProperties(const Building& building) {
     this->numerical_type = building.numerical_type;
     this->building_size  = building.building_size;
-    this->building_cost  = building.building_cost;
 }
 
 void Building::assignAllProperties(const Building& building) {

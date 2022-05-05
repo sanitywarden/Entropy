@@ -3,6 +3,7 @@
 #include "worldmap.hpp"
 #include "regionmap.hpp"
 #include "generationSettings.hpp"
+#include "nameGenerator.hpp"
 
 #include <iostream>
 
@@ -90,10 +91,6 @@ void SimulationManager::internalLoop(float delta_time) {
     // AI updates.
 }
 
-Player& SimulationManager::getHumanPlayer() {
-    return this->players.at(0);
-}
-
 void SimulationManager::prepare() {
     this->world.world_map = std::vector <Region> (world_settings.getWorldSize());
     this->world.forests   = std::map <int, GameObject> ();
@@ -105,7 +102,7 @@ void SimulationManager::prepare() {
 }
 
 void SimulationManager::updateScheduler() {
-    // Update buildigns across all regions.
+    // Update buildings across all regions.
     
     auto& update_buildings = this->global_updates.at("update_buildings");
     if(update_buildings.first != update_buildings.second)
@@ -311,14 +308,11 @@ void SimulationManager::initialiseWorld() {
         auto& player = this->players[player_id];
         auto& region = this->world.world_map[settle_spot_index];
 
-        if(player_id == 0)
-            player.is_human = true;
-
         // Temporary colour, generated randomly.
         // In the future it could maybe be less random. That would better it's visibility.
         const auto generated_colour_full  = this->texturizer.getRandomColour();
-        const auto generated_country_name = "Country" + std::to_string(player_id);
-
+        const auto generated_country_name = generate(GenerationType::COUNTRY, 3);
+        
         auto unit = std::shared_ptr <Unit> (new Unit("unit_settler"));
         unit.get()->object_texture_name = "unit_worldmap_settler";
         unit.get()->object_size         = region.getSize();
@@ -331,6 +325,9 @@ void SimulationManager::initialiseWorld() {
 
         player.setTeamColour(generated_colour_full);
         player.setCountryName(generated_country_name);
+        
+        if(player_id == 0)
+            player.is_human = true;
     }
 }
 
@@ -340,22 +337,6 @@ int SimulationManager::getDrawCalls() const {
 
 void SimulationManager::updateDrawCalls(int calls) {
     this->draw_calls = calls;
-}
-
-bool SimulationManager::isHumanPlayer(int player_id) const {
-    return this->getHumanPlayer().player_id == player_id;
-}
-
-Unit* SimulationManager::getUnit(int unit_id) {
-    for(Player& player : this->players) {
-        for(auto& unit_sp : player.units) {
-            auto* unit = unit_sp.get();
-            if(unit->getID() == unit_id)
-                return unit;
-        }
-    }
-
-    return nullptr;
 }
 
 std::string SimulationManager::getDateFormatted() const {
@@ -401,4 +382,33 @@ bool SimulationManager::inScreenSpace(const GameObject& object) const {
     sf::Rect object_box(object.getPosition2D(), object.getSize());
     
     return view_box.intersects(object_box);
+}
+
+Player* SimulationManager::getHumanPlayer() {
+    for(auto& player : this->players)
+        if(player.isHuman())
+            return &player;
+    return nullptr;
+}
+
+Player* SimulationManager::getPlayer(int player_id) {
+    for(auto& player : this->players)
+        if(player.getID() == player_id)
+            return &player;
+    return nullptr;
+}
+
+bool SimulationManager::isHumanPlayer(int player_id) const {
+    return this->getHumanPlayer()->getID() == player_id;
+}
+
+Unit* SimulationManager::getUnit(int unit_id) {
+    for(Player& player : this->players) {
+        for(auto& unit_sp : player.units) {
+            auto* unit = unit_sp.get();
+            if(unit->getID() == unit_id)
+                return unit;
+        }
+    }
+    return nullptr;
 }

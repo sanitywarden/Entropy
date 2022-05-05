@@ -6,12 +6,15 @@
 using namespace gui;
 using namespace iso;
 
-WidgetMenuBuilding::WidgetMenuBuilding() {
-    this->manager = nullptr;
+WidgetMenuBuilding::WidgetMenuBuilding() 
+    : InterfacePage(nullptr)
+{
     std::cout << "[GUI][WidgetMenuBuilding]: Simulation manager is a nullptr.\n";
 }
 
-WidgetMenuBuilding::WidgetMenuBuilding(SimulationManager* manager) : InterfacePage(manager) {
+WidgetMenuBuilding::WidgetMenuBuilding(SimulationManager* manager) 
+    : InterfacePage(manager) 
+{
     this->setWidgetID("component_widget_menu_building");
     this->createUI();
 
@@ -34,10 +37,6 @@ void WidgetMenuBuilding::createUI() {
         sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
 
     this->addComponent(widget_body);
-
-    // TODO: Make minimap.
-    // Make this widget display under the minimap when drawn.
-    // Make the buildings drop down to another row, when current is full (textures_size.x >= widget_size.x)
 
     auto image_size = sf::Vector2f(48, 48);
     auto offset     = sf::Vector2f(image_size.x / 2, image_size.y / 2);

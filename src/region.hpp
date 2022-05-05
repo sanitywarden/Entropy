@@ -43,9 +43,8 @@ namespace iso {
             
             RiverDirection riverDirection();
             bool isOwned() const;
-            void addResource(ResourceType resource, int quantity);
-            void addResources(ResourceCollection resource);
-            int  getResourceQuantity(ResourceType resource);
+            void addResource(Resource resource);
+            int  getResourceQuantity(Resource resource) const;
             bool isBuildingAffordable(const Building& building) const;
             bool isPositionValid(const Building& building, int index) const;
             void placeBuilding(Building building, sf::Vector2f texture_size, int index);
@@ -74,9 +73,9 @@ namespace iso {
             std::map    <int, std::vector<GameObject>>   sides;
             std::map    <int, std::shared_ptr<Building>> buildings;
             std::vector <Unit>                           population;
+            std::map    <std::string, int>               resources;  // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.
 
-            Player*            owner;     // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.
-            ResourceCollection resources; // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.
+            Player* owner; // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.
     }; 
 }
 

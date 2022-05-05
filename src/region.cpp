@@ -38,60 +38,33 @@ bool Region::isOwned() const {
     return this->owner != nullptr;
 }
 
-void Region::addResource(ResourceType resource, int quantity) {
-    switch(resource) {
-        default:
-            break;
-        
-        case ResourceType::RESOURCE_WOOD:
-            this->resources.wood += quantity;
-            break;
-
-        case ResourceType::RESOURCE_STONE:
-            this->resources.stone += quantity;
-            break;
-
-        case ResourceType::RESOURCE_FOOD:
-            this->resources.food += quantity;
-            break;
-
-        case ResourceType::RESOURCE_GOLD:
-            this->resources.gold += quantity;
-            break;
-
-        case ResourceType::RESOURCE_FLINT:
-            this->resources.flint += quantity;
-            break;
-    }
-}
-
-void Region::addResources(ResourceCollection resource) {
-    this->resources += resource;
-}
-
-int Region::getResourceQuantity(ResourceType resource) {
-    switch(resource) {
-        default:
-            return 0;
-
-        case ResourceType::RESOURCE_WOOD:
-            return this->resources.wood;
-
-        case ResourceType::RESOURCE_STONE:
-            return this->resources.wood;
+void Region::addResource(Resource resource) {
+    auto resource_name     = resource.getName();
+    auto resource_quantity = resource.getQuantity();
     
-        case ResourceType::RESOURCE_GOLD:
-            return this->resources.gold;
-    }
+    if(!this->resources.count(resource_name))
+        this->resources[resource_name] = resource_quantity;
+
+    else
+        this->resources[resource_name] += resource_quantity;
+}
+
+int Region::getResourceQuantity(Resource resource) const {
+    auto resource_name = resource.getName();
+
+    if(this->resources.count(resource_name))
+        return this->resources.at(resource_name);
+    return 0;
 }
 
 bool Region::isBuildingAffordable(const Building& building) const {
-    return (this->resources >= building.getBuildingCost());
+    return true;
+    // return (this->resources >= building.getBuildingCost());
 }
 
 /* Remove the resources needed to construct provided building from region's resource pool. */
 void Region::removeBuildingCost(const Building& building) {
-    this->resources -= building.getBuildingCost();
+    // this->resources -= building.getBuildingCost();
 }
 
 bool Region::isPositionValid(const Building& building, int index) const {
@@ -202,7 +175,8 @@ bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, in
 void Region::removeBuilding(int index) {
     if(this->buildings.count(index)) {
         auto building   = this->buildings.at(index).get();
-        this->resources += building->getBuildingRefund();
+        
+        // this->resources += building->getBuildingRefund();
         
         for(int y = 0; y < building->getBuildingArea().y; y++) {
             for(int x = 0; x < building->getBuildingArea().x; x++) {

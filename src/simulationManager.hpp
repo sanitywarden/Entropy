@@ -47,12 +47,14 @@ namespace iso {
             int  getDrawCalls() const;
             bool inScreenSpace(const GameObject& object) const;
 
-            Player& getHumanPlayer();
-            bool isHumanPlayer(int player_id) const;
             std::string getDateFormatted() const;
-            Unit*   getUnit(int unit_id);
-            std::vector <int> astar(int start, int end) const;
+            
+            bool isHumanPlayer(int player_id) const;
+            Player* getHumanPlayer();
+            Player* getPlayer(int player_id);
+            Unit* getUnit(int unit_id);
 
+            std::vector <int> astar(int start, int end) const;
             void prepare();
             void loop() override;
     };

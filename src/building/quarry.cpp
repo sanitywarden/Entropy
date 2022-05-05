@@ -6,7 +6,7 @@
 using namespace iso;
 
 Quarry::Quarry() 
-    : Building(BUILDINGSIZE128X128, "building_quarry", "Quarry", "icon_building_quarry", 5, VECTOR2X2, VECTOR3X3, ResourceCollection(0, 0, 0))
+    : Building(BUILDINGSIZE128X128, "building_quarry", "Quarry", "icon_building_quarry", 5, VECTOR2X2, VECTOR3X3)
 {}
 
 Quarry::~Quarry() {
@@ -20,19 +20,20 @@ void Quarry::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    int stone_tiles = 0;
+    Resource stone = RESOURCE_STONE;
+
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
 
             if(region->map[index].object_texture_name == "tile_resource_stone")
-                stone_tiles++;
+                stone.incrementQuantity();
         }
     }
 
     auto number_of_buildings = region->isBuildingInProximity(*this, building_index);
     if(number_of_buildings)
-        stone_tiles /= number_of_buildings;
+        stone.setQuantity(stone.getQuantity() / number_of_buildings);
 
-    region->addResource(ResourceType::RESOURCE_STONE, stone_tiles);
+    region->addResource(stone);
 }

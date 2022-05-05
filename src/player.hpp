@@ -42,6 +42,7 @@ namespace iso {
             void                      addUnit(std::shared_ptr <Unit> unit);
             Unit*                     getUnit(int unit_id);
             void                      removeUnit(int unit_id);
+            int                       getID() const;
     };
 }
 

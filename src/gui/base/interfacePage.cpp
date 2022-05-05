@@ -33,6 +33,10 @@ void InterfacePage::addComponent(std::shared_ptr <AbstractWidget> component) {
     this->interface[id] = component;
 }
 
+void InterfacePage::deleteComponent(std::string id) {
+    this->interface.erase(id);
+}
+
 bool InterfacePage::intersectsUI(sf::Vector2f point) const {
     for(const auto& pair : this->interface) {
         auto* component = pair.second.get();

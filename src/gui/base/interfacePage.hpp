@@ -41,6 +41,7 @@ namespace gui {
             virtual void    functionality() { return; }
             AbstractWidget* getComponent(std::string id) const;
             void            addComponent(std::shared_ptr<AbstractWidget> component);
+            void            deleteComponent(std::string id);
             bool            intersectsUI(sf::Vector2f point) const;
     };
 }

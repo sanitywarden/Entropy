@@ -31,7 +31,7 @@ namespace iso {
         { "tile_tree_beech", "tile_tree_oak", "tile_tree_maple" });
     static Biome BIOME_CONTINENTAL("Continental", COLOUR_GREEN_CONTINENTAL, 
         { "tile_grass_cold" }, 
-        { "tile_tree_spruce_1", "tile_tree_spruce_2", "tile_tree_pine" }); 
+        { "tile_tree_spruce_1", "tile_tree_spruce_2" }); 
     static Biome BIOME_MEDITERRANEAN("Mediterranean", COLOUR_GREEN_MEDITERRANEAN, 
         { "tile_grass_subtropical" }, 
         { "tile_tree_cypress", "tile_tree_acacia" }); 

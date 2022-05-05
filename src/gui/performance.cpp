@@ -91,11 +91,6 @@ void DebugPerformance::updateUI() {
         data += "Ocean: "                + std::to_string(current_tile.tiletype.is_ocean())   + "\n";
         data += "Water: "                + std::to_string(current_tile.tiletype.is_water())   + "\n";
         data += "Terrain: "              + std::to_string(current_tile.tiletype.is_terrain()) + "\n";
-
-        data += "Gold: "                 + std::to_string(region->resources.gold)  + "\n";
-        data += "Wood: "                 + std::to_string(region->resources.wood)  + "\n";
-        data += "Stone: "                + std::to_string(region->resources.stone) + "\n";
-        data += "Food: "                 + std::to_string(region->resources.food)  + "\n";
     }
 
     auto* text = static_cast<Label*>(this->getComponent("label_debug_performance"));

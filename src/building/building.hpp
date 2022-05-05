@@ -20,7 +20,7 @@ class Building : public GameObject {
     protected:
         int                numerical_type;
         sf::Vector2f       building_size;
-        ResourceCollection building_cost;
+        // ResourceCollection building_cost;
         std::string        building_menu_icon;
         std::string        building_name;      // Human-readable building name.
 
@@ -32,20 +32,28 @@ class Building : public GameObject {
     public:
         void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
         
-        Building();
-        Building(sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, ResourceCollection building_cost);
-        Building(const Building& building);
         ~Building();
-
+        Building();
+        Building(const Building& building);
+        Building(
+            sf::Vector2f size, 
+            std::string texture_name, 
+            std::string building_name, 
+            std::string building_menu_icon, 
+            int numerical_type, 
+            sf::Vector2f building_size, 
+            sf::Vector2f proximity
+        );
+        
         /* Get the area occupied by the building. */
         const sf::Vector2f getBuildingArea() const;
         const sf::Vector2f getProductionArea() const;
 
         /* Get the cost of the building. */
-        const ResourceCollection getBuildingCost() const;
+        // const ResourceCollection getBuildingCost() const;
 
         /* Get the refund of the building (when the building is destroyed). */
-        const ResourceCollection getBuildingRefund() const;
+        // const ResourceCollection getBuildingRefund() const;
 
         const int getNumericalType() const;
         std::string getBuildingMenuIconName() const;

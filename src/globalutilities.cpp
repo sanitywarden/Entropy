@@ -5,6 +5,9 @@
  * The code would not compile without specifying the namespace. */
 
 #include <iostream>
+#include <vector>
+#include <fstream>
+#include <map>
 
 bool iso::startsWith(const std::string& str, const std::string& phrase) {
     if(str.length() < phrase.length())
