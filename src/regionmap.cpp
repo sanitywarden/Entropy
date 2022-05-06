@@ -87,6 +87,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_woodcutter"     , sf::IntRect(256, 0, 128, 128));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry"         , sf::IntRect(384, 0, 128, 128));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_flint_collector", sf::IntRect(512, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_gatherer"       , sf::IntRect(640, 0, 128, 128));
 
     this->manager->resource.loadTexture("./res/regionmap/buildings/animalspot_deer.png", "animalspot_deer", sf::IntRect(0, 0, 128, 128));
 
@@ -119,7 +120,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/ui/template/icon_template.png"   , "icon_default",             sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/icon_path_dirt.png"           , "icon_path_dirt" ,          sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/icon_path_stone.png"          , "icon_path_stone",          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_farmhouse.png"  , "icon_building_farmhouse",  sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/icon_building_farmhouse.png"  , "icon_building_gatherer",   sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/icon_building_woodcutter.png" , "icon_building_woodcutter", sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/icon_building_quarry.png"     , "icon_building_quarry",     sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/icon_building_house.png"      , "icon_building_house",      sf::IntRect(0, 0, 48, 48));

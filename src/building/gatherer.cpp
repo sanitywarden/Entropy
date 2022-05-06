@@ -6,7 +6,7 @@
 using namespace iso;
 
 Farmhouse::Farmhouse() 
-    : Building(BUILDINGSIZE64X64, "building_farmland", "Farmhouse", "icon_building_farmhouse", 4, VECTOR1X1, VECTOR3X3) 
+    : Building(BUILDINGSIZE128X128, "building_gatherer", "Gatherer", "icon_building_gatherer", 4, VECTOR2X2, VECTOR3X3) 
 {}
 
 Farmhouse::~Farmhouse() {
