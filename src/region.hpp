@@ -55,6 +55,7 @@ namespace iso {
             bool isUnitPresent()   const;
             bool isTree(int index) const;
             bool isPath(int index) const;
+            bool isSpotOccupied(int index) const;
 
             // If building exists at provided index, return pointer.
             // Else returns nullptr.

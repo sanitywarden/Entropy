@@ -15,6 +15,8 @@
 #include <vector>
 
 namespace iso {
+    const Building       BUILDING_DEBUG_1X1(BUILDINGSIZE64X64, "default", "default", "icon_deafult", -1, VECTOR1X1, VECTOR1X1); // Debug building, not gameplay related.
+
     const Building       BUILDING_EMPTY;           // ID 0.
     const PathDirt       BUILDING_PATH_DIRT;       // ID 1.
     const PathStone      BUILDING_PATH_STONE;      // ID 2.

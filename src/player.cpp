@@ -7,6 +7,8 @@ using namespace iso;
 Player::Player() {
     this->is_human     = false;
     this->country_name = "*";
+    this->capital_region = -1;
+    this->player_id      = -1;
 }
 
 Player::~Player() {
@@ -38,8 +40,12 @@ bool Player::isHuman() const {
     return this->is_human;
 }
 
-int Player::getCapital() {
+int Player::getCapital() const {
     return this->capital_region;
+}
+
+bool Player::hasCapital() const {
+    return this->capital_region != -1;
 }
 
 void Player::setCapital(int region_index) {
@@ -79,10 +85,26 @@ Unit* Player::getUnit(int unit_id) {
     return nullptr;
 }
 
+Unit* Player::getUnit(std::string unit_name) {
+    for(auto& unit : this->units) {
+        if(unit.get()->getName() == unit_name)
+            return unit.get();
+    }
+
+    return nullptr;
+}
+
 void Player::removeUnit(int unit_id) {
     for(auto it = this->units.begin(); it != units.end(); ++it)
         if((*it).get()->getID() == unit_id)
             this->units.erase(it);
+}
+
+bool Player::hasUnit(int unit_id) const {
+    for(auto& unit : this->units)
+        if(unit.get()->getID() == unit_id)
+            return true;
+    return false;
 }
 
 int Player::empireSize() const {

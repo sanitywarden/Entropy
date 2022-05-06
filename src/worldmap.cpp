@@ -512,6 +512,12 @@ void Worldmap::renderWorld() {
 
 void Worldmap::selectPanel() {
     if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI()) {
+        const auto& region = this->manager->world.world_map[this->current_index];
+        if(region.regiontype.is_ocean()) {
+            this->setVisibilityFalse("component_widget_region");
+            return;
+        }
+
         sf::Vector2i panel_grid_position = sf::Vector2i(
             this->mouse_position_window.x / world_settings.panelSize(),
             this->mouse_position_window.y / world_settings.panelSize()
@@ -581,24 +587,25 @@ void Worldmap::createUI() {
 }
 
 void Worldmap::gamestateLoad() {
-    /* Centre the camera on current tile.
-     * Current tile is the capital (when first loaded in) or a tile the player was visiting. */
-    
-    #if 0
+    // Centre the camera on current tile.
+    // Current tile is the capital (when first loaded in) or a tile the player was visiting.
+
+    auto* human_player = this->manager->getHumanPlayer();
     auto* regionmap = this->manager->gamestate.getGamestateByName("regionmap")
         ? static_cast<Regionmap*>(this->manager->gamestate.getGamestateByName("regionmap"))
         : nullptr;
     
-    if(this->manager->players.size()) {
-        const int index = regionmap == nullptr
-            ? this->manager->getHumanPlayer().getCapital()
-            : regionmap->getRegionIndex();
+    if(human_player) {
+        auto* first_unit = human_player->getUnit("unit_settler");
+
+        int index = (!regionmap && first_unit)
+            ? first_unit->current_index    // If loaded in for the first time.
+            : regionmap->getRegionIndex(); // If exiting a region.
         
-        const auto& tile    = this->manager->world.world_map[index];
-        const auto position = sf::Vector2f(tile.getPosition() + sf::Vector2f(world_settings.tileSize().x / 2, world_settings.tileSize().y / 2));
+        const auto& region  = this->manager->world.world_map[index];
+        auto position = region.getPosition2D();
         this->view_game.setCenter(position);
     }
-    #endif
 
     this->mouse_moved = false;
     this->mouse_drag  = false;
@@ -615,9 +622,10 @@ void Worldmap::updateScheduler() {
 void Worldmap::selectUnit() {
     const auto& region = this->manager->world.world_map[this->current_index];
     auto* unit = region.unit;
+    auto* human_player = this->manager->getHumanPlayer();
 
     if(unit) {
-        if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && this->manager->isHumanPlayer(unit->owner_id)) {
+        if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && human_player->hasUnit(unit->getID())) {
             this->selected_unit_id = unit->getID();
             this->setVisibilityTrue("component_widget_unit");
             this->setVisibilityFalse("component_widget_region");

@@ -132,10 +132,9 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_3x3", sf::IntRect(192, 0, 192, 96));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_4x4", sf::IntRect(384, 0, 256, 128));
 
-    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_highlight_1x1", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
-    this->manager->texturizer.createColouredWorldmapTexture("tile_black_2x2", "tile_highlight_2x2", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
-    this->manager->texturizer.createColouredWorldmapTexture("tile_black_3x3", "tile_highlight_3x3", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
-    this->manager->texturizer.createColouredWorldmapTexture("tile_black_4x4", "tile_highlight_4x4", COLOUR_WHITE_TRANSPARENT_QUARTER, COLOUR_TRANSPARENT);
+    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_green", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_red"  , COLOUR_RED_TRANSPARENT_HALF  , COLOUR_TRANSPARENT);
 }
 
 void Regionmap::update(float delta_time) {
@@ -878,5 +877,49 @@ void Regionmap::renderSelectedBuilding() {
         sf::RenderStates states;
         states.texture = &this->manager->resource.getTexture(texture);
         this->manager->window.draw(building_highlight, states);
+
+        const int area_x = building.getProductionArea().x;
+        const int area_y = building.getProductionArea().y;
+        
+        if(area_x > 1 && area_y > 1) {
+            int vertex_index = 0; 
+            const size_t vertex_count = 4 * (2 * building.getProductionArea().x + building_area) * (2 * building.getProductionArea().y + building_area);
+            sf::Vertex vertex[vertex_count];
+            for(int y = -area_y; y <= area_y + building_area - 1; y++) {
+                for(int x = -area_x; x <= area_x + building_area - 1; x++) {
+                    const int index = this->current_index + world_settings.calculateRegionIndex(x, y);
+                    const auto& tile = this->region->map[index];
+                    auto tile_position = tile.getPosition2D();
+                    auto tile_size     = tile.getSize();
+
+                    sf::Vertex* quad = &vertex[vertex_index * 4];
+
+                    quad[0].position = tile_position + sf::Vector2f(0, 0); 
+                    quad[1].position = tile_position + sf::Vector2f(tile_size.x, 0); 
+                    quad[2].position = tile_position + sf::Vector2f(tile_size.x, tile_size.y); 
+                    quad[3].position = tile_position + sf::Vector2f(0, tile_size.y); 
+
+                    quad[0].texCoords = sf::Vector2f(0, 0);
+                    quad[1].texCoords = sf::Vector2f(tile_size.x, 0);
+                    quad[2].texCoords = sf::Vector2f(tile_size.x, tile_size.y);
+                    quad[3].texCoords = sf::Vector2f(0, tile_size.y);
+
+                    auto colour = this->region->isSpotOccupied(index)
+                        ? COLOUR_GREEN
+                        : COLOUR_RED;
+
+                    quad[0].color = colour;
+                    quad[1].color = colour;
+                    quad[2].color = colour;
+                    quad[3].color = colour;
+
+                    vertex_index++;
+                }
+            }
+
+            sf::RenderStates states;
+            states.texture = &this->manager->resource.getTexture("tile_transparent_white");
+            this->manager->window.getWindow()->draw(vertex, vertex_count, sf::Quads, states);
+        }
     }
 }

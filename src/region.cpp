@@ -96,6 +96,19 @@ bool Region::isPositionValid(const Building& building, int index) const {
     return true;
 }
 
+bool Region::isSpotOccupied(int index) const {
+    if(!this->map.at(index).tiletype.is_terrain())
+        return false;
+    
+    if(this->isTree(index))
+        return false;
+    
+    if(this->getBuildingAt(index) != nullptr)
+        return false;
+    
+    return true;
+}
+
 void Region::placeBuilding(Building building, sf::Vector2f texture_size, int index) {
     const Tile& tile         = this->map[index];
     building.object_position = tile.getPosition();

@@ -30,7 +30,8 @@ namespace iso {
             void                      removeOwnedRegion(int region_index);
             const std::vector <int>&  readOwnedRegions();
             int                       empireSize() const; // Number of regions that the player controls.
-            int                       getCapital();
+            int                       getCapital() const;
+            bool                      hasCapital() const;
             void                      setCapital(int region_index);
             void                      setHuman(bool is_human);
             bool                      isHuman() const;
@@ -41,6 +42,8 @@ namespace iso {
             const std::string&        getCountryName();
             void                      addUnit(std::shared_ptr <Unit> unit);
             Unit*                     getUnit(int unit_id);
+            Unit*                     getUnit(std::string unit_name);
+            bool                      hasUnit(int unit_id) const;
             void                      removeUnit(int unit_id);
             int                       getID() const;
     };

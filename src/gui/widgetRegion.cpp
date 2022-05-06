@@ -78,9 +78,14 @@ void WidgetRegion::updateUI() {
         ? region.owner->getCountryName()
         : "Uncolonised";
 
+    std::string additional_data = region.regiontype.is_forest()
+        ? "Forest"
+        : "";
+
     std::string display_text;
     display_text += "Region #" + std::to_string(index) + "\n";
     display_text += owner + "\n";
+    display_text += region.biome.biome_name + " " + additional_data + "\n";
 
     auto* label_component = static_cast<Label*>(this->getComponent("text_region_index"));
         label_component->setString(display_text);
