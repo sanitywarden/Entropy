@@ -41,29 +41,49 @@ void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const
 }
 
 void WidgetRegion::createUI() {
-    sf::Vector2i t_widget_size(1, 1);
-    sf::Vector2i t_button_size(4, 4);
+    sf::Vector2i t_widget_size(3, 2);
+    sf::Vector2i t_button_size(8, 4);
     int window_width  = this->manager->window.windowWidth();
     int window_height = this->manager->window.windowHeight();
 
     auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
         sf::Vector2f widget_size = widget_body.get()->getWidgetSize();
+        sf::Vector2f window_size = sf::Vector2f(window_width, window_height);
         widget_body.get()->setWidgetID("widget_region");
-        widget_body.get()->setWidgetPosition(0, 0);
+        widget_body.get()->setWidgetPosition(window_size - widget_size);
         sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
 
     auto button_travel = ButtonComponent(new Button(this->manager, t_button_size, "Visit"));
         sf::Vector2f button_size = button_travel.get()->getWidgetSize();
         button_travel.get()->setWidgetID("button_travel");
-        button_travel.get()->setWidgetPosition(widget_position + sf::Vector2f(0, (widget_size.y - button_size.y) / 2));
+        button_travel.get()->setWidgetPosition(widget_position + widget_size - button_size);
         button_travel.get()->label.setWidgetPosition(button_travel.get()->getWidgetPosition() + sf::Vector2f(button_size.x / 2, button_size.y / 2));
 
+    auto widget_text = LabelComponent(new Label(this->manager, ""));
+        widget_text.get()->setWidgetID("text_region_index");
+        widget_text.get()->setWidgetPosition(widget_position + sf::Vector2f(8, 8));
+        
     this->addComponent(widget_body);
     this->addComponent(button_travel);
+    this->addComponent(widget_text);
 }
 
 void WidgetRegion::updateUI() {
+    auto* gamestate = this->manager->gamestate.getGamestate();
+    auto* worldmap  = static_cast<Worldmap*>(gamestate);
+    auto index = worldmap->getSelectedIndex();
+    const auto& region = this->manager->world.world_map[index];
 
+    std::string owner = region.isOwned()
+        ? region.owner->getCountryName()
+        : "Uncolonised";
+
+    std::string display_text;
+    display_text += "Region #" + std::to_string(index) + "\n";
+    display_text += owner + "\n";
+
+    auto* label_component = static_cast<Label*>(this->getComponent("text_region_index"));
+        label_component->setString(display_text);
 }
 
 void WidgetRegion::functionality() {

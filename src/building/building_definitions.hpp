@@ -5,7 +5,7 @@
 #include "path_dirt.hpp"
 #include "path_stone.hpp"
 #include "house_small.hpp"
-#include "farmhouse.hpp"
+#include "gatherer.hpp"
 #include "quarry.hpp"
 #include "woodcutter.hpp"
 #include "hunter.hpp"

@@ -64,7 +64,7 @@ void WidgetUnit::createUI() {
         sf::Vector2f button_size = button_dismantle.get()->getWidgetSize();
         sf::Vector2f half_button_size = sf::Vector2f(button_size.x / 2, button_size.y / 2);
         button_dismantle.get()->setWidgetID("button_dismantle");
-        button_dismantle.get()->setWidgetPosition(widget_position + widget_size - sf::Vector2f(button_size.x, button_size.y));
+        button_dismantle.get()->setWidgetPosition(widget_position + widget_size - button_size);
         button_dismantle.get()->label.setWidgetPosition(button_dismantle.get()->getWidgetPosition() + half_button_size);
         button_dismantle.get()->show = true;
 
