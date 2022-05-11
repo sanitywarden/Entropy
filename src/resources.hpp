@@ -33,19 +33,11 @@ namespace iso {
             std::string getIcon() const;
     };
 
-    /*
-    icon_resource_wood
-    icon_resource_stone
-    icon_resource_flint
-    icon_resource_food
-    icon_resource_leather
-    */
-
-    const Resource RESOURCE_WOOD   ("Wood",    "icon_default", 0);
-    const Resource RESOURCE_STONE  ("Stone",   "icon_default", 0);
-    const Resource RESOURCE_FLINT  ("Flint",   "icon_default", 0);
-    const Resource RESOURCE_FOOD   ("Food",    "icon_default", 0);
-    const Resource RESOURCE_LEATHER("Leather", "icon_default", 0);
+    const Resource RESOURCE_WOOD   ("Wood",    "icon_item_wood"   , 0);
+    const Resource RESOURCE_STONE  ("Stone",   "icon_item_stone"  , 0);
+    const Resource RESOURCE_FLINT  ("Flint",   "icon_item_flint"  , 0);
+    const Resource RESOURCE_FOOD   ("Food",    "icon_default"     , 0);
+    const Resource RESOURCE_LEATHER("Leather", "icon_item_leather", 0);
 
     const static std::vector <Resource> RESOURCE_LOOKUP_TABLE = {
         RESOURCE_WOOD,

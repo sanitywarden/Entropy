@@ -98,15 +98,15 @@ bool Region::isPositionValid(const Building& building, int index) const {
 
 bool Region::isSpotOccupied(int index) const {
     if(!this->map.at(index).tiletype.is_terrain())
-        return false;
+        return true;
     
     if(this->isTree(index))
-        return false;
+        return true;
     
     if(this->getBuildingAt(index) != nullptr)
-        return false;
+        return true;
     
-    return true;
+    return false;
 }
 
 void Region::placeBuilding(Building building, sf::Vector2f texture_size, int index) {
@@ -164,10 +164,10 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, int ind
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             const int i = index + world_settings.calculateRegionIndex(x, y);
 
-            // This could be done better.
-            // This is a filler so that when a building is bigger than 1x1,
-            // other building can not be placed on the building's adjacent tiles.
             this->buildings[i] = std::shared_ptr <Building> (new Building());
+            
+            // The "empty" buildings are named to help recognise multi-tile structures.
+            this->buildings[i].get()->setBuildingName(sp_building.get()->getBuildingName());
         }
     }
     

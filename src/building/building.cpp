@@ -1,4 +1,5 @@
 #include "building.hpp"
+#include "region.hpp"
 
 #include <iostream>
 
@@ -110,4 +111,8 @@ std::string Building::getBuildingMenuIconName() const {
 
 std::string Building::getBuildingName() const {
     return this->building_name;
+}
+
+void Building::setBuildingName(std::string name) {
+    this->building_name = name;
 }

@@ -58,7 +58,6 @@ bool Gamestate::shouldCameraZoom() const {
 void Gamestate::addInterfaceComponent(gui::InterfacePage* interface_component) {
     std::string id = interface_component->getWidgetID();
     this->interface[id] = interface_component;
-    interface_component->show = false;
 }
 
 gui::InterfacePage* Gamestate::getInterfaceComponent(std::string interface_id) {
@@ -98,7 +97,6 @@ void Gamestate::setVisibilityFalse(std::string interface_id) {
 void Gamestate::renderUI() const {
     for(const auto& pair : this->interface) {
         auto* component = pair.second;
-
         if(component)
             if(component->isVisible())
                 this->engine->window.draw(*component);

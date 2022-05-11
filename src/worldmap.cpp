@@ -150,42 +150,6 @@ void Worldmap::loadResources() {
     this->manager->resource.loadTexture("./res/worldmap/unit_atlas.png", "unit_worldmap_warrior", sf::IntRect(0, 128, 128, 128));
 
     this->manager->resource.loadTexture("./res/default.png", "default");
-
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_top_left",                sf::IntRect(0, 0, 64, 64    ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_top_right",               sf::IntRect(128, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom_left",             sf::IntRect(0, 128, 64, 64  ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom_right",            sf::IntRect(128, 128, 64, 64));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_middle",                  sf::IntRect(64, 64, 64, 64  ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_top",                     sf::IntRect(64, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_left",                    sf::IntRect(0, 64, 64, 64   ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_right",                   sf::IntRect(128, 64, 64, 64 ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom",                  sf::IntRect(64, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_left",   sf::IntRect(0, 192, 64, 64  ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_right",  sf::IntRect(128, 192, 64, 64));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_middle", sf::IntRect(64, 192, 64, 64 ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_top",      sf::IntRect(192, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_bottom",   sf::IntRect(192, 128, 64, 64));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_middle",   sf::IntRect(192, 64, 64, 64 ));
-    this->manager->resource.loadTexture("./res/ui/template/template.png", "widget_base_single",                  sf::IntRect(192, 192, 64, 64));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_top_left",                sf::IntRect(0, 0, 8, 8      ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_top_right",               sf::IntRect(16, 0, 8, 8     ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_bottom_left",             sf::IntRect(0, 16, 8, 8     ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_bottom_right",            sf::IntRect(16, 16, 8, 8    ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_top",                     sf::IntRect(8, 0, 8, 8      ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_left",                    sf::IntRect(0, 8, 8, 8      ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_right",                   sf::IntRect(16, 8, 8, 8     ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_bottom",                  sf::IntRect(8, 16, 8, 8     ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_middle",                  sf::IntRect(8, 8, 8, 8      ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_small_horizontal_left",   sf::IntRect(0, 24, 8, 8     ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_small_horizontal_right",  sf::IntRect(16, 24, 8, 8    ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_small_horizontal_middle", sf::IntRect(8, 24, 8, 8     ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_small_vertical_top",      sf::IntRect(24, 0, 8, 8     ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_small_vertical_bottom",   sf::IntRect(24, 16, 8, 8    ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_small_vertical_middle",   sf::IntRect(24, 8, 8, 8     ));
-    this->manager->resource.loadTexture("./res/ui/template/buttons.png",  "button_base_single",                  sf::IntRect(24, 24, 8, 8    ));
-
-    this->manager->resource.loadFont("./res/font/proggy.ttf",   "proggy");
-    this->manager->resource.loadFont("./res/font/garamond.ttf", "garamond");
 }
 
 void Worldmap::moveCamera() {

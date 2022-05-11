@@ -117,21 +117,27 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 128, 64, 64 ));
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 192, 64, 64 ));
 
-    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"   , "icon_default",             sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_path_dirt.png"           , "icon_path_dirt" ,          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_path_stone.png"          , "icon_path_stone",          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_farmhouse.png"  , "icon_building_gatherer",   sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_woodcutter.png" , "icon_building_woodcutter", sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_quarry.png"     , "icon_building_quarry",     sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_house.png"      , "icon_building_house",      sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_flint.png"      , "icon_building_flint",      sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/icon_building_hunter.png"     , "icon_building_hunter",     sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"             , "icon_default",             sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_dirt.png"           , "icon_path_dirt" ,          sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_stone.png"          , "icon_path_stone",          sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_farmhouse.png"  , "icon_building_gatherer",   sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_woodcutter.png" , "icon_building_woodcutter", sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_quarry.png"     , "icon_building_quarry",     sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_house.png"      , "icon_building_house",      sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_flint.png"      , "icon_building_flint",      sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_hunter.png"     , "icon_building_hunter",     sf::IntRect(0, 0, 48, 48));
+
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_flint.png"  , "icon_item_flint"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_stone.png"  , "icon_item_stone"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_wood.png"   , "icon_item_wood"   , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_leather.png", "icon_item_leather", sf::IntRect(0, 0, 48, 48));
 
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_1x1", sf::IntRect(0,   0, 64,  32 ));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_2x2", sf::IntRect(64,  0, 128, 64 ));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_3x3", sf::IntRect(192, 0, 192, 96));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_4x4", sf::IntRect(384, 0, 256, 128));
 
+    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_green", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_red"  , COLOUR_RED_TRANSPARENT_HALF  , COLOUR_TRANSPARENT);
@@ -159,7 +165,7 @@ void Regionmap::render(float delta_time) {
 
     this->renderUI();
 
-    this->manager->window.getWindow()->display();
+    this->manager->window.display();
 }
 
 void Regionmap::handleInput() {
@@ -450,10 +456,8 @@ void Regionmap::renderRegion() {
             }
         }
 
-        auto compare = [](const GameObject& o1, const GameObject& o2) {
-            if((o1.getPosition2D().y < o2.getPosition2D().y) && (o1.getPosition2D().x < o2.getPosition2D().x)) return true;
-            if(o1.getPosition2D().y < o2.getPosition2D().y) return true;
-            return false;
+        const auto compare = [](const GameObject& o1, const GameObject& o2) {
+            return o1.getPosition2D().y < o2.getPosition2D().y;
         };
 
         std::sort(draw_order.begin(), draw_order.end(), compare);
@@ -888,7 +892,8 @@ void Regionmap::renderSelectedBuilding() {
             for(int y = -area_y; y <= area_y + building_area - 1; y++) {
                 for(int x = -area_x; x <= area_x + building_area - 1; x++) {
                     const int index = this->current_index + world_settings.calculateRegionIndex(x, y);
-                    const auto& tile = this->region->map[index];
+                    auto& tile = this->region->map[index];
+                    auto* building_on_tile = this->region->getBuildingAt(index);
                     auto tile_position = tile.getPosition2D();
                     auto tile_size     = tile.getSize();
 
@@ -904,9 +909,9 @@ void Regionmap::renderSelectedBuilding() {
                     quad[2].texCoords = sf::Vector2f(tile_size.x, tile_size.y);
                     quad[3].texCoords = sf::Vector2f(0, tile_size.y);
 
-                    auto colour = this->region->isSpotOccupied(index)
-                        ? COLOUR_GREEN
-                        : COLOUR_RED;
+                    auto colour = region->isSpotOccupied(index)
+                        ? COLOUR_RED_TRANSPARENT_HALF
+                        : COLOUR_WHITE_TRANSPARENT_HALF;
 
                     quad[0].color = colour;
                     quad[1].color = colour;

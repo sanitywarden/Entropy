@@ -4,6 +4,8 @@
 #include "gameObject.hpp"
 #include "resources.hpp"
 
+#include <iostream>
+
 const auto VECTOR0X0           = sf::Vector2f(0, 0);
 const auto VECTOR0X0X0         = sf::Vector3f(0, 0, 0);
 const auto VECTOR1X1           = sf::Vector2f(1, 1);
@@ -57,6 +59,8 @@ class Building : public GameObject {
 
         const int getNumericalType() const;
         std::string getBuildingMenuIconName() const;
+        
+        void setBuildingName(std::string name);
         std::string getBuildingName() const;
 
         // Assign ONLY BUILDING CLASS properties to this building.
