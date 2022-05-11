@@ -160,6 +160,12 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, int ind
     else if(building == BUILDING_FLINT_COLLECTOR)
         sp_building = std::shared_ptr <Building> (new FlintCollector());
 
+    else if(building == BUILDING_WELL)
+        sp_building = std::shared_ptr <Building> (new Well());
+
+    else if(building == BUILDING_WATER_COLLECTOR)
+        sp_building = std::shared_ptr <Building> (new WaterCollector());
+
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             const int i = index + world_settings.calculateRegionIndex(x, y);

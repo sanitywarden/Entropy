@@ -4,6 +4,7 @@
 #include "regionmap.hpp"
 #include "generationSettings.hpp"
 #include "nameGenerator.hpp"
+#include "menu.hpp"
 
 #include <iostream>
 
@@ -15,17 +16,16 @@ SimulationManager::SimulationManager() {
     this->texturizer = Texturizer(&this->resource);
 
     this->window.setTitle("Entropy by Vivit");
-    this->window.setKeyHold(false);
+    this->window.setKeyHold(true);
 
-    // static Menu menu(this);
-    // this->gamestate.addGamestate("menu", menu);
-    // this->gamestate.setGamestate("menu");
+    static Menu menu(this);
+    this->gamestate.addGamestate("menu", menu);
+    this->gamestate.setGamestate("menu");
 
     static Worldmap worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
     this->world = WorldGenerator(&this->resource, &this->texturizer);
     this->prepare();
-    this->gamestate.setGamestate("worldmap");
 
     // Global updates.
 
@@ -64,10 +64,10 @@ void SimulationManager::loop() {
             this->m_measurement_clock.restart();
             this->m_time_since_start = sf::Time::Zero;
             
-            if(this->time < INT_MAX)
+            Gamestate* gamestate = this->gamestate.getGamestate();
+            if(this->time < INT_MAX && gamestate->state_id != "Menu")
                 this->time++;
 
-            Gamestate* gamestate = this->gamestate.getGamestate();
             // Update gamestate-specific scheduler.
             if(gamestate)
                 gamestate->updateScheduler();
