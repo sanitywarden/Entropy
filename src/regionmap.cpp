@@ -88,6 +88,8 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry"         , sf::IntRect(384, 0, 128, 128));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_flint_collector", sf::IntRect(512, 0, 128, 128));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_gatherer"       , sf::IntRect(640, 0, 128, 128));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_water_collector", sf::IntRect(768, 0, 64, 64));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_well"           , sf::IntRect(832, 0, 64, 64));
 
     this->manager->resource.loadTexture("./res/regionmap/buildings/animalspot_deer.png", "animalspot_deer", sf::IntRect(0, 0, 128, 128));
 
@@ -457,10 +459,19 @@ void Regionmap::renderRegion() {
         }
 
         const auto compare = [](const GameObject& o1, const GameObject& o2) {
-            return o1.getPosition2D().y < o2.getPosition2D().y;
+            auto o1_y = o1.getPosition2D().y + o1.getSize().y;
+            auto o2_y = o2.getPosition2D().y + o2.getSize().y;
+
+            if(o1_y < o2_y)
+                return true;
+
+            return false;
         };
 
         std::sort(draw_order.begin(), draw_order.end(), compare);
+
+        // for(const auto& d : draw_order)
+        //     std::cout << d.getPosition().x << " " << d.getPosition().y << " " << d.getPosition().z << "\n";
 
         this->rmesh = false;
     }
