@@ -160,6 +160,15 @@ void SimulationManager::updateUnits() {
                 this->world.world_map[current].unit   = nullptr;
     
                 unit.get()->current_index = next_move;
+
+                for(int y = -1; y <= 1; y++) {
+                    for(int x = -1; x <= 1; x++) {
+                        const int index = next_move + world_settings.calculateWorldIndex(x, y);
+
+                        if(!player.discoveredRegion(index)) 
+                            player.discovered_regions.push_back(index);
+                    }
+                }
             }
         }
     }
@@ -360,6 +369,13 @@ void SimulationManager::initialiseWorld() {
         unit.get()->current_index       = settle_spot_index;
         unit.get()->owner_id            = player_id;
         player.addUnit(unit);
+
+        for(int y = -2; y <= 2; y++) {
+            for(int x = -2; x <= 2; x++) {
+                const int index = settle_spot_index + world_settings.calculateWorldIndex(x, y);
+                player.discovered_regions.push_back(index);
+            }
+        }
 
         region.unit = player.getUnit(unit.get()->getID());
 

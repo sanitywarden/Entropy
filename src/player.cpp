@@ -114,3 +114,11 @@ int Player::empireSize() const {
 int Player::getID() const {
     return this->player_id;
 }
+
+bool Player::discoveredRegion(int index) const {
+    return std::find(this->discovered_regions.begin(), this->discovered_regions.end(), index) != this->discovered_regions.end();    
+}
+
+bool Player::ownsRegion(int index) const {
+    return std::find(this->owned_regions.begin(), this->owned_regions.end(), index) != this->owned_regions.end();
+}

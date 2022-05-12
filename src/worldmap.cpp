@@ -393,57 +393,79 @@ void Worldmap::renderWorld() {
     const sf::Vector2f camera_centre = this->view_game.getCenter();
     const sf::Vector2f panel_size    = sf::Vector2f(world_settings.panelSize(), world_settings.panelSize());
     sf::Rect camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
+    auto* human_player = this->manager->getHumanPlayer();
 
-    for(const auto& region : this->manager->world.world_map) {
+    for(int i = 0; i < this->manager->world.world_map.size(); i++) {
+        const auto& region = this->manager->world.world_map[i];
         sf::Rect region_screen_space(region.getPosition2D(), region.getSize());
-        
+
         if(camera_screen_area.intersects(region_screen_space)) {
-            sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture(region.getTextureName());
-            this->manager->window.draw(region, states);
-            gpu_draw_calls++;
+            if(human_player->discoveredRegion(i)) {
+                // Draw panel.
+
+                sf::RenderStates panel_states;
+                panel_states.texture = &this->manager->resource.getTexture(region.getTextureName());
+                this->manager->window.draw(region, panel_states);
+                gpu_draw_calls++;
+            
+                // Draw panel details.
+                // Draw forest.
+
+                if(this->manager->world.forests.count(i)) {
+                    const auto& forest = this->manager->world.forests[i];
+                    sf::RenderStates forest_states;
+                    forest_states.texture = &this->manager->resource.getTexture(forest.getTextureName());
+                    this->manager->window.draw(forest, forest_states);
+                    gpu_draw_calls++;
+                }
+
+                // Draw rivers.
+
+                if(this->manager->world.rivers.count(i)) {
+                    const auto& river = this->manager->world.rivers[i];
+
+                    sf::RenderStates river_states;
+                    river_states.texture = &this->manager->resource.getTexture(river.getTextureName());
+                    this->manager->window.draw(river, river_states);
+                    gpu_draw_calls++;
+                }
+
+                if(this->manager->world.lakes.count(i)) {
+                    const auto& lake = this->manager->world.lakes[i];
+
+                    sf::RenderStates lake_states;
+                    lake_states.texture = &this->manager->resource.getTexture(lake.getTextureName());
+                    this->manager->window.draw(lake, lake_states);
+                    gpu_draw_calls++;
+                }
+            }
+
+            else {
+                sf::VertexArray fow(sf::Quads, 4);
+                fow[0].position = region.getPosition2D(); 
+                fow[1].position = region.getPosition2D() + sf::Vector2f(panel_size.x, 0);
+                fow[2].position = region.getPosition2D() + sf::Vector2f(panel_size.x, panel_size.y);
+                fow[3].position = region.getPosition2D() + sf::Vector2f(0, panel_size.y);
+
+                fow[0].color = COLOUR_BLACK;
+                fow[1].color = COLOUR_BLACK;
+                fow[2].color = COLOUR_BLACK;
+                fow[3].color = COLOUR_BLACK;
+                
+                this->manager->window.draw(fow);
+            }
+
+            for(const auto& player : this->manager->players) {
+                for(const auto& unit : player.units) {
+                    if(human_player->discoveredRegion(unit.get()->current_index)) {
+                        sf::RenderStates states;
+                        states.texture = &this->manager->resource.getTexture(unit.get()->getTextureName());
+                        this->manager->window.draw(*unit.get(), states);
+                    }
+                }
+            }
         }
     }
-
-    for(const auto& pair : this->manager->world.forests) {
-        const auto& forest = pair.second;
-        
-        sf::Rect forest_screen_space(forest.getPosition2D(), forest.getSize());
-
-        if(camera_screen_area.intersects(forest_screen_space)) {
-            sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture(forest.getTextureName());
-            this->manager->window.draw(forest, states);
-            gpu_draw_calls++;
-        }
-    }
-
-    for(const auto& pair : this->manager->world.rivers) {
-        const auto& river = pair.second;
-
-        sf::Rect river_screen_space(river.getPosition2D(), river.getSize());
-
-        if(camera_screen_area.intersects(river_screen_space)) {
-            sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture(river.getTextureName());
-            this->manager->window.draw(river, states);
-            gpu_draw_calls++;
-        }
-    }
-
-    for(const auto& pair : this->manager->world.lakes) {
-        const auto& lake = pair.second;
-
-        sf::Rect lake_screen_space(lake.getPosition2D(), lake.getSize());
-
-        if(camera_screen_area.intersects(lake_screen_space)) {
-            sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture(lake.getTextureName());
-            this->manager->window.draw(lake, states);
-            gpu_draw_calls++;
-        }
-    }
-
     // This is inefficient. You should not iterate through the world map two times.
     for(const auto& region : this->manager->world.world_map) {
         if(region.isOwned()) {
@@ -463,19 +485,12 @@ void Worldmap::renderWorld() {
         }
     }
 
-    for(const auto& player : this->manager->players) {
-        for(const auto& unit : player.units) {
-            sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture(unit.get()->getTextureName());
-            this->manager->window.draw(*unit.get(), states);
-        }
-    }
-
     this->manager->updateDrawCalls(gpu_draw_calls);
 }
 
 void Worldmap::selectPanel() {
-    if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI()) {
+    auto* human_player = this->manager->getHumanPlayer();
+    if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI() && human_player->discoveredRegion(this->current_index)) {
         const auto& region = this->manager->world.world_map[this->current_index];
         if(region.regiontype.is_ocean()) {
             this->setVisibilityFalse("component_widget_region");
@@ -589,7 +604,7 @@ void Worldmap::selectUnit() {
     auto* human_player = this->manager->getHumanPlayer();
 
     if(unit) {
-        if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && human_player->hasUnit(unit->getID())) {
+        if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && human_player->hasUnit(unit->getID()) && human_player->discoveredRegion(unit->current_index)) {
             this->selected_unit_id = unit->getID();
             this->setVisibilityTrue("component_widget_unit");
             this->setVisibilityFalse("component_widget_region");

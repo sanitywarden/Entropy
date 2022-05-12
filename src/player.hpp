@@ -15,12 +15,13 @@ namespace iso {
 
         public:
             std::vector <std::shared_ptr <Unit>> units;
-            std::vector <int> owned_regions;  // Indexes of the player owned regions. 
-            int               capital_region; // Index of the capital city.
+            std::vector <int> owned_regions;      // Indexes of the player owned regions. 
+            std::vector <int> discovered_regions;
+            int               capital_region;     // Index of the capital city.
             bool              is_human;
             sf::Color         team_colour;
             std::string       country_name;
-            int               player_id;      // Used to differenciate between players.
+            int               player_id;          // Used to differenciate between players.
 
         public:
             Player();
@@ -46,6 +47,8 @@ namespace iso {
             bool                      hasUnit(int unit_id) const;
             void                      removeUnit(int unit_id);
             int                       getID() const;
+            bool                      discoveredRegion(int index) const;
+            bool                      ownsRegion(int index) const;
     };
 }
 
