@@ -66,6 +66,11 @@ void WidgetRegionStorage::draw(sf::RenderTarget& target, sf::RenderStates states
                 auto* image_holder = static_cast<ImageHolder*>(component);
                 target.draw(*image_holder);
             }
+        
+            if(startsWith(component->getWidgetID(), "text_quantity")) {
+                auto* label = static_cast<Label*>(component);
+                target.draw(*label);
+            }
         }
     }
 }
@@ -75,9 +80,11 @@ void WidgetRegionStorage::refresh() {
         auto component = pair.second;
         auto component_name = component.get()->getWidgetID();
 
-        if(startsWith(component_name, "imageholder_")) {
+        if(startsWith(component_name, "imageholder_"))
             this->deleteComponent(component_name);
-        }
+
+        if(startsWith(component_name, "text_quantity_"))
+            this->deleteComponent(component_name);
     }
 
     auto image_size = sf::Vector2f(48, 48);
@@ -113,26 +120,42 @@ void WidgetRegionStorage::refresh() {
     for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
         if(current_region->resources.count(resource.getName())) {
             auto image = ImageComponent(new ImageHolder(this->manager, resource.getIcon()));
-            auto name = "imageholder_" + toLower(resource.getName());
-            image.get()->setWidgetID(name);
+            auto name_image = "imageholder_" + toLower(resource.getName());
+            image.get()->setWidgetID(name_image);
+            
+            auto text = LabelComponent(new Label(this->manager, std::to_string(current_region->getResourceQuantity(resource))));
+            auto name_text = "text_quantity_" + toLower(resource.getName());
+            text.get()->setWidgetID(name_text);
+
+            // std::cout << resource.getName() << " quantity: " << resource.getQuantity() << "\n";
 
             const int x = item_no % row_size;
             const int y = item_no / row_size;
 
+            // Image's final position.
             auto final_position = widget_position + offset + sf::Vector2f(x * image_size.x, y * image_size.y) + sf::Vector2f(x * offset.x, 0);
 
             image.get()->setWidgetPosition(final_position);
             image.get()->setWidgetSize(image_size);
 
+            // Quantity text's final position
+            auto text_final_position = final_position + sf::Vector2f(0, 32) + sf::Vector2f(4, -4); 
+
+            text.get()->setWidgetPosition(text_final_position);
+
             this->addComponent(image);
+            this->addComponent(text);
 
             item_no++;
         }
 
         // If the resource does not exist in the region storage, delete the image.
         else {
-            auto name = "imageholder_" + toLower(resource.getName());
-            this->deleteComponent(name);
+            auto name_image = "imageholder_" + toLower(resource.getName());
+            this->deleteComponent(name_image);
+
+            auto name_text = "text_quantity_" + toLower(resource.getName());
+            this->deleteComponent(name_text);
         }
     }
 }
