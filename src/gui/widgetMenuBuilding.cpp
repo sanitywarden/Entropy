@@ -26,7 +26,13 @@ WidgetMenuBuilding::~WidgetMenuBuilding() {
 }
 
 void WidgetMenuBuilding::createUI() {
-    sf::Vector2i t_widget_size(6, 10);
+    auto window_size = this->manager->window.windowSize();
+    auto ratio = sf::Vector2i(
+        window_size.x / 300,
+        window_size.y / 100
+    );
+
+    sf::Vector2i t_widget_size(ratio);
     int window_width  = this->manager->window.windowWidth();
     int window_height = this->manager->window.windowHeight();
 
@@ -39,38 +45,14 @@ void WidgetMenuBuilding::createUI() {
     this->addComponent(widget_body);
 
     auto image_size = sf::Vector2f(48, 48);
-    auto offset     = sf::Vector2f(image_size.x / 2, image_size.y / 2);
     int building_no = 0;
     
-    // Calculate the number of icons possible to fit in this widget.
-
-    int row_size = 0;
-    for(const auto& building : BUILDING_LOOKUP_TABLE) {
-        int a1 = widget_position.x + offset.x;
-        int n  = row_size;
-        int r  = row_size * offset.x;
-
-        int lim = widget_position.x + widget_size.x - offset.x;
-        int term = (n == 0)
-            ? a1
-            : a1 + (n - 1) * r;
-
-        if(term < lim)
-            row_size++;
-
-        else
-            break;  
-    }
-
     for(const auto& building : BUILDING_LOOKUP_TABLE) {
         if(building != BUILDING_EMPTY) {
             auto image = ImageComponent(new ImageHolder(this->manager, building.getBuildingMenuIconName()));
             image.get()->setWidgetID("imageholder_" + building.getTextureName());
-            
-            const int x = building_no % row_size;
-            const int y = building_no / row_size;
 
-            auto final_position = widget_position + offset + sf::Vector2f(x * image_size.x, y * image_size.y) + sf::Vector2f(x * offset.x, 0);
+            auto final_position = calculateItemPosition(building_no, BUILDING_LOOKUP_TABLE.size());       
 
             image.get()->setWidgetPosition(final_position);
             image.get()->setWidgetSize(image_size);
@@ -80,6 +62,69 @@ void WidgetMenuBuilding::createUI() {
             building_no++;
         }
     }
+}
+
+sf::Vector2f WidgetMenuBuilding::calculateItemPosition(int building_no, int building_total) {
+        sf::Vector2f widget_position = this->getComponent("widget_menu_building")->getWidgetPosition();
+        sf::Vector2f widget_size     = this->getComponent("widget_menu_building")->getWidgetSize();
+        sf::Vector2f image_size      = this->manager->resource.getTextureSize("icon_default");
+        sf::Vector2f offset     (widget_size.x / 20, widget_size.x / 20);
+        sf::Vector2f space_const(widget_size.x / 40, widget_size.y / 40);
+
+        int row_size = 0;
+        for(const auto& building : BUILDING_LOOKUP_TABLE) {
+            int a1 = widget_position.x + offset.x;
+            int n  = row_size;
+            int r  = image_size.x + space_const.x;
+
+            int lim = widget_position.x + widget_size.x - offset.x;
+            int term = (n == 0)
+                ? a1
+                : a1 + (n - 1) * r;
+
+            if(term + image_size.x < lim)
+                row_size++;
+            
+            else
+                break;
+        }
+
+        int space = (widget_size.x + -2 * offset.x + -row_size * image_size.x) / (row_size - 1);
+        int x     = building_no % row_size;
+        int y     = building_no / row_size;
+        int ri    = building_no - (y * row_size); // Item index in the row.
+        int hi    = row_size / 2;                 // Half items.
+
+        sf::Vector2f position;
+        if(ri < hi || building_total < row_size) {
+            position =
+            widget_position
+            + offset
+            + sf::Vector2f(x * image_size.x, y * image_size.y)
+            + sf::Vector2f(x * space       , y * space);
+        }
+
+        else if(ri >= hi) {
+            position = 
+            widget_position
+            + sf::Vector2f(widget_size.x, 0)
+            + sf::Vector2f(-offset.x, offset.y)
+            + sf::Vector2f(-image_size.x, 0)
+            + sf::Vector2f(-(x - hi) * image_size.x, y * image_size.y)
+            + sf::Vector2f(-(x - hi) * space       , y * space);
+        }
+
+        // Row size is 2n + 1.
+        // Middle item.
+        else if(ri == hi + 1 && row_size % 2 == 1) {
+            auto n_left  = this->calculateItemPosition(building_no - 1, building_total);
+            auto n_right = this->calculateItemPosition(building_no + 1, building_total);
+
+            auto middle_item_offset = (n_right.x - (n_left.x + image_size.x) - image_size.x) / 2;
+            position = n_left + sf::Vector2f(middle_item_offset, 0);
+        }
+
+        return position;
 }
 
 void WidgetMenuBuilding::draw(sf::RenderTarget& target, sf::RenderStates states) const {

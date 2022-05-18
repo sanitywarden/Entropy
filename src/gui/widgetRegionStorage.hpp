@@ -8,7 +8,7 @@ namespace gui {
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             void createUI() override;
-
+            sf::Vector2f calculateItemPosition(int resource_no, int resource_total);
         private:
             bool should_refresh;
 

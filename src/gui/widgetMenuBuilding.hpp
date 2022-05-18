@@ -10,7 +10,8 @@ namespace gui {
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             void createUI() override;
-            void findBuilding();    
+            void findBuilding();   
+            sf::Vector2f calculateItemPosition(int building_no, int building_total); 
         private:
             std::string last_selected_building;
         

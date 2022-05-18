@@ -26,7 +26,13 @@ WidgetRegionStorage::~WidgetRegionStorage() {
 }
 
 void WidgetRegionStorage::createUI() {
-    sf::Vector2i t_widget_size(6, 10);
+    auto window_size = this->manager->window.windowSize();
+    auto ratio = sf::Vector2i(
+        window_size.x / 300,
+        window_size.y / 100
+    );
+
+    sf::Vector2i t_widget_size(ratio);
     int window_width  = this->manager->window.windowWidth();
     int window_height = this->manager->window.windowHeight();
 
@@ -88,35 +94,20 @@ void WidgetRegionStorage::refresh() {
     }
 
     auto image_size = sf::Vector2f(48, 48);
-    auto offset     = sf::Vector2f(image_size.x / 2, image_size.y / 2);
-    int item_no = 0;
+    int resource_no = 0;
     
     auto widget_position = this->getComponent("widget_menu_items")->getWidgetPosition();
     auto widget_size     = this->getComponent("widget_menu_items")->getWidgetSize();
 
-    // Calculate the number of icons possible to fit in this widget.
-
-    int row_size = 0;
-    for(const auto& building : RESOURCE_LOOKUP_TABLE) {
-        int a1 = widget_position.x + offset.x;
-        int n  = row_size;
-        int r  = row_size * offset.x;
-
-        int lim = widget_position.x + widget_size.x - offset.x;
-        int term = (n == 0)
-            ? a1
-            : a1 + (n - 1) * r;
-
-        if(term < lim)
-            row_size++;
-
-        else
-            break;  
-    }
-
     auto* gamestate = this->manager->gamestate.getGamestate();
     auto* regionmap = static_cast<Regionmap*>(gamestate);
     auto* current_region = regionmap->getCurrentRegion();
+    
+    int resource_total = 0;
+    for(const auto& resource : RESOURCE_LOOKUP_TABLE)
+        if(current_region->resources.count(resource.getName()))
+            resource_total++;
+
     for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
         if(current_region->resources.count(resource.getName())) {
             auto image = ImageComponent(new ImageHolder(this->manager, resource.getIcon()));
@@ -127,26 +118,21 @@ void WidgetRegionStorage::refresh() {
             auto name_text = "text_quantity_" + toLower(resource.getName());
             text.get()->setWidgetID(name_text);
 
-            // std::cout << resource.getName() << " quantity: " << resource.getQuantity() << "\n";
-
-            const int x = item_no % row_size;
-            const int y = item_no / row_size;
-
             // Image's final position.
-            auto final_position = widget_position + offset + sf::Vector2f(x * image_size.x, y * image_size.y) + sf::Vector2f(x * offset.x, 0);
+            auto position = this->calculateItemPosition(resource_no, resource_total);
 
-            image.get()->setWidgetPosition(final_position);
+            image.get()->setWidgetPosition(position);
             image.get()->setWidgetSize(image_size);
 
             // Quantity text's final position
-            auto text_final_position = final_position + sf::Vector2f(0, 32) + sf::Vector2f(4, -4); 
+            auto text_final_position = position + sf::Vector2f(0, 32) + sf::Vector2f(4, -4); 
 
             text.get()->setWidgetPosition(text_final_position);
 
             this->addComponent(image);
             this->addComponent(text);
 
-            item_no++;
+            resource_no++;
         }
 
         // If the resource does not exist in the region storage, delete the image.
@@ -158,4 +144,71 @@ void WidgetRegionStorage::refresh() {
             this->deleteComponent(name_text);
         }
     }
+}
+
+sf::Vector2f WidgetRegionStorage::calculateItemPosition(int resource_no, int resource_total) {
+    auto* gamestate = this->manager->gamestate.getGamestate();
+    auto* regionmap = static_cast<Regionmap*>(gamestate);
+    auto* current_region = regionmap->getCurrentRegion();
+
+    sf::Vector2f widget_position = this->getComponent("widget_menu_items")->getWidgetPosition();
+    sf::Vector2f widget_size     = this->getComponent("widget_menu_items")->getWidgetSize();
+    sf::Vector2f image_size      = this->manager->resource.getTextureSize("icon_default");
+    sf::Vector2f offset     (widget_size.x / 20, widget_size.x / 20);
+    sf::Vector2f space_const(widget_size.x / 40, widget_size.y / 40);
+
+    int row_size = 0;
+    for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
+        int a1 = widget_position.x + offset.x;
+        int n  = row_size;
+        int r  = image_size.x + space_const.x;
+
+        int lim = widget_position.x + widget_size.x - offset.x;
+        int term = (n == 0)
+            ? a1
+            : a1 + (n - 1) * r;
+
+        if(term + image_size.x < lim)
+            row_size++;
+        
+        else
+            break;
+    }
+
+    int space = (widget_size.x + -2 * offset.x + -row_size * image_size.x) / (row_size - 1);
+    int x     = resource_no % row_size;
+    int y     = resource_no / row_size;
+    int ri    = resource_no - (y * row_size); // Item index in the row.
+    int hi    = row_size / 2;                 // Half items.
+
+    sf::Vector2f position;
+    if(ri < hi || resource_total < row_size) {
+        position =
+        widget_position
+        + offset
+        + sf::Vector2f(x * image_size.x, y * image_size.y)
+        + sf::Vector2f(x * space       , y * space);
+    }
+
+    else if(ri >= hi) {
+        position = 
+        widget_position
+        + sf::Vector2f(widget_size.x, 0)
+        + sf::Vector2f(-offset.x, offset.y)
+        + sf::Vector2f(-image_size.x, 0)
+        + sf::Vector2f(-(x - hi) * image_size.x, y * image_size.y)
+        + sf::Vector2f(-(x - hi) * space       , y * space);
+    }
+
+    // Row size is 2n + 1.
+    // Middle item.
+    else if(ri == hi + 1 && row_size % 2 == 1) {
+        auto n_left  = this->calculateItemPosition(resource_no - 1, resource_total);
+        auto n_right = this->calculateItemPosition(resource_no + 1, resource_total);
+
+        auto middle_item_offset = (n_right.x - (n_left.x + image_size.x) - image_size.x) / 2;
+        position = n_left + sf::Vector2f(middle_item_offset, 0);
+    }
+    
+    return position;
 }
