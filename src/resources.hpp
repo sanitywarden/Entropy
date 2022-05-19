@@ -39,6 +39,7 @@ namespace iso {
     const Resource RESOURCE_FOOD   ("Food",    "icon_default"     , 0);
     const Resource RESOURCE_LEATHER("Leather", "icon_item_leather", 0);
     const Resource RESOURCE_WATER  ("Water",   "icon_default"     , 0);
+    const Resource RESOURCE_TOOLS  ("Tools",   "icon_default"     , 0);
 
     const static std::vector <Resource> RESOURCE_LOOKUP_TABLE = {
         RESOURCE_WOOD,
@@ -46,7 +47,8 @@ namespace iso {
         RESOURCE_FLINT,
         RESOURCE_FOOD,
         RESOURCE_LEATHER,
-        RESOURCE_WATER
+        RESOURCE_WATER,
+        RESOURCE_TOOLS,
     };
 }
 

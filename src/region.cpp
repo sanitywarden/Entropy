@@ -166,6 +166,12 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, int ind
     else if(building == BUILDING_WATER_COLLECTOR)
         sp_building = std::shared_ptr <Building> (new WaterCollector());
 
+    else if(building == BUILDING_TOOLMAKER)
+        sp_building = std::shared_ptr <Building> (new Toolmaker());
+
+    else
+        std::cout << "[Region][Place Building]: Undefined building type: " << building.getName() << "\n";
+
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             const int i = index + world_settings.calculateRegionIndex(x, y);

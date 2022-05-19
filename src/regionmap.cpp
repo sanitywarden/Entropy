@@ -90,6 +90,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_gatherer"       , sf::IntRect(640, 0, 128, 128));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_water_collector", sf::IntRect(768, 0, 64, 64));
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_well"           , sf::IntRect(832, 0, 64, 64));
+    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_toolmaker"      , sf::IntRect(896, 0, 128, 128));
 
     this->manager->resource.loadTexture("./res/regionmap/buildings/animalspot_deer.png", "animalspot_deer", sf::IntRect(0, 0, 128, 128));
 

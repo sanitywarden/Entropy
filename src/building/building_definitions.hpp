@@ -13,6 +13,7 @@
 #include "flint_collector.hpp"
 #include "well.hpp"
 #include "water_collector.hpp"
+#include "toolmaker.hpp"
 
 #include <vector>
 
@@ -31,6 +32,7 @@ namespace iso {
     const FlintCollector BUILDING_FLINT_COLLECTOR; // ID 9.
     const Well           BUILDING_WELL;            // ID 10.
     const WaterCollector BUILDING_WATER_COLLECTOR; // ID 11.
+    const Toolmaker      BUILDING_TOOLMAKER;       // ID 12.
 
     // If the building should be possible to place, add it here.
     const static std::vector <Building> BUILDING_LOOKUP_TABLE = {
@@ -44,7 +46,8 @@ namespace iso {
         BUILDING_HUNTER,
         BUILDING_FLINT_COLLECTOR,
         BUILDING_WELL,
-        BUILDING_WATER_COLLECTOR
+        BUILDING_WATER_COLLECTOR,
+        BUILDING_TOOLMAKER,
     };
 }
 
