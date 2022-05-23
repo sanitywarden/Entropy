@@ -59,7 +59,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_cold",         sf::IntRect(64, 0, 64, 32   ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_subtropical",  sf::IntRect(128, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tropical",     sf::IntRect(192, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_tundra",             sf::IntRect(256, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tundra",       sf::IntRect(256, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_ocean",              sf::IntRect(320, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river",              sf::IntRect(384, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black",              sf::IntRect(0, 288, 64, 32  ));
@@ -134,6 +134,8 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/ui/items/icon_item_stone.png"  , "icon_item_stone"  , sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/items/icon_item_wood.png"   , "icon_item_wood"   , sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/items/icon_item_leather.png", "icon_item_leather", sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_meat.png"   , "icon_item_meat"   , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_grain.png"  , "icon_item_grain"  , sf::IntRect(0, 0, 48, 48));
 
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_1x1", sf::IntRect(0,   0, 64,  32 ));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_2x2", sf::IntRect(64,  0, 128, 64 ));
@@ -812,10 +814,21 @@ void Regionmap::recalculateMesh() {
 
 void Regionmap::renderSelectedBuilding() {
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY && building_menu->isVisible()) {
+    Building building        = building_menu->getBuilding();
+
+    auto in_bounds = false;
+    if(building != BUILDING_EMPTY) {
+        bool current      = world_settings.inRegionBounds(this->current_index);
+        bool right        = world_settings.inRegionBounds(this->current_index + building.getBuildingArea().x - 1);
+        bool down         = world_settings.inRegionBounds(this->current_index + world_settings.calculateRegionIndex(0, building.getBuildingArea().y - 1));
+        bool bottom_right = world_settings.inRegionBounds(this->current_index + world_settings.calculateRegionIndex(building.getBuildingArea().x - 1, building.getBuildingArea().y - 1));
+    
+        in_bounds = current && right && down && bottom_right;
+    }
+
+    if(building != BUILDING_EMPTY && building_menu->isVisible() && world_settings.inRegionBounds(this->current_index) && in_bounds) {
         auto tile = this->region->map[this->current_index];
         
-        Building building        = building_menu->getBuilding();
         building.object_position = tile.getPosition();
         
         const int a1_w = 0; 
@@ -904,6 +917,10 @@ void Regionmap::renderSelectedBuilding() {
             for(int y = -area_y; y <= area_y + building_area - 1; y++) {
                 for(int x = -area_x; x <= area_x + building_area - 1; x++) {
                     const int index = this->current_index + world_settings.calculateRegionIndex(x, y);
+
+                    if(!world_settings.inRegionBounds(index))
+                        continue;
+
                     auto& tile = this->region->map[index];
                     auto* building_on_tile = this->region->getBuildingAt(index);
                     auto tile_position = tile.getPosition2D();

@@ -39,7 +39,7 @@ namespace iso {
         { "tile_grass_tropical" }, 
         { "tile_tree_cypress", "tile_tree_acacia", "tile_tree_palm" });
     static Biome BIOME_TUNDRA("Tundra", COLOUR_BROWN_TUNDRA, 
-        { "tile_tundra" }, 
+        { "tile_grass_tundra" }, 
         { "tile_tree_spruce_1", "tile_tree_spruce_2" });
 }
 
