@@ -20,7 +20,7 @@ void Farmhouse::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    Resource food = RESOURCE_FOOD;
+    Resource grain = RESOURCE_GRAIN;
 
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
@@ -28,13 +28,13 @@ void Farmhouse::update(GameObject* object, int building_index) {
 
             auto texture_name = region->map[index].getTextureName();
             if(startsWith(texture_name, "tile_grass"))
-                food.incrementQuantity();
+                grain.incrementQuantity();
         }
     }
 
     auto number_of_buildings = region->isBuildingInProximity(*this, building_index);
     if(number_of_buildings)
-        food.setQuantity(food.getQuantity() / number_of_buildings);
+        grain.setQuantity(grain.getQuantity() / number_of_buildings);
 
-    region->addResource(food);
+    region->addResource(grain);
 }

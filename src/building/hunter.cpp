@@ -22,7 +22,8 @@ void Hunter::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    Resource food = RESOURCE_FOOD;
+    Resource meat    = RESOURCE_MEAT;
+    Resource leather = RESOURCE_LEATHER; 
 
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
@@ -30,12 +31,15 @@ void Hunter::update(GameObject* object, int building_index) {
             
             auto building = region->getBuildingAt(index);
             if(building) {
-                if(*building == BUILDING_ANIMAL_SPOT) {
-                    food.incrementQuantity();
+                if(building->getBuildingName() == "Animal Spot") {
+                    meat.incrementQuantity();
                 }
             }
         }
     }
 
-    region->addResource(food);
+    leather.setQuantity(meat.getQuantity() / 4);
+
+    region->addResource(meat);
+    region->addResource(leather);
 }

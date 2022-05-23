@@ -36,7 +36,8 @@ namespace iso {
     const Resource RESOURCE_WOOD   ("Wood",    "icon_item_wood"   , 0);
     const Resource RESOURCE_STONE  ("Stone",   "icon_item_stone"  , 0);
     const Resource RESOURCE_FLINT  ("Flint",   "icon_item_flint"  , 0);
-    const Resource RESOURCE_FOOD   ("Food",    "icon_default"     , 0);
+    const Resource RESOURCE_GRAIN  ("Grain",   "icon_item_grain"  , 0);
+    const Resource RESOURCE_MEAT   ("Meat",    "icon_item_meat"   , 0);
     const Resource RESOURCE_LEATHER("Leather", "icon_item_leather", 0);
     const Resource RESOURCE_WATER  ("Water",   "icon_default"     , 0);
     const Resource RESOURCE_TOOLS  ("Tools",   "icon_default"     , 0);
@@ -45,7 +46,8 @@ namespace iso {
         RESOURCE_WOOD,
         RESOURCE_STONE,
         RESOURCE_FLINT,
-        RESOURCE_FOOD,
+        RESOURCE_GRAIN,
+        RESOURCE_MEAT,
         RESOURCE_LEATHER,
         RESOURCE_WATER,
         RESOURCE_TOOLS,
