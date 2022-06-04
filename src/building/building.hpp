@@ -30,6 +30,7 @@ class Building : public GameObject {
         // To produce a item, they need to be in proximity to a resource, and every instance of that resource increases the production rate.
         // This variable makes sure that in a certain area there can not be the same type of building (or rather, that the production efficiency will be lower).
         sf::Vector2f       building_proximity_area;
+        bool               removable;
     
     public:
         void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -44,7 +45,8 @@ class Building : public GameObject {
             std::string building_menu_icon, 
             int numerical_type, 
             sf::Vector2f building_size, 
-            sf::Vector2f proximity
+            sf::Vector2f proximity,
+            bool removable = true
         );
         
         /* Get the area occupied by the building. */
@@ -83,6 +85,8 @@ class Building : public GameObject {
 
         /* Implementation of the building's functionality. */
         virtual void update(GameObject* region, int building_index) { return; } 
+
+        bool isRemovable() const;
 };
 }
 

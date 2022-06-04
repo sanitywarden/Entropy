@@ -13,9 +13,10 @@ Building::Building()
     this->numerical_type          = 0;
     this->building_proximity_area = VECTOR0X0;
     this->building_name           = "Empty";
+    this->removable               = true;
 }
 
-Building::Building(sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity) 
+Building::Building(sf::Vector2f size, std::string texture_name, std::string building_name, std::string building_menu_icon, int numerical_type, sf::Vector2f building_size, sf::Vector2f proximity, bool removable) 
     : GameObject(VECTOR0X0X0, VECTOR0X0X0, size, texture_name, "Building") 
 {
     this->building_menu_icon      = building_menu_icon;
@@ -23,6 +24,7 @@ Building::Building(sf::Vector2f size, std::string texture_name, std::string buil
     this->numerical_type          = numerical_type;
     this->building_proximity_area = proximity;
     this->building_name           = building_name;
+    this->removable               = removable;
 }
 
 Building::Building(const Building& building) 
@@ -33,6 +35,7 @@ Building::Building(const Building& building)
     this->numerical_type          = building.getNumericalType();
     this->building_proximity_area = building.getProductionArea();
     this->building_name           = building.getBuildingName();
+    this->removable               = building.isRemovable();
 }
 
 Building::~Building() {
@@ -93,6 +96,8 @@ void Building::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 void Building::assignBuildingProperties(const Building& building) {
     this->numerical_type = building.numerical_type;
     this->building_size  = building.building_size;
+    this->building_name  = building.building_name;
+    this->removable      = building.removable;
 }
 
 void Building::assignAllProperties(const Building& building) {
@@ -115,4 +120,8 @@ std::string Building::getBuildingName() const {
 
 void Building::setBuildingName(std::string name) {
     this->building_name = name;
+}
+
+bool Building::isRemovable() const {
+    return this->removable;
 }
