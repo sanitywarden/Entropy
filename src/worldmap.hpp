@@ -11,6 +11,7 @@
 #include "gui/performance.hpp"
 #include "gui/widgetRegion.hpp"
 #include "gui/widgetUnit.hpp"
+#include "gui/widgetNameCity.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>

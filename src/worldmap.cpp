@@ -43,13 +43,53 @@ void Worldmap::initialise() {
     this->view_interface.setSize(this->manager->window.windowSize());
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
 
-    this->controls.addKeyMappingCheck("key_tilde",             sf::Keyboard::Key::Tilde);
+    this->controls.addKeyMappingCheck("key_f3",                sf::Keyboard::Key::F3);
+    this->controls.addKeyMappingCheck("tilde",                 sf::Keyboard::Key::Tilde);
     this->controls.addKeyMappingCheck("key_escape",            sf::Keyboard::Key::Escape);
     this->controls.addKeyMappingCheck("key_regenerate_world",  sf::Keyboard::Key::R);
     this->controls.addKeyMappingCheck("arrow_left",            sf::Keyboard::Key::Left);
     this->controls.addKeyMappingCheck("arrow_right",           sf::Keyboard::Key::Right);
     this->controls.addKeyMappingCheck("arrow_down",            sf::Keyboard::Key::Down);
     this->controls.addKeyMappingCheck("arrow_up",              sf::Keyboard::Key::Up);
+    this->controls.addKeyMappingCheck("backspace",             sf::Keyboard::Key::BackSpace);
+
+    this->controls.addKeyMappingCheck("A", sf::Keyboard::Key::A);
+    this->controls.addKeyMappingCheck("B", sf::Keyboard::Key::B);
+    this->controls.addKeyMappingCheck("C", sf::Keyboard::Key::C);
+    this->controls.addKeyMappingCheck("D", sf::Keyboard::Key::D);
+    this->controls.addKeyMappingCheck("E", sf::Keyboard::Key::E);
+    this->controls.addKeyMappingCheck("F", sf::Keyboard::Key::F);
+    this->controls.addKeyMappingCheck("G", sf::Keyboard::Key::G);
+    this->controls.addKeyMappingCheck("H", sf::Keyboard::Key::H);
+    this->controls.addKeyMappingCheck("I", sf::Keyboard::Key::I);
+    this->controls.addKeyMappingCheck("J", sf::Keyboard::Key::J);
+    this->controls.addKeyMappingCheck("K", sf::Keyboard::Key::K);
+    this->controls.addKeyMappingCheck("L", sf::Keyboard::Key::L);
+    this->controls.addKeyMappingCheck("M", sf::Keyboard::Key::M);
+    this->controls.addKeyMappingCheck("N", sf::Keyboard::Key::N);
+    this->controls.addKeyMappingCheck("O", sf::Keyboard::Key::O);
+    this->controls.addKeyMappingCheck("P", sf::Keyboard::Key::P);
+    this->controls.addKeyMappingCheck("R", sf::Keyboard::Key::R);
+    this->controls.addKeyMappingCheck("S", sf::Keyboard::Key::S);
+    this->controls.addKeyMappingCheck("T", sf::Keyboard::Key::T);
+    this->controls.addKeyMappingCheck("U", sf::Keyboard::Key::U);
+    this->controls.addKeyMappingCheck("W", sf::Keyboard::Key::W);
+    this->controls.addKeyMappingCheck("V", sf::Keyboard::Key::V);
+    this->controls.addKeyMappingCheck("Q", sf::Keyboard::Key::Q);
+    this->controls.addKeyMappingCheck("X", sf::Keyboard::Key::X);
+    this->controls.addKeyMappingCheck("Y", sf::Keyboard::Key::Y);
+    this->controls.addKeyMappingCheck("Z", sf::Keyboard::Key::Z);
+
+    this->controls.addKeyMappingCheck("0", sf::Keyboard::Key::Num0);
+    this->controls.addKeyMappingCheck("1", sf::Keyboard::Key::Num1);
+    this->controls.addKeyMappingCheck("2", sf::Keyboard::Key::Num2);
+    this->controls.addKeyMappingCheck("3", sf::Keyboard::Key::Num3);
+    this->controls.addKeyMappingCheck("4", sf::Keyboard::Key::Num4);
+    this->controls.addKeyMappingCheck("5", sf::Keyboard::Key::Num5);
+    this->controls.addKeyMappingCheck("6", sf::Keyboard::Key::Num6);
+    this->controls.addKeyMappingCheck("7", sf::Keyboard::Key::Num7);
+    this->controls.addKeyMappingCheck("8", sf::Keyboard::Key::Num8);
+    this->controls.addKeyMappingCheck("9", sf::Keyboard::Key::Num9);
 }
 
 void Worldmap::loadResources() {
@@ -261,17 +301,45 @@ void Worldmap::handleInput() {
                 break;
             }
 
+            case sf::Event::Resized: {
+                auto new_window_size = sf::Vector2f(
+                    this->event.size.width,
+                    this->event.size.height
+                );
+
+                this->view_game.setSize(new_window_size);
+                
+                this->view_interface.setSize(new_window_size);
+                this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
+
+                this->resizeUI();
+
+                break; 
+            }
+
+            case sf::Event::TextEntered: {
+                sf::String input(this->event.text.unicode);
+                auto readable_text = input.toAnsiString();
+
+                auto* settle_city = static_cast<gui::WidgetSettleCity*>(this->getInterfaceComponent("component_widget_settle_city"));
+                if(settle_city->acceptsInput() && settle_city->isVisible())
+                    settle_city->updateInput(readable_text);
+
+                break;
+            }
+
             case sf::Event::KeyPressed: {
                 for(const auto& pair : this->controls.key_map) {
                     const auto& name  = pair.first;
                     const int   state = this->controls.isKeyPressed(name);
 
-                    if(this->controls.key_state.count(name))
+                    if(this->controls.key_state.count(name)) {
                         this->controls.key_state[name] = state;
+                    }
                     else this->controls.key_state.insert({ name, state });
                 }
 
-                if(this->controls.keyState("key_tilde")) {
+                if(this->controls.keyState("key_f3")) {
                     this->toggleComponentVisibility("component_debug_performance");
                 }
 
@@ -311,6 +379,7 @@ void Worldmap::handleInput() {
                     if(!(state_old && state_current))
                         this->controls.key_state[name] = state_current;  
                 }
+                
                 break;
             }
 
@@ -326,7 +395,7 @@ void Worldmap::handleInput() {
                 const bool unit_exists = current_region.isUnitPresent();
                 if(this->controls.mouseLeftPressed()) {
                     if(unit_exists && current_region.unit->contains(this->mouse_position_window)) {
-                        this->selectUnit(); 
+                        this->selectUnit();
                     }
     
                     else {
@@ -559,10 +628,12 @@ void Worldmap::createUI() {
     static gui::WidgetRegion widget_region(this->manager);
     static gui::DebugPerformance widget_performance_worldmap(this->manager);
     static gui::WidgetUnit widget_unit(this->manager);
+    static gui::WidgetSettleCity widget_settle_city(this->manager);
 
     this->addInterfaceComponent(&widget_region);
     this->addInterfaceComponent(&widget_performance_worldmap);
     this->addInterfaceComponent(&widget_unit);
+    this->addInterfaceComponent(&widget_settle_city);
 }
 
 void Worldmap::gamestateLoad() {
@@ -575,7 +646,7 @@ void Worldmap::gamestateLoad() {
         : nullptr;
     
     if(human_player) {
-        auto* first_unit = human_player->getUnit("unit_settler");
+        auto* first_unit = human_player->getUnit("Settler");
 
         int index = (!regionmap && first_unit)
             ? first_unit->current_index    // If loaded in for the first time.
