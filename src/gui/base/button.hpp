@@ -17,12 +17,14 @@ namespace gui {
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             std::string getBlockTexture(int x, int y, sf::Vector2i dimensions) const override;
+            std::string texture_id;
         public:
             Button();
             Button(iso::SimulationManager* manager, sf::Vector2i dimensions, std::string data);
             ~Button();
 
             Label label;
+            void setWidgetTexture(std::string texture_name_base);
     };
 }
 

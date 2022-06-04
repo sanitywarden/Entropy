@@ -18,7 +18,6 @@ namespace gui {
             ~WidgetRegionStorage();
 
             void updateUI() override;
-            void refresh();
     };
 }
 

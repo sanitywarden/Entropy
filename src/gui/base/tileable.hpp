@@ -29,6 +29,8 @@ namespace gui {
             ~PropertyTileable();
 
             virtual std::string getBlockTexture(int current_x, int current_y, sf::Vector2i dimensions) const;
+            sf::Vector2i getBlockSize() const;
+            void setBlockSize(sf::Vector2i size);
     };
 }
 

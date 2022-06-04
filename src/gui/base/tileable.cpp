@@ -39,3 +39,11 @@ PropertyTileable::~PropertyTileable() {
 std::string PropertyTileable::getBlockTexture(int current_x, int current_y, sf::Vector2i dimensions) const {
     return "default";
 }
+
+sf::Vector2i PropertyTileable::getBlockSize() const {
+    return this->m_dimensions;
+}
+
+void PropertyTileable::setBlockSize(sf::Vector2i size) {
+    this->m_dimensions = size;
+}

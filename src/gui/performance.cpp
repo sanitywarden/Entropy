@@ -79,7 +79,7 @@ void DebugPerformance::updateUI() {
 
         data += "Current index: "        + std::to_string(current_index)                        + "\n";
         data += "Selected: "             + std::to_string(grid_position.x) + " " + std::to_string(grid_position.y) + "\n";
-        data += "Selected building: "    + selected_building.getName() + "\n";
+        data += "Selected building: "    + selected_building.getBuildingName() + "\n";
 
         data += "Tree quantity: "        + std::to_string(region->trees.size())                 + "\n";
         data += "Building quantity: "    + std::to_string(region->buildings.size())             + "\n";

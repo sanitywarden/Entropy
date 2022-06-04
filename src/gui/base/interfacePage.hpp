@@ -9,6 +9,7 @@
 #include "gui/base/label.hpp"
 #include "gui/base/image.hpp"
 #include "gui/base/widget.hpp"
+#include "gui/base/inputBox.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <map>
@@ -21,6 +22,7 @@ namespace gui {
     typedef std::shared_ptr <Label>          LabelComponent;
     typedef std::shared_ptr <ImageHolder>    ImageComponent;
     typedef std::shared_ptr <Widget>         WidgetComponent;
+    typedef std::shared_ptr <InputBox>       InputBoxComponent;
 
     /*  This is a base class for GUI pages.
      *  GUI page is a high level GUI component ready to draw. It represents some interface in game.
@@ -28,7 +30,6 @@ namespace gui {
     class InterfacePage : public AbstractWidget {
         protected:
             virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const { return; }
-            virtual void createUI() { return; }
         protected:
             std::map <std::string, std::shared_ptr<AbstractWidget>> interface;
             iso::SimulationManager* manager;
@@ -37,6 +38,7 @@ namespace gui {
             InterfacePage(iso::SimulationManager* manager);
             ~InterfacePage();
 
+            virtual void    createUI()      { return; }
             virtual void    updateUI()      { return; }
             virtual void    functionality() { return; }
             AbstractWidget* getComponent(std::string id) const;

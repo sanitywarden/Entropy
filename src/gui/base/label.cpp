@@ -52,6 +52,11 @@ void Label::align(Alignment alignment, sf::Vector2f parent_position, sf::Vector2
             this->final_position = sf::Vector2f(parent_position.x + parent_size.x / 4, parent_position.y + parent_size.y / 4);
             break;
         }
+
+        case Alignment::ALIGMNENT_CENTRED_LEFT: {
+            this->final_position = sf::Vector2f(parent_position.x, parent_position.y + parent_size.y / 4);
+            break;
+        }
     }
 }
 

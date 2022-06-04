@@ -2,7 +2,6 @@
 #define _GUI_ABSTRACT_WIDGET_HPP_
 
 #include <SFML/Graphics.hpp>
-#include <functional>
 
 namespace gui {    
     enum class WidgetState {

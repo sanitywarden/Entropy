@@ -45,13 +45,6 @@ void WidgetRegionStorage::createUI() {
     this->addComponent(widget_body);
 }
 
-void WidgetRegionStorage::updateUI() {
-    if(this->should_refresh) {
-        this->refresh();
-        this->should_refresh = false;
-    }
-}
-
 void WidgetRegionStorage::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if(!this->manager)
         return;
@@ -81,7 +74,7 @@ void WidgetRegionStorage::draw(sf::RenderTarget& target, sf::RenderStates states
     }
 }
 
-void WidgetRegionStorage::refresh() {
+void WidgetRegionStorage::updateUI() {
     for(auto pair : this->interface) {
         auto component = pair.second;
         auto component_name = component.get()->getWidgetID();
@@ -110,6 +103,9 @@ void WidgetRegionStorage::refresh() {
 
     for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
         if(current_region->resources.count(resource.getName())) {
+            if(!current_region->resources[resource.getName()])
+                continue;
+
             auto image = ImageComponent(new ImageHolder(this->manager, resource.getIcon()));
             auto name_image = "imageholder_" + toLower(resource.getName());
             image.get()->setWidgetID(name_image);
@@ -182,7 +178,7 @@ sf::Vector2f WidgetRegionStorage::calculateItemPosition(int resource_no, int res
     int hi    = row_size / 2;                 // Half items.
 
     sf::Vector2f position;
-    if(ri < hi || resource_total < row_size) {
+    if(ri < hi || resource_total < row_size || ri < row_size) {
         position =
         widget_position
         + offset

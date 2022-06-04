@@ -10,8 +10,6 @@ using namespace iso;
 WidgetUnit::WidgetUnit() {
     this->manager = nullptr;
     std::cout << "[GUI][WidgetUnit]: Simulation manager is a nullptr.\n";
-
-    this->unit = nullptr;
 }
 
 WidgetUnit::WidgetUnit(SimulationManager* manager) : InterfacePage(manager) {
@@ -19,6 +17,7 @@ WidgetUnit::WidgetUnit(SimulationManager* manager) : InterfacePage(manager) {
     this->createUI();
 
     this->unit = nullptr;
+    this->show = false;
 }
 
 WidgetUnit::~WidgetUnit() {
@@ -26,17 +25,17 @@ WidgetUnit::~WidgetUnit() {
 }
 
 void WidgetUnit::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    if(this->manager == nullptr)
+    if(!this->manager)
         return;
 
-    if(this->unit == nullptr)
+    if(!this->unit)
         return;
 
     auto* widget = static_cast<Widget*>(this->getComponent("widget_unit"));
     if(widget)
         target.draw(*widget);
 
-    if(containsWord(this->unit->getName(), "settler")) {
+    if(unit->isSameType(UNIT_SETTLER)) {
         auto* button_colonise = static_cast<Button*>(this->getComponent("button_colonise"));
         if(button_colonise->show)
             target.draw(*button_colonise);
@@ -45,17 +44,27 @@ void WidgetUnit::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     auto* button_dismantle = static_cast<Button*>(this->getComponent("button_dismantle"));
     if(button_dismantle->show)
         target.draw(*button_dismantle);
+
+    auto* label_component = static_cast<Label*>(this->getComponent("text_widget_unit"));
+    if(label_component)
+        target.draw(*label_component);
 } 
 
 void WidgetUnit::createUI() {
-    sf::Vector2i t_widget_size(3, 2);
-    sf::Vector2i t_button_size(8, 4);
-    int window_width  = this->manager->window.windowWidth();
-    int window_height = this->manager->window.windowHeight();
+    auto window_size = this->manager->window.windowSize();
+    
+    sf::Vector2i t_widget_size(
+        window_size.x / 400,
+        window_size.y / 500
+    );
+
+    sf::Vector2i t_button_size(
+        window_size.x / 200,
+        window_size.y / 250
+    );
 
     auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
         sf::Vector2f widget_size = widget_body.get()->getWidgetSize();
-        sf::Vector2f window_size = sf::Vector2f(window_width, window_height);
         widget_body.get()->setWidgetID("widget_unit"); 
         widget_body.get()->setWidgetPosition(window_size - widget_size);
         sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
@@ -72,29 +81,36 @@ void WidgetUnit::createUI() {
         button_colonise.get()->setWidgetID("button_colonise");
         button_colonise.get()->setWidgetPosition(widget_position + widget_size - sf::Vector2f(button_size.x, button_size.y) - sf::Vector2f(0, button_size.y));
         button_colonise.get()->label.setWidgetPosition(button_colonise.get()->getWidgetPosition() + half_button_size);
+    
+    auto widget_text = LabelComponent(new Label(this->manager, ""));
+        widget_text.get()->setWidgetID("text_widget_unit");
+        widget_text.get()->setWidgetPosition(widget_position + sf::Vector2f(8, 8));
 
     this->addComponent(widget_body);
     this->addComponent(button_dismantle);
     this->addComponent(button_colonise);
+    this->addComponent(widget_text);
 }
 
 void WidgetUnit::updateUI() {
     auto* worldmap = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
     int selected_unit_id = worldmap->getSelectedUnitID();
 
-    if(selected_unit_id != -1) {
-        auto* human_player  = this->manager->getHumanPlayer();
-        auto* selected_unit = human_player->getUnit(selected_unit_id);
-        this->unit = selected_unit;
-    }
-    
-    else this->unit = nullptr;
+    this->unit = this->manager->getHumanPlayer()->getUnit(selected_unit_id);
+    if(!this->unit)
+        return;
 
-    if(selected_unit_id != -1) {
-        auto current_index = this->unit->current_index;
-        auto* button_colonise = this->getComponent("button_colonise");
-        button_colonise->show = this->canColonise(current_index);
-    }
+    std::string data = "";
+    data += this->manager->getHumanPlayer()->getCountryName() + " | " + this->unit->getUnitName() + "\n";
+    data += "Currently stationed at #" + std::to_string(this->unit->current_index) + "\n";
+
+    auto* label_component = static_cast<Label*>(this->getComponent("text_widget_unit"));
+    label_component->setString(data);
+
+    // If the terrain is not colonised, display the "colonise" button.
+
+    auto* button_colonise = this->getComponent("button_colonise");
+    button_colonise->show = this->canColonise(this->unit->current_index);
 }
 
 void WidgetUnit::functionality() {
@@ -114,13 +130,13 @@ void WidgetUnit::functionality() {
     }
 
     if(this->unit) {
-        if(containsWord(this->unit->getName(), "settler")) {
+        if(unit->isSameType(UNIT_SETTLER)) {
             auto* button_colonise = this->getComponent("button_colonise");
             
             if(this->canColonise(region_index) && worldmap->controls.mouseLeftPressed() && button_colonise->containsPoint(worldmap->mouse_position_interface)) {
                 // Region to be added to the player's territory.
                 auto* human_player = this->manager->getHumanPlayer();
-                
+
                 // Does not yet have a settlement.
                 if(!human_player->empireSize()) {
                     human_player->setCapital(region_index);
@@ -131,8 +147,15 @@ void WidgetUnit::functionality() {
                 auto colour_transparent = human_player->getTeamColourTransparent();
                 region.object_colour = colour_transparent;
 
+                worldmap->setVisibilityTrue("component_widget_settle_city");
+
+                auto* city_settle_gui = static_cast<WidgetSettleCity*>(worldmap->getInterfaceComponent("component_widget_settle_city"));
+                city_settle_gui->region_id = region_index;
+
                 // After colonising, it should be deleted.
                 this->deleteCurrentUnit();
+
+                worldmap->setVisibilityFalse("component_widget_unit");
             }
         }
     }
@@ -142,17 +165,10 @@ bool WidgetUnit::canColonise(int index) const {
     if(index == -1)
         return false;
 
-    const auto& owned_regions = this->manager->getHumanPlayer()->readOwnedRegions();
     const auto& region = this->manager->world.world_map[index];
-
-    for(const auto& owned_index : owned_regions) {
-        if(owned_index == index)
-            return false;
-    }
-
     if(region.isOwned()) 
         return false;
-
+    
     if(region.regiontype.is_ocean())
         return false;
 

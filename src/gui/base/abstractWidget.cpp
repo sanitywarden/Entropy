@@ -11,7 +11,6 @@ AbstractWidget::AbstractWidget() {
     this->m_widget_size     = sf::Vector2f(0, 0);
     this->m_parent          = nullptr;
     this->m_transparent     = false;
-    
     this->show              = true;
 }
 

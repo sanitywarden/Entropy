@@ -33,13 +33,11 @@ void WidgetMenuBuilding::createUI() {
     );
 
     sf::Vector2i t_widget_size(ratio);
-    int window_width  = this->manager->window.windowWidth();
-    int window_height = this->manager->window.windowHeight();
 
     auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
         sf::Vector2f widget_size = widget_body.get()->getWidgetSize();
         widget_body.get()->setWidgetID("widget_menu_building");
-        widget_body.get()->setWidgetPosition(window_width - widget_size.x, window_height - widget_size.y);
+        widget_body.get()->setWidgetPosition(window_size - widget_size);
         sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
 
     this->addComponent(widget_body);
@@ -96,7 +94,7 @@ sf::Vector2f WidgetMenuBuilding::calculateItemPosition(int building_no, int buil
         int hi    = row_size / 2;                 // Half items.
 
         sf::Vector2f position;
-        if(ri < hi || building_total < row_size) {
+        if(ri < hi || building_total < row_size || ri < row_size) {
             position =
             widget_position
             + offset

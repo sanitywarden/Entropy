@@ -15,6 +15,8 @@ WidgetRegion::WidgetRegion() {
 WidgetRegion::WidgetRegion(SimulationManager* manager) : InterfacePage(manager) {
     this->setWidgetID("component_widget_region");
     this->createUI();
+
+    this->show = false;
 }
 
 WidgetRegion::~WidgetRegion() {
@@ -22,7 +24,7 @@ WidgetRegion::~WidgetRegion() {
 }
 
 void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    if(this->manager == nullptr)
+    if(!this->manager)
         return;
 
     // You always draw the main widget first,
@@ -41,18 +43,24 @@ void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const
 }
 
 void WidgetRegion::createUI() {
-    sf::Vector2i t_widget_size(3, 2);
-    sf::Vector2i t_button_size(8, 4);
-    int window_width  = this->manager->window.windowWidth();
-    int window_height = this->manager->window.windowHeight();
+    auto window_size = this->manager->window.windowSize();
+
+    sf::Vector2i t_widget_size(
+        window_size.x / 400,
+        window_size.y / 500
+    );
+
+    sf::Vector2i t_button_size(
+        window_size.x / 200,
+        window_size.y / 250
+    );
 
     auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
         sf::Vector2f widget_size = widget_body.get()->getWidgetSize();
-        sf::Vector2f window_size = sf::Vector2f(window_width, window_height);
         widget_body.get()->setWidgetID("widget_region");
         widget_body.get()->setWidgetPosition(window_size - widget_size);
         sf::Vector2f widget_position = widget_body.get()->getWidgetPosition();
-
+ 
     auto button_travel = ButtonComponent(new Button(this->manager, t_button_size, "Visit"));
         sf::Vector2f button_size = button_travel.get()->getWidgetSize();
         button_travel.get()->setWidgetID("button_travel");
@@ -84,7 +92,10 @@ void WidgetRegion::updateUI() {
 
     std::string display_text;
     display_text += "Region #" + std::to_string(index) + "\n";
-    display_text += owner + "\n";
+    
+    if(region.isOwned())
+        display_text += region.owner->getCountryName() + " | " + region.settlement_name + "\n";
+    
     display_text += region.biome.biome_name + " " + additional_data + "\n";
 
     auto* label_component = static_cast<Label*>(this->getComponent("text_region_index"));

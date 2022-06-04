@@ -1,7 +1,7 @@
 #ifndef _GUI_WIDGET_REGION_HPP_
 #define _GUI_WIDGET_REGION_HPP_
 
-#include "gui/base/interfacePage.hpp"
+#include "interfacePage.hpp"
 
 namespace gui {
     class WidgetRegion : public InterfacePage {

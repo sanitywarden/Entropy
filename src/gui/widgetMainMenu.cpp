@@ -18,6 +18,8 @@ WidgetMainMenu::WidgetMainMenu(SimulationManager* manager)
 {
     this->setWidgetID("component_main_menu");
     this->createUI();
+
+    this->show = true;
 }
 
 WidgetMainMenu::~WidgetMainMenu() {
