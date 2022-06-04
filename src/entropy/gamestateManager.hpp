@@ -12,7 +12,7 @@ namespace entropy {
     
     // Gamestate Manager is a class that is used for storing and using user-created gamestates.
     class gamestateManager {
-        private:
+        public:
             Settings m_settings;
 
             std::map <std::string, entropy::Gamestate*> m_gamestates;

@@ -10,7 +10,7 @@ namespace iso {
             virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
         public:
-            std::string  object_name;         // Object's name indicates the type and purpose -> "building_house".
+            std::string  object_name;         // Object's name indicates the object type -> "Building" or "Region" or "Tile".
             sf::Vector3f object_position;     // Object's position in the game world.
             sf::Vector2f object_size;         // Object's size, equivalent of the texture size.
             std::string  object_texture_name; // Object's texture name.

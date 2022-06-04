@@ -4,6 +4,7 @@
 #include "generationSettings.hpp"
 
 #include <iostream>
+#include <string>
 
 using namespace iso;
 
@@ -13,6 +14,8 @@ Region::Region()
     this->_marked    = false;
     this->_direction = RiverDirection::RIVER_NONE;
     
+    this->settlement_name = "*";
+
     this->height      = 0.0f;
     this->latitude    = 0.0f;
     this->moisture    = 0.0f;
@@ -200,6 +203,9 @@ void Region::removeBuilding(int index) {
     if(this->buildings.count(index)) {
         auto building   = this->buildings.at(index).get();
         
+        if(!building->isRemovable())
+            return;
+        
         // this->resources += building->getBuildingRefund();
         
         for(int y = 0; y < building->getBuildingArea().y; y++) {
@@ -238,14 +244,33 @@ int Region::isBuildingInProximity(const Building& building, int building_index) 
             // Building or a nullptr.
             auto tile_building = this->getBuildingAt(index);
             if(tile_building) {
-                // If the building on this tile is the same building type.
-                if(tile_building->getName() == building.getName())
-                    buildings_in_proximity++; 
+                if(!this->isSameBuilding(*tile_building, building_index, index) && *tile_building == building)
+                    buildings_in_proximity++;
             }
         }
     } 
 
     return buildings_in_proximity;
+}
+
+bool Region::isSameBuilding(const Building& building, int building_index, int index) const {
+    bool same_building = false;
+
+    if(building.getBuildingArea().x == 1)
+        return building_index == index;
+
+    auto building_size = building.getBuildingArea();
+
+    for(int y = -building_size.y; y <= building_size.y; y++) {
+        for(int x = -building_size.x; x <= building_size.x; x++) {
+            const int index = building_index + world_settings.calculateRegionIndex(x, y);
+            
+            if(building_index == index)
+                return true;
+        }
+    }
+
+    return false;
 }
 
 bool Region::isPath(int index) const {

@@ -87,7 +87,6 @@ void Menu::handleInput() {
 void Menu::createUI() {
     static gui::DebugPerformance debug_performance(this->manager);
     static gui::WidgetMainMenu widget_main_menu(this->manager);
-        widget_main_menu.show = true;
 
     this->addInterfaceComponent(&debug_performance);
     this->addInterfaceComponent(&widget_main_menu);

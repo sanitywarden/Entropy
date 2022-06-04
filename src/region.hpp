@@ -61,6 +61,7 @@ namespace iso {
             // Else returns nullptr.
             Building* getBuildingAt(int index) const;
             int isBuildingInProximity(const Building& building, int building_index) const;
+            bool isSameBuilding(const Building& building, int building_index, int index) const;
 
         public:
             RegionType regiontype;
@@ -68,6 +69,7 @@ namespace iso {
             Unit*      unit;
 
             bool visited;
+            std::string settlement_name; // Settlement's human readable name. If there is no settlement, it's "*".
 
             std::vector <Tile>                           map;
             std::map    <int, GameObject>                trees;

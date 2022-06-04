@@ -74,6 +74,7 @@ namespace entropy {
 
             void renderUI() const;
             void updateUI() const;
+            void resizeUI() const;
             bool mouseIntersectsUI() const;
             bool pointIntersectsUI(sf::Vector2f point) const;
 

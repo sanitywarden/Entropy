@@ -87,7 +87,7 @@ Unit* Player::getUnit(int unit_id) {
 
 Unit* Player::getUnit(std::string unit_name) {
     for(auto& unit : this->units) {
-        if(unit.get()->getName() == unit_name)
+        if(unit.get()->getUnitName() == unit_name)
             return unit.get();
     }
 

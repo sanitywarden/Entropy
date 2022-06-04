@@ -108,10 +108,20 @@ void Gamestate::updateUI() const {
         auto* component = pair.second;
         
         if(component) {
-            if(component->show) {
+            if(component->isVisible()) {
                 component->updateUI();
-                component->functionality();   
+                component->functionality();
             }
+        }
+    }
+}
+
+void Gamestate::resizeUI() const {
+    for(const auto& pair : this->interface) {
+        auto* component = pair.second;
+
+        if(component) {
+            component->createUI();
         }
     }
 }
@@ -121,7 +131,7 @@ bool Gamestate::mouseIntersectsUI() const {
         const auto* component = pair.second;
         
         if(component)
-            if(component->intersectsUI(this->mouse_position_interface))
+            if(component->intersectsUI(this->mouse_position_interface) && component->isVisible())
                 return true;
     }
     
@@ -133,7 +143,7 @@ bool Gamestate::pointIntersectsUI(sf::Vector2f point) const {
         const auto* component = pair.second;
         
         if(component)
-            if(component->intersectsUI(point))
+            if(component->intersectsUI(point) && component->isVisible())
                 return true;
     }
     

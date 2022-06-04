@@ -39,8 +39,8 @@ namespace iso {
     const Resource RESOURCE_GRAIN  ("Grain",   "icon_item_grain"  , 0);
     const Resource RESOURCE_MEAT   ("Meat",    "icon_item_meat"   , 0);
     const Resource RESOURCE_LEATHER("Leather", "icon_item_leather", 0);
-    const Resource RESOURCE_WATER  ("Water",   "icon_default"     , 0);
-    const Resource RESOURCE_TOOLS  ("Tools",   "icon_default"     , 0);
+    const Resource RESOURCE_WATER  ("Water",   "icon_item_water"  , 0);
+    const Resource RESOURCE_TOOLS  ("Tools",   "icon_item_tools"  , 0);
 
     const static std::vector <Resource> RESOURCE_LOOKUP_TABLE = {
         RESOURCE_WOOD,

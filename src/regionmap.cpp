@@ -50,7 +50,6 @@ void Regionmap::initialise() {
     this->controls.addKeyMappingCheck("key_centre_view",         sf::Keyboard::Key::Space);
 
     this->scheduler.insert({ "update_pawns",   std::pair(0, 1) });   
-    this->scheduler.insert({ "update_storage", std::pair(0, 4) });
 }
 
 void Regionmap::loadResources() {
@@ -136,6 +135,8 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/ui/items/icon_item_leather.png", "icon_item_leather", sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/items/icon_item_meat.png"   , "icon_item_meat"   , sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/items/icon_item_grain.png"  , "icon_item_grain"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_water.png"  , "icon_item_water"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_tools.png"  , "icon_item_tools"  , sf::IntRect(0, 0, 48, 48));
 
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_1x1", sf::IntRect(0,   0, 64,  32 ));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_2x2", sf::IntRect(64,  0, 128, 64 ));
@@ -181,6 +182,22 @@ void Regionmap::handleInput() {
                 break;
             }
 
+            case sf::Event::Resized: {
+                auto new_window_size = sf::Vector2f(
+                    this->event.size.width,
+                    this->event.size.height
+                );
+
+                this->view_game.setSize(new_window_size);
+                
+                this->view_interface.setSize(new_window_size);
+                this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
+
+                this->resizeUI();
+
+                break; 
+            }
+
             case sf::Event::KeyPressed: {
                 for(const auto& pair : this->controls.key_map) {
                     const auto& name  = pair.first;
@@ -201,8 +218,6 @@ void Regionmap::handleInput() {
 
                 if(this->controls.keyState("key_toggle_storage")) {
                     this->toggleComponentVisibility("component_widget_region_storage");
-                    auto* widget_region_storage = static_cast<gui::WidgetRegionStorage*>(this->getInterfaceComponent("component_widget_region_storage"));
-                    widget_region_storage->refresh();
                 }
 
                 if(this->controls.keyState("key_escape")) {
@@ -773,18 +788,6 @@ void Regionmap::updateScheduler() {
     //         }
     //     }   
     // }
-
-    // Update item display in storage.
-
-    auto& update_storage = this->scheduler.at("update_storage");
-    if(update_storage.first != update_storage.second)
-        update_storage.first++;
-
-    if(update_storage.first == update_storage.second) {
-        auto* widget_region_storage = static_cast<gui::WidgetRegionStorage*>(this->getInterfaceComponent("component_widget_region_storage"));
-        widget_region_storage->refresh();
-        update_storage.first = 0;
-    }
 }
 
 void Regionmap::gamestateLoad() {
