@@ -17,21 +17,26 @@ namespace iso {
             std::vector <int> path;
             int               current_index;
             int               goal;
+            std::string       unit_name;     // Human readable unit name. 
 
         public:
             Unit();
-            Unit(std::string unit_type);
+            Unit(std::string unit_name);
             ~Unit();
 
             bool operator== (const Unit& unit) const;
             bool operator!= (const Unit& unit) const;
 
             int                      getID() const;
+            std::string              getUnitName() const;
             void                     setNewPath(std::vector <int> path);
             const std::vector <int>& getAStarPath();
             int                      getNextMove();
             bool                     hasPath() const;
+            bool                     isSameType(const Unit& unit) const;
     };
+
+    const Unit UNIT_SETTLER("Settler");
 }
 
 #endif

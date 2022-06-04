@@ -5,8 +5,10 @@
 using namespace iso;
 
 int Unit::id_count = 0;
-Unit::Unit() {
-    this->object_name = "unit";
+Unit::Unit() 
+    : GameObject(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0), sf::Vector2f(0, 0), "*", "Unit")
+{
+    this->unit_name = "*";
     this->id = this->id_count;
     this->id_count++;
     
@@ -16,8 +18,10 @@ Unit::Unit() {
     this->path.resize(0);
 }
 
-Unit::Unit(std::string unit_type) {
-    this->object_name = unit_type;
+Unit::Unit(std::string unit_name)
+    : GameObject(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0), sf::Vector2f(0, 0), "*", "Unit")
+{
+    this->unit_name = unit_name;
     this->id = this->id_count;
     this->id_count++;
     
@@ -64,4 +68,12 @@ bool Unit::operator== (const Unit& unit) const {
 
 bool Unit::operator!= (const Unit& unit) const {
     return !(*this == unit);
+}
+
+bool Unit::isSameType(const Unit& unit) const {
+    return this->getUnitName() == unit.getUnitName();
+}
+
+std::string Unit::getUnitName() const {
+    return this->unit_name;
 }
