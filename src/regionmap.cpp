@@ -24,9 +24,10 @@ void Regionmap::initialise() {
 
     this->current_index = -1;
 
-    this->default_zoom = 2;
-    this->max_zoom_in  = 0; 
-    this->max_zoom_out = 3;
+    this->default_zoom  = 0;
+    this->current_index = this->default_zoom;
+    this->max_zoom_in   = 0; 
+    this->max_zoom_out  = 3;
     
     this->view_game.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
     this->view_game.setSize(this->manager->window.windowSize());
@@ -154,7 +155,6 @@ void Regionmap::update(float delta_time) {
     this->handleInput();
     this->updateCamera();
 
-    this->updateTile();
     this->updateUI();
 }
 
@@ -187,9 +187,19 @@ void Regionmap::handleInput() {
                     this->event.size.width,
                     this->event.size.height
                 );
+            
+                this->view_game.setSize(
+                    new_window_size.x * this->current_zoom,
+                    new_window_size.y * this->current_zoom
+                );
 
-                this->view_game.setSize(new_window_size);
-                
+                // To avoid weird camera glitches, set the centre explicitly.
+
+                auto grid_position = this->manager->world.tileGridPosition(this->view_game.getCenter());
+                auto index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y); 
+                auto tile_position = this->region->map[index].getPosition2D();
+                this->view_game.setCenter(tile_position);
+
                 this->view_interface.setSize(new_window_size);
                 this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
 
@@ -288,6 +298,9 @@ void Regionmap::handleInput() {
                 if(this->controls.mouseMiddlePressed())
                     this->position_pressed = this->mouse_position_window;
                 
+                if(this->controls.mouseLeftPressed())
+                    this->updateTile();
+
                 break;
             }
 
@@ -367,14 +380,14 @@ void Regionmap::zoomCamera() {
     // If you scroll up   - zoom in.
     // If you scroll down - zoom out.
 
-    if((this->default_zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->default_zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
+    if((this->current_zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->current_zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
         if(this->controls.mouseMiddleUp()) {
-            this->default_zoom = this->default_zoom - 1;
+            this->current_zoom = this->current_zoom - 1;
             this->view_game.zoom(0.5f);
         }
         
         else if(this->controls.mouseMiddleDown()) {
-            this->default_zoom = this->default_zoom + 1;
+            this->current_zoom = this->current_zoom + 1;
             this->view_game.zoom(2.f);
         }
     } 
@@ -463,7 +476,7 @@ void Regionmap::renderRegion() {
         this->recalculate_mesh = false;
     }
 
-    if(this->rmesh) {
+    if(this->recalculate_tree_mesh) {
         draw_order = std::vector<GameObject>();
 
         for(int i = 0; i < world_settings.getRegionSize(); i++) {
@@ -487,11 +500,7 @@ void Regionmap::renderRegion() {
         };
 
         std::sort(draw_order.begin(), draw_order.end(), compare);
-
-        // for(const auto& d : draw_order)
-        //     std::cout << d.getPosition().x << " " << d.getPosition().y << " " << d.getPosition().z << "\n";
-
-        this->rmesh = false;
+        this->recalculate_tree_mesh = false;
     }
 
     sf::RenderStates states_tiles;
@@ -646,16 +655,17 @@ void Regionmap::updateTile() {
     if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
         Building building = building_menu->getBuilding();
         auto texture_size = this->manager->resource.getTextureSize(building.getTextureName());
-        this->region->placeBuildingCheck(building, texture_size, this->current_index);
+        auto grid_position = this->manager->world.tileGridPosition(this->mouse_position_window);
+        this->region->placeBuildingCheck(building, texture_size, grid_position);
         this->updatePaths(this->current_index);
-        this->rmesh = true;
+        this->recalculate_tree_mesh = true;
     }
 
     if(this->controls.keyState("key_remove_building")) {
         if(this->region->buildings.count(this->current_index)) {
             this->region->removeBuilding(this->current_index);
             this->updatePaths(this->current_index);
-            this->rmesh = true;
+            this->recalculate_tree_mesh = true;
         }
     }
 
@@ -793,7 +803,6 @@ void Regionmap::updateScheduler() {
 void Regionmap::gamestateLoad() {
     this->recalculate_mesh      = true;
     this->recalculate_tree_mesh = true;
-    this->rmesh = true;
 
     int side_vector_size = 0;
     for(int i = 0; i < this->region->sides.size(); i++)
@@ -817,21 +826,15 @@ void Regionmap::recalculateMesh() {
 
 void Regionmap::renderSelectedBuilding() {
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    Building building        = building_menu->getBuilding();
-
-    auto in_bounds = false;
-    if(building != BUILDING_EMPTY) {
-        bool current      = world_settings.inRegionBounds(this->current_index);
-        bool right        = world_settings.inRegionBounds(this->current_index + building.getBuildingArea().x - 1);
-        bool down         = world_settings.inRegionBounds(this->current_index + world_settings.calculateRegionIndex(0, building.getBuildingArea().y - 1));
-        bool bottom_right = world_settings.inRegionBounds(this->current_index + world_settings.calculateRegionIndex(building.getBuildingArea().x - 1, building.getBuildingArea().y - 1));
+    Building building   = building_menu->getBuilding();
     
-        in_bounds = current && right && down && bottom_right;
-    }
-
-    if(building != BUILDING_EMPTY && building_menu->isVisible() && world_settings.inRegionBounds(this->current_index) && in_bounds) {
+    if(building != BUILDING_EMPTY && building_menu->isVisible()) {
         auto tile = this->region->map[this->current_index];
-        
+
+        auto grid_position = this->manager->world.tileGridPosition(this->mouse_position_window);
+        if(!this->region->isPositionValid(building, grid_position))
+            return;
+
         building.object_position = tile.getPosition();
         
         const int a1_w = 0; 
@@ -896,7 +899,7 @@ void Regionmap::renderSelectedBuilding() {
         building_highlight[2].texCoords = sf::Vector2f(building.getSize().x, building.getSize().y); 
         building_highlight[3].texCoords = sf::Vector2f(0, building.getSize().y);
 
-        auto invalid_position = !this->region->isPositionValid(building, this->current_index); 
+        auto invalid_position = !this->region->isPositionValid(building, grid_position); 
         if(invalid_position) {
             building_highlight[0].color = COLOUR_RED;
             building_highlight[1].color = COLOUR_RED;

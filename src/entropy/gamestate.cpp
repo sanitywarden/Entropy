@@ -12,6 +12,7 @@ Gamestate::Gamestate() {
     this->zoom_camera = false;
 
     this->default_zoom = 0;
+    this->current_zoom = 0;
     this->max_zoom_in  = 0;
     this->max_zoom_out = 0;
 }

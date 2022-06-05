@@ -26,9 +26,10 @@ void Worldmap::initialise() {
     this->selected_index   = -1;
     this->selected_unit_id = -1;
 
-    this->default_zoom = 3;
+    this->default_zoom = 0;
+    this->current_zoom = this->default_zoom;
     this->max_zoom_in  = 0; 
-    this->max_zoom_out = 3;
+    this->max_zoom_out = 2;
 
     this->view_game.setCenter(sf::Vector2f(
         world_settings.panelSize() * world_settings.getWorldWidth(),
@@ -36,8 +37,8 @@ void Worldmap::initialise() {
     ));
 
     this->view_game.setSize(sf::Vector2f(
-        this->manager->window.windowWidth()  * 2,
-        this->manager->window.windowHeight() * 2
+        this->manager->window.windowWidth(),
+        this->manager->window.windowHeight()
     ));
 
     this->view_interface.setSize(this->manager->window.windowSize());
@@ -199,8 +200,8 @@ void Worldmap::moveCamera() {
     );
 
     // Multipliers for faster camera movement. 
-    const float x_multiplier = (this->default_zoom + 1) * 5.00f;
-    const float y_multiplier = (this->default_zoom + 1) * 5.00f;    
+    const float x_multiplier = (this->current_zoom + 1) * 5.00f;
+    const float y_multiplier = (this->current_zoom + 1) * 5.00f;    
 
     // Check the horizontal and vertical bounds of the screen.
     // This makes sure that you can not move past the world map.
@@ -219,14 +220,14 @@ void Worldmap::zoomCamera() {
     // If you scroll up   - zoom in.
     // If you scroll down - zoom out.
 
-    if((this->default_zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->default_zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
+    if((this->current_zoom > this->max_zoom_in && this->controls.mouseMiddleUp()) || (this->current_zoom < this->max_zoom_out && !this->controls.mouseMiddleUp())) {  
         if(this->controls.mouseMiddleUp()) {
-            this->default_zoom = this->default_zoom - 1;
+            this->current_zoom = this->current_zoom - 1;
             this->view_game.zoom(0.5f);
         }
         
         if(this->controls.mouseMiddleDown()) {
-            this->default_zoom = this->default_zoom + 1;
+            this->current_zoom = this->current_zoom + 1;
             this->view_game.zoom(2.f);
         }
     } 
@@ -307,8 +308,27 @@ void Worldmap::handleInput() {
                     this->event.size.height
                 );
 
-                this->view_game.setSize(new_window_size);
-                
+                this->view_game.setSize(
+                    new_window_size.x * this->current_zoom,
+                    new_window_size.y * this->current_zoom
+                );
+
+                // To avoid weird camera glitches, set the centre explicitly.
+
+                int human_player_capital = this->manager->getHumanPlayer()->getCapital();
+                if(human_player_capital == -1) {
+                    int index = world_settings.getWorldSize() / 2 - 1;
+                    const auto& region = this->manager->world.world_map[index];
+                    auto position      = region.getPosition2D();
+                    this->view_game.setCenter(position);
+                }
+
+                else {
+                    const auto& region = this->manager->world.world_map[human_player_capital];
+                    auto position      = region.getPosition2D();
+                    this->view_game.setCenter(position);
+                }
+
                 this->view_interface.setSize(new_window_size);
                 this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
 

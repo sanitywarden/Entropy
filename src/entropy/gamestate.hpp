@@ -29,6 +29,7 @@ namespace entropy {
             bool         move_camera;
             bool         zoom_camera;
             int          default_zoom;
+            int          current_zoom;
             int          max_zoom_in;
             int          max_zoom_out;
 

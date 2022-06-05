@@ -29,7 +29,6 @@ namespace iso {
             bool mouse_drag;
             bool recalculate_mesh;
             bool recalculate_tree_mesh;
-            bool rmesh;
 
             sf::Vector2f position_pressed;
             sf::Vector2f position_released;
