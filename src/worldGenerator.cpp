@@ -821,7 +821,7 @@ void WorldGenerator::generateNoise(NoiseSettings& settings, NoiseContainer& stor
 // This function returns grid coordinate of a tile.
 // The range on these is from (for both x and y) (0, region_size).
 // Return value from this function is accepted by tilePositionScreen() to convert back to tile's original position.
-sf::Vector2i WorldGenerator::tileGridPosition(sf::Vector2f tile_position) {
+sf::Vector2i WorldGenerator::tileGridPosition(sf::Vector2f tile_position) const {
     sf::Vector2i cell(
         tile_position.x / world_settings.tileSize().x,
         tile_position.y / world_settings.tileSize().y
@@ -851,6 +851,13 @@ sf::Vector2i WorldGenerator::tileGridPosition(sf::Vector2f tile_position) {
         selected += sf::Vector2i(1, 0);
 
     return selected;
+}
+
+sf::Vector2i WorldGenerator::tileGridPosition(int index) const {
+    return sf::Vector2i(
+        index % world_settings.getRegionWidth(),
+        index / world_settings.getRegionWidth()
+    );
 }
 
 // This function accepts coordinates of the tile in a grid - not the tile position.
@@ -1406,11 +1413,12 @@ void WorldGenerator::generateRegion(int region_index) {
         bool animal_spot_valid = false;
         while(!animal_spot_valid) {
             int index = rand() % world_settings.getRegionSize();
+            auto grid_position = this->tileGridPosition(index);
 
-            if(region.isPositionValid(BUILDING_ANIMAL_SPOT, index)) {
+            if(region.isPositionValid(BUILDING_ANIMAL_SPOT, grid_position)) {
                 auto texture_name = BUILDING_ANIMAL_SPOT.getTextureName();
                 auto texture_size = this->resource->getTextureSize(texture_name);
-                region.placeBuilding(BUILDING_ANIMAL_SPOT, texture_size, index);
+                region.placeBuilding(BUILDING_ANIMAL_SPOT, texture_size, grid_position);
                 animal_spot_valid = true;
             }
         }

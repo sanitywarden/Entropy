@@ -70,18 +70,24 @@ void Region::removeBuildingCost(const Building& building) {
     // this->resources -= building.getBuildingCost();
 }
 
-bool Region::isPositionValid(const Building& building, int index) const {
+bool Region::isPositionValid(const Building& building, sf::Vector2i grid_position) const {
+    int index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y);
     const auto building_size             = building.getBuildingArea();
-    const auto foundation_tile_elevation = this->map[index].getElevation(); 
+
+    if(!world_settings.inRegionBounds(grid_position))
+        return false;
+    
+    if(!world_settings.inRegionBounds(grid_position + sf::Vector2i(building_size.x - 1, building_size.y - 1)))
+        return false;
 
     for(int y = 0; y < building_size.y; y++) {
         for(int x = 0; x < building_size.x; x++) {
-            const int i = index + world_settings.calculateRegionIndex(x, y);
+            const int i = world_settings.calculateRegionIndex(grid_position.x, grid_position.y) + world_settings.calculateRegionIndex(x, y);
 
-            if(!world_settings.inRegionBounds(index))
+            if(!world_settings.inRegionBounds(i))
                 return false;
 
-            if(this->map.at(i).getElevation() != foundation_tile_elevation)
+            if(this->map.at(i).getElevation() != this->map.at(index).getElevation())
                 return false;
 
             if(!this->map.at(i).tiletype.is_terrain())
@@ -111,7 +117,8 @@ bool Region::isSpotOccupied(int index) const {
     return false;
 }
 
-void Region::placeBuilding(Building building, sf::Vector2f texture_size, int index) {
+void Region::placeBuilding(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
+    int index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y);
     const Tile& tile         = this->map[index];
     building.object_position = tile.getPosition();
 
@@ -189,9 +196,9 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, int ind
     this->buildings[index] = sp_building;
 }
 
-bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, int index) {
-    if(this->isPositionValid(building, index) && this->isBuildingAffordable(building)) {
-        this->placeBuilding(building, texture_size, index);
+bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
+    if(this->isPositionValid(building, grid_position) && this->isBuildingAffordable(building)) {
+        this->placeBuilding(building, texture_size, grid_position);
         this->removeBuildingCost(building);
         return true;
     }

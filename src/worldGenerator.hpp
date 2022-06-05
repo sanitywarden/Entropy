@@ -58,7 +58,8 @@ namespace iso {
     
             void generateNoise(NoiseSettings& settings, NoiseContainer& container);
 
-            sf::Vector2i tileGridPosition(sf::Vector2f tile_position);
+            sf::Vector2i tileGridPosition(sf::Vector2f tile_position) const;
+            sf::Vector2i tileGridPosition(int index) const;
 
             sf::Vector3f tilePositionScreen(int x, int y);
             sf::Vector3f tilePositionScreen(sf::Vector2i grid_position);

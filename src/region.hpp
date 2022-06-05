@@ -46,9 +46,9 @@ namespace iso {
             void addResource(Resource resource);
             int  getResourceQuantity(Resource resource) const;
             bool isBuildingAffordable(const Building& building) const;
-            bool isPositionValid(const Building& building, int index) const;
-            void placeBuilding(Building building, sf::Vector2f texture_size, int index);
-            bool placeBuildingCheck(Building building, sf::Vector2f texture_size, int index);
+            bool isPositionValid(const Building& building, sf::Vector2i grid_position) const;
+            void placeBuilding(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position);
+            bool placeBuildingCheck(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position);
             void removeBuilding(int index);
             void removeBuildingCost(const Building& building);
             

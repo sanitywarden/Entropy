@@ -279,6 +279,13 @@ bool WorldData::inRegionBounds(int index) const {
     return (index >= 0 && index < this->getRegionSize());
 }
 
+bool WorldData::inRegionBounds(sf::Vector2i grid_position) const {
+    return (
+        grid_position.x >= 0 && grid_position.x < this->getRegionWidth() && 
+        grid_position.y >= 0 && grid_position.y < this->getRegionWidth()
+    );
+}
+
 NoiseSettings WorldData::getRegionForestSettingsDense() const {
     return NoiseSettings(this->region_size, 8, 16, 4, 1.00f);
 }

@@ -96,6 +96,7 @@ class WorldData {
         float getRegionStoneMin()    const;
 
         bool inRegionBounds(int index) const;
+        bool inRegionBounds(sf::Vector2i grid_position) const;
         int calculateRegionIndex(int x, int y)        const;
         NoiseSettings getRegionForestSettingsDense()  const;
         NoiseSettings getRegionForestSettingsSparse() const;
