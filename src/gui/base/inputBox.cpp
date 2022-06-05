@@ -49,8 +49,8 @@ void InputBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
 
     if(this->label.show) {
+        this->label.align(Alignment::ALIGMNENT_CENTRED_LEFT, this);
         this->label.setString(this->current_text);
-        this->label.setWidgetPosition(widget_position.x , widget_position.y);
         target.draw(this->label);
     }
 }
@@ -115,7 +115,8 @@ void InputBox::setText(std::string input) {
 }
 
 void InputBox::appendText(std::string input) {
-    this->current_text += input;
+    if(this->current_text.length() < this->input_length_limit)
+        this->current_text += input;
 }
 
 std::string InputBox::getText() const {

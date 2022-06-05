@@ -48,7 +48,7 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
 
     if(this->label.show) {
-        this->label.align(Alignment::ALIGNMENT_CENTRED, widget_position, this->getWidgetSize());
+        this->label.align(Alignment::ALIGNMENT_CENTRED, this);
         target.draw(this->label);
     }
 }

@@ -10,6 +10,7 @@
 
 namespace gui {
     enum class Alignment {
+        ALIGNMENT_NONE,
         ALIGNMENT_CENTRED,
         ALIGMNENT_CENTRED_LEFT,
         ALIGMNENT_CENTRED_RIGHT,
@@ -29,6 +30,8 @@ namespace gui {
             sf::Vector2f final_position;
             sf::Vector2f final_origin;
             std::string  data;
+            sf::Text     text;
+            Alignment    alignment;
         public:
             Label();
             Label(iso::SimulationManager* manager);
@@ -36,7 +39,7 @@ namespace gui {
             ~Label();
 
             // Align the text within it's parent.
-            void align(Alignment alignment, sf::Vector2f parent_position, sf::Vector2f parent_size);
+            void align(Alignment alignment, const AbstractWidget* widget);
             void setString(std::string data);
     };
 }

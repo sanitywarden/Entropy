@@ -14,10 +14,18 @@ Label::Label() {
 Label::Label(SimulationManager* manager, std::string data) {
     this->manager = manager;
     this->data    = data;
+
+    this->text = sf::Text(data, this->manager->resource.getFont("garamond"), 14);
+    this->text.setFillColor(sf::Color::Black);
+    this->alignment = Alignment::ALIGNMENT_NONE;
 }
 
 Label::Label(SimulationManager* manager) {
     this->manager = manager;
+
+    this->text = sf::Text("", this->manager->resource.getFont("garamond"), 14);
+    this->text.setFillColor(sf::Color::Black);
+    this->alignment = Alignment::ALIGNMENT_NONE;
 }
 
 Label::~Label() {
@@ -28,33 +36,44 @@ void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if(!this->show)
         return;
     
-    sf::Text text;
-    text.setPosition(this->getWidgetPosition());
-    text.setOrigin(this->final_origin);
-    text.setFillColor(sf::Color::Black);
-    text.setFont(this->manager->resource.getFont("garamond"));
-    text.setString(this->data);
-    text.setCharacterSize(14);
+    if(this->alignment != Alignment::ALIGNMENT_NONE) {
+        this->text.setPosition(this->final_position);
+        this->text.setOrigin(this->final_origin);
+    }
+
+    else
+        this->text.setPosition(this->getWidgetPosition());
+    
+    this->text.setString(this->data);
 
     target.draw(text, states);
 }
 
-void Label::align(Alignment alignment, sf::Vector2f parent_position, sf::Vector2f parent_size) {
-    sf::Text text(this->data, this->manager->resource.getFont("garamond"), 14);
-    sf::Rect text_rectangle = text.getLocalBounds();
+void Label::align(Alignment alignment, const AbstractWidget* widget) {
+    if(!widget)
+        return;
+
+    this->alignment = alignment;
+
+    sf::Rect tr_local  = text.getLocalBounds();
+    sf::Rect tr_global = text.getGlobalBounds(); 
+
+    auto parent_position = widget->getWidgetPosition();
+    auto parent_size     = widget->getWidgetSize();
 
     switch(alignment) {
         default: 
             break;
 
         case Alignment::ALIGNMENT_CENTRED: {
-            this->final_origin   = sf::Vector2f(text_rectangle.left + text_rectangle.width / 2.0f, text_rectangle.top + text_rectangle.height / 2);
-            this->final_position = sf::Vector2f(parent_position.x + parent_size.x / 4, parent_position.y + parent_size.y / 4);
+            this->final_origin   = sf::Vector2f(tr_local.left + tr_local.width / 2.0f, tr_local.top + tr_local.height / 2);
+            this->final_position = sf::Vector2f(parent_position.x + parent_size.x / 2, parent_position.y + parent_size.y / 2);            
             break;
         }
 
         case Alignment::ALIGMNENT_CENTRED_LEFT: {
-            this->final_position = sf::Vector2f(parent_position.x, parent_position.y + parent_size.y / 4);
+            this->final_origin   = sf::Vector2f(tr_local.left, tr_local.top + tr_local.height / 2);
+            this->final_position = sf::Vector2f(parent_position.x + 8, parent_position.y + parent_size.y / 2);    
             break;
         }
     }
