@@ -842,10 +842,18 @@ void Regionmap::renderSelectedBuilding() {
     if(building != BUILDING_EMPTY && building_menu->isVisible()) {
         auto tile = this->region->map[this->current_index];
 
+        auto building_size = building.getBuildingArea();
         auto grid_position = this->manager->world.tileGridPosition(this->mouse_position_window);
-        if(!this->region->isPositionValid(building, grid_position))
-            return;
+        
+        for(int y = grid_position.y; y < grid_position.y + building_size.y; y++) {
+            for(int x = grid_position.x; x < grid_position.x + building_size.x; x++) {
+                auto grid = sf::Vector2i(x, y);
 
+                if(!world_settings.inRegionBounds(grid)) 
+                    return;
+            }
+        }
+        
         building.object_position = tile.getPosition();
         
         const int a1_w = 0; 
