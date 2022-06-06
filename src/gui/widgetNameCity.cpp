@@ -70,11 +70,13 @@ void WidgetSettleCity::functionality() {
     auto* input_box = static_cast<InputBox*>(this->getComponent("input_box"));
     auto* gamestate = this->manager->gamestate.getGamestate();
     
-    if(input_box->containsPoint(gamestate->mouse_position_interface) && gamestate->controls.mouseLeftPressed())
+    if(input_box->containsPoint(gamestate->mouse_position_interface) && gamestate->controls.mouseLeftPressed()) {
         input_box->is_selected = true;
+    }
 
-    else if(!input_box->containsPoint(gamestate->mouse_position_interface) && gamestate->controls.mouseLeftPressed())
+    else if(!input_box->containsPoint(gamestate->mouse_position_interface) && gamestate->controls.mouseLeftPressed()) {
         input_box->is_selected = false;
+    }
 }   
 
 void WidgetSettleCity::updateInput(std::string text) {
@@ -98,6 +100,9 @@ void WidgetSettleCity::updateInput(std::string text) {
         this->region_id = -1;
         this->show      = false;
         input_box->is_selected = false;
+        
+        auto* gamestate = this->manager->gamestate.getGamestate();
+        gamestate->block_keybinds = false;
 
         return;
     }

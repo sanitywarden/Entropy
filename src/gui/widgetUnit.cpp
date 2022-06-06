@@ -148,6 +148,7 @@ void WidgetUnit::functionality() {
                 region.object_colour = colour_transparent;
 
                 worldmap->setVisibilityTrue("component_widget_settle_city");
+                worldmap->block_keybinds = true;
 
                 auto* city_settle_gui = static_cast<WidgetSettleCity*>(worldmap->getInterfaceComponent("component_widget_settle_city"));
                 city_settle_gui->region_id = region_index;

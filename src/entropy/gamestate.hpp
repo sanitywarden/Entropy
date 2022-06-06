@@ -18,6 +18,7 @@ namespace entropy {
             Entropy* engine;
             Controls controls;
             std::map <std::string, gui::InterfacePage*> interface;
+            bool block_keybinds; // When true, the pressed keys will not affect the game.
 
             std::string  state_id;
             sf::Event    event;
