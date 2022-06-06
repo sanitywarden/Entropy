@@ -63,6 +63,8 @@ namespace iso {
             void unselectUnit();
             void selectUnitGoal();
 
+            void centreOnCapital();
+
             // Unit's and region's hitbox may be on top of each other, making it difficult to distinguish between each other.
             // This function returns a pointer to the object which is being clicked on.
             GameObject* getSelectedObject();

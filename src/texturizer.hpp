@@ -17,6 +17,7 @@ namespace iso {
             ~Texturizer();
 
             std::string createColouredWorldmapTexture(const std::string& id, const std::string& save_as, const sf::Color& replacement_black, const sf::Color& replacement_white);      
+            std::string blendTextures(const std::string& save_as, const std::string& texture_1, const std::string& texture_2);
             sf::Color   getRandomColour() const;
     };
 }

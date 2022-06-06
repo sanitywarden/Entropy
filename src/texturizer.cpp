@@ -1,5 +1,6 @@
 #include "./texturizer.hpp"
 #include "globalutilities.hpp"
+#include <iostream>
 
 iso::Texturizer::Texturizer() 
     : resource(nullptr) {}
@@ -42,4 +43,28 @@ sf::Color iso::Texturizer::getRandomColour() const {
     auto image  = texture.copyToImage();
     auto colour = image.getPixel(x * 16, y * 16);
     return colour; 
+}
+
+std::string iso::Texturizer::blendTextures(const std::string& save_as, const std::string& texture_name, const std::string& blend_name) {
+    if(this->resource->checkTextureExists(save_as))
+        return save_as;
+
+    auto image_1 = this->resource->getTexture(texture_name).copyToImage();
+    auto image_2 = this->resource->getTexture(blend_name).copyToImage();
+
+    for(int y = 0; y < image_1.getSize().y; y++) {
+        for(int x = 0; x < image_1.getSize().x; x++) {
+            auto colour = image_2.getPixel(x, y);
+            if(colour.a != 0) {
+                auto colour = image_2.getPixel(x, y);
+                image_1.setPixel(x, y, colour);
+            }
+        }
+    }
+    
+    sf::Texture texture;
+    auto intrect = this->resource->getTextureIntRect(texture_name);
+    texture.loadFromImage(image_1);
+    this->resource->addTexture(save_as, texture, intrect);
+    return save_as;
 }

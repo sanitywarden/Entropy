@@ -53,44 +53,7 @@ void Worldmap::initialise() {
     this->controls.addKeyMappingCheck("arrow_down",            sf::Keyboard::Key::Down);
     this->controls.addKeyMappingCheck("arrow_up",              sf::Keyboard::Key::Up);
     this->controls.addKeyMappingCheck("backspace",             sf::Keyboard::Key::BackSpace);
-
-    this->controls.addKeyMappingCheck("A", sf::Keyboard::Key::A);
-    this->controls.addKeyMappingCheck("B", sf::Keyboard::Key::B);
-    this->controls.addKeyMappingCheck("C", sf::Keyboard::Key::C);
-    this->controls.addKeyMappingCheck("D", sf::Keyboard::Key::D);
-    this->controls.addKeyMappingCheck("E", sf::Keyboard::Key::E);
-    this->controls.addKeyMappingCheck("F", sf::Keyboard::Key::F);
-    this->controls.addKeyMappingCheck("G", sf::Keyboard::Key::G);
-    this->controls.addKeyMappingCheck("H", sf::Keyboard::Key::H);
-    this->controls.addKeyMappingCheck("I", sf::Keyboard::Key::I);
-    this->controls.addKeyMappingCheck("J", sf::Keyboard::Key::J);
-    this->controls.addKeyMappingCheck("K", sf::Keyboard::Key::K);
-    this->controls.addKeyMappingCheck("L", sf::Keyboard::Key::L);
-    this->controls.addKeyMappingCheck("M", sf::Keyboard::Key::M);
-    this->controls.addKeyMappingCheck("N", sf::Keyboard::Key::N);
-    this->controls.addKeyMappingCheck("O", sf::Keyboard::Key::O);
-    this->controls.addKeyMappingCheck("P", sf::Keyboard::Key::P);
-    this->controls.addKeyMappingCheck("R", sf::Keyboard::Key::R);
-    this->controls.addKeyMappingCheck("S", sf::Keyboard::Key::S);
-    this->controls.addKeyMappingCheck("T", sf::Keyboard::Key::T);
-    this->controls.addKeyMappingCheck("U", sf::Keyboard::Key::U);
-    this->controls.addKeyMappingCheck("W", sf::Keyboard::Key::W);
-    this->controls.addKeyMappingCheck("V", sf::Keyboard::Key::V);
-    this->controls.addKeyMappingCheck("Q", sf::Keyboard::Key::Q);
-    this->controls.addKeyMappingCheck("X", sf::Keyboard::Key::X);
-    this->controls.addKeyMappingCheck("Y", sf::Keyboard::Key::Y);
-    this->controls.addKeyMappingCheck("Z", sf::Keyboard::Key::Z);
-
-    this->controls.addKeyMappingCheck("0", sf::Keyboard::Key::Num0);
-    this->controls.addKeyMappingCheck("1", sf::Keyboard::Key::Num1);
-    this->controls.addKeyMappingCheck("2", sf::Keyboard::Key::Num2);
-    this->controls.addKeyMappingCheck("3", sf::Keyboard::Key::Num3);
-    this->controls.addKeyMappingCheck("4", sf::Keyboard::Key::Num4);
-    this->controls.addKeyMappingCheck("5", sf::Keyboard::Key::Num5);
-    this->controls.addKeyMappingCheck("6", sf::Keyboard::Key::Num6);
-    this->controls.addKeyMappingCheck("7", sf::Keyboard::Key::Num7);
-    this->controls.addKeyMappingCheck("8", sf::Keyboard::Key::Num8);
-    this->controls.addKeyMappingCheck("9", sf::Keyboard::Key::Num9);
+    this->controls.addKeyMappingCheck("spacebar",              sf::Keyboard::Key::Space);
 }
 
 void Worldmap::loadResources() {
@@ -349,6 +312,9 @@ void Worldmap::handleInput() {
             }
 
             case sf::Event::KeyPressed: {
+                if(this->block_keybinds)
+                    break;
+
                 for(const auto& pair : this->controls.key_map) {
                     const auto& name  = pair.first;
                     const int   state = this->controls.isKeyPressed(name);
@@ -357,6 +323,10 @@ void Worldmap::handleInput() {
                         this->controls.key_state[name] = state;
                     }
                     else this->controls.key_state.insert({ name, state });
+                }
+
+                if(this->controls.keyState("spacebar")) {
+                    this->centreOnCapital();
                 }
 
                 if(this->controls.keyState("key_f3")) {
@@ -763,4 +733,20 @@ int Worldmap::getCurrentIndex() {
 
 int Worldmap::getSelectedIndex() { 
     return this->selected_index;
+}
+
+void Worldmap::centreOnCapital() {
+    auto* player = this->manager->getHumanPlayer();
+
+    if(!player)
+        return;
+
+    if(!player->hasCapital())
+        return;
+
+    auto capital_index = player->getCapital();
+    const auto& region = this->manager->world.world_map[capital_index];
+    auto position = region.getPosition2D() + sf::Vector2f(world_settings.panelSize() / 2, world_settings.panelSize() / 2);
+
+    this->view_game.setCenter(position);
 }

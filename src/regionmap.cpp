@@ -120,24 +120,24 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 128, 64, 64 ));
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 192, 64, 64 ));
 
-    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"             , "icon_default",             sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_dirt.png"           , "icon_path_dirt" ,          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_stone.png"          , "icon_path_stone",          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_farmhouse.png"  , "icon_building_gatherer",   sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_woodcutter.png" , "icon_building_woodcutter", sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_quarry.png"     , "icon_building_quarry",     sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_house.png"      , "icon_building_house",      sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_flint.png"      , "icon_building_flint",      sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_hunter.png"     , "icon_building_hunter",     sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"             , "icon_default",                      sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_dirt.png"           , "icon_template_path_dirt" ,          sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_stone.png"          , "icon_template_path_stone",          sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_farmhouse.png"  , "icon_template_building_gatherer",   sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_woodcutter.png" , "icon_template_building_woodcutter", sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_quarry.png"     , "icon_template_building_quarry",     sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_house.png"      , "icon_template_building_house",      sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_flint.png"      , "icon_template_building_flint",      sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_hunter.png"     , "icon_template_building_hunter",     sf::IntRect(0, 0, 48, 48));
 
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_flint.png"  , "icon_item_flint"  , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_stone.png"  , "icon_item_stone"  , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_wood.png"   , "icon_item_wood"   , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_leather.png", "icon_item_leather", sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_meat.png"   , "icon_item_meat"   , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_grain.png"  , "icon_item_grain"  , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_water.png"  , "icon_item_water"  , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_tools.png"  , "icon_item_tools"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_flint.png"  , "icon_template_item_flint"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_stone.png"  , "icon_template_item_stone"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_wood.png"   , "icon_template_item_wood"   , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_leather.png", "icon_template_item_leather", sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_meat.png"   , "icon_template_item_meat"   , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_grain.png"  , "icon_template_item_grain"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_water.png"  , "icon_template_item_water"  , sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/items/icon_item_tools.png"  , "icon_template_item_tools"  , sf::IntRect(0, 0, 48, 48));
 
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_1x1", sf::IntRect(0,   0, 64,  32 ));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_2x2", sf::IntRect(64,  0, 128, 64 ));
@@ -148,6 +148,19 @@ void Regionmap::loadResources() {
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_green", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_red"  , COLOUR_RED_TRANSPARENT_HALF  , COLOUR_TRANSPARENT);
+
+    for(const auto& texture_pair : this->manager->resource.getTextureCollection()) {
+        const auto& texture_name = texture_pair.first;
+        const auto& texture      = texture_pair.second;
+
+        // Generate icons.
+        if(startsWith(texture_name, "icon_template_")) {
+            auto save_as = "icon_" + readAfter(texture_name, "icon_template_");
+            auto base    = "icon_default";
+            auto blend   = texture_name;
+            this->manager->texturizer.blendTextures(save_as, base, blend);
+        }
+    }
 }
 
 void Regionmap::update(float delta_time) {
@@ -651,6 +664,10 @@ int Regionmap::getCurrentIndex() {
 }
 
 void Regionmap::updateTile() {
+    auto* human_player = this->manager->getHumanPlayer();
+    if(!human_player->ownsRegion(this->region_index))
+        return;
+
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
     if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
         Building building = building_menu->getBuilding();
