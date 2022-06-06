@@ -152,3 +152,14 @@ bool Gamestate::pointIntersectsUI(sf::Vector2f point) const {
     
     return false;
 }
+
+void Gamestate::resizeViews() {
+    auto window_size = this->engine->window.windowSize();
+    auto scaled_size = sf::Vector2f(
+        window_size.x * this->current_zoom,
+        window_size.y * this->current_zoom
+    );
+
+    this->view_game.setSize(scaled_size);
+    this->view_interface.setSize(window_size);
+}

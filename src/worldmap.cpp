@@ -31,18 +31,13 @@ void Worldmap::initialise() {
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 2;
 
+    this->resizeViews();
+
+    this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
     this->view_game.setCenter(sf::Vector2f(
         world_settings.panelSize() * world_settings.getWorldWidth(),
         world_settings.panelSize() * world_settings.getWorldWidth()
     ));
-
-    this->view_game.setSize(sf::Vector2f(
-        this->manager->window.windowWidth(),
-        this->manager->window.windowHeight()
-    ));
-
-    this->view_interface.setSize(this->manager->window.windowSize());
-    this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
 
     this->controls.addKeyMappingCheck("key_f3",                sf::Keyboard::Key::F3);
     this->controls.addKeyMappingCheck("tilde",                 sf::Keyboard::Key::Tilde);
@@ -166,15 +161,19 @@ void Worldmap::moveCamera() {
     const float x_multiplier = (this->current_zoom + 1) * 5.00f;
     const float y_multiplier = (this->current_zoom + 1) * 5.00f;    
 
-    // Check the horizontal and vertical bounds of the screen.
-    // This makes sure that you can not move past the world map.
-    if(this->view_game.getCenter().x + (distance.x * x_multiplier) < (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().x / 2.f && this->view_game.getCenter().x + (distance.x * x_multiplier) > 0.f + this->view_game.getSize().x / 2.f) {
-        this->view_game.move(x_multiplier * distance.x, 0.f);
-    }
+    const auto tile_top_left     = this->manager->world.world_map[0];
+    const auto tile_bottom_right = this->manager->world.world_map[world_settings.getWorldSize() - 1];
+    
+    const auto left_bound   = tile_top_left.getPosition2D().x + -(world_settings.getWorldWidth() * world_settings.panelSize() / 8); 
+    const auto right_bound  = tile_bottom_right.getPosition2D().x + world_settings.getWorldWidth() * world_settings.panelSize() / 8;
+    const auto top_bound    = tile_top_left.getPosition2D().y + -(world_settings.getWorldWidth() * world_settings.panelSize() / 8);
+    const auto bottom_bound = tile_bottom_right.getPosition2D().y + world_settings.getWorldWidth() * world_settings.panelSize() / 8;
 
-    if(this->view_game.getCenter().y + (distance.y * y_multiplier) < (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().y / 2.f && this->view_game.getCenter().y + (distance.y * y_multiplier) > 0.f + this->view_game.getSize().y / 2.f) {
-        this->view_game.move(0.f, y_multiplier * distance.y);
-    }
+    if(this->view_game.getCenter().x + distance.x * x_multiplier > left_bound - this->view_game.getSize().x / 4 && this->view_game.getCenter().x + distance.x * x_multiplier < right_bound + this->view_game.getSize().x / 4)
+        this->view_game.move(distance.x * x_multiplier, 0);
+
+    if(this->view_game.getCenter().y + distance.y * y_multiplier > top_bound - this->view_game.getSize().y / 4 && this->view_game.getCenter().y + distance.y * y_multiplier < bottom_bound + this->view_game.getSize().y / 4)
+        this->view_game.move(0, distance.y * y_multiplier);
 
     this->move_camera = false;
 }
@@ -204,34 +203,6 @@ void Worldmap::updateCamera() {
 
     if(this->zoom_camera) 
         this->zoomCamera();
-
-    // Check if the camera is postioned badly on the top of the screen.
-    if(this->view_game.getCenter().y - this->view_game.getSize().y / 2 < 0) {
-        float offset_y = std::abs(this->view_game.getCenter().y - this->view_game.getSize().y / 2);
-
-        this->view_game.move(0.f, offset_y);
-    }
-
-    // Check if the camera is postioned badly on the left of the screen.
-    if(this->view_game.getCenter().x - this->view_game.getSize().x / 2 < 0) {
-        float offset_x = std::abs(this->view_game.getCenter().x - this->view_game.getSize().x / 2);
-
-        this->view_game.move(offset_x, 0.f);
-    }
-
-    // Check if the camera is postioned badly on the right of the screen.
-    if(this->view_game.getCenter().x + this->view_game.getSize().x / 2 > world_settings.panelSize() * world_settings.getWorldWidth()) {
-        float offset_x = -(this->view_game.getCenter().x + this->view_game.getSize().x / 2);
-
-        this->view_game.move(offset_x, 0.f);
-    } 
-    
-    // Check if the camera is positioned badly on the bottom of the screen.
-    if(this->view_game.getCenter().y + this->view_game.getSize().y / 2 > world_settings.panelSize() * world_settings.getWorldWidth()) {
-        float offset_y = -(this->view_game.getCenter().y + this->view_game.getSize().y / 2);
-
-        this->view_game.move(0.f, offset_y);
-    }
 }
 
 void Worldmap::update(float delta_time) {
@@ -243,7 +214,7 @@ void Worldmap::update(float delta_time) {
 }
 
 void Worldmap::render(float delta_time) {
-    this->manager->window.clear(sf::Color(50, 50, 50));
+    this->manager->window.clear(COLOUR_BLACK);
     this->manager->window.getWindow()->setView(this->view_game);
 
     this->renderWorld();
@@ -271,11 +242,6 @@ void Worldmap::handleInput() {
                     this->event.size.height
                 );
 
-                this->view_game.setSize(
-                    new_window_size.x * this->current_zoom,
-                    new_window_size.y * this->current_zoom
-                );
-
                 // To avoid weird camera glitches, set the centre explicitly.
 
                 int human_player_capital = this->manager->getHumanPlayer()->getCapital();
@@ -292,9 +258,9 @@ void Worldmap::handleInput() {
                     this->view_game.setCenter(position);
                 }
 
-                this->view_interface.setSize(new_window_size);
                 this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
 
+                this->resizeViews();
                 this->resizeUI();
 
                 break; 
@@ -341,20 +307,28 @@ void Worldmap::handleInput() {
                     this->manager->prepare();
                 }
 
+                const auto tile_top_left     = this->manager->world.world_map[0];
+                const auto tile_bottom_right = this->manager->world.world_map[world_settings.getWorldSize() - 1];
+                
+                const auto left_bound   = tile_top_left.getPosition2D().x + -(world_settings.getWorldWidth() * world_settings.panelSize() / 8); 
+                const auto right_bound  = tile_bottom_right.getPosition2D().x + world_settings.getWorldWidth() * world_settings.panelSize() / 8;
+                const auto top_bound    = tile_top_left.getPosition2D().y + -(world_settings.getWorldWidth() * world_settings.panelSize() / 8);
+                const auto bottom_bound = tile_bottom_right.getPosition2D().y + world_settings.getWorldWidth() * world_settings.panelSize() / 8;
+
                 if(this->controls.keyState("arrow_left"))
-                    if(this->view_game.getCenter().x + world_settings.panelSize() >= this->view_game.getSize().x / 2)
+                    if(this->view_game.getCenter().x + world_settings.panelSize() >= left_bound)
                         this->view_game.move(-world_settings.panelSize(), 0);
 
                 if(this->controls.keyState("arrow_right"))
-                    if(this->view_game.getCenter().x + world_settings.panelSize() <= (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().x / 2)
+                    if(this->view_game.getCenter().x + world_settings.panelSize() <= right_bound)
                         this->view_game.move(world_settings.panelSize(), 0);
 
                 if(this->controls.keyState("arrow_down"))
-                    if(this->view_game.getCenter().y + world_settings.panelSize() <= (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().y / 2)
+                    if(this->view_game.getCenter().y + world_settings.panelSize() <= bottom_bound)
                         this->view_game.move(0, world_settings.panelSize());
 
                 if(this->controls.keyState("arrow_up"))
-                    if(this->view_game.getCenter().x + (world_settings.panelSize()) <= (world_settings.getWorldWidth() * world_settings.panelSize()) - this->view_game.getSize().x / 2)
+                    if(this->view_game.getCenter().x + (world_settings.panelSize()) <= top_bound)
                         this->view_game.move(0, -world_settings.panelSize());
 
                 break;
@@ -573,7 +547,6 @@ void Worldmap::selectPanel() {
 void Worldmap::unselectPanel() {
     if(this->controls.mouseRightPressed() && this->selected_index != -1) {
         this->selected_index = -1;
-        
         this->toggleComponentVisibility("component_widget_region");
     }
 }
@@ -584,11 +557,14 @@ void Worldmap::highlightPanel() {
         this->mouse_position_window.y / world_settings.panelSize()
     );
     
-    this->current_index = tile_grid.y * world_settings.getWorldWidth() + tile_grid.x;
+    this->current_index = world_settings.calculateWorldIndex(tile_grid.x, tile_grid.y);
     
     if(this->mouse_drag)
         return;
     
+    if(!world_settings.inWorldBounds(tile_grid))
+        return;
+
     auto panel_grid_position = sf::Vector2i(
         this->mouse_position_window.x / world_settings.panelSize(),
         this->mouse_position_window.y / world_settings.panelSize()
@@ -646,6 +622,8 @@ void Worldmap::gamestateLoad() {
         auto position = region.getPosition2D();
         this->view_game.setCenter(position);
     }
+
+    this->resizeViews();
 
     this->mouse_moved = false;
     this->mouse_drag  = false;
@@ -749,4 +727,13 @@ void Worldmap::centreOnCapital() {
     auto position = region.getPosition2D() + sf::Vector2f(world_settings.panelSize() / 2, world_settings.panelSize() / 2);
 
     this->view_game.setCenter(position);
+}
+
+void Worldmap::resizeViews() {
+    auto window_size = this->manager->window.windowSize();
+    this->view_interface.setSize(window_size);
+    this->view_game.setSize(sf::Vector2f(
+        window_size.x * (this->current_zoom + 1),
+        window_size.y * (this->current_zoom + 1)
+    ));
 }

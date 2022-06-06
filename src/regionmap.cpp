@@ -29,11 +29,8 @@ void Regionmap::initialise() {
     this->max_zoom_in   = 0; 
     this->max_zoom_out  = 3;
     
-    this->view_game.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
-    this->view_game.setSize(this->manager->window.windowSize());
-
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
-    this->view_interface.setSize(this->manager->window.windowSize());
+    this->view_game.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
 
     this->controls.addKeyMappingCheck("key_tilde",   sf::Keyboard::Key::Tilde);
     this->controls.addKeyMappingCheck("key_escape",  sf::Keyboard::Key::Escape);
@@ -201,21 +198,16 @@ void Regionmap::handleInput() {
                     this->event.size.height
                 );
             
-                this->view_game.setSize(
-                    new_window_size.x * this->current_zoom,
-                    new_window_size.y * this->current_zoom
-                );
-
+                
                 // To avoid weird camera glitches, set the centre explicitly.
 
                 auto grid_position = this->manager->world.tileGridPosition(this->view_game.getCenter());
                 auto index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y); 
                 auto tile_position = this->region->map[index].getPosition2D();
                 this->view_game.setCenter(tile_position);
-
-                this->view_interface.setSize(new_window_size);
                 this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
 
+                this->resizeViews();
                 this->resizeUI();
 
                 break; 
@@ -828,6 +820,8 @@ void Regionmap::gamestateLoad() {
     const size_t verticies_tilemap = 4 * this->region->map.size() + 4 * side_vector_size;
 
     regionmap_mesh_tile.create(verticies_tilemap);
+
+    this->resizeViews();
 }
 
 void Regionmap::gamestateClose() {
@@ -979,4 +973,13 @@ void Regionmap::renderSelectedBuilding() {
             this->manager->window.getWindow()->draw(vertex, vertex_count, sf::Quads, states);
         }
     }
+}
+
+void Regionmap::resizeViews() {
+    auto window_size = this->manager->window.windowSize();
+    this->view_interface.setSize(window_size);
+    this->view_game.setSize(sf::Vector2f(
+        window_size.x * (this->current_zoom + 1),
+        window_size.y * (this->current_zoom + 1) 
+    ));
 }

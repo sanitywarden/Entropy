@@ -67,6 +67,7 @@ namespace entropy {
             virtual void updateCamera()         { return; }
             virtual void updateScheduler()      { return; }
             virtual void createUI()             { return; } 
+            virtual void resizeViews();
 
             int getDefaultZoom()    const;
             int getMaxZoomIn()      const;

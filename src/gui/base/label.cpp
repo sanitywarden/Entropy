@@ -82,3 +82,7 @@ void Label::align(Alignment alignment, const AbstractWidget* widget) {
 void Label::setString(std::string data) {
     this->data = data;
 }
+
+void Label::setColour(sf::Color colour) {
+    this->text.setColor(colour);
+}

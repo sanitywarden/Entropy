@@ -17,17 +17,18 @@ Menu::~Menu() {
 void Menu::initialise() {
     auto window_size = this->manager->window.windowSize();
 
-    this->view_game.setSize(window_size);
-    this->view_game.setCenter(window_size.x / 2, window_size.y / 2);
-
-    this->view_interface.setSize(window_size);
-    this->view_interface.setCenter(window_size.x / 2, window_size.y / 2);
-
     this->controls.addKeyMappingCheck("key_tilde", sf::Keyboard::Key::Tilde);
 }
 
 void Menu::loadResources() {
+    this->manager->resource.loadTexture("./res/ui/background.png", "background", sf::IntRect(0, 0, 2560, 1440));
 
+    auto texture_size = this->manager->resource.getTextureSize("background");
+    this->view_game.setSize(texture_size);
+    this->view_game.setCenter(texture_size.x / 2, texture_size.y / 2);
+
+    this->view_interface.setSize(texture_size);
+    this->view_interface.setCenter(texture_size.x / 2, texture_size.y / 2);
 }
 
 void Menu::handleInput() {
@@ -51,6 +52,23 @@ void Menu::handleInput() {
                 if(this->controls.keyState("key_tilde")) {
                     this->toggleComponentVisibility("component_debug_performance");
                 }
+            }
+
+            case sf::Event::Resized: {
+                auto new_window_size = sf::Vector2f(
+                    this->event.size.width,
+                    this->event.size.height
+                );
+            
+                auto texture_size = this->manager->resource.getTextureSize("background");
+
+                this->view_game.setCenter(texture_size.x / 2, texture_size.y / 2);
+                this->view_interface.setCenter(texture_size.x / 2, texture_size.y / 2);
+
+                this->resizeViews();
+                this->resizeUI();
+
+                break; 
             }
 
             case sf::Event::KeyReleased: {
@@ -102,7 +120,34 @@ void Menu::render(float delta_time) {
     this->manager->window.clear(COLOUR_WHITE);
     this->manager->window.getWindow()->setView(this->view_interface);
 
+    this->renderBackground();
     this->renderUI();
 
     this->manager->window.display();
+}
+
+void Menu::renderBackground() {
+    sf::VertexArray background(sf::Quads, 4);
+    
+    auto texture_size = this->manager->resource.getTextureSize("background");
+
+    background[0].position = sf::Vector2f(0, 0); 
+    background[1].position = sf::Vector2f(texture_size.x, 0); 
+    background[2].position = sf::Vector2f(texture_size.x, texture_size.y); 
+    background[3].position = sf::Vector2f(0, texture_size.y);
+
+    background[0].texCoords = sf::Vector2f(0, 0); 
+    background[1].texCoords = sf::Vector2f(texture_size.x, 0);  
+    background[2].texCoords = sf::Vector2f(texture_size.x, texture_size.y); 
+    background[3].texCoords = sf::Vector2f(0, texture_size.y); 
+
+    sf::RenderStates states;
+    states.texture = &this->manager->resource.getTexture("background");
+    this->manager->window.draw(background, states);
+}
+
+void Menu::resizeViews() {
+    auto background_size = this->manager->resource.getTextureSize("background");
+    this->view_game.setSize(background_size);
+    this->view_interface.setSize(background_size);
 }

@@ -38,6 +38,8 @@ namespace gui {
             Label(iso::SimulationManager* manager, std::string data);
             ~Label();
 
+            void setColour(sf::Color colour);
+
             // Align the text within it's parent.
             void align(Alignment alignment, const AbstractWidget* widget);
             void setString(std::string data);

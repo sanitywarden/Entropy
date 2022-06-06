@@ -47,6 +47,7 @@ namespace iso {
             void gamestateClose()  override;
             void updateScheduler() override;
             void createUI()        override;
+            void resizeViews()     override;
 
             void renderRegion();
             void higlightTile();

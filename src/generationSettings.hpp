@@ -68,6 +68,7 @@ class WorldData {
         // Worldmap API
 
         bool inWorldBounds(int index) const;
+        bool inWorldBounds(sf::Vector2i grid_position) const;
         int getWorldSize()            const;
         int getWorldWidth()           const;
         int getWorldMargin()          const;

@@ -1,6 +1,7 @@
 #include "gui/performance.hpp"
 #include "worldmap.hpp"
 #include "regionmap.hpp"
+#include "generationSettings.hpp"
 
 using namespace gui;
 using namespace iso;
@@ -22,6 +23,7 @@ void DebugPerformance::createUI() {
     auto text = LabelComponent(new Label(this->manager));
         text.get()->setWidgetID("label_debug_performance");
         text.get()->setWidgetPosition(0, 0);
+        text.get()->setColour(COLOUR_WHITE);
 
     this->addComponent(text);
 }
@@ -53,16 +55,25 @@ void DebugPerformance::updateUI() {
     if(gamestate_id == "Worldmap") {
         auto* worldmap = static_cast<Worldmap*>(gamestate);
         
-        const int current_index  = worldmap->getCurrentIndex();
-        const int selected_index = worldmap->getSelectedIndex();
+        sf::Vector2i tile_grid = sf::Vector2i(
+            worldmap->mouse_position_window.x / world_settings.panelSize(),
+            worldmap->mouse_position_window.y / world_settings.panelSize()
+        );
+        
+        int selected_index = worldmap->getSelectedIndex(); 
+        int current_index  = -1;
+        if(world_settings.inWorldBounds(tile_grid)) {
+            current_index = world_settings.calculateWorldIndex(tile_grid.x, tile_grid.y);
 
-        data += "Current index:  " + std::to_string(current_index)  + "\n";
-        data += "Selected index: " + std::to_string(selected_index) + "\n";
-        data += "Selected unit: "  + std::to_string(worldmap->selected_unit_id) + "\n";
-        data += "Terrain: "        + std::to_string(this->manager->world.world_map[current_index].regiontype.is_terrain()) + "\n";
-        data += "Coast: "          + std::to_string(this->manager->world.world_map[current_index].regiontype.is_coast())   + "\n";
-        data += "Forest: "         + std::to_string(this->manager->world.forests.count(current_index)) + "\n";
-        data += "Lake: "           + std::to_string(this->manager->world.is_lake(current_index)) + "\n";
+            data += "Current index:  " + std::to_string(current_index)  + "\n";
+            data += "Terrain: "        + std::to_string(this->manager->world.world_map[current_index].regiontype.is_terrain()) + "\n";
+            data += "Coast: "          + std::to_string(this->manager->world.world_map[current_index].regiontype.is_coast())   + "\n";
+            data += "Forest: "         + std::to_string(this->manager->world.forests.count(current_index)) + "\n";
+            data += "Lake: "           + std::to_string(this->manager->world.is_lake(current_index)) + "\n";
+        }
+
+        if(selected_index != -1)    
+            data += "Selected index: " + std::to_string(selected_index) + "\n";       
     }
 
     if(gamestate_id == "Regionmap") {

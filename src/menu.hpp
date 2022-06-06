@@ -19,6 +19,9 @@ namespace iso {
             void initialise()     override;
             void loadResources()  override;
             void createUI()       override;
+            void resizeViews()    override;
+
+            void renderBackground();
 
         public:
             Menu(SimulationManager* manager);

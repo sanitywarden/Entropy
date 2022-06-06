@@ -247,6 +247,10 @@ bool WorldData::inWorldBounds(int index) const {
     return (index >= 0 && index < this->getWorldSize());
 }
 
+bool WorldData::inWorldBounds(sf::Vector2i grid_position) const {
+    return (grid_position.x >= 0 && grid_position.y >= 0 && grid_position.x < this->getWorldWidth() && grid_position.y < this->getWorldWidth());
+}
+
 NoiseSettings WorldData::getWorldNoiseSettings() const {
     return world_noise;
 }
