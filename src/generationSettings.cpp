@@ -48,7 +48,6 @@ void WorldData::loadSettingsFromFile() {
     int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
     
     std::string line_content;
-
     while(std::getline(config_file, line_content)) {
         if(line_content[0] == comment_indicator || (int)line_content[0] == ascii_empty_line_indicator)
             continue;
@@ -56,9 +55,6 @@ void WorldData::loadSettingsFromFile() {
         auto index = find(line_content, read_value_from);
         std::string property_name  = readBefore(line_content, read_value_from);  
         std::string property_value = read(line_content, index + 1, line_content.length() - 1);
-
-        // Well, this is bad.
-        // Perhaps you could hold names, and values of properties in a map, and retrieve them by specific functions on demand.
 
         if(property_name == "WORLDSIZE") {
             this->world_size = std::stoi(property_value);

@@ -7,7 +7,7 @@
 
 #include "engineSettings.hpp"
 
-namespace entropy {
+namespace iso {
     // Window Manager is a class responsible for creating and managing a SFML window.
     class windowManager {
         private:

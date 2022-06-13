@@ -3,17 +3,9 @@
 
 #include <string>
 #include <fstream>
-
 #include <SFML/Graphics.hpp>
 
-// Settings order:
-// WIDTHxHEIGHT
-// FULLSCREEN
-// VSYNC
-// REFRESHRATE
-// DEBUGMODE
-
-namespace entropy {
+namespace iso {
     // This is a class that represents the user-customisable application settings.
     // It does not have any public or private functions.
     // Default parameters are set in the class constructor.
@@ -34,19 +26,15 @@ namespace entropy {
     // The settings are saved to a file whenever the program terminates.
     class applicationSettings {
         private:
-            entropy::Settings m_settings;
+            Settings m_settings;
             std::string       m_default_config_path; // Default path where the config file is stored.
 
-            /* From is inclusive. To is exclusive. */
-            std::string extractPartString(const int from, const int to, std::string str);
-
             void loadUserSettings();
-            void saveUserSettings();
         public:
             applicationSettings();
             ~applicationSettings();
 
-            const entropy::Settings& userSettings();
+            const Settings& userSettings();
     };  
 }
 

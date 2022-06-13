@@ -9,7 +9,7 @@ WorldGenerator::WorldGenerator() {
 
 }
 
-WorldGenerator::WorldGenerator(entropy::resourceManager* resource, Texturizer* texturizer) {
+WorldGenerator::WorldGenerator(resourceManager* resource, Texturizer* texturizer) {
     this->resource   = resource;
     this->texturizer = texturizer;
 

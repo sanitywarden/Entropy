@@ -8,7 +8,7 @@
 #include "performance.hpp"
 
 namespace iso {
-    class Menu : public entropy::Gamestate {
+    class Menu : public Gamestate {
         friend class SimulationManager;
 
         public:

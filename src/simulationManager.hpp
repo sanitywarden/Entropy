@@ -25,7 +25,7 @@ namespace iso {
     const int food_consumed_per_pop  = 1;
     const int water_consumed_per_pop = 2;
 
-    class SimulationManager : public entropy::Entropy {
+    class SimulationManager : public Entropy {
         private:
             void internalLoop(float delta_time);
 

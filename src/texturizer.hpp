@@ -10,10 +10,10 @@
 namespace iso {
     class Texturizer {
         private:
-            entropy::resourceManager* resource;
+            resourceManager* resource;
         public:
             Texturizer();
-            Texturizer(entropy::resourceManager* resource_manager);
+            Texturizer(resourceManager* resource_manager);
             ~Texturizer();
 
             std::string createColouredWorldmapTexture(const std::string& id, const std::string& save_as, const sf::Color& replacement_black, const sf::Color& replacement_white);      

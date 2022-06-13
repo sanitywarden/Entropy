@@ -8,7 +8,7 @@
 
 #include "engineSettings.hpp"
 
-namespace entropy {
+namespace iso {
     // This class works as a easy to use resource manager.
     // It is used by Entropy, and there is only one instance of it per instance of the engine.
     // This allows to manage when to load or unload resources that the application uses. 

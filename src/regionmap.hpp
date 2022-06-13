@@ -17,7 +17,7 @@
 
 namespace iso {
     // Gamestate class responsible for management of a single region.
-    class Regionmap : public entropy::Gamestate {
+    class Regionmap : public Gamestate {
         friend class SimulationManager;
         
         public:

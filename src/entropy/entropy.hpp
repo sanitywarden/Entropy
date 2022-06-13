@@ -6,7 +6,7 @@
 #include "gamestateManager.hpp"
 #include "engineSettings.hpp"
 
-namespace entropy {
+namespace iso {
     /* Entropy is a main class which is supposed to work as a engine.
      * All the modules that you add are supposed to be in Entropy class.
      * To create a application using this engine you need to:

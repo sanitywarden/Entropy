@@ -7,7 +7,7 @@
 
 #include "engineSettings.hpp"
 
-namespace entropy {
+namespace iso {
     class Gamestate;
     
     // Gamestate Manager is a class that is used for storing and using user-created gamestates.
@@ -15,15 +15,15 @@ namespace entropy {
         public:
             Settings m_settings;
 
-            std::map <std::string, entropy::Gamestate*> m_gamestates;
-            entropy::Gamestate* m_current_gamestate;
+            std::map <std::string, Gamestate*> m_gamestates;
+            Gamestate* m_current_gamestate;
 
         public:
             gamestateManager();
             gamestateManager(const Settings& settings);
             ~gamestateManager();
 
-            void addGamestate(std::string id, entropy::Gamestate& gamestate);
+            void addGamestate(std::string id, Gamestate& gamestate);
             void removeGamestate(std::string id);
             bool checkGamestateExists(std::string id);
             void setGamestate(std::string id);

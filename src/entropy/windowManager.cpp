@@ -1,7 +1,7 @@
 #include "windowManager.hpp"
 #include <iostream>
 
-using namespace entropy;
+using namespace iso;
 
 windowManager::windowManager() {
 

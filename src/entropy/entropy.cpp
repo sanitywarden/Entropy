@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-using namespace entropy;
+using namespace iso;
 
 Entropy::Entropy() {
     auto settings = this->config.userSettings();

@@ -1,8 +1,11 @@
 #include "engineSettings.hpp"
+#include "globalutilities.hpp"
 
 #include <iostream>
 
-entropy::Settings::Settings() {
+using namespace iso;
+
+Settings::Settings() {
     this->window_size            = sf::Vector2f(1200, 800);
     this->window_fullscreen      = false;
     this->window_vsync           = false;
@@ -10,125 +13,87 @@ entropy::Settings::Settings() {
     this->application_debug_mode = true;
 }
 
-entropy::Settings::~Settings() {
+Settings::~Settings() {
 
 }
 
-// Extract part of the string.
-// Argument from is inclusive.
-// Argument to is exclusive.
-std::string entropy::applicationSettings::extractPartString(const int from, const int to, std::string str) {
-    std::string value;
-
-    for(int i = from; i < to; i++) {
-        value += str[i];
-    }
-
-    return value;
-}
-
-entropy::applicationSettings::applicationSettings() {
-    this->m_settings = entropy::Settings();
-
+applicationSettings::applicationSettings() {
+    this->m_settings = Settings();
     this->loadUserSettings();
 }
 
-entropy::applicationSettings::~applicationSettings() {
-    this->saveUserSettings();
+applicationSettings::~applicationSettings() {
 }
 
-void entropy::applicationSettings::loadUserSettings() {
+void applicationSettings::loadUserSettings() {
     std::string filename = "./config/config.config";
     
     // Check if the file has been opened correctly, or if the file even exists.
     // If the file could not be opened, use default settings instead.
     std::fstream input_file(filename.c_str(), std::ios::in);
     if(!input_file) {
-        this->m_settings = entropy::Settings();
-        
+        this->m_settings = Settings();
         std::cout << "[Entropy Engine][Engine Settings]: Custom user settings file not found.\n";
         std::cout << "[Entropy Engine][Engine Settings]: Application loaded with default settings.\n";        
-        
         return;
-    } 
-
-
-    std::string file_line;
-
-    // Load the settings...
-    // Extract the window size from the file.
-    std::getline(input_file, file_line);
-
-    size_t index = file_line.find_first_of('x');
-    
-    if(index == std::string::npos) {
-        std::cout << "[Entropy Engine][Engine Settings]: Custom user settings file is empty.\n";
-        std::cout << "[Entropy Engine][Engine Settings]: Application loaded with default settings.\n";        
-
-        this->m_settings = Settings();
-        return;     
     }
 
     std::cout << "[Entropy Engine][Engine Settings]: Custom user settings file loaded.\n";
 
-    int width  = std::stoi(this->extractPartString(0, index, file_line));
-    int height = std::stoi(this->extractPartString(index + 1, file_line.length(), file_line));
-    this->m_settings.window_size = sf::Vector2f(width, height);
-    std::cout << "[Entropy Engine][Engine Settings]: Window size:\t\t" << width << "x" << height << "\n";
+    std::string line_delimiter  = ",";   // What char marks that a line ends.
+    std::string read_value_from = ":";   // What char marks that value is afterwards.
+    char comment_indicator = '#';        // What char marks a comment.
+    int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
 
-    std::getline(input_file, file_line);
-    int is_fullscreen = std::stoi(file_line);
-    this->m_settings.window_fullscreen = is_fullscreen;
-    std::string fullscreen_prompt = (is_fullscreen) ? "True" : "False";
-    std::cout << "[Entropy Engine][Engine Settings]: Fullscreen:\t\t" << fullscreen_prompt << "\n";
+    std::string file_line;
+    while(std::getline(input_file, file_line)) {
+        if(file_line[0] == comment_indicator || (int)file_line[0] == ascii_empty_line_indicator)
+            continue;
 
-    std::getline(input_file, file_line);
-    int vsync_on = std::stoi(file_line);
-    this->m_settings.window_vsync = vsync_on;
-    std::string vsync_prompt = (vsync_on) ? "True" : "False";
-    std::cout << "[Entropy Engine][Engine Settings]: Vsync enabled:\t" << vsync_prompt << "\n";
+        auto index = iso::find(file_line, read_value_from);
+        std::string property_name  = iso::readBefore(file_line, read_value_from); 
+        std::string property_value = iso::read(file_line, index + 1, file_line.length() - 1);
 
-    std::getline(input_file, file_line);
-    int refresh_rate = std::stoi(file_line);
-    this->m_settings.window_refresh_rate = refresh_rate;
-    std::cout << "[Entropy Engine][Engine Settings]: Refresh rate:\t" << refresh_rate << "\n";
+        if(property_name == "WINDOW_SIZE") {
+            auto str_width  = iso::read(file_line, iso::find(file_line, read_value_from) + 1, iso::find(file_line, "x"));
+            auto str_height = iso::read(file_line, iso::find(file_line, "x") + 1, iso::find(file_line, line_delimiter));
+            int width  = std::stoi(str_width);
+            int height = std::stoi(str_height);
+            this->m_settings.window_size = sf::Vector2f(width, height);
+            std::cout << "[Entropy Engine][Engine Settings]: Window size:\t\t" << width << "x" << height << "\n";
+            continue;
+        }
+    
+        if(property_name == "FULLSCREEN") {
+            this->m_settings.window_fullscreen = std::stoi(property_value);
+            std::cout << "[Entropy Engine][Engine Settings]: Fullscreen:\t\t" << iso::asBool(this->m_settings.window_fullscreen) << "\n";
+            continue;
+        }
 
-    std::getline(input_file, file_line);
-    int debug_mode_on = std::stoi(file_line);
-    this->m_settings.application_debug_mode = debug_mode_on;
-    std::string debug_mode_prompt = (debug_mode_on) ? "True" : "False";
-    std::cout << "[Entropy Engine][Engine Settings]: Debug mode:\t\t" << debug_mode_prompt << "\n";
+        if(property_name == "VSYNC") {
+            this->m_settings.window_vsync = std::stoi(property_value);
+            std::cout << "[Entropy Engine][Engine Settings]: Vsync enabled:\t" << iso::asBool(this->m_settings.window_vsync) << "\n";
+            continue;
+        }
+
+        if(property_name == "REFRESH_RATE") {
+            this->m_settings.window_refresh_rate = std::stoi(property_value);
+            std::cout << "[Entropy Engine][Engine Settings]: Refresh rate:\t" << this->m_settings.window_refresh_rate << "\n";
+            continue;
+        }
+
+        if(property_name == "DEBUG_MODE") {
+            this->m_settings.application_debug_mode = std::stoi(property_value);
+            std::cout << "[Entropy Engine][Engine Settings]: Debug mode:\t\t" << iso::asBool(this->m_settings.application_debug_mode) << "\n";
+            continue;
+        }
+    }
 
     // Close the file.
 
     input_file.close();
 }
 
-void entropy::applicationSettings::saveUserSettings() {
-    std::string filename = "./config/config.config";
-
-    // Check if the file has been opened correctly, or if the file even exists.
-    // If the file could not be opened, do not save the settings.
-    std::fstream output_file(filename.c_str(), std::ios::out);
-    if(!output_file) {
-        std::cout << "[Entropy Engine][Engine Settings]: User settings config file not found. Settings will not be saved.\n";
-        return;
-    }
-
-    std::cout << "[Entropy Engine][Engine Settings]: Attempting to save settings.\n";
-
-    // Save the settings...
-    output_file << this->m_settings.window_size.x << "x" << this->m_settings.window_size.y << "\n";
-    output_file << this->m_settings.window_fullscreen << "\n";
-    output_file << this->m_settings.window_vsync << "\n";
-    output_file << this->m_settings.window_refresh_rate << "\n";
-    output_file << this->m_settings.application_debug_mode << "\n";
-
-    // Close the file.
-
-    output_file.close();
-}
-
-const entropy::Settings& entropy::applicationSettings::userSettings() {
-    return this->m_settings;
+const Settings& applicationSettings::userSettings() {
+    return this->m_settings;    
 }

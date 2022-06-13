@@ -9,7 +9,6 @@
 #include <iostream>
 
 using namespace iso;
-using namespace entropy;
 
 SimulationManager::SimulationManager() {
     this->initialise();

@@ -5,7 +5,7 @@
 iso::Texturizer::Texturizer() 
     : resource(nullptr) {}
 
-iso::Texturizer::Texturizer(entropy::resourceManager* resource_manager)
+iso::Texturizer::Texturizer(resourceManager* resource_manager)
     : resource(resource_manager) {}
 
 iso::Texturizer::~Texturizer() {

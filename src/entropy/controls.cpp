@@ -1,6 +1,6 @@
 #include "controls.hpp"
 
-using namespace entropy;
+using namespace iso;
 
 Controls::Controls() {
     this->mouse_left        = false;

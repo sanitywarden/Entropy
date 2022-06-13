@@ -3,7 +3,7 @@
 #include <iostream>
 #include <ios>
 
-using namespace entropy;
+using namespace iso;
 
 resourceManager::resourceManager() {
 }

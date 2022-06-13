@@ -177,7 +177,7 @@ bool iso::inCircle(const sf::Vector2f point, const sf::Vector2f centre, const in
 }
 
 /* If the phrase is found, returns the index of the first character of the phrase.
- * Example: when searching for "_is" in "this_utility_is_useful" function will return the position of "_" - index 12.
+ * Example: when searching for "_is" in "this_isoity_is_useful" function will return the position of "_" - index 12.
  */
 size_t iso::find(const std::string& str, const std::string& phrase) {
     if(str.length() < phrase.length())
@@ -224,4 +224,12 @@ std::string iso::trimWhitespace(const std::string& str) {
     }
 
     return trimmed_string;
+}
+
+std::string iso::asBool(int number) {
+    return number ? "True" : "False";
+}
+
+std::string iso::asBool(bool condition) {
+    return condition ? "True" : "False";
 }

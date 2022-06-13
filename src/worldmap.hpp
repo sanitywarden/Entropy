@@ -21,7 +21,7 @@
 #include <cmath>
 
 namespace iso {
-    class Worldmap : public entropy::Gamestate {
+    class Worldmap : public Gamestate {
         friend class SimulationManager;
 
         public:

@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-using namespace entropy;
+using namespace iso;
 
 gamestateManager::gamestateManager() {
     this->m_current_gamestate = nullptr;
@@ -19,7 +19,7 @@ gamestateManager::~gamestateManager() {
     
 }
 
-void gamestateManager::addGamestate(std::string id, entropy::Gamestate& gamestate) {
+void gamestateManager::addGamestate(std::string id, Gamestate& gamestate) {
     this->m_gamestates[id] = &gamestate;
 }
 
@@ -45,13 +45,13 @@ void gamestateManager::setGamestate(std::string id) {
 }
 
 /* Returns current gamestate. */
-Gamestate* entropy::gamestateManager::getGamestate() {
+Gamestate* gamestateManager::getGamestate() {
     return this->m_current_gamestate;
 }
 
 /*  Get a gamestate by name.
  *  If the requested gamestate does not exist, returns nullptr. */
-Gamestate* entropy::gamestateManager::getGamestateByName(std::string id) {
+Gamestate* gamestateManager::getGamestateByName(std::string id) {
     return this->checkGamestateExists(id)
         ? this->m_gamestates[id] 
         : nullptr; 

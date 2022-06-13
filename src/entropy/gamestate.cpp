@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-using namespace entropy;
+using namespace iso;
 
 Gamestate::Gamestate() {
     this->engine   = nullptr;

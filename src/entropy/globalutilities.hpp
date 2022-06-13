@@ -16,6 +16,8 @@ namespace iso {
     size_t find(const std::string& str, const std::string& phrase);
     std::string trimWhitespace(const std::string& str);
     bool inCircle(const sf::Vector2f point, const sf::Vector2f centre, const int radius);
+    std::string asBool(int number);
+    std::string asBool(bool condition);
 }
 
 #endif

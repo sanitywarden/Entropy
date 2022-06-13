@@ -21,7 +21,7 @@ namespace iso {
             Region m_region;
             Tile   m_tile;
 
-            entropy::resourceManager* resource;
+            resourceManager* resource;
             Texturizer*               texturizer;
             std::vector <float> m_gradient; 
         
@@ -50,7 +50,7 @@ namespace iso {
 
         public:
             WorldGenerator();
-            WorldGenerator(entropy::resourceManager* resource, Texturizer* texturizer);
+            WorldGenerator(resourceManager* resource, Texturizer* texturizer);
             ~WorldGenerator();
 
             void generateWorld();

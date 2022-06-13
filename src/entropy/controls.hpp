@@ -8,7 +8,7 @@
 #include <map>
 
 
-namespace entropy {    
+namespace iso {    
     class Controls {
         friend class Entropy;
 

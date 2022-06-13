@@ -7,7 +7,7 @@
 
 #include <map>
 
-namespace entropy {
+namespace iso {
     // Base class for gamestates.
     // Gamestates represent possible states that the application can be in.
     // To create a new gamestate, inherit from this class, and override at least update(), render() and handleInput().
@@ -56,7 +56,7 @@ namespace entropy {
 
             /* This function does not need to but may be overriden.
              * It provides default updates for 3 types of mouse position. 
-             * Check entropy::Gamestate class for more details on mouse position types. */
+             * Check Gamestate class for more details on mouse position types. */
             virtual void updateMousePosition();
             
             virtual void handleInput()          { return; }
