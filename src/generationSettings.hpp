@@ -34,6 +34,9 @@ class WorldData {
         float resource_flint_chance; // Chance to generate flint in a region (0.00 - 1.00).
         float resource_stone_chance; // Chance to generate stone in a region (0.00 - 1.00).
 
+        int region_animals_max;
+        int region_initial_population;
+        
         int resource_flint_radius; // How big the flint resource patch should be.
         int resource_stone_radius; // How big the stone resource patch should be.
 
@@ -88,13 +91,15 @@ class WorldData {
 
         int getRegionSize()    const;
         int getRegionWidth()   const;
-        float getRegionFlintChance() const;
-        float getRegionStoneChance() const;
-        int getRegionFlintRadius()   const;
-        int getRegionStoneRadius()   const;
-        float getRegionTreeMin()     const;
-        float getRegionFlintMin()    const;
-        float getRegionStoneMin()    const;
+        float getRegionFlintChance()     const;
+        float getRegionStoneChance()     const;
+        int getRegionMaxAnimals()        const;
+        int getRegionInitialPopulation() const;
+        int getRegionFlintRadius()       const;
+        int getRegionStoneRadius()       const;
+        float getRegionTreeMin()         const;
+        float getRegionFlintMin()        const;
+        float getRegionStoneMin()        const;
 
         bool inRegionBounds(int index) const;
         bool inRegionBounds(sf::Vector2i grid_position) const;

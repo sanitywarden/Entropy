@@ -92,16 +92,17 @@ void DebugPerformance::updateUI() {
         data += "Selected: "             + std::to_string(grid_position.x) + " " + std::to_string(grid_position.y) + "\n";
         data += "Selected building: "    + selected_building.getBuildingName() + "\n";
 
-        data += "Tree quantity: "        + std::to_string(region->trees.size())                 + "\n";
-        data += "Building quantity: "    + std::to_string(region->buildings.size())             + "\n";
-        data += "Population quantitiy: " + std::to_string(region->population.size())            + "\n";
+        data += "Tree quantity: "        + std::to_string(region->trees.size())     + "\n";
+        data += "Building quantity: "    + std::to_string(region->buildings.size()) + "\n";
+        data += "Population quantitiy: " + std::to_string(region->population)       + "\n";
         
         data += "Tile elevation: "       + std::to_string(region->map[current_index].getElevation()) + "\n";
         data += "Tile position: "        + std::to_string((int)current_tile.getPosition().x) + " " + std::to_string((int)current_tile.getPosition().y) + " " + std::to_string((int)current_tile.getPosition().z) + "\n";
-        data += "River: "                + std::to_string(current_tile.tiletype.is_river())   + "\n";
-        data += "Ocean: "                + std::to_string(current_tile.tiletype.is_ocean())   + "\n";
-        data += "Water: "                + std::to_string(current_tile.tiletype.is_water())   + "\n";
-        data += "Terrain: "              + std::to_string(current_tile.tiletype.is_terrain()) + "\n";
+        data += "River: "                + std::to_string(current_tile.tiletype.is_river())      + "\n";
+        data += "Ocean: "                + std::to_string(current_tile.tiletype.is_ocean())      + "\n";
+        data += "Water: "                + std::to_string(current_tile.tiletype.is_water())      + "\n";
+        data += "Terrain: "              + std::to_string(current_tile.tiletype.is_terrain())    + "\n";
+        data += "Occupied: "             + std::to_string(region->isSpotOccupied(current_index)) + "\n";
     }
 
     auto* text = static_cast<Label*>(this->getComponent("label_debug_performance"));

@@ -5,16 +5,23 @@
 #include <string>
 
 namespace iso {
+    enum class ResourceType {
+        TYPE_UNCATEGORISED,
+        TYPE_FOOD,
+        TYPE_BASE_MATERIAL,
+    };
+
     class Resource {
         private:
             int quantity;
             std::string name;
             std::string icon_name;
+            ResourceType type;
 
         public:
             Resource();
             Resource(std::string resource_name, int quantity);
-            Resource(std::string resource_name, std::string resource_icon, int quantity);
+            Resource(std::string resource_name, std::string resource_icon, ResourceType type, int quantity);
             ~Resource();
 
             Resource& operator -= (const Resource& cost);
@@ -29,18 +36,19 @@ namespace iso {
             void setQuantity(int quantity);
             void incrementQuantity();
             int getQuantity() const;
+            ResourceType getType() const;
             std::string getName() const;
             std::string getIcon() const;
     };
 
-    const Resource RESOURCE_WOOD   ("Wood",    "icon_item_wood"   , 0);
-    const Resource RESOURCE_STONE  ("Stone",   "icon_item_stone"  , 0);
-    const Resource RESOURCE_FLINT  ("Flint",   "icon_item_flint"  , 0);
-    const Resource RESOURCE_GRAIN  ("Grain",   "icon_item_grain"  , 0);
-    const Resource RESOURCE_MEAT   ("Meat",    "icon_item_meat"   , 0);
-    const Resource RESOURCE_LEATHER("Leather", "icon_item_leather", 0);
-    const Resource RESOURCE_WATER  ("Water",   "icon_item_water"  , 0);
-    const Resource RESOURCE_TOOLS  ("Tools",   "icon_item_tools"  , 0);
+    const Resource RESOURCE_WOOD   ("Wood",    "icon_item_wood"   , ResourceType::TYPE_BASE_MATERIAL, 0);
+    const Resource RESOURCE_STONE  ("Stone",   "icon_item_stone"  , ResourceType::TYPE_BASE_MATERIAL, 0);
+    const Resource RESOURCE_FLINT  ("Flint",   "icon_item_flint"  , ResourceType::TYPE_BASE_MATERIAL, 0);
+    const Resource RESOURCE_GRAIN  ("Grain",   "icon_item_grain"  , ResourceType::TYPE_FOOD         , 0);
+    const Resource RESOURCE_MEAT   ("Meat",    "icon_item_meat"   , ResourceType::TYPE_FOOD         , 0);
+    const Resource RESOURCE_LEATHER("Leather", "icon_item_leather", ResourceType::TYPE_BASE_MATERIAL, 0);
+    const Resource RESOURCE_WATER  ("Water",   "icon_item_water"  , ResourceType::TYPE_FOOD         , 0);
+    const Resource RESOURCE_TOOLS  ("Tools",   "icon_item_tools"  , ResourceType::TYPE_BASE_MATERIAL, 0);
 
     const static std::vector <Resource> RESOURCE_LOOKUP_TABLE = {
         RESOURCE_WOOD,

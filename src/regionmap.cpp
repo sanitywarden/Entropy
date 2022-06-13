@@ -32,7 +32,7 @@ void Regionmap::initialise() {
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
     this->view_game.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
 
-    this->controls.addKeyMappingCheck("key_tilde",   sf::Keyboard::Key::Tilde);
+    this->controls.addKeyMappingCheck("key_f3",      sf::Keyboard::Key::F3);
     this->controls.addKeyMappingCheck("key_escape",  sf::Keyboard::Key::Escape);
     this->controls.addKeyMappingCheck("arrow_left",  sf::Keyboard::Key::Left);
     this->controls.addKeyMappingCheck("arrow_right", sf::Keyboard::Key::Right);
@@ -46,8 +46,6 @@ void Regionmap::initialise() {
     this->controls.addKeyMappingCheck("key_toggle_storage",      sf::Keyboard::Key::I);
     this->controls.addKeyMappingCheck("key_toggle_minimap",      sf::Keyboard::Key::M);
     this->controls.addKeyMappingCheck("key_centre_view",         sf::Keyboard::Key::Space);
-
-    this->scheduler.insert({ "update_pawns",   std::pair(0, 1) });   
 }
 
 void Regionmap::loadResources() {
@@ -141,6 +139,11 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_3x3", sf::IntRect(192, 0, 192, 96));
     this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_4x4", sf::IntRect(384, 0, 256, 128));
 
+    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_tl", sf::IntRect(0  , 0, 64, 96));
+    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_tr", sf::IntRect(64 , 0, 64, 96));
+    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_br", sf::IntRect(128, 0, 64, 96));
+    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_bl", sf::IntRect(192, 0, 64, 96));
+
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_green", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
@@ -223,7 +226,7 @@ void Regionmap::handleInput() {
                     else this->controls.key_state.insert({ name, state });
                 }
 
-                if(this->controls.keyState("key_tilde")) {
+                if(this->controls.keyState("key_f3")) {
                     this->toggleComponentVisibility("component_debug_performance");
                 }
 
@@ -237,6 +240,21 @@ void Regionmap::handleInput() {
 
                 if(this->controls.keyState("key_escape")) {
                     this->manager->gamestate.setGamestate("worldmap");
+                }
+
+                if(this->controls.keyState("key_remove_building")) {
+                    if(this->region->buildings.count(this->current_index)) {
+                        this->region->removeBuilding(this->current_index);
+                        this->updatePaths(this->current_index);
+                        this->recalculate_tree_mesh = true;
+                    }
+                }
+
+                if(this->controls.keyState("key_removeresource_tree")) {
+                    if(this->region->trees.count(this->current_index)) {
+                        this->region->trees.erase(this->current_index);
+                        this->recalculate_tree_mesh = true; 
+                    }
                 }
 
                 if(this->controls.keyState("key_centre_view")) {
@@ -264,20 +282,30 @@ void Regionmap::handleInput() {
                     this->manager->window.getWindow()->capture().saveToFile("./res/screenshot/screenshot_" + screenshot_time + ".png");
                 }
 
+                const auto& tile_top    = this->region->map[0];
+                const auto& tile_left   = this->region->map[world_settings.calculateRegionIndex(0, world_settings.getRegionWidth() - 1)];
+                const auto& tile_right  = this->region->map[world_settings.calculateRegionIndex(world_settings.getRegionWidth() - 1, 0)];
+                const auto& tile_bottom = this->region->map[world_settings.calculateRegionIndex(world_settings.getRegionWidth() - 1, world_settings.getRegionWidth() - 1)];
+
+                const auto bound_top    = tile_top.getPosition2D().y;
+                const auto bound_left   = tile_left.getPosition2D().x;
+                const auto bound_right  = tile_right.getPosition2D().x;
+                const auto bound_bottom = tile_bottom.getPosition2D().y;
+
                 if(this->controls.keyState("arrow_left"))
-                    if(this->view_game.getCenter().x + world_settings.tileSize().x >= -this->view_game.getSize().x / 2)
+                    if(this->view_game.getCenter().x - world_settings.tileSize().x >= bound_left)
                         this->view_game.move(-world_settings.tileSize().x, 0);
 
                 if(this->controls.keyState("arrow_right"))
-                    if(this->view_game.getCenter().x + world_settings.tileSize().x <= (world_settings.getRegionWidth() * world_settings.tileSize().x) - this->view_game.getSize().x / 2)
+                    if(this->view_game.getCenter().x + world_settings.tileSize().x <= bound_right)
                         this->view_game.move(world_settings.tileSize().x, 0);
 
                 if(this->controls.keyState("arrow_down"))
-                    if(this->view_game.getCenter().y + world_settings.tileSize().y <= (world_settings.getRegionWidth() * world_settings.tileSize().y) - this->view_game.getSize().y / 2)
+                    if(this->view_game.getCenter().y + world_settings.tileSize().y <= bound_bottom)
                         this->view_game.move(0, world_settings.tileSize().y);
 
                 if(this->controls.keyState("arrow_up"))
-                    if(this->view_game.getCenter().x + (world_settings.tileSize().x) <= (world_settings.getRegionWidth() * world_settings.tileSize().x) - this->view_game.getSize().x / 2)
+                    if(this->view_game.getCenter().y - (world_settings.tileSize().y) >= bound_top)
                         this->view_game.move(0, -world_settings.tileSize().y);
 
                 break;
@@ -555,14 +583,10 @@ void Regionmap::setCurrentRegion(int region_index) {
         this->region->map[tile_index].getPosition().y
     );
 
+    this->region->population = world_settings.getRegionInitialPopulation();
+
     this->view_game.setCenter(first_tile_position);
-
-    this->region->population.resize(10);
-    for(int i = 0; i < this->region->population.size(); i++) {
-        auto& pawn = this->region->population[i];
-        pawn.object_position = this->region->map[0].getPosition();
-    }
-
+    
     auto minimap = static_cast<gui::WidgetMinimap*>(this->getInterfaceComponent("component_minimap"));
         minimap->should_redraw = true;
 }
@@ -669,21 +693,6 @@ void Regionmap::updateTile() {
         this->updatePaths(this->current_index);
         this->recalculate_tree_mesh = true;
     }
-
-    if(this->controls.keyState("key_remove_building")) {
-        if(this->region->buildings.count(this->current_index)) {
-            this->region->removeBuilding(this->current_index);
-            this->updatePaths(this->current_index);
-            this->recalculate_tree_mesh = true;
-        }
-    }
-
-    if(this->controls.keyState("key_removeresource_tree")) {
-        if(this->region->trees.count(this->current_index)) {
-            this->region->trees.erase(this->current_index);
-            this->recalculate_tree_mesh = true; 
-        }
-    }
 }
 
 void Regionmap::updatePaths(int index) {
@@ -783,30 +792,7 @@ void Regionmap::createUI() {
 }
 
 void Regionmap::updateScheduler() {
-    // const auto nextMove = [this](Unit& pawn) -> void {
-    //     int index = pawn.getNextMove();
-    //     pawn.object_position = this->region->map[index].getPosition();
-    // };
-
-    // // Update pawns movement.
-    // auto& update_pawn = this->scheduler.at("update_pawns");
-    // if(update_pawn.first != update_pawn.second)
-    //     update_pawn.first++;
     
-    // if(update_pawn.first ==  update_pawn.second) {
-    //     for(auto& pawn : this->region->population) {
-    //         if(!pawn.path.empty()) {
-    //             pawn.object_position = this->region->map[pawn.getNextMove()].getPosition();
-    //             update_pawn.first = 0;
-    //         }
-        
-    //         else {
-    //             int goal = std::rand() % world_settings.getRegionSize() - 1;
-    //             auto path = this->manager->astar(pawn.current_index, goal);
-    //             pawn.setNewPath(path);
-    //         }
-    //     }   
-    // }
 }
 
 void Regionmap::gamestateLoad() {
@@ -821,6 +807,7 @@ void Regionmap::gamestateLoad() {
 
     regionmap_mesh_tile.create(verticies_tilemap);
 
+    this->resizeUI();
     this->resizeViews();
 }
 

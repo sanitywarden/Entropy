@@ -115,6 +115,16 @@ void WorldData::loadSettingsFromFile() {
             continue;
         } 
 
+        if(property_name == "REGION_MAX_ANIMALSPOT") {
+            this->region_animals_max = std::stoi(property_value);
+            continue;   
+        }
+
+        if(property_name == "REGION_INITIAL_POPULATION") {
+            this->region_initial_population = std::stoi(property_value);
+            continue;
+        }
+
         // WORLD NOISE.
 
         if(property_name == "WORLD_NOISE_O") {
@@ -308,6 +318,14 @@ float WorldData::getRegionFlintChance() const {
 
 float WorldData::getRegionStoneChance() const {
     return this->resource_flint_chance;
+}
+
+int WorldData::getRegionMaxAnimals() const {
+    return this->region_animals_max;
+}
+
+int WorldData::getRegionInitialPopulation() const {
+    return this->region_initial_population;
 }
 
 int WorldData::getRegionFlintRadius() const {

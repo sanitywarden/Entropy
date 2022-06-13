@@ -17,6 +17,14 @@ namespace iso {
     typedef std::map <std::string, std::pair <int, int>> Scheduler;
     typedef std::pair <int, int> ScheduledUpdate;
 
+    constexpr int seconds_per_hour  = 12;
+    constexpr int seconds_per_day   = seconds_per_hour  * 12;
+    constexpr int seconds_per_month = seconds_per_day   * 30;
+    constexpr int seconds_per_year  = seconds_per_month * 12; 
+
+    const int food_consumed_per_pop  = 1;
+    const int water_consumed_per_pop = 2;
+
     class SimulationManager : public entropy::Entropy {
         private:
             void internalLoop(float delta_time);
@@ -27,6 +35,7 @@ namespace iso {
             void updateScheduler();
             void updateBuildings();
             void updateUnits();
+            void updatePopulation();
         private:
             int draw_calls;
 
@@ -55,6 +64,8 @@ namespace iso {
             Unit* getUnit(int unit_id);
 
             std::vector <int> astar(int start, int end) const;
+            std::vector <int> r_astar(int start, int end) const;
+
             void prepare();
             void loop() override;
     };

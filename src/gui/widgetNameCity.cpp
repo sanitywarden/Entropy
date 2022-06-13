@@ -1,5 +1,6 @@
 #include "widgetNameCity.hpp"
 #include "gamestate.hpp"
+#include "nameGenerator.hpp"
 
 using namespace gui;
 using namespace iso;
@@ -57,7 +58,8 @@ void WidgetSettleCity::createUI() {
         input_box.get()->setWidgetID("input_box");
         input_box.get()->setWidgetPosition(widget_position + sf::Vector2f(0, widget_size.y) + sf::Vector2f(0, -input_box_size.y));
         sf::Vector2f input_box_position = input_box.get()->getWidgetPosition();
-    
+        input_box.get()->setText(generate(GenerationType::CITY, 1));
+
     this->addComponent(widget_body);
     this->addComponent(input_box);
 }

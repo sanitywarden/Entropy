@@ -56,12 +56,14 @@ namespace iso {
             bool isTree(int index) const;
             bool isPath(int index) const;
             bool isSpotOccupied(int index) const;
+            bool isSpotOccupied(sf::Vector2i grid_position) const;
 
             // If building exists at provided index, return pointer.
             // Else returns nullptr.
             Building* getBuildingAt(int index) const;
             int isBuildingInProximity(const Building& building, int building_index) const;
             bool isSameBuilding(const Building& building, int building_index, int index) const;
+            int findNotOccupiedTile(std::vector <int> buffer) const;
 
         public:
             RegionType regiontype;
@@ -69,13 +71,13 @@ namespace iso {
             Unit*      unit;
 
             bool visited;
+            int  population;
             std::string settlement_name; // Settlement's human readable name. If there is no settlement, it's "*".
 
             std::vector <Tile>                           map;
             std::map    <int, GameObject>                trees;
             std::map    <int, std::vector<GameObject>>   sides;
             std::map    <int, std::shared_ptr<Building>> buildings;
-            std::vector <Unit>                           population;
             std::map    <std::string, int>               resources;  // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.
 
             Player* owner; // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.

@@ -22,11 +22,12 @@ Region::Region()
     this->temperature = 0.0f;
     this->visited     = false;
     
+    this->population = 0;
+
     this->owner = nullptr;
     this->unit  = nullptr;
 
     this->map.resize(0);
-    this->population.resize(0);
 }
 
 Region::~Region() {
@@ -115,6 +116,11 @@ bool Region::isSpotOccupied(int index) const {
         return true;
     
     return false;
+}
+
+bool Region::isSpotOccupied(sf::Vector2i grid_position) const {
+    auto index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y);
+    return this->isSpotOccupied(index);
 }
 
 void Region::placeBuilding(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
@@ -289,4 +295,46 @@ bool Region::isPath(int index) const {
     }
 
     return false;
+}
+
+// Returns the index of a closest free (not occupied) tile relative to the centre of the map.
+// If no free spot is found, returns -1.
+int Region::findNotOccupiedTile(std::vector <int> buffer) const {
+    sf::Vector2i middle = world_settings.getWorldWidth() % 2 == 0
+        ? sf::Vector2i(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2)
+        : sf::Vector2i(world_settings.getRegionWidth() / 2 + 1, world_settings.getRegionWidth() / 2 + 1);
+    
+    const int middle_index = world_settings.calculateRegionIndex(middle.x, middle.y); 
+
+    int size = 1;
+    while(true) {
+        for(int y = -size; y <= size; y++) {
+            for(int x = -size; x <= size; x++) {
+                sf::Vector2i normalised_grid;
+                normalised_grid.x = (x <= 0)
+                    ? x + world_settings.getRegionWidth() / 2
+                    : x + world_settings.getRegionWidth() / 2 - 1;
+
+                normalised_grid.y = (y <= 0)
+                    ? y + world_settings.getRegionWidth() / 2
+                    : y + world_settings.getRegionWidth() / 2 - 1;
+
+                const int index     = middle_index + world_settings.calculateRegionIndex(x, y);
+                const bool occupied = this->isSpotOccupied(index);
+                
+                if((occupied || std::find(buffer.begin(), buffer.end(), index) != buffer.end()) && y == size - 1 && x == size - 1) {
+                    size++;
+                    y = -size;
+
+                    std::cout << "Size: " << -size << " " << size << "\n";
+                }
+
+                // If the index is not marked as unacceptable, then it is a free spot.
+                else if(!occupied && std::find(buffer.begin(), buffer.end(), index) == buffer.end())
+                    return index;
+            }
+        }
+    }
+
+    return -1;
 }

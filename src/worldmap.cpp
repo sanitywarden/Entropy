@@ -623,6 +623,7 @@ void Worldmap::gamestateLoad() {
         this->view_game.setCenter(position);
     }
 
+    this->resizeUI();
     this->resizeViews();
 
     this->mouse_moved = false;
