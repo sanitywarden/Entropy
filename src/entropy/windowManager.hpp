@@ -33,6 +33,7 @@ namespace iso {
             void setVsync(bool on = false);
             void setKeyHold(bool on = false);
             void setMaxFramerate(unsigned int framerate);
+            void takeScreenshot();
 
             void clear(const sf::Color& clear_colour);
             void display();

@@ -18,6 +18,7 @@ namespace iso {
     bool inCircle(const sf::Vector2f point, const sf::Vector2f centre, const int radius);
     std::string asBool(int number);
     std::string asBool(bool condition);
+    std::string capitalise(const std::string& str);
 }
 
 #endif

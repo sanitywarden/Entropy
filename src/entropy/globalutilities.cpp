@@ -233,3 +233,11 @@ std::string iso::asBool(int number) {
 std::string iso::asBool(bool condition) {
     return condition ? "True" : "False";
 }
+
+std::string iso::capitalise(const std::string& str) {
+    auto lower = iso::toLower(str);
+    int ascii_value = (int)lower[0];
+    if(ascii_value >= 97 && ascii_value <= 122)
+        lower[0] = char(ascii_value - 32);
+    return lower;
+}

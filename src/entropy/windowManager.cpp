@@ -92,3 +92,14 @@ void windowManager::setMaxFramerate(unsigned int framerate) {
 bool windowManager::focused() {
     return this->getWindow()->hasFocus();
 }
+
+void windowManager::takeScreenshot() {
+    auto screenshot_time = std::to_string(time(0));
+    
+    sf::Texture texture;
+    auto size = this->windowSize();
+    texture.create(size.x, size.y);
+    texture.update(*this->getWindow());
+    auto screenshot = texture.copyToImage();
+    screenshot.saveToFile("./screenshot/screenshot_" + screenshot_time + ".png");  
+}
