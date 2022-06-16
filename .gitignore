@@ -2,6 +2,7 @@
 .vscode
 
 /res
+/screenshot
 /bin
 /config/*.*
 NOTES.txt

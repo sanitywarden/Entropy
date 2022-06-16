@@ -160,7 +160,7 @@ void SimulationManager::updateBuildings() {
 }
 
 void SimulationManager::updateUnits() {
-    for(const auto& player : this->players) {
+    for(auto& player : this->players) {
         for(auto& unit : player.units) {
             if(unit.get()->hasPath()) {
                 auto current   = unit.get()->current_index;
@@ -191,7 +191,7 @@ void SimulationManager::updateUnits() {
 
 void SimulationManager::updatePopulation() {
     for(auto& region : this->world.world_map) {
-        if(region.getPopulation() && region.visited) {
+        if(region.getPopulation() && region.visited && world_settings.populationNeedsEnabled()) {
             auto water_quantity      = region.getResourceQuantity(RESOURCE_WATER);
             auto pop_needs_met_water = water_quantity / water_consumed_per_pop;
             auto dehydrated_people   = region.getPopulation() - pop_needs_met_water < 0

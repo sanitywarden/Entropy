@@ -49,6 +49,7 @@ void Worldmap::initialise() {
     this->controls.addKeyMappingCheck("arrow_up",              sf::Keyboard::Key::Up);
     this->controls.addKeyMappingCheck("backspace",             sf::Keyboard::Key::BackSpace);
     this->controls.addKeyMappingCheck("spacebar",              sf::Keyboard::Key::Space);
+    this->controls.addKeyMappingCheck("key_screenshot",        sf::Keyboard::Key::F12);
 }
 
 void Worldmap::loadResources() {
@@ -305,6 +306,10 @@ void Worldmap::handleInput() {
 
                 if(this->controls.keyState("key_regenerate_world")) {
                     this->manager->prepare();
+                }
+
+                if(this->controls.keyState("key_screenshot")) {
+                    this->manager->window.takeScreenshot();
                 }
 
                 const auto tile_top_left     = this->manager->world.world_map[0];

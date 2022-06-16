@@ -287,8 +287,7 @@ void Regionmap::handleInput() {
                 }
 
                 if(this->controls.keyState("key_screenshot")) {
-                    auto screenshot_time = std::to_string(time(0));
-                    this->manager->window.getWindow()->capture().saveToFile("./res/screenshot/screenshot_" + screenshot_time + ".png");
+                    this->manager->window.takeScreenshot();                  
                 }
 
                 const auto& tile_top    = this->region->map[0];
@@ -849,10 +848,6 @@ void Regionmap::updateScheduler() {
                 auto path = this->manager->r_astar(unit.current_index, random_index);
                 unit.setNewPath(path);
                 
-                // Delete later.
-                for(auto tile_index : path)
-                    this->region->map[tile_index].object_texture_name = "tile_black";
-
                 this->recalculate_mesh = true;
             }
         }

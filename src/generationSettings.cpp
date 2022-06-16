@@ -58,6 +58,7 @@ void WorldData::loadSettingsFromFile() {
 
         if(property_name == "WORLDSIZE") {
             this->world_size = std::stoi(property_value);
+            std::cout << "[Generation Settings]: World size:\t\t" << this->world_size << "x" << this->world_size << "\n";
             continue;
         }
 
@@ -83,6 +84,11 @@ void WorldData::loadSettingsFromFile() {
 
         if(property_name == "REGION_RESOURCE_CHANCE_STONE") {
             this->resource_stone_chance = std::stof(property_value);
+            continue;
+        } 
+
+        if(property_name == "REGION_RESOURCE_CHANCE_ANIMAL") {
+            this->resource_animal_chance = std::stof(property_value);
             continue;
         } 
 
@@ -118,7 +124,19 @@ void WorldData::loadSettingsFromFile() {
 
         if(property_name == "REGION_INITIAL_POPULATION") {
             this->region_initial_population = std::stoi(property_value);
+            std::cout << "[Generation Settings]: Region population:\t" << this->region_initial_population << "\n";
             continue;
+        }
+
+        if(property_name == "POPULATION_NEEDS_ENABLED") {
+            this->population_needs_enabled = std::stoi(property_value);
+            std::cout << "[Generation Settings]: Population needs:\t" << asBool(this->population_needs_enabled) << "\n";
+            continue;
+        }
+
+        if(property_name == "BUILDING_COST_ENABLED") {
+            this->building_cost_enabled = std::stoi(property_value);
+            std::cout << "[Generation Settings]: Building cost:\t\t" << asBool(this->building_cost_enabled) << "\n";
         }
 
         // WORLD NOISE.
@@ -316,6 +334,10 @@ float WorldData::getRegionStoneChance() const {
     return this->resource_flint_chance;
 }
 
+float WorldData::getRegionAnimalChance() const {
+    return this->resource_animal_chance;
+}
+
 int WorldData::getRegionMaxAnimals() const {
     return this->region_animals_max;
 }
@@ -342,6 +364,14 @@ float WorldData::getRegionFlintMin() const {
 
 float WorldData::getRegionStoneMin() const {
     return this->stone_noise_minimum;
+}
+
+bool WorldData::populationNeedsEnabled() const {
+    return this->population_needs_enabled;
+}
+
+bool WorldData::buildingCostEnabled() const {
+    return this->building_cost_enabled;
 }
 
 int WorldData::panelSize() const {

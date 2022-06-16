@@ -1405,26 +1405,36 @@ void WorldGenerator::generateRegion(int region_index) {
 
     std::cout << "  [] Stone:\t" << has_stone << "\n";
 
-    std::string did_animal_generate = "False";
-    bool did_animal_spot_generate = (rand() % 100) > 10;
-    if(did_animal_spot_generate) {
-        did_animal_generate = "True";
+    int animals_generated = 0;
+    for(int a = 0; a < world_settings.getRegionMaxAnimals(); a++) {
+        bool did_animal_spot_generate = false; 
+        
+        if(!animals_generated)
+            did_animal_spot_generate = (rand() % 100) > 100 - (100 * world_settings.getRegionAnimalChance());
+        
+        else 
+            did_animal_spot_generate = (rand() % 100) > 100 * world_settings.getRegionAnimalChance();
 
-        bool animal_spot_valid = false;
-        while(!animal_spot_valid) {
-            int index = rand() % world_settings.getRegionSize();
-            auto grid_position = this->tileGridPosition(index);
+        if(did_animal_spot_generate) {
+            animals_generated++;
 
-            if(region.isPositionValid(BUILDING_ANIMAL_SPOT, grid_position)) {
-                auto texture_name = BUILDING_ANIMAL_SPOT.getTextureName();
-                auto texture_size = this->resource->getTextureSize(texture_name);
-                region.placeBuilding(BUILDING_ANIMAL_SPOT, texture_size, grid_position);
-                animal_spot_valid = true;
+            bool animal_spot_valid = false;
+            while(!animal_spot_valid) {
+                int index = rand() % world_settings.getRegionSize();
+                auto grid_position = this->tileGridPosition(index);
+
+                if(region.isPositionValid(BUILDING_ANIMAL_SPOT, grid_position)) {
+                    auto texture_name = BUILDING_ANIMAL_SPOT.getTextureName();
+                    auto texture_size = this->resource->getTextureSize(texture_name);
+                    region.placeBuilding(BUILDING_ANIMAL_SPOT, texture_size, grid_position);
+                    animal_spot_valid = true;
+                }
             }
         }
-    } 
+    }
 
-    std::cout << "  [] Animals:\t" << did_animal_generate << "\n";
+    std::string did_animal_generate = animals_generated > 0 ? "True" : "False";
+    std::cout << "  [] Animals:\t" << did_animal_generate << " (" << animals_generated << ")\n";
 
     region.visited = true;
 
