@@ -7,7 +7,9 @@ using namespace iso;
 
 Farmhouse::Farmhouse() 
     : Building(BUILDINGSIZE128X128, "building_gatherer", "Gatherer", "icon_building_gatherer", 4, VECTOR2X2, VECTOR3X3) 
-{}
+{
+    this->loadResourceCost();
+}
 
 Farmhouse::~Farmhouse() {
 

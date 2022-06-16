@@ -7,7 +7,9 @@ using namespace iso;
 
 Quarry::Quarry() 
     : Building(BUILDINGSIZE128X128, "building_quarry", "Quarry", "icon_building_quarry", 5, VECTOR2X2, VECTOR3X3)
-{}
+{
+    this->loadResourceCost();
+}
 
 Quarry::~Quarry() {
 

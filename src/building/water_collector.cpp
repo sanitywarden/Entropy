@@ -6,7 +6,9 @@ using namespace iso;
 
 WaterCollector::WaterCollector() 
     : Building(BUILDINGSIZE64X64, "building_water_collector", "Water Collector", "icon_default", 11, VECTOR1X1, VECTOR2X2) 
-{}
+{
+    this->loadResourceCost();
+}
 
 WaterCollector::~WaterCollector() {
 

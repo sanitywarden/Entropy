@@ -6,7 +6,9 @@ using namespace iso;
 
 FlintCollector::FlintCollector()
     : Building(BUILDINGSIZE128X128, "building_flint_collector", "Flint Collector", "icon_building_flint", 9, VECTOR2X2, VECTOR3X3)
-{}
+{
+    this->loadResourceCost();
+}
 
 FlintCollector::~FlintCollector() {
 

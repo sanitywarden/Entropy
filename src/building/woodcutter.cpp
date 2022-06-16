@@ -6,7 +6,9 @@ using namespace iso;
 
 Woodcutter::Woodcutter() 
     : Building(BUILDINGSIZE128X128, "building_woodcutter", "Woodcutter", "icon_building_woodcutter", 6, VECTOR2X2, VECTOR3X3) 
-{}
+{
+    this->loadResourceCost();
+}
 
 Woodcutter::~Woodcutter() {
 

@@ -9,7 +9,9 @@ using namespace iso;
 
 Hunter::Hunter()
     : Building(BUILDINGSIZE128X128, "building_hunter", "Hunter", "icon_building_hunter", 7, VECTOR2X2, VECTOR3X3)
-{}
+{
+    this->loadResourceCost();
+}
 
 Hunter::~Hunter() {
 

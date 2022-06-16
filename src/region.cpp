@@ -204,7 +204,10 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, sf::Vec
 bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
     if(this->isPositionValid(building, grid_position) && this->isBuildingAffordable(building)) {
         this->placeBuilding(building, texture_size, grid_position);
-        this->removeBuildingCost(building);
+        
+        if(world_settings.buildingCostEnabled())
+            this->removeBuildingCost(building);
+        
         return true;
     }
 
@@ -218,7 +221,12 @@ void Region::removeBuilding(int index) {
         if(!building->isRemovable())
             return;
         
-        // this->resources += building->getBuildingRefund();
+        if(world_settings.buildingCostEnabled()) {
+            auto refund = building->getBuildingRefund();
+            for(auto resource : refund) {
+                this->addResource(resource);
+            }
+        }
         
         for(int y = 0; y < building->getBuildingArea().y; y++) {
             for(int x = 0; x < building->getBuildingArea().x; x++) {

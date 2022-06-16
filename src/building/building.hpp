@@ -20,11 +20,14 @@ const auto BUILDINGSIZE192X192 = sf::Vector2f(192, 192);
 namespace iso {
 class Building : public GameObject {
     protected:
-        int                numerical_type;
-        sf::Vector2f       building_size;
-        // ResourceCollection building_cost;
-        std::string        building_menu_icon;
-        std::string        building_name;      // Human-readable building name.
+        void loadResourceCost();
+
+    protected:
+        int                    numerical_type;
+        sf::Vector2f           building_size;
+        std::vector <Resource> building_cost;
+        std::string            building_menu_icon;
+        std::string            building_name;      // Human-readable building name.
 
         // Certain buildings can produce stuff, wood, stone or other items.
         // To produce a item, they need to be in proximity to a resource, and every instance of that resource increases the production rate.
@@ -54,10 +57,10 @@ class Building : public GameObject {
         const sf::Vector2f getProductionArea() const;
 
         /* Get the cost of the building. */
-        // const ResourceCollection getBuildingCost() const;
+        const std::vector <Resource> getBuildingCost() const;
 
         /* Get the refund of the building (when the building is destroyed). */
-        // const ResourceCollection getBuildingRefund() const;
+        const std::vector <Resource> getBuildingRefund() const;
 
         const int getNumericalType() const;
         std::string getBuildingMenuIconName() const;

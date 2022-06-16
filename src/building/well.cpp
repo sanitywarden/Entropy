@@ -5,7 +5,9 @@ using namespace iso;
 
 Well::Well() 
     : Building(BUILDINGSIZE64X64, "building_well", "Well", "icon_default", 10, VECTOR1X1, VECTOR1X1) 
-{}
+{
+    this->loadResourceCost();
+}
 
 Well::~Well() {
 
