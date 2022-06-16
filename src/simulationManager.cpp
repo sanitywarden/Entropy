@@ -191,12 +191,12 @@ void SimulationManager::updateUnits() {
 
 void SimulationManager::updatePopulation() {
     for(auto& region : this->world.world_map) {
-        if(region.population && region.visited) {
+        if(region.getPopulation() && region.visited) {
             auto water_quantity      = region.getResourceQuantity(RESOURCE_WATER);
             auto pop_needs_met_water = water_quantity / water_consumed_per_pop;
-            auto dehydrated_people   = region.population - pop_needs_met_water < 0
+            auto dehydrated_people   = region.getPopulation() - pop_needs_met_water < 0
                 ? 0
-                : region.population - pop_needs_met_water;
+                : region.getPopulation() - pop_needs_met_water;
             
             std::cout << "Water quantity: "  << water_quantity      << "\n";
             std::cout << "Water needs met: " << pop_needs_met_water << "\n";
@@ -204,9 +204,9 @@ void SimulationManager::updatePopulation() {
 
             auto food_quantity       = region.getResourceQuantity(RESOURCE_GRAIN);
             auto pop_needs_met_food  = food_quantity / food_consumed_per_pop;
-            auto malnourished_people = region.population - pop_needs_met_food < 0
+            auto malnourished_people = region.getPopulation() - pop_needs_met_food < 0
                 ? 0
-                : region.population - pop_needs_met_food; 
+                : region.getPopulation() - pop_needs_met_food; 
 
             std::cout << "Food quantity: "   << food_quantity       << "\n";
             std::cout << "Food needs met: "  << pop_needs_met_food  << "\n";
@@ -223,15 +223,16 @@ void SimulationManager::updatePopulation() {
                 ? dehydrated_people
                 : malnourished_people;
 
-            auto survive = region.population - common_number; 
-            auto dead    = region.population - survive;
+            auto survive = region.getPopulation() - common_number; 
+            auto dead    = region.getPopulation() - survive;
 
             std::cout << "Survive: " << survive << "\n";
             std::cout << "Dead: "    << dead << "\n";
 
-            if(dead)
-                region.population -= dead;
-
+            while(region.getPopulation() != survive) {
+                region.population.resize(region.population.size() - 1);
+            }
+            
             auto resource_water = RESOURCE_WATER;
             resource_water.setQuantity(-(survive * water_consumed_per_pop));
 
@@ -244,12 +245,14 @@ struct aNode {
     int x;
     int y;
     int index;
+    int movement_cost;
     int h_cost;
+    int g_cost;
     bool passable;
 };
 
 std::vector <int> SimulationManager::astar(int start, int end) const {
-    const auto H = [](const aNode& node, const aNode& end) -> int {
+    const auto H = [](const aNode& node, const aNode& end) -> int {      
         return std::abs(end.x - node.x) + std::abs(end.y - node.y);
     };
 
@@ -294,6 +297,8 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
 
     std::vector <aNode> nodes(world_settings.getWorldSize());
     
+    
+
     for(int y = 0; y < world_settings.getWorldWidth(); y++) {
         for(int x = 0; x < world_settings.getWorldWidth(); x++) {
             const int index = world_settings.calculateWorldIndex(x, y);
@@ -333,7 +338,7 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         return path;
     };
 
-    frontier.push(Intpair(node_start.h_cost, node_start.index));
+    frontier.push(Intpair(H(node_start, node_end), node_start.index));
     cost_so_far[node_start.index] = 0;
 
     while(!frontier.empty()) {
@@ -364,11 +369,25 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
 }
 
 std::vector <int> SimulationManager::r_astar(int start, int end) const {
+    auto* gamestate = this->gamestate.getGamestateByName("regionmap");
+    auto* regionmap = static_cast<Regionmap*>(gamestate);
+    auto& region = this->world.world_map[regionmap->getRegionIndex()];
+
     const auto H = [](const aNode& node, const aNode& end) -> int {
+        // Euclidean distance.
+        // return std::sqrt(
+        //     std::pow(node.x - end.x, 2) + std::pow(node.y - end.y, 2)
+        // );
+
+        // Manhattan distance.  
         return std::abs(end.x - node.x) + std::abs(end.y - node.y);
     };
 
-    const auto neighbours = [this](sf::Vector2i grid_position) -> std::vector <int> {
+    const auto G = [H](const aNode& start_node, const aNode& current_node) -> int {
+        return H(start_node, current_node);
+    };
+
+    const auto neighbours = [region, this](sf::Vector2i grid_position) -> std::vector <int> {
         auto grid_up    = grid_position + sf::Vector2i(0, 1);
         auto grid_down  = grid_position + sf::Vector2i(0, -1);
         auto grid_left  = grid_position + sf::Vector2i(-1, 0);
@@ -377,36 +396,50 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
         auto index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y);
 
         std::vector <int> neighbours;
-        auto* region = static_cast<Regionmap*>(this->gamestate.getGamestate())->getCurrentRegion();
         
         if(world_settings.inRegionBounds(grid_left))
-            if(!region->isSpotOccupied(grid_left))
+            if(region.isPassableAStar(world_settings.calculateRegionIndex(grid_left.x, grid_right.y)))
                 neighbours.push_back(index - 1);
 
         if(world_settings.inRegionBounds(grid_right))
-            if(!region->isSpotOccupied(grid_right))
+            if(region.isPassableAStar(world_settings.calculateRegionIndex(grid_right.x, grid_right.y)))
                 neighbours.push_back(index + 1);
 
         if(world_settings.inRegionBounds(grid_up))
-            if(!region->isSpotOccupied(grid_up))
+            if(region.isPassableAStar(world_settings.calculateRegionIndex(grid_up.x, grid_up.y)))
                 neighbours.push_back(index - world_settings.getRegionWidth());
 
         if(world_settings.inRegionBounds(grid_down))
-            if(!region->isSpotOccupied(grid_down))
+            if(region.isPassableAStar(world_settings.calculateRegionIndex(grid_down.x, grid_down.y)))
                 neighbours.push_back(index + world_settings.getRegionWidth());
 
         return neighbours;
     };
-
-    const auto passable = [this](int index) -> bool {
-        auto* region = static_cast<Regionmap*>(this->gamestate.getGamestate())->getCurrentRegion();
-        if(region->isSpotOccupied(index))
-            return false;
-        return true;
+    
+    const auto get_cost = [region](int index) -> int {
+        if(region.map[index].tiletype.is_river())
+            return 3;
+        
+        if(region.isTree(index))
+            return 3;
+        return 1;
     };
 
     std::vector <aNode> nodes(world_settings.getRegionSize());
-    
+    auto& node_start = nodes[start];
+    auto& node_end   = nodes[end];
+
+    node_start.index = start;
+    node_start.passable = region.isPassableAStar(start);
+
+    node_end.index = end;
+    node_end.passable = region.isPassableAStar(end);
+
+    if(!node_end.passable) {
+        std::cout << "[DEBUG][A*]: End node is unpassable.\n";
+        return std::vector<int> ();
+    }
+
     for(int y = 0; y < world_settings.getRegionWidth(); y++) {
         for(int x = 0; x < world_settings.getRegionWidth(); x++) {
             const int index = world_settings.calculateRegionIndex(x, y);
@@ -415,15 +448,12 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
             node.index = index;        
             node.x = x;
             node.y = y;
-            node.passable = passable(index); 
+            node.passable = region.isPassableAStar(index); 
+            node.movement_cost = get_cost(index);
+            node.h_cost = H(node, node_end);
+            node.g_cost = G(node_start, node);
         }
     }
-
-    const auto& node_start = nodes[start];
-    const auto& node_end   = nodes[end];
-
-    if(!node_end.passable)
-        return std::vector<int> ();
 
     typedef std::pair<int, int> Intpair;
     typedef std::priority_queue <Intpair, std::vector <Intpair>, std::greater <Intpair>> Frontier;
@@ -433,47 +463,52 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
     std::unordered_map <int, int> cost_so_far; // index, cost
     std::unordered_map <int, int> came_from;   // index, index
 
-    const auto reconstruct = [](int start, int end, std::unordered_map <int, int> came_from) -> std::vector <int> {
+    frontier.push(Intpair(H(node_start, node_end), node_start.index));
+    cost_so_far[node_start.index] = 0;
+
+    const auto reconstruct_path = [](const aNode& start, const aNode& end, std::unordered_map <int, int> came_from) -> std::vector <int> {
         std::vector <int> path;
-        int current = end;
-        while(current != start) {
-            path.push_back(current);
-            current = came_from[current];
+        int current_index = end.index;
+        while(current_index != start.index) {
+            path.push_back(current_index);
+            current_index = came_from[current_index];
         }
 
-        path.push_back(start);
+        path.push_back(start.index);
         std::reverse(path.begin(), path.end());
         return path;
     };
 
-    frontier.push(Intpair(node_start.h_cost, node_start.index));
-    cost_so_far[node_start.index] = 0;
-
     while(!frontier.empty()) {
-        const aNode& current_node = nodes[(frontier.top()).second];
+        const auto& current_node = nodes[(frontier.top()).second];
         frontier.pop();
-
+        
         if(current_node.index == end)
-            break;
+            return reconstruct_path(node_start, node_end, came_from);
 
-        for(int index : neighbours(sf::Vector2i(current_node.x, current_node.y))) {
-            const aNode& neighbour = nodes[index];
-            const int new_cost     = cost_so_far[current_node.index] + 1;
+        seen.push_back(current_node.index);
 
+        auto current_neighbours = neighbours(sf::Vector2i(current_node.x, current_node.y));
+        for(auto index : current_neighbours) {
+            // If index was already seen, skip.
+            if(std::find(seen.begin(), seen.end(), index) != seen.end())
+                continue;
+
+            const auto& neighbour = nodes[index];
             if(!neighbour.passable)
                 continue;
 
+            auto new_cost = cost_so_far[current_node.index] + H(current_node, neighbour);
             if(cost_so_far.find(index) == cost_so_far.end() || new_cost < cost_so_far[index]) {
                 cost_so_far[index] = new_cost;
-                came_from[index]   = current_node.index;
-                
-                const int priority = new_cost + H(neighbour, node_end);
-                frontier.push(Intpair(priority, index));
+                auto priority = new_cost + H(neighbour, node_end);
+                frontier.push({ priority, index });
+                came_from[index] = current_node.index;
             }
         }
     }
 
-    return reconstruct(start, end, came_from);
+    return reconstruct_path(node_start, node_end, came_from);
 }
 
 void SimulationManager::initialise() {

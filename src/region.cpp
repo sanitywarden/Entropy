@@ -22,10 +22,9 @@ Region::Region()
     this->temperature = 0.0f;
     this->visited     = false;
     
-    this->population = 0;
-
     this->owner = nullptr;
     this->unit  = nullptr;
+    this->population.resize(0);
 
     this->map.resize(0);
 }
@@ -325,8 +324,6 @@ int Region::findNotOccupiedTile(std::vector <int> buffer) const {
                 if((occupied || std::find(buffer.begin(), buffer.end(), index) != buffer.end()) && y == size - 1 && x == size - 1) {
                     size++;
                     y = -size;
-
-                    std::cout << "Size: " << -size << " " << size << "\n";
                 }
 
                 // If the index is not marked as unacceptable, then it is a free spot.
@@ -337,4 +334,17 @@ int Region::findNotOccupiedTile(std::vector <int> buffer) const {
     }
 
     return -1;
+}
+
+int Region::getPopulation() const {
+    return this->population.size();
+}
+
+bool Region::isPassableAStar(int index) const {
+    if(this->map[index].tiletype.is_ocean())
+        return false;
+    
+    if(this->getBuildingAt(index))
+        return false;
+    return true;
 }

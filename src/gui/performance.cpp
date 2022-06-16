@@ -94,7 +94,7 @@ void DebugPerformance::updateUI() {
 
         data += "Tree quantity: "        + std::to_string(region->trees.size())     + "\n";
         data += "Building quantity: "    + std::to_string(region->buildings.size()) + "\n";
-        data += "Population quantitiy: " + std::to_string(region->population)       + "\n";
+        data += "Population quantitiy: " + std::to_string(region->getPopulation())  + "\n";
         
         data += "Tile elevation: "       + std::to_string(region->map[current_index].getElevation()) + "\n";
         data += "Tile position: "        + std::to_string((int)current_tile.getPosition().x) + " " + std::to_string((int)current_tile.getPosition().y) + " " + std::to_string((int)current_tile.getPosition().z) + "\n";

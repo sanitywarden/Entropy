@@ -46,6 +46,9 @@ void Regionmap::initialise() {
     this->controls.addKeyMappingCheck("key_toggle_storage",      sf::Keyboard::Key::I);
     this->controls.addKeyMappingCheck("key_toggle_minimap",      sf::Keyboard::Key::M);
     this->controls.addKeyMappingCheck("key_centre_view",         sf::Keyboard::Key::Space);
+
+    this->scheduler.insert({ "update_path"    , std::pair(0, 10) });
+    this->scheduler.insert({ "update_movement", std::pair(0, 1)  });
 }
 
 void Regionmap::loadResources() {
@@ -57,6 +60,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tundra",       sf::IntRect(256, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_ocean",              sf::IntRect(320, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river",              sf::IntRect(384, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river_pass",         sf::IntRect(448, 0, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black",              sf::IntRect(0, 288, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black_empty",        sf::IntRect(0, 256, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_template_direction", sf::IntRect(64, 288, 64, 32 ));
@@ -143,6 +147,11 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_tr", sf::IntRect(64 , 0, 64, 96));
     this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_br", sf::IntRect(128, 0, 64, 96));
     this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_bl", sf::IntRect(192, 0, 64, 96));
+
+    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_transport_arrow_tl", sf::IntRect(0  , 96, 64, 96));
+    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_transport_arrow_tr", sf::IntRect(64 , 96, 64, 96));
+    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_transport_arrow_br", sf::IntRect(128, 96, 64, 96));
+    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_transport_arrow_bl", sf::IntRect(192, 96, 64, 96));
 
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
@@ -566,6 +575,12 @@ void Regionmap::renderRegion() {
         gpu_draw_calls++;
     }
 
+    for(const auto& unit : this->region->population) {
+        sf::RenderStates states;
+        states.texture = &this->manager->resource.getTexture(unit.getTextureName());
+        this->manager->window.draw(unit, states);
+    }
+
     this->manager->updateDrawCalls(gpu_draw_calls);
 }
 
@@ -583,7 +598,29 @@ void Regionmap::setCurrentRegion(int region_index) {
         this->region->map[tile_index].getPosition().y
     );
 
-    this->region->population = world_settings.getRegionInitialPopulation();
+    if(this->region->isOwned() && this->region->getPopulation() == 0) {
+        this->region->population.resize(world_settings.getRegionInitialPopulation());
+
+        std::vector <int> buffer;
+        std::vector <std::string> directions = { "_tl", "_tr", "_bl", "_br" };
+        for(int i = 0; i < world_settings.getRegionInitialPopulation(); i++) {
+            auto& pop = this->region->population[i];
+            auto  free_spot = this->region->findNotOccupiedTile(buffer);
+            pop.current_index = free_spot;
+
+            const auto& tile = this->region->map[free_spot];
+            const auto tile_position = tile.getPosition();
+            std::string base_texture = tile.tiletype.is_river() 
+                ? "unit_transport_arrow"
+                : "unit_classic_arrow";
+
+            pop.object_size         = sf::Vector2f(64, 96);
+            pop.object_position     = tile_position + sf::Vector3f(0, -(pop.object_size.y - world_settings.tileSize().y), 0);
+            pop.object_texture_name = base_texture + directions[rand() % directions.size()];
+
+            buffer.push_back(free_spot);
+        }
+    }
 
     this->view_game.setCenter(first_tile_position);
     
@@ -791,8 +828,77 @@ void Regionmap::createUI() {
     this->addInterfaceComponent(&widget_region_storage);
 }
 
-void Regionmap::updateScheduler() {
+void Regionmap::updateScheduler() {    
+    auto& update_population_path = this->scheduler.at("update_path");
+    if(update_population_path.first != update_population_path.second)
+        update_population_path.first++;
+
+    if(update_population_path.first == update_population_path.second) {
+        for(auto& unit : this->region->population) {
+            if(!unit.hasPath()) {
+                auto random_index = rand() % world_settings.getRegionSize();
+                auto found = false;
+                while(!found) {
+                    random_index = rand() % world_settings.getRegionSize();
+                    if(this->region->map[random_index].tiletype.is_terrain() && !this->region->isTree(random_index) && !this->region->getBuildingAt(region_index)) {
+                        found = true;
+                        break;
+                    }
+                } 
+
+                auto path = this->manager->r_astar(unit.current_index, random_index);
+                unit.setNewPath(path);
+                
+                for(auto tile_index : path)
+                    this->region->map[tile_index].object_texture_name = "tile_black";
+
+                this->recalculate_mesh = true;
+            }
+        }
+
+        update_population_path.first = 0;
+    }
+
+    auto& update_population_movement = this->scheduler.at("update_movement");
+    if(update_population_movement.first != update_population_movement.second)
+        update_population_movement.first++;
     
+    if(update_population_movement.first == update_population_movement.second) {
+        for(auto& unit : this->region->population) {
+            if(unit.hasPath()) {
+                auto current = unit.current_index;
+                auto next    = unit.getNextMove();
+            
+                const auto& tile  = this->region->map[next];
+                auto new_position = tile.getPosition();
+
+                unit.object_position = new_position + sf::Vector3f(0, -(unit.object_size.y - world_settings.tileSize().y), 0);
+                unit.current_index   = next;
+
+                // Assign texture.
+                
+                std::string texture_base = tile.tiletype.is_river()
+                    ? "unit_transport_arrow"
+                    : "unit_classic_arrow";
+
+                auto index_difference = next - current;
+                
+                if(index_difference == 1)
+                    unit.object_texture_name = texture_base + "_br";
+
+                else if(index_difference == -1)
+                    unit.object_texture_name = texture_base + "_tl";
+
+                else if(index_difference == world_settings.getRegionWidth())
+                    unit.object_texture_name = texture_base + "_bl";
+
+                else if(index_difference == -world_settings.getRegionWidth())
+                    unit.object_texture_name = texture_base + "_tr";
+            }
+        }
+    
+        update_population_movement.first = 0;
+    }
 }
 
 void Regionmap::gamestateLoad() {

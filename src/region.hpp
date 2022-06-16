@@ -51,12 +51,14 @@ namespace iso {
             bool placeBuildingCheck(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position);
             void removeBuilding(int index);
             void removeBuildingCost(const Building& building);
-            
+            int  getPopulation() const;
+
             bool isUnitPresent()   const;
             bool isTree(int index) const;
             bool isPath(int index) const;
             bool isSpotOccupied(int index) const;
             bool isSpotOccupied(sf::Vector2i grid_position) const;
+            bool isPassableAStar(int index) const;
 
             // If building exists at provided index, return pointer.
             // Else returns nullptr.
@@ -71,10 +73,10 @@ namespace iso {
             Unit*      unit;
 
             bool visited;
-            int  population;
             std::string settlement_name; // Settlement's human readable name. If there is no settlement, it's "*".
 
             std::vector <Tile>                           map;
+            std::vector <Unit>                           population;
             std::map    <int, GameObject>                trees;
             std::map    <int, std::vector<GameObject>>   sides;
             std::map    <int, std::shared_ptr<Building>> buildings;
