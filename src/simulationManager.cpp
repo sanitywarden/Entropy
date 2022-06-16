@@ -245,7 +245,6 @@ struct aNode {
     int x;
     int y;
     int index;
-    int movement_cost;
     int h_cost;
     int g_cost;
     bool passable;
@@ -416,15 +415,6 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
         return neighbours;
     };
     
-    const auto get_cost = [region](int index) -> int {
-        if(region.map[index].tiletype.is_river())
-            return 3;
-        
-        if(region.isTree(index))
-            return 3;
-        return 1;
-    };
-
     std::vector <aNode> nodes(world_settings.getRegionSize());
     auto& node_start = nodes[start];
     auto& node_end   = nodes[end];
@@ -449,7 +439,6 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
             node.x = x;
             node.y = y;
             node.passable = region.isPassableAStar(index); 
-            node.movement_cost = get_cost(index);
             node.h_cost = H(node, node_end);
             node.g_cost = G(node_start, node);
         }
@@ -465,6 +454,16 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
 
     frontier.push(Intpair(H(node_start, node_end), node_start.index));
     cost_so_far[node_start.index] = 0;
+
+    const auto get_node_movement_cost = [region](const aNode& current, const aNode& next) -> int {
+        if(region.map[current.index].tiletype.is_river())
+            return 3;
+    
+        if(region.isTree(current.index))
+            return 5;
+
+        return 1;
+    };
 
     const auto reconstruct_path = [](const aNode& start, const aNode& end, std::unordered_map <int, int> came_from) -> std::vector <int> {
         std::vector <int> path;
@@ -498,7 +497,7 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
             if(!neighbour.passable)
                 continue;
 
-            auto new_cost = cost_so_far[current_node.index] + H(current_node, neighbour);
+            auto new_cost = cost_so_far[current_node.index] + get_node_movement_cost(current_node, neighbour);
             if(cost_so_far.find(index) == cost_so_far.end() || new_cost < cost_so_far[index]) {
                 cost_so_far[index] = new_cost;
                 auto priority = new_cost + H(neighbour, node_end);

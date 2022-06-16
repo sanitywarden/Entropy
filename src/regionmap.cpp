@@ -849,6 +849,7 @@ void Regionmap::updateScheduler() {
                 auto path = this->manager->r_astar(unit.current_index, random_index);
                 unit.setNewPath(path);
                 
+                // Delete later.
                 for(auto tile_index : path)
                     this->region->map[tile_index].object_texture_name = "tile_black";
 
