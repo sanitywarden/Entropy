@@ -5,7 +5,7 @@
 using namespace iso;
 
 Toolmaker::Toolmaker()
-    : Building(BUILDINGSIZE128X128, "building_toolmaker", "Toolmaker", "icon_default", 12, VECTOR2X2, VECTOR1X1)
+    : Building(BUILDINGSIZE128X128, "building_toolmaker", "Toolmaker", "icon_building_toolmaker", 12, VECTOR2X2, VECTOR1X1)
 {
     this->loadResourceCost();
 }

@@ -120,15 +120,18 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 128, 64, 64 ));
     this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 192, 64, 64 ));
 
-    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"             , "icon_default",                      sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_dirt.png"           , "icon_template_path_dirt" ,          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_stone.png"          , "icon_template_path_stone",          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_farmhouse.png"  , "icon_template_building_gatherer",   sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_woodcutter.png" , "icon_template_building_woodcutter", sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_quarry.png"     , "icon_template_building_quarry",     sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_house.png"      , "icon_template_building_house",      sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_flint.png"      , "icon_template_building_flint",      sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_hunter.png"     , "icon_template_building_hunter",     sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"                 , "icon_default",                           sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_dirt.png"               , "icon_template_path_dirt" ,               sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_stone.png"              , "icon_template_path_stone",               sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_farmhouse.png"      , "icon_template_building_gatherer",        sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_woodcutter.png"     , "icon_template_building_woodcutter",      sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_quarry.png"         , "icon_template_building_quarry",          sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_house.png"          , "icon_template_building_house",           sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_flint.png"          , "icon_template_building_flint",           sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_hunter.png"         , "icon_template_building_hunter",          sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_toolmaker.png"      , "icon_template_building_toolmaker",       sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_well.png"           , "icon_template_building_well",            sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_water_collector.png", "icon_template_building_water_collector", sf::IntRect(0, 0, 48, 48));
 
     this->manager->resource.loadTexture("./res/ui/items/icon_item_flint.png"  , "icon_template_item_flint"  , sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/items/icon_item_stone.png"  , "icon_template_item_stone"  , sf::IntRect(0, 0, 48, 48));
@@ -159,6 +162,7 @@ void Regionmap::loadResources() {
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_green", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_red"  , COLOUR_RED_TRANSPARENT_HALF  , COLOUR_TRANSPARENT);
 
+    // Automatically generate icon names.
     for(const auto& texture_pair : this->manager->resource.getTextureCollection()) {
         const auto& texture_name = texture_pair.first;
         const auto& texture      = texture_pair.second;

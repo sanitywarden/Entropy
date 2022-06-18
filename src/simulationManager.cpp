@@ -149,6 +149,9 @@ void SimulationManager::updateScheduler() {
     auto const* gamestate = this->gamestate.getGamestate();
     auto* interface_page = gamestate->getInterfaceComponent("component_tooltip");
     
+    // TODO: Clean up the code related to vector of sp buildings.
+    // You do not need the non sp vector anymore.
+
     if(interface_page) {
         auto* tooltip = static_cast<gui::Tooltip*>(interface_page);
         if(!tooltip->intersectsSupportedUI()) {
