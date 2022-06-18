@@ -27,6 +27,9 @@ void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const
     if(!this->manager)
         return;
 
+    if(!this->show)
+        return;
+
     // You always draw the main widget first,
     // so that there is no issue with components overlapping.
     auto* widget = static_cast<Widget*>(this->getComponent("widget_region"));

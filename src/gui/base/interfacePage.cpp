@@ -11,8 +11,9 @@ InterfacePage::InterfacePage() {
 }
 
 InterfacePage::InterfacePage(SimulationManager* manager) {
-    this->manager = manager;
-    this->show    = false;
+    this->manager       = manager;
+    this->show          = false;
+    this->draw_priority = 1;
 }
 
 InterfacePage::~InterfacePage() {
@@ -46,4 +47,12 @@ bool InterfacePage::intersectsUI(sf::Vector2f point) const {
     }
 
     return false;
+}
+
+void InterfacePage::setDrawingPriority(int priority) {
+    this->draw_priority = priority;
+}
+
+int InterfacePage::getDrawingPriority() const {
+    return this->draw_priority;
 }

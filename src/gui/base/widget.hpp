@@ -19,7 +19,6 @@ namespace gui {
             
         protected:
             std::map <std::string, AbstractWidget*> m_components;
-            std::string texture_id;
         private:
             void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
             std::string getBlockTexture(int x, int y, sf::Vector2i dimensions) const override;
@@ -32,7 +31,6 @@ namespace gui {
 
             void addComponent(AbstractWidget* component, std::string id);
             AbstractWidget* getComponentByName(std::string id);
-            void setWidgetTexture(std::string texture_name_base);
     };
 }
 

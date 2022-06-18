@@ -15,7 +15,7 @@ Button::Button(SimulationManager* manager, sf::Vector2i dimensions, std::string 
     this->m_dimensions = dimensions;
     this->m_blocks.resize(dimensions.x * dimensions.y);
     this->setWidgetSize(dimensions.x * 8, dimensions.y * 8);
-    this->texture_id = "button_base";
+    this->setBlockTextureBase("button_base");
 }
 
 Button::~Button() {
@@ -57,57 +57,54 @@ std::string Button::getBlockTexture(int x, int y, sf::Vector2i dimensions) const
     // Big widget.
     if(dimensions.x > 1 && dimensions.y > 1) {
         if(x == 0 && y == 0)
-            return this->texture_id + "_top_left";
+            return this->getBlockTextureBase() + "_top_left";
 
         else if(x == 0 && y == dimensions.y - 1)
-            return this->texture_id + "_bottom_left";
+            return this->getBlockTextureBase() + "_bottom_left";
         
         else if(x == dimensions.x - 1 && y == 0)
-            return this->texture_id + "_top_right";
+            return this->getBlockTextureBase() + "_top_right";
         
         else if(x == dimensions.x - 1 && y == dimensions.y - 1)
-            return this->texture_id + "_bottom_right";
+            return this->getBlockTextureBase() + "_bottom_right";
 
         else if(x != 0 && x != dimensions.x - 1 && y == 0)
-            return this->texture_id + "_top";
+            return this->getBlockTextureBase() + "_top";
 
         else if(x != 0 && x != dimensions.x - 1 && y == dimensions.y - 1)
-            return this->texture_id + "_bottom";
+            return this->getBlockTextureBase() + "_bottom";
 
         else if(y != 0 && y != dimensions.y - 1 && x == 0)
-            return this->texture_id + "_left";
+            return this->getBlockTextureBase() + "_left";
         
         else if(y != 0 && y != dimensions.y - 1 && x == dimensions.x - 1)
-            return this->texture_id + "_right";
+            return this->getBlockTextureBase() + "_right";
 
-        else return this->texture_id + "_middle";
+        else return this->getBlockTextureBase() + "_middle";
     }
 
     // Thin widget, vertical.
     else if(dimensions.x == 1 && dimensions.y != 1) {
         if(y == 0)
-            return this->texture_id + "_small_vertical_top";
+            return this->getBlockTextureBase() + "_small_vertical_top";
 
         else if(y == dimensions.y - 1)
-            return this->texture_id + "_small_vertical_bottom";
+            return this->getBlockTextureBase() + "_small_vertical_bottom";
 
-        else return this->texture_id + "_small_vertical_middle";
+        else return this->getBlockTextureBase() + "_small_vertical_middle";
     }
 
     // Thin widget, horizontal.
     else if(dimensions.y == 1 && dimensions.x != 1) {
         if(x == 0)
-            return this->texture_id + "_small_horizontal_left";
+            return this->getBlockTextureBase() + "_small_horizontal_left";
 
         else if(x == dimensions.x - 1)
-            return this->texture_id + "_small_horizontal_right";
+            return this->getBlockTextureBase() + "_small_horizontal_right";
 
-        else return this->texture_id + "_small_horizontal_middle";
+        else return this->getBlockTextureBase() + "_small_horizontal_middle";
     }
 
-    return this->texture_id + "_single";
+    return this->getBlockTextureBase() + "_single";
 }
 
-void Button::setWidgetTexture(std::string texture_name_base) {
-    this->texture_id = texture_name_base;
-}

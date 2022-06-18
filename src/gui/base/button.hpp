@@ -24,7 +24,6 @@ namespace gui {
             ~Button();
 
             Label label;
-            void setWidgetTexture(std::string texture_name_base);
     };
 }
 

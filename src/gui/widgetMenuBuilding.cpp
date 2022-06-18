@@ -188,3 +188,21 @@ Building WidgetMenuBuilding::getBuilding() {
 void WidgetMenuBuilding::resetBuilding() {
     this->last_selected_building = "Empty";
 } 
+
+Building WidgetMenuBuilding::getBuildingByTexture(const std::string& texture_name) {
+    for(auto building : BUILDING_LOOKUP_TABLE) {
+        if(building.getTextureName() == texture_name)
+            return building;
+    }
+
+    return BUILDING_EMPTY;
+}
+
+std::shared_ptr <Building> WidgetMenuBuilding::getBuildingSP(const std::string& name) {
+    for(auto sp : BUILDING_SP_LOOKUP_TABLE) {
+        if(sp.get()->getBuildingName() == name)
+            return sp;
+    }
+
+    return nullptr;
+}

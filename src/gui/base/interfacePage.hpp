@@ -30,9 +30,11 @@ namespace gui {
     class InterfacePage : public AbstractWidget {
         protected:
             virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const { return; }
-        protected:
+        public:
             std::map <std::string, std::shared_ptr<AbstractWidget>> interface;
+        protected:
             iso::SimulationManager* manager;
+            int draw_priority; // Drawing priority. Pages with higher number will be drawn over pages with lower number.
         public:
             InterfacePage();
             InterfacePage(iso::SimulationManager* manager);
@@ -45,6 +47,8 @@ namespace gui {
             void            addComponent(std::shared_ptr<AbstractWidget> component);
             void            deleteComponent(std::string id);
             bool            intersectsUI(sf::Vector2f point) const;
+            void            setDrawingPriority(int priority);
+            int             getDrawingPriority() const;        
     };
 }
 

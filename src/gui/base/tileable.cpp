@@ -29,7 +29,6 @@ void Block::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 }
 
 PropertyTileable::PropertyTileable() {
-
 }
 
 PropertyTileable::~PropertyTileable() {
@@ -37,7 +36,7 @@ PropertyTileable::~PropertyTileable() {
 }
 
 std::string PropertyTileable::getBlockTexture(int current_x, int current_y, sf::Vector2i dimensions) const {
-    return "default";
+    return this->m_texture;
 }
 
 sf::Vector2i PropertyTileable::getBlockSize() const {
@@ -46,4 +45,12 @@ sf::Vector2i PropertyTileable::getBlockSize() const {
 
 void PropertyTileable::setBlockSize(sf::Vector2i size) {
     this->m_dimensions = size;
+}
+
+void PropertyTileable::setBlockTextureBase(std::string texture) {
+    this->m_texture = texture;
+}
+
+std::string PropertyTileable::getBlockTextureBase() const {
+    return this->m_texture;
 }

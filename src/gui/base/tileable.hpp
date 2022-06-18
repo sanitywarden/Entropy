@@ -23,6 +23,7 @@ namespace gui {
         protected:
             sf::Vector2i        m_dimensions;
             std::vector <Block> m_blocks;
+            std::string         m_texture;
 
         public:
             PropertyTileable();
@@ -31,6 +32,8 @@ namespace gui {
             virtual std::string getBlockTexture(int current_x, int current_y, sf::Vector2i dimensions) const;
             sf::Vector2i getBlockSize() const;
             void setBlockSize(sf::Vector2i size);
+            void setBlockTextureBase(std::string texture);
+            std::string getBlockTextureBase() const;
     };
 }
 
