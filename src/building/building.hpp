@@ -88,9 +88,8 @@ class Building : public GameObject {
 
         /* Implementation of the building's functionality. */
         virtual void update(GameObject* region, int building_index) { return; } 
-
         bool isRemovable() const;
-};
+    };
 }
 
 #endif

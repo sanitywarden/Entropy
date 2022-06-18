@@ -596,15 +596,17 @@ void Worldmap::highlightPanel() {
 }
 
 void Worldmap::createUI() {
-    static gui::WidgetRegion widget_region(this->manager);
+    static gui::WidgetRegion     widget_region(this->manager);
     static gui::DebugPerformance widget_performance_worldmap(this->manager);
-    static gui::WidgetUnit widget_unit(this->manager);
+    static gui::WidgetUnit       widget_unit(this->manager);
     static gui::WidgetSettleCity widget_settle_city(this->manager);
+    static gui::Tooltip          tooltip(this->manager);
 
     this->addInterfaceComponent(&widget_region);
     this->addInterfaceComponent(&widget_performance_worldmap);
     this->addInterfaceComponent(&widget_unit);
     this->addInterfaceComponent(&widget_settle_city);
+    this->addInterfaceComponent(&tooltip);
 }
 
 void Worldmap::gamestateLoad() {

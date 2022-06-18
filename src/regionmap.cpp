@@ -71,14 +71,15 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_flint",     sf::IntRect(64, 64, 64, 32  ));
 
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_foliage_atlas");
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_beech"   , sf::IntRect(0, 0, 64, 96   ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_oak"     , sf::IntRect(64, 0, 64, 96  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_maple"   , sf::IntRect(128, 0, 64, 96 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_1", sf::IntRect(0, 96, 64, 96  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_2", sf::IntRect(64, 96, 64, 96 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_cypress" , sf::IntRect(0, 192, 64, 96 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_beech"   , sf::IntRect(0, 0, 64, 96    ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_oak"     , sf::IntRect(64, 0, 64, 96   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_maple"   , sf::IntRect(128, 0, 64, 96  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_1", sf::IntRect(0, 96, 64, 96   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_2", sf::IntRect(64, 96, 64, 96  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_cypress" , sf::IntRect(0, 192, 64, 96  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_acacia"  , sf::IntRect(64, 192, 128, 96));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_pine"    , sf::IntRect(704, 0, 64, 192 ));
 
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_atlas");
     this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_house"          , sf::IntRect(0, 0, 128, 128  ));
@@ -820,11 +821,13 @@ void Regionmap::createUI() {
     static gui::DebugPerformance    widget_performance_regionmap(this->manager);
     static gui::WidgetMinimap       widget_minimap(this->manager);
     static gui::WidgetRegionStorage widget_region_storage(this->manager);
+    static gui::Tooltip             tooltip(this->manager);
 
     this->addInterfaceComponent(&widget_menu_building);
     this->addInterfaceComponent(&widget_performance_regionmap);
     this->addInterfaceComponent(&widget_minimap);
     this->addInterfaceComponent(&widget_region_storage);
+    this->addInterfaceComponent(&tooltip);
 }
 
 void Regionmap::updateScheduler() {    

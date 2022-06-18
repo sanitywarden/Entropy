@@ -59,6 +59,7 @@ void WorldData::loadSettingsFromFile() {
         if(property_name == "WORLDSIZE") {
             this->world_size = std::stoi(property_value);
             std::cout << "[Generation Settings]: World size:\t\t" << this->world_size << "x" << this->world_size << "\n";
+            std::cout << "[Generation Settings]: Region size:\t\t" << this->world_size << "x" << this->world_size << "\n";
             continue;
         }
 

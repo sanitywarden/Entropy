@@ -49,6 +49,21 @@ namespace iso {
         BUILDING_WATER_COLLECTOR,
         BUILDING_TOOLMAKER,
     };
+
+    const static std::vector <std::shared_ptr<Building>> BUILDING_SP_LOOKUP_TABLE = {
+        std::shared_ptr <Building> (new Building()      ), // ID 0.  
+        std::shared_ptr <Building> (new PathDirt()      ), // ID 1.  
+        std::shared_ptr <Building> (new PathStone()     ), // ID 2.  
+        std::shared_ptr <Building> (new HouseSmall()    ), // ID 3.  
+        std::shared_ptr <Building> (new Farmhouse()     ), // ID 4.  
+        std::shared_ptr <Building> (new Quarry()        ), // ID 5.  
+        std::shared_ptr <Building> (new Woodcutter()    ), // ID 6.  
+        std::shared_ptr <Building> (new Hunter()        ), // ID 7.  
+        std::shared_ptr <Building> (new FlintCollector()), // ID 9.  
+        std::shared_ptr <Building> (new Well()          ), // ID 10  
+        std::shared_ptr <Building> (new WaterCollector()), // ID 11.  
+        std::shared_ptr <Building> (new Toolmaker()     ), // ID 12.  
+    };    
 }
 
 #endif

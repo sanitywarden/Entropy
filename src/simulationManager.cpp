@@ -5,6 +5,7 @@
 #include "generationSettings.hpp"
 #include "nameGenerator.hpp"
 #include "menu.hpp"
+#include "tooltip.hpp"
 
 #include <iostream>
 
@@ -28,9 +29,10 @@ SimulationManager::SimulationManager() {
 
     // Global updates.
 
-    this->global_updates.insert({ "update_buildings",        std::pair(0, seconds_per_hour) });
-    this->global_updates.insert({ "update_units",            std::pair(0, 1) });
-    this->global_updates.insert({ "update_population_needs", std::pair(0, seconds_per_day) });
+    this->global_updates.insert({ "update_buildings",        std::pair(0, seconds_per_hour) }); // Update buildings in every region.
+    this->global_updates.insert({ "update_units",            std::pair(0, 1) });                // Move units.
+    this->global_updates.insert({ "update_population_needs", std::pair(0, seconds_per_day) });  // Distribute resources to pops.
+    this->global_updates.insert({ "gui_tooltip_timer",       std::pair(0, 3) });                // Measure the time to display a tooltip.
 }
 
 SimulationManager::~SimulationManager() {
@@ -141,6 +143,25 @@ void SimulationManager::updateScheduler() {
     if(update_pop_needs.first == update_pop_needs.second) {
         this->updatePopulation();
         update_pop_needs.first = 0;
+    }
+
+    auto& gui_tooltip_timer = this->global_updates.at("gui_tooltip_timer");
+    auto const* gamestate = this->gamestate.getGamestate();
+    
+    auto* interface_page = gamestate->getInterfaceComponent("component_tooltip");
+    auto* tooltip        = static_cast<gui::Tooltip*>(interface_page);
+
+    if(!tooltip->intersectsSupportedUI()) {
+        tooltip->show = false;
+        gui_tooltip_timer.first = 0;
+    }
+
+    if(gui_tooltip_timer.first != gui_tooltip_timer.second && tooltip->intersectsSupportedUI())
+        gui_tooltip_timer.first++;
+
+    if(gui_tooltip_timer.first == gui_tooltip_timer.second && tooltip->intersectsSupportedUI()) {
+        tooltip->show = true;
+        gui_tooltip_timer.first = 0;
     }
 }
 
@@ -547,6 +568,40 @@ void SimulationManager::initialise() {
     this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_vertical_bottom",   sf::IntRect(24, 16, 8, 8    ));
     this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_vertical_middle",   sf::IntRect(24, 8, 8, 8     ));
     this->resource.loadTexture("./res/ui/template/button.png",  "button_base_single",                  sf::IntRect(24, 24, 8, 8    ));
+
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top_left",                sf::IntRect(0, 0, 64, 64    ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top_right",               sf::IntRect(128, 0, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom_left",             sf::IntRect(0, 128, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom_right",            sf::IntRect(128, 128, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_middle",                  sf::IntRect(64, 64, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top",                     sf::IntRect(64, 0, 64, 64   ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_left",                    sf::IntRect(0, 64, 64, 64   ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_right",                   sf::IntRect(128, 64, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom",                  sf::IntRect(64, 128, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_left",   sf::IntRect(0, 192, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_right",  sf::IntRect(128, 192, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_middle", sf::IntRect(64, 192, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_top",      sf::IntRect(192, 0, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_bottom",   sf::IntRect(192, 128, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_middle",   sf::IntRect(192, 64, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_single",                  sf::IntRect(192, 192, 64, 64));
+
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top_left",                sf::IntRect(0, 0, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top_right",               sf::IntRect(16, 0, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom_left",             sf::IntRect(0, 16, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom_right",            sf::IntRect(16, 16, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top",                     sf::IntRect(8, 0, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_left",                    sf::IntRect(0, 8, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_right",                   sf::IntRect(16, 8, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom",                  sf::IntRect(8, 16, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_middle",                  sf::IntRect(8, 8, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_left",   sf::IntRect(0, 24, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_right",  sf::IntRect(16, 24, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_middle", sf::IntRect(8, 24, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_top",      sf::IntRect(24, 0, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_bottom",   sf::IntRect(24, 16, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_middle",   sf::IntRect(24, 8, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_single",                  sf::IntRect(24, 24, 8, 8    ));
 
     this->resource.loadFont("./res/font/proggy.ttf",   "proggy");
     this->resource.loadFont("./res/font/garamond.ttf", "garamond");

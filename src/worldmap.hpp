@@ -12,6 +12,7 @@
 #include "gui/widgetRegion.hpp"
 #include "gui/widgetUnit.hpp"
 #include "gui/widgetNameCity.hpp"
+#include "gui/tooltip.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>

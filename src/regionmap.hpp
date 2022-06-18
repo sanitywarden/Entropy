@@ -10,6 +10,7 @@
 #include "gui/performance.hpp"
 #include "gui/minimap.hpp"
 #include "gui/widgetRegionStorage.hpp"
+#include "gui/tooltip.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <map>
