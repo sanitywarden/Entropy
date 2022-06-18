@@ -98,7 +98,28 @@ void Gamestate::setVisibilityFalse(std::string interface_id) {
 }
 
 void Gamestate::renderUI() const {
-    for(const auto& pair : this->interface) {
+    // Pages with lower priority end up first in the vector.
+    const auto compare = [](
+        const std::pair<std::string, gui::InterfacePage*> pair1, 
+        const std::pair<std::string, gui::InterfacePage*> pair2
+    ) {
+        auto* page1 = pair1.second;
+        auto* page2 = pair2.second;
+
+        return page1->getDrawingPriority() < page2->getDrawingPriority(); 
+    };
+
+    std::vector <std::pair<std::string, gui::InterfacePage*>> copied_interface;
+    if(!copied_interface.size())
+        for(auto pair : this->interface)
+            copied_interface.push_back(pair);
+
+    // Sort the vector. Pages with low priority are first. Pages with high priority are last.
+    // Pages with low priotity are drawn first.
+    std::sort(copied_interface.begin(), copied_interface.end(), compare);
+    
+    // Draw the pages in the correct order.
+    for(const auto& pair : copied_interface) {
         auto* component = pair.second;
         if(component)
             if(component->isVisible())
@@ -150,6 +171,19 @@ bool Gamestate::pointIntersectsUI(sf::Vector2f point) const {
                 return true;
     }
     
+    return false;
+}
+
+bool Gamestate::mouseIntersectsUI(const std::string& component_name) const {
+    return this->pointIntersectsUI(this->mouse_position_interface, component_name);
+}
+
+bool Gamestate::pointIntersectsUI(sf::Vector2f point, const std::string& component_name) const {
+    if(this->checkComponentExist(component_name)) {
+        auto* component = this->getInterfaceComponent(component_name);
+        return component->intersectsUI(point);
+    }
+
     return false;
 }
 

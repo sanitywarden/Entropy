@@ -80,6 +80,8 @@ namespace iso {
             void resizeUI() const;
             bool mouseIntersectsUI() const;
             bool pointIntersectsUI(sf::Vector2f point) const;
+            bool mouseIntersectsUI(const std::string& component_name) const;
+            bool pointIntersectsUI(sf::Vector2f point, const std::string& component_name) const;
 
             void addInterfaceComponent(gui::InterfacePage* interface_component);
             gui::InterfacePage* getInterfaceComponent(std::string interface_id);
