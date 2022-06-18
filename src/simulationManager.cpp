@@ -147,21 +147,22 @@ void SimulationManager::updateScheduler() {
 
     auto& gui_tooltip_timer = this->global_updates.at("gui_tooltip_timer");
     auto const* gamestate = this->gamestate.getGamestate();
-    
     auto* interface_page = gamestate->getInterfaceComponent("component_tooltip");
-    auto* tooltip        = static_cast<gui::Tooltip*>(interface_page);
+    
+    if(interface_page) {
+        auto* tooltip = static_cast<gui::Tooltip*>(interface_page);
+        if(!tooltip->intersectsSupportedUI()) {
+            tooltip->show = false;
+            gui_tooltip_timer.first = 0;
+        }
 
-    if(!tooltip->intersectsSupportedUI()) {
-        tooltip->show = false;
-        gui_tooltip_timer.first = 0;
-    }
+        if(gui_tooltip_timer.first != gui_tooltip_timer.second && tooltip->intersectsSupportedUI())
+            gui_tooltip_timer.first++;
 
-    if(gui_tooltip_timer.first != gui_tooltip_timer.second && tooltip->intersectsSupportedUI())
-        gui_tooltip_timer.first++;
-
-    if(gui_tooltip_timer.first == gui_tooltip_timer.second && tooltip->intersectsSupportedUI()) {
-        tooltip->show = true;
-        gui_tooltip_timer.first = 0;
+        if(gui_tooltip_timer.first == gui_tooltip_timer.second && tooltip->intersectsSupportedUI()) {
+            tooltip->show = true;
+            gui_tooltip_timer.first = 0;
+        }
     }
 }
 
