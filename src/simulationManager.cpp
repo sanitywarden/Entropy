@@ -32,7 +32,7 @@ SimulationManager::SimulationManager() {
     this->global_updates.insert({ "update_buildings",        std::pair(0, seconds_per_hour) }); // Update buildings in every region.
     this->global_updates.insert({ "update_units",            std::pair(0, 1) });                // Move units.
     this->global_updates.insert({ "update_population_needs", std::pair(0, seconds_per_day) });  // Distribute resources to pops.
-    this->global_updates.insert({ "gui_tooltip_timer",       std::pair(0, 3) });                // Measure the time to display a tooltip.
+    this->global_updates.insert({ "gui_tooltip_timer",       std::pair(0, 1) });                // Measure the time to display a tooltip.
 }
 
 SimulationManager::~SimulationManager() {

@@ -685,7 +685,7 @@ void Regionmap::higlightTile() {
         return;
 
     auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-    if(building_menu->getBuilding() != BUILDING_EMPTY)
+    if(*building_menu->getBuilding() != BUILDING_EMPTY)
         return;
 
     const auto& tile   = this->region->map[index];
@@ -726,11 +726,11 @@ void Regionmap::updateTile() {
         return;
 
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
-        Building building = building_menu->getBuilding();
-        auto texture_size = this->manager->resource.getTextureSize(building.getTextureName());
+    if(*building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
+        auto building = building_menu->getBuilding();
+        auto texture_size = this->manager->resource.getTextureSize(building.get()->getTextureName());
         auto grid_position = this->manager->world.tileGridPosition(this->mouse_position_window);
-        this->region->placeBuildingCheck(building, texture_size, grid_position);
+        this->region->placeBuildingCheck(*building.get(), texture_size, grid_position);
         this->updatePaths(this->current_index);
         this->recalculate_tree_mesh = true;
     }
@@ -933,12 +933,12 @@ void Regionmap::recalculateMesh() {
 
 void Regionmap::renderSelectedBuilding() {
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    Building building   = building_menu->getBuilding();
+    auto  building      = building_menu->getBuilding();
     
-    if(building != BUILDING_EMPTY && building_menu->isVisible()) {
+    if(*building != BUILDING_EMPTY && building_menu->isVisible()) {
         auto tile = this->region->map[this->current_index];
 
-        auto building_size = building.getBuildingArea();
+        auto building_size = building.get()->getBuildingArea();
         auto grid_position = this->manager->world.tileGridPosition(this->mouse_position_window);
         
         for(int y = grid_position.y; y < grid_position.y + building_size.y; y++) {
@@ -950,13 +950,13 @@ void Regionmap::renderSelectedBuilding() {
             }
         }
         
-        building.object_position = tile.getPosition();
+        building.get()->object_position = tile.getPosition();
         
         const int a1_w = 0; 
         const int a1_h = world_settings.tileSize().y; 
         const int r_w  = world_settings.tileSize().x / 2;
         const int r_h  = world_settings.tileSize().y;    
-        const int n    = building.getBuildingArea().x;                    
+        const int n    = building.get()->getBuildingArea().x;                    
         
         // Here you adjust the origin of buildings with sizes of n > 0.
         // Texture size scale are arithmetic series.
@@ -975,9 +975,9 @@ void Regionmap::renderSelectedBuilding() {
 
         sf::VertexArray building_surround_highlight(sf::Lines, 8);
         
-        auto building_area = building.getBuildingArea().x;
+        auto building_area = building.get()->getBuildingArea().x;
         auto tile_size     = world_settings.tileSize(); 
-        auto br            = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); ;
+        auto br            = building.get()->getPosition2D() + offset + sf::Vector2f(building.get()->getSize().x, building.get()->getSize().y); ;
         auto br_corrected  = br + sf::Vector2f(-building_area / 2 * tile_size.x, 0);
 
         building_surround_highlight[0].position = br_corrected + sf::Vector2f(0, -building_area * tile_size.y);
@@ -1004,17 +1004,17 @@ void Regionmap::renderSelectedBuilding() {
 
         sf::VertexArray building_highlight(sf::Quads, 4);
 
-        building_highlight[0].position = building.getPosition2D() + offset;
-        building_highlight[1].position = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, 0);
-        building_highlight[2].position = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); 
-        building_highlight[3].position = building.getPosition2D() + offset + sf::Vector2f(0, building.getSize().y);
+        building_highlight[0].position = building.get()->getPosition2D() + offset;
+        building_highlight[1].position = building.get()->getPosition2D() + offset + sf::Vector2f(building.get()->getSize().x, 0);
+        building_highlight[2].position = building.get()->getPosition2D() + offset + sf::Vector2f(building.get()->getSize().x, building.get()->getSize().y); 
+        building_highlight[3].position = building.get()->getPosition2D() + offset + sf::Vector2f(0, building.get()->getSize().y);
 
         building_highlight[0].texCoords = sf::Vector2f(0, 0);
-        building_highlight[1].texCoords = sf::Vector2f(building.getSize().x, 0); 
-        building_highlight[2].texCoords = sf::Vector2f(building.getSize().x, building.getSize().y); 
-        building_highlight[3].texCoords = sf::Vector2f(0, building.getSize().y);
+        building_highlight[1].texCoords = sf::Vector2f(building.get()->getSize().x, 0); 
+        building_highlight[2].texCoords = sf::Vector2f(building.get()->getSize().x, building.get()->getSize().y); 
+        building_highlight[3].texCoords = sf::Vector2f(0, building.get()->getSize().y);
 
-        auto invalid_position = !this->region->isPositionValid(building, grid_position); 
+        auto invalid_position = !this->region->isPositionValid(*building, grid_position); 
         if(invalid_position) {
             building_highlight[0].color = COLOUR_RED;
             building_highlight[1].color = COLOUR_RED;
@@ -1022,18 +1022,18 @@ void Regionmap::renderSelectedBuilding() {
             building_highlight[3].color = COLOUR_RED;
         }
 
-        const auto texture = building.getTextureName();
+        const auto texture = building.get()->getTextureName();
         
         sf::RenderStates states;
         states.texture = &this->manager->resource.getTexture(texture);
         this->manager->window.draw(building_highlight, states);
 
-        const int area_x = building.getProductionArea().x;
-        const int area_y = building.getProductionArea().y;
+        const int area_x = building.get()->getProductionArea().x;
+        const int area_y = building.get()->getProductionArea().y;
         
         if(area_x > 1 && area_y > 1) {
             int vertex_index = 0; 
-            const size_t vertex_count = 4 * (2 * building.getProductionArea().x + building_area) * (2 * building.getProductionArea().y + building_area);
+            const size_t vertex_count = 4 * (2 * building.get()->getProductionArea().x + building_area) * (2 * building.get()->getProductionArea().y + building_area);
             sf::Vertex vertex[vertex_count];
             for(int y = -area_y; y <= area_y + building_area - 1; y++) {
                 for(int x = -area_x; x <= area_x + building_area - 1; x++) {

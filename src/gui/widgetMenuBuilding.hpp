@@ -22,9 +22,7 @@ namespace gui {
 
             void updateUI() override;
             void resetBuilding();
-            iso::Building getBuilding();
-            iso::Building getBuildingByTexture(const std::string& texture_name);
-            std::shared_ptr <iso::Building> getBuildingSP(const std::string& name);
+            std::shared_ptr <iso::Building> getBuilding();
     };
 }
 

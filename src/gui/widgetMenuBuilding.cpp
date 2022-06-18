@@ -46,9 +46,9 @@ void WidgetMenuBuilding::createUI() {
     int building_no = 0;
     
     for(const auto& building : BUILDING_LOOKUP_TABLE) {
-        if(building != BUILDING_EMPTY) {
-            auto image = ImageComponent(new ImageHolder(this->manager, building.getBuildingMenuIconName()));
-            image.get()->setWidgetID("imageholder_" + building.getTextureName());
+        if(*building != BUILDING_EMPTY) {
+            auto image = ImageComponent(new ImageHolder(this->manager, building.get()->getBuildingMenuIconName()));
+            image.get()->setWidgetID("imageholder_" + building.get()->getTextureName());
 
             auto final_position = calculateItemPosition(building_no, BUILDING_LOOKUP_TABLE.size());       
 
@@ -175,34 +175,17 @@ void WidgetMenuBuilding::updateUI() {
     this->findBuilding();
 }
 
-Building WidgetMenuBuilding::getBuilding() {
+std::shared_ptr <iso::Building> WidgetMenuBuilding::getBuilding() {
     const std::string& building_name = this->last_selected_building;
     for(const auto& building : BUILDING_LOOKUP_TABLE) {
-        if(building != BUILDING_EMPTY && building_name == building.getTextureName())
+        if(*building.get() != BUILDING_EMPTY && building_name == building.get()->getTextureName())
             return building;
     }
 
-    return BUILDING_EMPTY;
+    // Empty building.
+    return BUILDING_LOOKUP_TABLE[0];
 }
 
 void WidgetMenuBuilding::resetBuilding() {
     this->last_selected_building = "Empty";
 } 
-
-Building WidgetMenuBuilding::getBuildingByTexture(const std::string& texture_name) {
-    for(auto building : BUILDING_LOOKUP_TABLE) {
-        if(building.getTextureName() == texture_name)
-            return building;
-    }
-
-    return BUILDING_EMPTY;
-}
-
-std::shared_ptr <Building> WidgetMenuBuilding::getBuildingSP(const std::string& name) {
-    for(auto sp : BUILDING_SP_LOOKUP_TABLE) {
-        if(sp.get()->getBuildingName() == name)
-            return sp;
-    }
-
-    return nullptr;
-}

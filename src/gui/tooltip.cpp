@@ -104,16 +104,25 @@ bool Tooltip::intersectsSupportedUI() const {
                 if(startsWith(id, "imageholder")) {
                     if(component->containsPoint(regionmap->mouse_position_interface)) {
                         auto building_texture = readAfter(id, "imageholder_");
-                        auto building    = building_menu->getBuildingByTexture(building_texture);
-                        auto building_sp = building_menu->getBuildingSP(building.getBuildingName());                        
 
-                        if(building_sp == nullptr)
+                        // Empty building.
+
+                        auto building = BUILDING_LOOKUP_TABLE[0];
+                        for(auto building_sp : BUILDING_LOOKUP_TABLE) {
+                            if(building_sp.get()->getTextureName() == building_texture) {
+                                building = building_sp;
+                                break;
+                            }
+                        }
+
+                        // Building has not been found.
+                        if(*building == BUILDING_EMPTY)
                             return false;
 
                         std::string data;
-                        data += building_sp.get()->getBuildingName() + "\n";
+                        data += building.get()->getBuildingName() + "\n";
 
-                        for(const auto& resource : building_sp.get()->getBuildingCost()) {
+                        for(const auto& resource : building.get()->getBuildingCost()) {
                             data += resource.getName() + " - " + std::to_string(resource.getQuantity()) + "\n";
                         }
 

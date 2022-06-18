@@ -16,6 +16,7 @@
 #include "toolmaker.hpp"
 
 #include <vector>
+#include <memory>
 
 namespace iso {
     const Building       BUILDING_DEBUG_1X1(BUILDINGSIZE64X64, "default", "default", "icon_deafult", -1, VECTOR1X1, VECTOR1X1); // Debug building, not gameplay related.
@@ -35,22 +36,8 @@ namespace iso {
     const Toolmaker      BUILDING_TOOLMAKER;       // ID 12.
 
     // If the building should be possible to place, add it here.
-    const static std::vector <Building> BUILDING_LOOKUP_TABLE = {
-        BUILDING_EMPTY,
-        BUILDING_PATH_DIRT,
-        BUILDING_PATH_STONE,
-        BUILDING_FARM,
-        BUILDING_QUARRY,
-        BUILDING_WOODCUTTER,
-        BUILDING_HOUSE_SMALL,
-        BUILDING_HUNTER,
-        BUILDING_FLINT_COLLECTOR,
-        BUILDING_WELL,
-        BUILDING_WATER_COLLECTOR,
-        BUILDING_TOOLMAKER,
-    };
-
-    const static std::vector <std::shared_ptr<Building>> BUILDING_SP_LOOKUP_TABLE = {
+    // Vector of player available buildings.
+    const static std::vector <std::shared_ptr<Building>> BUILDING_LOOKUP_TABLE = {
         std::shared_ptr <Building> (new Building()      ), // ID 0.  
         std::shared_ptr <Building> (new PathDirt()      ), // ID 1.  
         std::shared_ptr <Building> (new PathStone()     ), // ID 2.  
@@ -63,7 +50,9 @@ namespace iso {
         std::shared_ptr <Building> (new Well()          ), // ID 10  
         std::shared_ptr <Building> (new WaterCollector()), // ID 11.  
         std::shared_ptr <Building> (new Toolmaker()     ), // ID 12.  
-    };    
+    };  
+
+    std::shared_ptr <Building> getBuildingPointer(const std::string& building_name);  
 }
 
 #endif
