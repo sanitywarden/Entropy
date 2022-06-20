@@ -41,6 +41,7 @@ namespace iso {
             std::string getIcon() const;
     };
 
+    const Resource RESOURCE_EMPTY  ("None",    "default"          , ResourceType::TYPE_UNCATEGORISED, 0);
     const Resource RESOURCE_WOOD   ("Wood",    "icon_item_wood"   , ResourceType::TYPE_BASE_MATERIAL, 0);
     const Resource RESOURCE_STONE  ("Stone",   "icon_item_stone"  , ResourceType::TYPE_BASE_MATERIAL, 0);
     const Resource RESOURCE_FLINT  ("Flint",   "icon_item_flint"  , ResourceType::TYPE_BASE_MATERIAL, 0);

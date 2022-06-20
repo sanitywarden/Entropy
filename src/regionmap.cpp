@@ -250,6 +250,15 @@ void Regionmap::handleInput() {
 
                 if(this->controls.keyState("key_toggle_storage")) {
                     this->toggleComponentVisibility("component_widget_region_storage");
+                    this->setVisibilityFalse("component_widget_building_menu");
+                }
+
+                if(this->controls.keyState("key_toggle_buildmenu")) {
+                    this->toggleComponentVisibility("component_widget_menu_building");
+                    this->setVisibilityFalse("component_widget_region_storage");
+
+                    auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
+                    building_menu->resetBuilding();
                 }
 
                 if(this->controls.keyState("key_escape")) {
@@ -282,13 +291,6 @@ void Regionmap::handleInput() {
                     );
 
                     this->view_game.setCenter(first_tile_position);
-                }
-
-                if(this->controls.keyState("key_toggle_buildmenu")) {
-                    this->toggleComponentVisibility("component_widget_menu_building");
-                    
-                    auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-                    building_menu->resetBuilding();
                 }
 
                 if(this->controls.keyState("key_screenshot")) {

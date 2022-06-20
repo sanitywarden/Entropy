@@ -83,6 +83,7 @@ void Tooltip::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 bool Tooltip::intersectsSupportedUI() const {
     auto* gamestate = this->manager->gamestate.getGamestate();
     auto* widget_text = static_cast<Label*>(this->getComponent("tooltip_text"));
+        widget_text->setString("");
 
     // This is a dirty solution to the problem.
 
@@ -94,7 +95,7 @@ bool Tooltip::intersectsSupportedUI() const {
         auto* regionmap = static_cast<Regionmap*>(gamestate);
 
         // Show the tooltip when hovering over images in the regionmap building menu interface.
-        if(regionmap->mouseIntersectsUI("component_widget_menu_building")) {
+        if(regionmap->mouseIntersectsUI("component_widget_menu_building") && regionmap->isComponentVisible("component_widget_menu_building")) {
             auto* building_menu = static_cast<WidgetMenuBuilding*>(regionmap->getInterfaceComponent("component_widget_menu_building"));
 
             for(const auto& pair : building_menu->interface) {
@@ -133,6 +134,44 @@ bool Tooltip::intersectsSupportedUI() const {
             }
         }
 
+        else if(regionmap->mouseIntersectsUI("component_widget_region_storage") && regionmap->isComponentVisible("component_widget_region_storage")) {
+            auto* region_storage = static_cast<WidgetRegionStorage*>(regionmap->getInterfaceComponent("component_widget_region_storage"));
+
+            for(const auto& pair : region_storage->interface) {
+                auto id        = pair.first;
+                auto component = pair.second.get();
+
+                if(startsWith(id, "imageholder")) {
+                    if(component->containsPoint(regionmap->mouse_position_interface)) {
+                        auto resource_name = readAfter(id, "imageholder_");
+
+                        auto resource = RESOURCE_EMPTY;
+                        for(const auto& resource_template : RESOURCE_LOOKUP_TABLE) {
+                            if(toLower(resource_name) == toLower(resource_template.getName())) {
+                                resource = resource_template;
+                                break;
+                            }
+                        }
+
+                        if(resource.getName() == RESOURCE_EMPTY.getName())
+                            return false;
+
+                        std::string data;
+                        data += resource.getName() + "\n";
+                        
+                        auto* region = regionmap->getCurrentRegion();
+                        if(!region)
+                            return false;
+
+                        auto quantity = region->getResourceQuantity(resource);
+                        data += std::to_string(quantity) + "\n";
+
+                        widget_text->setString(data);
+                        return true;
+                    }
+                }
+            }
+        }
 
     }
 
