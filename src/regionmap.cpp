@@ -1061,9 +1061,12 @@ void Regionmap::renderSelectedBuilding() {
                     quad[2].texCoords = sf::Vector2f(tile_size.x, tile_size.y);
                     quad[3].texCoords = sf::Vector2f(0, tile_size.y);
 
-                    auto colour = region->isSpotOccupied(index)
-                        ? COLOUR_RED_TRANSPARENT_HALF
-                        : COLOUR_WHITE_TRANSPARENT_HALF;
+                    auto colour = COLOUR_WHITE_TRANSPARENT90PERCENT;
+                    if(building.get()->isBuildingResourceTile(region, index))
+                        colour = COLOUR_GREEN_TRANSPARENT90PERCENT;
+
+                    else if(region->isSpotOccupied(index))
+                        colour = COLOUR_RED_TRANSPARENT90PERCENT;
 
                     quad[0].color = colour;
                     quad[1].color = colour;

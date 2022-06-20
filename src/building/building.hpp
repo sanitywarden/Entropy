@@ -88,6 +88,10 @@ class Building : public GameObject {
 
         /* Implementation of the building's functionality. */
         virtual void update(GameObject* region, int building_index) { return; } 
+
+        /* Buildings which produce basic resources, have to be adjacent to it's resource tile. */
+        virtual bool isBuildingResourceTile(GameObject* region, int index) const { return false; }
+
         bool isRemovable() const;
     };
 }

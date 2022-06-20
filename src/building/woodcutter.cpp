@@ -38,3 +38,8 @@ void Woodcutter::update(GameObject* object, int building_index) {
 
     region->addResource(wood);
 }
+
+bool Woodcutter::isBuildingResourceTile(GameObject* object, int index) const {
+    auto region = static_cast<Region*>(object);
+    return region->isTree(index);
+}

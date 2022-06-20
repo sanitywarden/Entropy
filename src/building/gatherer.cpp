@@ -40,3 +40,8 @@ void Farmhouse::update(GameObject* object, int building_index) {
 
     region->addResource(grain);
 }
+
+bool Farmhouse::isBuildingResourceTile(GameObject* object, int index) const { 
+    auto region = static_cast<Region*>(object);
+    return startsWith(region->map[index].object_texture_name, "tile_grass");
+}

@@ -9,11 +9,14 @@ namespace iso {
     const sf::Color COLOUR_WHITE      (255, 255, 255, 255);
     const sf::Color COLOUR_BLACK      (0, 0, 0, 255);
 
-    const sf::Color COLOUR_WHITE_TRANSPARENT_HALF   (255, 255, 255, 127);
-    const sf::Color COLOUR_WHITE_TRANSPARENT_QUARTER(255, 255, 255, 63);
-    const sf::Color COLOUR_BLACK_TRANSPARENT_HALF   (0, 0, 0, 127);
-    const sf::Color COLOUR_GREEN_TRANSPARENT_HALF   (46, 131, 31, 127);
-    const sf::Color COLOUR_RED_TRANSPARENT_HALF     (229, 20, 0, 127);
+    const sf::Color COLOUR_WHITE_TRANSPARENT_HALF    (255, 255, 255, 127);
+    const sf::Color COLOUR_WHITE_TRANSPARENT_QUARTER (255, 255, 255, 63);
+    const sf::Color COLOUR_BLACK_TRANSPARENT_HALF    (0, 0, 0, 127);
+    const sf::Color COLOUR_GREEN_TRANSPARENT_HALF    (46, 131, 31, 127);
+    const sf::Color COLOUR_RED_TRANSPARENT_HALF      (229, 20, 0, 127);
+    const sf::Color COLOUR_WHITE_TRANSPARENT90PERCENT(255, 255, 255, 255 * 0.9f);
+    const sf::Color COLOUR_GREEN_TRANSPARENT90PERCENT(46, 131, 31, 255 * 0.9f);
+    const sf::Color COLOUR_RED_TRANSPARENT90PERCENT  (229, 20, 0, 255 * 0.9f);
 
     // Biome specific colours.
 

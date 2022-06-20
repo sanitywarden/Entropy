@@ -45,3 +45,10 @@ void Hunter::update(GameObject* object, int building_index) {
     region->addResource(meat);
     region->addResource(leather);
 }
+
+bool Hunter::isBuildingResourceTile(GameObject* object, int index) const {
+    auto* region = static_cast<Region*>(object);
+    return region->getBuildingAt(index)
+        ? region->getBuildingAt(index)->getBuildingName() == "Animal Spot"
+        : false;
+}

@@ -38,3 +38,8 @@ void WaterCollector::update(GameObject* object, int building_index) {
 
     region->addResource(water);
 }
+
+bool WaterCollector::isBuildingResourceTile(GameObject* object, int index) const {
+    auto region = static_cast<Region*>(object);
+    return region->map[index].tiletype.is_water();    
+}

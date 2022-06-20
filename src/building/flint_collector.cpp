@@ -38,3 +38,8 @@ void FlintCollector::update(GameObject* object, int building_index) {
 
     region->addResource(flint);
 }
+
+bool FlintCollector::isBuildingResourceTile(GameObject* object, int index) const {
+    auto region = static_cast<Region*>(object);
+    return region->map[index].object_texture_name == "tile_resource_flint";
+}

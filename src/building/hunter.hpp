@@ -12,6 +12,7 @@ namespace iso {
             ~Hunter();
 
             void update(GameObject* object, int building_index) override;
+            bool isBuildingResourceTile(GameObject* object, int index) const override;
     };
 }
 
