@@ -85,8 +85,9 @@ namespace iso {
 
             void addInterfaceComponent(gui::InterfacePage* interface_component);
             gui::InterfacePage* getInterfaceComponent(std::string interface_id);
-            bool checkComponentExist(std::string interface_id);
+            bool checkComponentExist(std::string interface_id) const;
             void toggleComponentVisibility(std::string interface_id);
+            bool isComponentVisible(std::string interface_id) const;
             void setVisibilityTrue(std::string interface_id);
             void setVisibilityFalse(std::string interface_id);
     };

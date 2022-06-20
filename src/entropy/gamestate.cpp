@@ -72,8 +72,17 @@ gui::InterfacePage* Gamestate::getInterfaceComponent(std::string interface_id) {
     return nullptr;
 }
 
-bool Gamestate::checkComponentExist(std::string interface_id) {
+bool Gamestate::checkComponentExist(std::string interface_id) const {
     return this->interface.count(interface_id);
+}
+
+bool Gamestate::isComponentVisible(std::string interface_id) const {
+    if(this->checkComponentExist(interface_id)) {
+        auto* component = this->interface.at(interface_id);
+        return component->isVisible();
+    }
+    
+    return false;
 }
 
 void Gamestate::toggleComponentVisibility(std::string interface_id) {
