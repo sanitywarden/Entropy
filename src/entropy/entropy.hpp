@@ -27,14 +27,14 @@ namespace iso {
             resourceManager     resource;
             gamestateManager    gamestate;
             windowManager       window;
-            applicationSettings config;
+            applicationSettings settings;
 
             virtual void loop();
             int getFramesPerSecond();
             int getTimePerFrame();
             void exitApplication(int code);
 
-            
+            bool debugModeEnabled() const;
     };
 }
 

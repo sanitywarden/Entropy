@@ -94,6 +94,6 @@ void applicationSettings::loadUserSettings() {
     input_file.close();
 }
 
-const Settings& applicationSettings::userSettings() {
+const Settings& applicationSettings::userSettings() const {
     return this->m_settings;    
 }

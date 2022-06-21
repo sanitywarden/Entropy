@@ -34,7 +34,7 @@ namespace iso {
             applicationSettings();
             ~applicationSettings();
 
-            const Settings& userSettings();
+            const Settings& userSettings() const;
     };  
 }
 

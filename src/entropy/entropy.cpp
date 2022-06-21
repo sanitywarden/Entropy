@@ -6,22 +6,22 @@
 using namespace iso;
 
 Entropy::Entropy() {
-    auto settings = this->config.userSettings();
+    auto settings = this->settings.userSettings();
 
     this->resource  = resourceManager(settings);
     this->gamestate = gamestateManager(settings);
     this->window    = windowManager(settings);
     
-    if(this->config.userSettings().window_fullscreen) 
+    if(this->settings.userSettings().window_fullscreen) 
         this->window.createFullscreenWindow();
     
     else 
-        this->window.createWindow(this->config.userSettings().window_size);
+        this->window.createWindow(this->settings.userSettings().window_size);
 
     this->window.setTitle("Entropy Application");
 
-    this->window.setVsync(this->config.userSettings().window_vsync);
-    this->window.setMaxFramerate(this->config.userSettings().window_refresh_rate);
+    this->window.setVsync(this->settings.userSettings().window_vsync);
+    this->window.setMaxFramerate(this->settings.userSettings().window_refresh_rate);
 
     std::cout << "[Entropy Engine]: Configuration finished.\n";
     std::cout << "[Entropy Engine]: Greetings from Entropy Game Engine.\n";   
@@ -86,4 +86,8 @@ int Entropy::getTimePerFrame() {
 void Entropy::exitApplication(int code) {
     std::cout << "[Entropy Engine]: Requested application exit with code " << code << ".\n";
     exit(code);
+}
+
+bool Entropy::debugModeEnabled() const {
+    return this->settings.userSettings().application_debug_mode;
 }
