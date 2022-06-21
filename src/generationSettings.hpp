@@ -45,7 +45,8 @@ class WorldData {
 
         // Game data.
 
-        int player_quantity; // Number of players in the game.
+        int player_quantity;    // Number of players in the game.
+        float simulation_speed; // See SimulationManger::simulation_speed. 
 
         // Noise.
 
@@ -118,6 +119,7 @@ class WorldData {
         bool populationNeedsEnabled() const;
         bool buildingCostEnabled()    const;
         bool astarEnabled()           const;
+        float simulationSpeed()        const;
 };
 }
 

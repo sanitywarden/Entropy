@@ -40,15 +40,19 @@ namespace iso {
             int draw_calls;
             int people_dehydrated;   // Number of people with water needs not satisfied.
             int people_malnourished; // Number of people with food needs not satisfied.
-            
-            Scheduler global_updates;
 
+            float simulation_speed;                // Simulation speed. Events, updates and other gameplay-related stuff depend on this. 1 is default value, and equals to updating every 1 second.             
+            sf::Clock simulation_clock;            // For timing simulation updates internally. Use this instead of Entropy's clock (it's intended for measuring FPS).
+            sf::Time  simulation_time_since_start; // Time since clock start.      
+
+            Scheduler global_updates;
         public:
             Texturizer texturizer;
 
             WorldGenerator       world;
             std::vector <Player> players;
-            int                  time;    // Time passed since game started in real time seconds.
+            int                  time;            // Time passed since game started in real time seconds.
+            int                  simulation_time; // Time passed inside the simulation. Depends on the frequency of updates.
 
         public:
             SimulationManager();

@@ -47,6 +47,7 @@ void DebugPerformance::updateUI() {
     data += "Mouse position: "  + std::to_string((int)gamestate->mouse_position_window.x)    + " / " + std::to_string((int)gamestate->mouse_position_window.y)    + "\n"; 
     data += "Mouse interface: " + std::to_string((int)gamestate->mouse_position_interface.x) + " / " + std::to_string((int)gamestate->mouse_position_interface.y) + "\n"; 
     data += "Time passed: "     + std::to_string(this->manager->time) + "\n";
+    data += "Simulation time passed: " + std::to_string(this->manager->simulation_time) + "\n";
     data += "Date DMY: "        + this->manager->getDateFormatted() + "\n";
     data += "Draw calls: "      + std::to_string(this->manager->getDrawCalls()) + "\n";
     data += "View interface: "  + std::to_string((int)view_interface.getSize().x) + " " + std::to_string((int)view_interface.getSize().y) + "\n";

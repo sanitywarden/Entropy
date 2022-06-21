@@ -138,11 +138,19 @@ void WorldData::loadSettingsFromFile() {
         if(property_name == "BUILDING_COST_ENABLED") {
             this->building_cost_enabled = std::stoi(property_value);
             std::cout << "[Generation Settings]: Building cost:\t\t" << asBool(this->building_cost_enabled) << "\n";
+            continue;
         }
 
         if(property_name == "ASTAR_PATHING_ENABLED") {
             this->astar_enabled = std::stoi(property_value);
             std::cout << "[Generation Settings]: A* AI enabled:\t\t" << asBool(this->astar_enabled) << "\n";
+            continue;
+        }
+
+        if(property_name == "SIMULATION_UPDATE_SPEED") {
+            this->simulation_speed = std::stof(property_value);
+            std::cout << "[Generation Settings]: Simulation speed:\t" << this->simulation_speed << "\n";
+            continue;
         }
 
         // WORLD NOISE.
@@ -398,4 +406,8 @@ sf::Vector2f WorldData::tileOffset() const {
 
 int WorldData::getPlayerQuantity() const {
     return this->player_quantity;
+}
+
+float WorldData::simulationSpeed() const {
+    return this->simulation_speed;
 }

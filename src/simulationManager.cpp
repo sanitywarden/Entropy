@@ -27,6 +27,8 @@ SimulationManager::SimulationManager() {
     this->world = WorldGenerator(&this->resource, &this->texturizer);
     this->prepare();
 
+    this->simulation_speed = world_settings.simulationSpeed();
+
     // Global updates.
 
     this->global_updates.insert({ "update_buildings",        std::pair(0, seconds_per_hour) }); // Update buildings in every region.
@@ -41,8 +43,11 @@ SimulationManager::~SimulationManager() {
 
 void SimulationManager::loop() {
     this->m_measurement_clock = sf::Clock();
-    const sf::Time one_second = sf::seconds(1.0f);
-    
+    this->simulation_clock    = sf::Clock();
+
+    const sf::Time one_second       = sf::seconds(1.0f);
+    const sf::Time simulation_speed = sf::seconds(this->simulation_speed); 
+
     // Frames per second.
     int updates = 0;
 
@@ -66,9 +71,27 @@ void SimulationManager::loop() {
             this->m_measurement_clock.restart();
             this->m_time_since_start = sf::Time::Zero;
             
-            Gamestate* gamestate = this->gamestate.getGamestate();
+            auto* gamestate = this->gamestate.getGamestate();
             if(this->time < INT_MAX && gamestate->state_id != "Menu")
                 this->time++;
+
+            updates = 0;
+        }
+
+        // Simulation updates.
+        // Here execute updates depending on the simulation speed. 
+
+        if(this->simulation_time_since_start.asMilliseconds() < simulation_speed.asMilliseconds()) {
+            this->simulation_time_since_start = this->simulation_clock.getElapsedTime();
+        }
+
+        else {
+            this->simulation_clock.restart();
+            this->simulation_time_since_start = sf::Time::Zero;
+
+            auto* gamestate = this->gamestate.getGamestate();
+            if(this->simulation_time < INT_MAX && gamestate->state_id != "Menu")
+                this->simulation_time++;
 
             // Update gamestate-specific scheduler.
             if(gamestate) {
@@ -77,9 +100,6 @@ void SimulationManager::loop() {
 
             // Update global scheduler.
             this->updateScheduler();
-            this->getDateFormatted();
-
-            updates = 0;
         }
     }
 }
