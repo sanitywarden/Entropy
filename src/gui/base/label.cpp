@@ -84,5 +84,5 @@ void Label::setString(std::string data) {
 }
 
 void Label::setColour(sf::Color colour) {
-    this->text.setColor(colour);
+    this->text.setFillColor(colour);
 }

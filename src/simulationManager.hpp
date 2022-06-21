@@ -38,7 +38,9 @@ namespace iso {
             void updatePopulation();
         private:
             int draw_calls;
-
+            int people_dehydrated;   // Number of people with water needs not satisfied.
+            int people_malnourished; // Number of people with food needs not satisfied.
+            
             Scheduler global_updates;
 
         public:

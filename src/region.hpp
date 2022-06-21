@@ -45,6 +45,9 @@ namespace iso {
             bool isOwned() const;
             void addResource(Resource resource);
             int  getResourceQuantity(Resource resource) const;
+            bool checkResourceExists(Resource resource) const;
+            int  getFoodQuantity() const;
+            int  getDrinkableLiquidQuantity() const;
             bool isBuildingAffordable(const Building& building) const;
             bool isPositionValid(const Building& building, sf::Vector2i grid_position) const;
             void placeBuilding(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position);

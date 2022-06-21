@@ -140,6 +140,11 @@ void WorldData::loadSettingsFromFile() {
             std::cout << "[Generation Settings]: Building cost:\t\t" << asBool(this->building_cost_enabled) << "\n";
         }
 
+        if(property_name == "ASTAR_PATHING_ENABLED") {
+            this->astar_enabled = std::stoi(property_value);
+            std::cout << "[Generation Settings]: A* AI enabled:\t\t" << asBool(this->astar_enabled) << "\n";
+        }
+
         // WORLD NOISE.
 
         if(property_name == "WORLD_NOISE_O") {
@@ -373,6 +378,10 @@ bool WorldData::populationNeedsEnabled() const {
 
 bool WorldData::buildingCostEnabled() const {
     return this->building_cost_enabled;
+}
+
+bool WorldData::astarEnabled() const {
+    return this->astar_enabled;
 }
 
 int WorldData::panelSize() const {

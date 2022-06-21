@@ -149,9 +149,6 @@ void SimulationManager::updateScheduler() {
     auto const* gamestate = this->gamestate.getGamestate();
     auto* interface_page = gamestate->getInterfaceComponent("component_tooltip");
     
-    // TODO: Clean up the code related to vector of sp buildings.
-    // You do not need the non sp vector anymore.
-
     if(interface_page) {
         auto* tooltip = static_cast<gui::Tooltip*>(interface_page);
         if(!tooltip->intersectsSupportedUI()) {
@@ -217,51 +214,91 @@ void SimulationManager::updateUnits() {
 void SimulationManager::updatePopulation() {
     for(auto& region : this->world.world_map) {
         if(region.getPopulation() && region.visited && world_settings.populationNeedsEnabled()) {
-            auto water_quantity      = region.getResourceQuantity(RESOURCE_WATER);
-            auto pop_needs_met_water = water_quantity / water_consumed_per_pop;
-            auto dehydrated_people   = region.getPopulation() - pop_needs_met_water < 0
+            // Calculate people with their needs not fullfilled currently.
+
+            const auto water_quantity      = region.getDrinkableLiquidQuantity();
+            const auto pop_needs_met_water = water_quantity / water_consumed_per_pop;
+            const auto water_needed        = region.getPopulation() * water_consumed_per_pop;
+            const auto dehydrated_people   = region.getPopulation() - pop_needs_met_water <= 0
                 ? 0
                 : region.getPopulation() - pop_needs_met_water;
             
-            std::cout << "Water quantity: "  << water_quantity      << "\n";
-            std::cout << "Water needs met: " << pop_needs_met_water << "\n";
-            std::cout << "Dehydrated: "      << dehydrated_people   << "\n";
-
-            auto food_quantity       = region.getResourceQuantity(RESOURCE_GRAIN);
-            auto pop_needs_met_food  = food_quantity / food_consumed_per_pop;
-            auto malnourished_people = region.getPopulation() - pop_needs_met_food < 0
+            const auto food_quantity       = region.getFoodQuantity();
+            const auto pop_needs_met_food  = food_quantity / food_consumed_per_pop;
+            const auto food_needed         = region.getPopulation() * food_consumed_per_pop;
+            const auto malnourished_people = region.getPopulation() - pop_needs_met_food <= 0
                 ? 0
                 : region.getPopulation() - pop_needs_met_food; 
 
-            std::cout << "Food quantity: "   << food_quantity       << "\n";
-            std::cout << "Food needs met: "  << pop_needs_met_food  << "\n";
-            std::cout << "Malnourished: "    << malnourished_people << "\n";
 
-            // TODO: Make sure that after some time, malnourished and dehydrated people who's needs are not met
-            // consecutively for a few days, die.
-
-            auto smaller_need = pop_needs_met_food >= pop_needs_met_water
-                ? pop_needs_met_water
-                : pop_needs_met_food;
-
-            auto common_number = malnourished_people >= dehydrated_people
+            // Calculate the number of dead people, including people with their needs not fullfilled from previous updates.
+            // Select the smaller number.
+            const auto dead_from_dehydration = this->people_dehydrated > dehydrated_people
                 ? dehydrated_people
-                : malnourished_people;
+                : this->people_dehydrated;
 
-            auto survive = region.getPopulation() - common_number; 
-            auto dead    = region.getPopulation() - survive;
+            // Select the smaller number.
+            const auto dead_from_malnutrition = this->people_malnourished > malnourished_people
+                ? malnourished_people
+                : this->people_malnourished;
 
-            std::cout << "Survive: " << survive << "\n";
-            std::cout << "Dead: "    << dead << "\n";
+            const auto dead_average = (dead_from_dehydration + dead_from_malnutrition) / 2;
+            auto survive = region.getPopulation() - dead_average; 
+
+            if(this->debugModeEnabled()) {
+                std::cout << "=======[DEBUG]=======\n";
+                std::cout << "[] Water needs met: " << pop_needs_met_water << " / " << region.getPopulation() << " people.\n";
+                std::cout << "[] Food needs met:  " << pop_needs_met_food  << " / " << region.getPopulation() << " people.\n";
+                std::cout << "[] Dehydrated currently:   " << dehydrated_people   << " | Dehydrated last time:   " << this->people_dehydrated   << "\n";
+                std::cout << "[] Malnourished currently: " << malnourished_people << " | Malnourished last time: " << this->people_malnourished << "\n";
+                std::cout << "[] Dead:    " << dead_average << "\n";
+                std::cout << "[] Survive: " << survive      << "\n";
+            }
 
             while(region.getPopulation() != survive) {
                 region.population.resize(region.population.size() - 1);
             }
-            
-            auto resource_water = RESOURCE_WATER;
-            resource_water.setQuantity(-(survive * water_consumed_per_pop));
 
-            region.addResource(resource_water);
+            const auto new_dehydrated = dehydrated_people - dead_from_dehydration;
+                this->people_dehydrated = new_dehydrated;
+
+            const auto new_malnourished = malnourished_people - dead_from_malnutrition;
+                this->people_malnourished = new_malnourished;
+
+            for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
+                if(region.checkResourceExists(resource) && resource.getType() == ResourceType::TYPE_FOOD) {
+                    // Find the food's share of all food. 
+                    const auto percent_of_all_food = (float)region.getResourceQuantity(resource) / (float)food_quantity; 
+                    const auto percent_rounded = std::ceil(percent_of_all_food * 100) / 100;
+
+                    // Calculate the equivalent percentage of this food in the smaller quantity.
+                    const int quantity = percent_rounded * food_needed;                                                     
+                    const auto resource_copy = Resource(resource.getName(), -quantity);                                        
+                    
+                    if(this->debugModeEnabled())
+                        std::cout << "[] " << resource.getName() << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
+                    
+                    region.addResource(resource_copy);
+                }
+
+                if(region.checkResourceExists(resource) && resource.getType() == ResourceType::TYPE_DRINKABLE_LIQUID) {
+                    // Find the liquid's share of all liquids.
+                    const auto percent_of_all_liquids = (float)region.getResourceQuantity(resource) / (float)water_quantity;
+                    const auto percent_rounded = std::ceil(percent_of_all_liquids * 100) / 100;
+                    
+                    // Calculate the equivalent percentage of this liquid in the smaller quantity.
+                    const int quantity = percent_rounded * water_needed;
+                    const auto resource_copy = Resource(resource.getName(), -quantity);
+
+                    if(this->debugModeEnabled())
+                        std::cout << "[] " << resource.getName() << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
+
+                    region.addResource(resource_copy);
+                }
+            }
+
+            if(this->debugModeEnabled())
+                std::cout << "=======[DEBUG]=======\n";
         }
     }
 }
@@ -536,7 +573,9 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
 }
 
 void SimulationManager::initialise() {
-    this->draw_calls = 0;
+    this->draw_calls          = 0;
+    this->people_dehydrated   = 0;
+    this->people_malnourished = 0;
     this->resource.loadTexture("./res/random_colour.png", "random_colour");
 
     this->resource.loadTexture("./res/ui/template/template.png", "widget_base_top_left",                sf::IntRect(0, 0, 64, 64    ));

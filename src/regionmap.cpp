@@ -537,6 +537,10 @@ void Regionmap::renderRegion() {
             }
         }
 
+        for(int i = 0; i < this->region->getPopulation(); i++) {
+            draw_order.push_back(this->region->population[i]);
+        }
+
         const auto compare = [](const GameObject& o1, const GameObject& o2) {
             auto o1_y = o1.getPosition2D().y + o1.getSize().y;
             auto o2_y = o2.getPosition2D().y + o2.getSize().y;
@@ -579,12 +583,6 @@ void Regionmap::renderRegion() {
         
         this->manager->window.draw(game_object, states);
         gpu_draw_calls++;
-    }
-
-    for(const auto& unit : this->region->population) {
-        sf::RenderStates states;
-        states.texture = &this->manager->resource.getTexture(unit.getTextureName());
-        this->manager->window.draw(unit, states);
     }
 
     this->manager->updateDrawCalls(gpu_draw_calls);
@@ -837,72 +835,75 @@ void Regionmap::createUI() {
 }
 
 void Regionmap::updateScheduler() {    
-    auto& update_population_path = this->scheduler.at("update_path");
-    if(update_population_path.first != update_population_path.second)
-        update_population_path.first++;
+    if(world_settings.astarEnabled()) {
+        auto& update_population_path = this->scheduler.at("update_path");
+        if(update_population_path.first != update_population_path.second)
+            update_population_path.first++;
 
-    if(update_population_path.first == update_population_path.second) {
-        for(auto& unit : this->region->population) {
-            if(!unit.hasPath()) {
-                auto random_index = rand() % world_settings.getRegionSize();
-                auto found = false;
-                while(!found) {
-                    random_index = rand() % world_settings.getRegionSize();
-                    if(this->region->map[random_index].tiletype.is_terrain() && !this->region->isTree(random_index) && !this->region->getBuildingAt(region_index)) {
-                        found = true;
-                        break;
-                    }
-                } 
+        if(update_population_path.first == update_population_path.second) {
+            for(auto& unit : this->region->population) {
+                if(!unit.hasPath()) {
+                    auto random_index = rand() % world_settings.getRegionSize();
+                    auto found = false;
+                    while(!found) {
+                        random_index = rand() % world_settings.getRegionSize();
+                        if(this->region->map[random_index].tiletype.is_terrain() && !this->region->isTree(random_index) && !this->region->getBuildingAt(region_index)) {
+                            found = true;
+                            break;
+                        }
+                    } 
 
-                auto path = this->manager->r_astar(unit.current_index, random_index);
-                unit.setNewPath(path);
-                
-                this->recalculate_mesh = true;
+                    auto path = this->manager->r_astar(unit.current_index, random_index);
+                    unit.setNewPath(path);
+                    
+                    this->recalculate_mesh = true;
+                }
             }
+
+            update_population_path.first = 0;
         }
 
-        update_population_path.first = 0;
-    }
+        auto& update_population_movement = this->scheduler.at("update_movement");
+        if(update_population_movement.first != update_population_movement.second)
+            update_population_movement.first++;
+        
+        if(update_population_movement.first == update_population_movement.second) {
+            for(auto& unit : this->region->population) {
+                if(unit.hasPath()) {
+                    auto current = unit.current_index;
+                    auto next    = unit.getNextMove();
+                
+                    const auto& tile  = this->region->map[next];
+                    auto new_position = tile.getPosition();
 
-    auto& update_population_movement = this->scheduler.at("update_movement");
-    if(update_population_movement.first != update_population_movement.second)
-        update_population_movement.first++;
-    
-    if(update_population_movement.first == update_population_movement.second) {
-        for(auto& unit : this->region->population) {
-            if(unit.hasPath()) {
-                auto current = unit.current_index;
-                auto next    = unit.getNextMove();
+                    unit.object_position = new_position + sf::Vector3f(0, -(unit.object_size.y - world_settings.tileSize().y), 0);
+                    unit.current_index   = next;
+
+                    // Assign texture.
+                    
+                    std::string texture_base = tile.tiletype.is_river()
+                        ? "unit_transport_arrow"
+                        : "unit_classic_arrow";
+
+                    auto index_difference = next - current;
+                    
+                    if(index_difference == 1)
+                        unit.object_texture_name = texture_base + "_br";
+
+                    else if(index_difference == -1)
+                        unit.object_texture_name = texture_base + "_tl";
+
+                    else if(index_difference == world_settings.getRegionWidth())
+                        unit.object_texture_name = texture_base + "_bl";
+
+                    else if(index_difference == -world_settings.getRegionWidth())
+                        unit.object_texture_name = texture_base + "_tr";
+                }
+            }
             
-                const auto& tile  = this->region->map[next];
-                auto new_position = tile.getPosition();
-
-                unit.object_position = new_position + sf::Vector3f(0, -(unit.object_size.y - world_settings.tileSize().y), 0);
-                unit.current_index   = next;
-
-                // Assign texture.
-                
-                std::string texture_base = tile.tiletype.is_river()
-                    ? "unit_transport_arrow"
-                    : "unit_classic_arrow";
-
-                auto index_difference = next - current;
-                
-                if(index_difference == 1)
-                    unit.object_texture_name = texture_base + "_br";
-
-                else if(index_difference == -1)
-                    unit.object_texture_name = texture_base + "_tl";
-
-                else if(index_difference == world_settings.getRegionWidth())
-                    unit.object_texture_name = texture_base + "_bl";
-
-                else if(index_difference == -world_settings.getRegionWidth())
-                    unit.object_texture_name = texture_base + "_tr";
-            }
+            this->recalculate_tree_mesh = true;
+            update_population_movement.first = 0;
         }
-    
-        update_population_movement.first = 0;
     }
 }
 

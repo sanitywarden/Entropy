@@ -7,11 +7,6 @@
 #include <map>
 
 namespace iso {    
-// TODO:
-// - Add more settings customisable settings.
-// - Settings: Biome generation settings.
-// - (?) Maybe make this class hold region data, that are currently stored by the SimulationManager class.
-
 class WorldData {
     private:
         // World settings.
@@ -39,6 +34,7 @@ class WorldData {
         int region_initial_population;
         bool population_needs_enabled;
         bool building_cost_enabled;
+        bool astar_enabled;
 
         int resource_flint_radius; // How big the flint resource patch should be.
         int resource_stone_radius; // How big the stone resource patch should be.
@@ -104,9 +100,7 @@ class WorldData {
         float getRegionTreeMin()           const;
         float getRegionFlintMin()          const;
         float getRegionStoneMin()          const;
-        bool populationNeedsEnabled()      const;
-        bool buildingCostEnabled()         const;
-
+        
         bool inRegionBounds(int index) const;
         bool inRegionBounds(sf::Vector2i grid_position) const;
         int calculateRegionIndex(int x, int y)        const;
@@ -120,6 +114,10 @@ class WorldData {
         sf::Vector2f tileSize()   const;
         sf::Vector2f tileOffset() const;
         int getPlayerQuantity()   const;
+
+        bool populationNeedsEnabled() const;
+        bool buildingCostEnabled()    const;
+        bool astarEnabled()           const;
 };
 }
 

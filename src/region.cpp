@@ -45,7 +45,7 @@ void Region::addResource(Resource resource) {
     auto resource_name     = resource.getName();
     auto resource_quantity = resource.getQuantity();
     
-    if(!this->resources.count(resource_name))
+    if(!this->checkResourceExists(resource))
         this->resources[resource_name] = resource_quantity;
 
     else
@@ -55,9 +55,36 @@ void Region::addResource(Resource resource) {
 int Region::getResourceQuantity(Resource resource) const {
     auto resource_name = resource.getName();
 
-    if(this->resources.count(resource_name))
+    if(this->checkResourceExists(resource))
         return this->resources.at(resource_name);
     return 0;
+}
+
+bool Region::checkResourceExists(Resource resource) const {
+    auto resource_name = resource.getName();
+    return this->resources.count(resource_name);
+}
+
+int Region::getFoodQuantity() const {
+    int quantity = 0;
+    for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
+        if(this->checkResourceExists(resource) && resource.getType() == ResourceType::TYPE_FOOD) {
+            quantity += this->getResourceQuantity(resource);
+        }
+    }  
+
+    return quantity;
+}
+
+int Region::getDrinkableLiquidQuantity() const {
+    int quantity = 0;
+    for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
+        if(this->checkResourceExists(resource) && resource.getType() == ResourceType::TYPE_DRINKABLE_LIQUID) {
+            quantity += this->getResourceQuantity(resource);
+        }
+    }
+
+    return quantity;
 }
 
 bool Region::isBuildingAffordable(const Building& building) const {

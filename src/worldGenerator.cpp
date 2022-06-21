@@ -137,7 +137,7 @@ void WorldGenerator::generateWorld() {
             else
                 this->m_region.regiontype.set_ocean();
 
-            this->m_region.height            = std::ceil(value * 100) / 100;;
+            this->m_region.height            = std::ceil(value * 100) / 100;
             this->m_region.object_position.x = world_settings.panelSize() * x; 
             this->m_region.object_position.y = world_settings.panelSize() * y;
             this->m_region.object_size       = sf::Vector2f(world_settings.panelSize(), world_settings.panelSize());
