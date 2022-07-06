@@ -21,22 +21,22 @@ void FlintCollector::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    Resource flint = RESOURCE_FLINT;
+    StorageItem flint = ITEM_FLINT;
 
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
 
             if(region->map[index].object_texture_name == "tile_resource_flint")
-                flint.incrementQuantity();
+                flint.quantity++;
         }
     }
 
     auto number_of_buildings = region->isBuildingInProximity(*this, building_index);
     if(number_of_buildings)
-        flint.setQuantity(flint.getQuantity() / number_of_buildings);
+        flint.quantity /= number_of_buildings;
 
-    region->addResource(flint);
+    region->addItem(flint);
 }
 
 bool FlintCollector::isBuildingResourceTile(GameObject* object, int index) const {

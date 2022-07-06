@@ -122,3 +122,30 @@ bool Player::discoveredRegion(int index) const {
 bool Player::ownsRegion(int index) const {
     return std::find(this->owned_regions.begin(), this->owned_regions.end(), index) != this->owned_regions.end();
 }
+
+void Player::addQuest(std::shared_ptr<Quest> quest) {
+    this->current_quests.push_back(quest);
+}
+
+void Player::removeQuest(std::shared_ptr<Quest> quest) {
+    for(auto it = this->current_quests.begin(); it != this->current_quests.end(); ++it) {
+        if((*it).get()->quest_code_id == quest.get()->quest_code_id) {
+            this->current_quests.erase(it);
+            return;
+        }
+    }
+}
+
+void Player::finishQuest(std::shared_ptr<Quest> quest) {
+    quest.get()->onQuestFinish();
+} 
+
+bool Player::hasQuest(std::shared_ptr<Quest> quest) const {
+     for(auto it = this->current_quests.begin(); it != this->current_quests.end(); ++it) {
+        if((*it).get()->quest_code_id == quest.get()->quest_code_id) {
+            return true;
+        }
+    }
+
+    return false;
+}

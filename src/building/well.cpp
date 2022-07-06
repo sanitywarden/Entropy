@@ -16,8 +16,8 @@ Well::~Well() {
 void Well::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     
-    Resource water = RESOURCE_WATER;
-    water.setQuantity(8);
+    StorageItem water = ITEM_WATER;
+    water.quantity = 8;
 
-    region->addResource(water);
+    region->addItem(water);
 }

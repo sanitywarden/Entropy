@@ -123,8 +123,8 @@ bool Tooltip::intersectsSupportedUI() const {
                         std::string data;
                         data += building.get()->getBuildingName() + "\n";
 
-                        for(const auto& resource : building.get()->getBuildingCost()) {
-                            data += resource.getName() + " - " + std::to_string(resource.getQuantity()) + "\n";
+                        for(const auto& item : building.get()->getBuildingCost()) {
+                            data += item.item_name + " - " + std::to_string(item.quantity) + "\n";
                         }
 
                         widget_text->setString(data);
@@ -145,25 +145,25 @@ bool Tooltip::intersectsSupportedUI() const {
                     if(component->containsPoint(regionmap->mouse_position_interface)) {
                         auto resource_name = readAfter(id, "imageholder_");
 
-                        auto resource = RESOURCE_EMPTY;
-                        for(const auto& resource_template : RESOURCE_LOOKUP_TABLE) {
-                            if(toLower(resource_name) == toLower(resource_template.getName())) {
-                                resource = resource_template;
+                        auto resource = ITEM_EMPTY;
+                        for(const auto& item_template : ITEM_LOOKUP_TABLE) {
+                            if(toLower(resource_name) == toLower(item_template.item_name)) {
+                                resource = item_template;
                                 break;
                             }
                         }
 
-                        if(resource.getName() == RESOURCE_EMPTY.getName())
+                        if(resource.item_name == ITEM_EMPTY.item_name)
                             return false;
 
                         std::string data;
-                        data += resource.getName() + "\n";
+                        data += resource.item_name + "\n";
                         
                         auto* region = regionmap->getCurrentRegion();
                         if(!region)
                             return false;
 
-                        auto quantity = region->getResourceQuantity(resource);
+                        auto quantity = region->getItemQuantity(resource);
                         data += std::to_string(quantity) + "\n";
 
                         widget_text->setString(data);

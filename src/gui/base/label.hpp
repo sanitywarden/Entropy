@@ -41,7 +41,7 @@ namespace gui {
             void setColour(sf::Color colour);
 
             // Align the text within it's parent.
-            void align(Alignment alignment, const AbstractWidget* widget);
+            void align(Alignment alignment, const AbstractWidget* parent);
             void setString(std::string data);
     };
 }

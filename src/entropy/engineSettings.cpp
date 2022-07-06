@@ -26,7 +26,7 @@ applicationSettings::~applicationSettings() {
 }
 
 void applicationSettings::loadUserSettings() {
-    std::string filename = "./config/config.config";
+    std::string filename = "./data/config.config";
     
     // Check if the file has been opened correctly, or if the file even exists.
     // If the file could not be opened, use default settings instead.

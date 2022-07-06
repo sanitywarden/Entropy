@@ -22,22 +22,22 @@ void Quarry::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    Resource stone = RESOURCE_STONE;
+    StorageItem stone = ITEM_STONE;
 
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
 
             if(region->map[index].object_texture_name == "tile_resource_stone")
-                stone.incrementQuantity();
+                stone.quantity++;
         }
     }
 
     auto number_of_buildings = region->isBuildingInProximity(*this, building_index);
     if(number_of_buildings)
-        stone.setQuantity(stone.getQuantity() / number_of_buildings);
+        stone.quantity /= number_of_buildings;
 
-    region->addResource(stone);
+    region->addItem(stone);
 }
 
 bool Quarry::isBuildingResourceTile(GameObject* object, int index) const {

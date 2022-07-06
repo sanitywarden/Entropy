@@ -32,7 +32,7 @@ WorldData::~WorldData() {
 }
 
 void WorldData::loadSettingsFromFile() {
-    const std::string config_file_path = "./config/world_generation.config";
+    const std::string config_file_path = "./data/world_generation.config";
     std::fstream config_file(config_file_path);
 
     if(!config_file.good()) {
@@ -410,4 +410,72 @@ int WorldData::getPlayerQuantity() const {
 
 float WorldData::simulationSpeed() const {
     return this->simulation_speed;
+}
+
+int WorldData::getRegionResourceRadius(const Resource& resource) const {
+    auto resource_name_higher = toHigher(resource.resource_name);
+
+    const std::string config_file_path = "./data/world_generation.config";
+    std::fstream config_file(config_file_path);
+
+    if(!config_file.good()) {
+        std::cout << "[Generation Settings]: Could not open config file: " << config_file_path << ".\n";
+        exit(1);
+    }
+
+    std::string line_delimiter  = ",";   // What char marks that a line ends.
+    std::string read_value_from = ":";   // What char marks that value is afterwards.
+    char comment_indicator = '#';        // What char marks a comment.
+    int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
+    
+    std::string line_content;
+    while(std::getline(config_file, line_content)) {
+        if(line_content[0] == comment_indicator || (int)line_content[0] == ascii_empty_line_indicator)
+            continue;
+
+        auto index = find(line_content, read_value_from);
+        std::string property_name  = readBefore(line_content, read_value_from);  
+        std::string property_value = read(line_content, index + 1, line_content.length() - 1);
+
+        if(property_name == "REGION_RESOURCE_RADIUS_DIV_" + resource_name_higher) {
+            auto value = std::stoi(property_value);
+            return value;
+        }
+    }
+
+    return 0;
+}
+
+float WorldData::getRegionResourceGenerationChance(const Resource& resource) const {
+    auto resource_name_higher = toHigher(resource.resource_name);
+
+    const std::string config_file_path = "./data/world_generation.config";
+    std::fstream config_file(config_file_path);
+
+    if(!config_file.good()) {
+        std::cout << "[Generation Settings]: Could not open config file: " << config_file_path << ".\n";
+        exit(1);
+    }
+
+    std::string line_delimiter  = ",";   // What char marks that a line ends.
+    std::string read_value_from = ":";   // What char marks that value is afterwards.
+    char comment_indicator = '#';        // What char marks a comment.
+    int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
+    
+    std::string line_content;
+    while(std::getline(config_file, line_content)) {
+        if(line_content[0] == comment_indicator || (int)line_content[0] == ascii_empty_line_indicator)
+            continue;
+
+        auto index = find(line_content, read_value_from);
+        std::string property_name  = readBefore(line_content, read_value_from);  
+        std::string property_value = read(line_content, index + 1, line_content.length() - 1);
+
+        if(property_name == "REGION_RESOURCE_CHANCE_" + resource_name_higher) {
+            auto value =  std::stof(property_value);
+            return value;
+        }
+    }
+
+    return 0.0f;
 }

@@ -2,6 +2,7 @@
 #include "./building/building_definitions.hpp"
 #include "globalutilities.hpp"
 #include "generationSettings.hpp"
+#include "resource_definitions.hpp"
 
 #include <iostream>
 #include <string>
@@ -24,9 +25,10 @@ Region::Region()
     
     this->owner = nullptr;
     this->unit  = nullptr;
-    this->population.resize(0);
-
+    
     this->map.resize(0);
+    this->population.resize(0);
+    this->storage.resize(0);
 }
 
 Region::~Region() {
@@ -41,35 +43,48 @@ bool Region::isOwned() const {
     return this->owner != nullptr;
 }
 
-void Region::addResource(Resource resource) {
-    auto resource_name     = resource.getName();
-    auto resource_quantity = resource.getQuantity();
-    
-    if(!this->checkResourceExists(resource))
-        this->resources[resource_name] = resource_quantity;
+void Region::addItem(StorageItem item) {
+    if(this->checkItemExists(item)) {
+        for(auto it = this->storage.begin(); it != this->storage.end(); ++it) {
+            auto storage_item = *it;
 
-    else
-        this->resources[resource_name] += resource_quantity;
+            if(storage_item.item_name == item.item_name) {
+                storage_item.quantity += item.quantity;
+                return;
+            }
+        }
+    }
+
+    this->storage.push_back(item);
 }
 
-int Region::getResourceQuantity(Resource resource) const {
-    auto resource_name = resource.getName();
+int Region::getItemQuantity(StorageItem item) const {
+    if(this->checkItemExists(item)) {
+        for(auto it = this->storage.begin(); it != this->storage.end(); ++it) {
+            auto stored_item = *it;
+            if(stored_item.item_name == item.item_name)
+                return stored_item.quantity;
+        }
+    }
 
-    if(this->checkResourceExists(resource))
-        return this->resources.at(resource_name);
     return 0;
 }
 
-bool Region::checkResourceExists(Resource resource) const {
-    auto resource_name = resource.getName();
-    return this->resources.count(resource_name);
+bool Region::checkItemExists(StorageItem item) const {
+    for(auto it = this->storage.begin(); it != this->storage.end(); ++it) {
+        auto stored_item = *it;
+        if(stored_item.item_name == item.item_name)
+            return true;
+    }
+
+    return false;
 }
 
 int Region::getFoodQuantity() const {
     int quantity = 0;
-    for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
-        if(this->checkResourceExists(resource) && resource.getType() == ResourceType::TYPE_FOOD) {
-            quantity += this->getResourceQuantity(resource);
+    for(const auto& item : ITEM_LOOKUP_TABLE) {
+        if(this->checkItemExists(item) && item.item_type == ItemType::TYPE_FOOD) {
+            quantity += this->getItemQuantity(item);
         }
     }  
 
@@ -78,11 +93,11 @@ int Region::getFoodQuantity() const {
 
 int Region::getDrinkableLiquidQuantity() const {
     int quantity = 0;
-    for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
-        if(this->checkResourceExists(resource) && resource.getType() == ResourceType::TYPE_DRINKABLE_LIQUID) {
-            quantity += this->getResourceQuantity(resource);
+    for(const auto& item : ITEM_LOOKUP_TABLE) {
+        if(this->checkItemExists(item) && item.item_type == ItemType::TYPE_DRINKABLE_LIQUID) {
+            quantity += this->getItemQuantity(item);
         }
-    }
+    }  
 
     return quantity;
 }
@@ -195,8 +210,8 @@ void Region::placeBuilding(Building building, sf::Vector2f texture_size, sf::Vec
     else if(building == BUILDING_HUNTER)
         sp_building = std::shared_ptr <Building> (new Hunter());
 
-    else if(building == BUILDING_ANIMAL_SPOT)
-        sp_building = std::shared_ptr <Building> (new AnimalSpot());
+    else if(building == RESOURCE_ANIMAL)
+        sp_building = std::shared_ptr <Building> (new Animal());
 
     else if(building == BUILDING_FLINT_COLLECTOR)
         sp_building = std::shared_ptr <Building> (new FlintCollector());
@@ -243,7 +258,7 @@ bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, sf
 
 void Region::removeBuilding(int index) {
     if(this->buildings.count(index)) {
-        auto building   = this->buildings.at(index).get();
+        auto building = this->buildings.at(index).get();
         
         if(!building->isRemovable())
             return;
@@ -251,7 +266,7 @@ void Region::removeBuilding(int index) {
         if(world_settings.buildingCostEnabled()) {
             auto refund = building->getBuildingRefund();
             for(auto resource : refund) {
-                this->addResource(resource);
+                this->addItem(resource);
             }
         }
         

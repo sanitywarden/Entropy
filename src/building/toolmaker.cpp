@@ -15,22 +15,21 @@ Toolmaker::~Toolmaker() {
 }
 
 void Toolmaker::update(GameObject* object, int building_index) {
-    auto region          = static_cast<Region*>(object);
-    auto production_area = this->getProductionArea();
+    auto region = static_cast<Region*>(object);
+    
+    if(region->getItemQuantity(ITEM_WOOD) && region->getItemQuantity(ITEM_FLINT)) {
+        StorageItem tools = ITEM_TOOLS;
 
-    Resource tools = RESOURCE_TOOLS;
+        StorageItem wood = ITEM_WOOD;
+        wood.quantity = -1;
 
-    if(region->resources.count(RESOURCE_WOOD.getName()) && region->resources.count(RESOURCE_FLINT.getName())) {
-        Resource wood = RESOURCE_WOOD;
-        wood.setQuantity(-1);
+        StorageItem flint = ITEM_FLINT;
+        flint.quantity = -1;
 
-        Resource flint = RESOURCE_FLINT;
-        flint.setQuantity(-1);
+        tools.quantity = 1;
 
-        tools.incrementQuantity();
-
-        region->addResource(wood);
-        region->addResource(flint);
-        region->addResource(tools);
+        region->addItem(wood);
+        region->addItem(flint);
+        region->addItem(tools);
     }
 }

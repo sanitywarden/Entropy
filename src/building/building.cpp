@@ -16,7 +16,7 @@ Building::Building()
     this->building_proximity_area = VECTOR0X0;
     this->building_name           = "Empty";
     this->removable               = true;
-    this->building_cost           = RESOURCE_LOOKUP_TABLE; // All resource quantities are 0.
+    this->building_cost           = ITEM_LOOKUP_TABLE; // All resource quantities are 0.
 }
 
 Building::Building(
@@ -57,12 +57,12 @@ Building::~Building() {
 }
 
 void Building::loadResourceCost() {
-    const std::string filename = "./config/building_resource_cost.config";
+    const std::string filename = "./data/building_resource_cost.config";
     std::fstream config_file(filename);
 
     if(!config_file.good()) {
         std::cout << "[Building]: Could not open resource config file for " << this->getBuildingName() << ".\n";
-        this->building_cost = RESOURCE_LOOKUP_TABLE;
+        this->building_cost = ITEM_LOOKUP_TABLE;
         return;
     }
 
@@ -72,7 +72,7 @@ void Building::loadResourceCost() {
     int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
 
     std::string line_content;
-    std::vector <Resource> cost;
+    std::vector <StorageItem> cost;
     while(std::getline(config_file, line_content)) {
         if(line_content[0] == comment_indicator || (int)line_content[0] == ascii_empty_line_indicator)
             continue;
@@ -86,8 +86,8 @@ void Building::loadResourceCost() {
             std::string resource_name = capitalise(readAfter(property_name, (building_name_uppercase + "_")));
             int resource_quantity     = std::stoi(property_value);
 
-            Resource resource(resource_name, resource_quantity);
-            cost.push_back(resource);
+            StorageItem item(resource_name, resource_quantity, ItemType::TYPE_UNCATEGORISED);
+            cost.push_back(item);
         }
     }
 
@@ -102,14 +102,14 @@ const sf::Vector2f Building::getProductionArea() const {
     return this->building_proximity_area;
 }
 
-const std::vector <Resource> Building::getBuildingCost() const {
+const std::vector <StorageItem> Building::getBuildingCost() const {
     return this->building_cost;
 }
 
-const std::vector <Resource> Building::getBuildingRefund() const {
-    std::vector <Resource> refund;
-    for(const auto& resource : this->building_cost) {
-        Resource refund_resource(resource.getName(), resource.getIcon(), resource.getType(), resource.getQuantity() * 0.90f);
+const std::vector <StorageItem> Building::getBuildingRefund() const {
+    std::vector <StorageItem> refund;
+    for(const auto& item : this->building_cost) {
+        StorageItem refund_resource(item.item_name, item.quantity, item.item_type, item.item_icon);
         refund.push_back(refund_resource);
     }
 

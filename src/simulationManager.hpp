@@ -3,7 +3,6 @@
 
 #include "entropy/entropy.hpp"
 #include "player.hpp"
-#include "colours.hpp"
 #include "worldGenerator.hpp"
 #include "texturizer.hpp"
 #include "noiseSettings.hpp"
@@ -19,11 +18,12 @@ namespace iso {
 
     constexpr int seconds_per_hour  = 12;
     constexpr int seconds_per_day   = seconds_per_hour  * 12;
+    constexpr int seconds_per_week  = seconds_per_day   * 7;
     constexpr int seconds_per_month = seconds_per_day   * 30;
     constexpr int seconds_per_year  = seconds_per_month * 12; 
 
-    const int food_consumed_per_pop  = 1;
-    const int water_consumed_per_pop = 2;
+    constexpr int food_consumed_per_pop  = 1;
+    constexpr int water_consumed_per_pop = 2; 
 
     class SimulationManager : public Entropy {
         private:
@@ -32,10 +32,13 @@ namespace iso {
             void initialise();
             void initialiseWorld();
 
-            void updateScheduler();
+            void updateSchedulerGlobal();
+            void updateShedulerSimulation();
             void updateBuildings();
             void updateUnits();
             void updatePopulation();
+            void updateRandomEvent();
+            void updateQuest();
         private:
             int draw_calls;
             int people_dehydrated;   // Number of people with water needs not satisfied.
@@ -46,6 +49,9 @@ namespace iso {
             sf::Time  simulation_time_since_start; // Time since clock start.      
 
             Scheduler global_updates;
+            Scheduler simulation_updates;
+
+
         public:
             Texturizer texturizer;
 
@@ -53,7 +59,9 @@ namespace iso {
             std::vector <Player> players;
             int                  time;            // Time passed since game started in real time seconds.
             int                  simulation_time; // Time passed inside the simulation. Depends on the frequency of updates.
-
+            
+            // TODO: move somewhere else.
+            int font_size;
         public:
             SimulationManager();
             ~SimulationManager();

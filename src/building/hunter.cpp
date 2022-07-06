@@ -24,8 +24,8 @@ void Hunter::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    Resource meat    = RESOURCE_MEAT;
-    Resource leather = RESOURCE_LEATHER; 
+    StorageItem meat    = ITEM_MEAT;
+    StorageItem leather = ITEM_LEATHER; 
 
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
@@ -34,16 +34,15 @@ void Hunter::update(GameObject* object, int building_index) {
             auto building = region->getBuildingAt(index);
             if(building) {
                 if(building->getBuildingName() == "Animal Spot") {
-                    meat.incrementQuantity();
+                    meat.quantity    += 2;
+                    leather.quantity += 1;
                 }
             }
         }
     }
 
-    leather.setQuantity(meat.getQuantity() / 4);
-
-    region->addResource(meat);
-    region->addResource(leather);
+    region->addItem(meat);
+    region->addItem(leather);
 }
 
 bool Hunter::isBuildingResourceTile(GameObject* object, int index) const {

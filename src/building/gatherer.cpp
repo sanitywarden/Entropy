@@ -22,23 +22,25 @@ void Farmhouse::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    Resource grain = RESOURCE_GRAIN;
+    StorageItem grain = ITEM_GRAIN;
 
+    // TODO: Rewrite this function to make it collect all types of collectable plants. 
+   
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
 
             auto texture_name = region->map[index].getTextureName();
             if(startsWith(texture_name, "tile_grass"))
-                grain.incrementQuantity();
+                grain.quantity++;
         }
     }
 
     auto number_of_buildings = region->isBuildingInProximity(*this, building_index);
     if(number_of_buildings)
-        grain.setQuantity(grain.getQuantity() / number_of_buildings);
+        grain.quantity /= number_of_buildings;
 
-    region->addResource(grain);
+    region->addItem(grain);
 }
 
 bool Farmhouse::isBuildingResourceTile(GameObject* object, int index) const { 

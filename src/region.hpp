@@ -6,6 +6,8 @@
 #include "regionType.hpp"
 #include "gameObject.hpp"
 #include "player.hpp"
+#include "resource.hpp"
+#include "item.hpp"
 #include "./building/building.hpp"
 #include "./unit/unit.hpp"
 
@@ -43,9 +45,10 @@ namespace iso {
             
             RiverDirection riverDirection();
             bool isOwned() const;
-            void addResource(Resource resource);
-            int  getResourceQuantity(Resource resource) const;
-            bool checkResourceExists(Resource resource) const;
+            void addItem(StorageItem item);
+            int  getItemQuantity(StorageItem item) const;
+            bool checkItemExists(StorageItem item) const;
+
             int  getFoodQuantity() const;
             int  getDrinkableLiquidQuantity() const;
             bool isBuildingAffordable(const Building& building) const;
@@ -74,18 +77,17 @@ namespace iso {
             RegionType regiontype;
             Biome      biome;
             Unit*      unit;
+            Player*    owner; // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.
 
             bool visited;
             std::string settlement_name; // Settlement's human readable name. If there is no settlement, it's "*".
 
             std::vector <Tile>                           map;
             std::vector <Unit>                           population;
+            std::vector <StorageItem>                    storage;  // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.
             std::map    <int, GameObject>                trees;
             std::map    <int, std::vector<GameObject>>   sides;
             std::map    <int, std::shared_ptr<Building>> buildings;
-            std::map    <std::string, int>               resources;  // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.
-
-            Player* owner; // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.
     }; 
 }
 

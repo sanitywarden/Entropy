@@ -3,6 +3,7 @@
 
 #include <string>
 #include <SFML/System/Vector2.hpp>
+#include <SFML/Graphics/Texture.hpp>
 
 namespace iso {
     bool startsWith(const std::string& str, const std::string& phrase);
@@ -19,6 +20,10 @@ namespace iso {
     std::string asBool(int number);
     std::string asBool(bool condition);
     std::string capitalise(const std::string& str);
+    sf::Vector2i tileGridPosition(const sf::Texture& texture, sf::Vector2f tile_position);
+    sf::Vector2i tileGridPosition(int index);    
+    std::string getTilePixelColour(const sf::Texture& texture, sf::Vector2i pixel);
+
 }
 
 #endif

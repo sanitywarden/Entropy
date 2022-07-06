@@ -96,26 +96,26 @@ void WidgetRegionStorage::updateUI() {
     auto* regionmap = static_cast<Regionmap*>(gamestate);
     auto* current_region = regionmap->getCurrentRegion();
     
-    int resource_total = 0;
-    for(const auto& resource : RESOURCE_LOOKUP_TABLE)
-        if(current_region->resources.count(resource.getName()))
-            resource_total++;
+    int item_total = 0;
+    for(const auto& item : ITEM_LOOKUP_TABLE)
+        if(current_region->checkItemExists(item))
+            item_total++;
 
-    for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
-        if(current_region->resources.count(resource.getName())) {
-            if(!current_region->resources[resource.getName()])
+    for(const auto& item : ITEM_LOOKUP_TABLE) {
+        if(current_region->checkItemExists(item)) {
+            if(!current_region->getItemQuantity(item))
                 continue;
 
-            auto image = ImageComponent(new ImageHolder(this->manager, resource.getIcon()));
-            auto name_image = "imageholder_" + toLower(resource.getName());
+            auto image = ImageComponent(new ImageHolder(this->manager, item.item_icon));
+            auto name_image = "imageholder_" + toLower(item.item_name);
             image.get()->setWidgetID(name_image);
             
-            auto text = LabelComponent(new Label(this->manager, std::to_string(current_region->getResourceQuantity(resource))));
-            auto name_text = "text_quantity_" + toLower(resource.getName());
+            auto text = LabelComponent(new Label(this->manager, std::to_string(current_region->getItemQuantity(item))));
+            auto name_text = "text_quantity_" + toLower(item.item_name);
             text.get()->setWidgetID(name_text);
 
             // Image's final position.
-            auto position = this->calculateItemPosition(resource_no, resource_total);
+            auto position = this->calculateItemPosition(resource_no, item_total);
 
             image.get()->setWidgetPosition(position);
             image.get()->setWidgetSize(image_size);
@@ -133,10 +133,10 @@ void WidgetRegionStorage::updateUI() {
 
         // If the resource does not exist in the region storage, delete the image.
         else {
-            auto name_image = "imageholder_" + toLower(resource.getName());
+            auto name_image = "imageholder_" + toLower(item.item_name);
             this->deleteComponent(name_image);
 
-            auto name_text = "text_quantity_" + toLower(resource.getName());
+            auto name_text = "text_quantity_" + toLower(item.item_name);
             this->deleteComponent(name_text);
         }
     }
@@ -154,7 +154,7 @@ sf::Vector2f WidgetRegionStorage::calculateItemPosition(int resource_no, int res
     sf::Vector2f space_const(widget_size.x / 40, widget_size.y / 40);
 
     int row_size = 0;
-    for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
+    for(const auto& item : ITEM_LOOKUP_TABLE) {
         int a1 = widget_position.x + offset.x;
         int n  = row_size;
         int r  = image_size.x + space_const.x;

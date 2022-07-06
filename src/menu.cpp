@@ -64,9 +64,12 @@ void Menu::handleInput() {
 
                 this->view_game.setCenter(texture_size.x / 2, texture_size.y / 2);
                 this->view_interface.setCenter(texture_size.x / 2, texture_size.y / 2);
+                this->manager->font_size = (this->manager->window.windowWidth() + this->manager->window.windowHeight()) / 160;
 
+                this->manager->window.getWindow()->setView(this->view_interface);
                 this->resizeViews();
                 this->resizeUI();
+                this->manager->window.getWindow()->setView(this->view_game);
 
                 break; 
             }

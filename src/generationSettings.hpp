@@ -2,6 +2,7 @@
 #define _WORLD_SETTINGS_HPP_
 
 #include "noiseSettings.hpp"
+#include "resource.hpp"
 
 #include <SFML/System/Vector2.hpp>
 #include <map>
@@ -101,7 +102,10 @@ class WorldData {
         float getRegionTreeMin()           const;
         float getRegionFlintMin()          const;
         float getRegionStoneMin()          const;
-        
+
+        int getRegionResourceRadius(const Resource& resource) const;
+        float getRegionResourceGenerationChance(const Resource& resource) const;
+
         bool inRegionBounds(int index) const;
         bool inRegionBounds(sf::Vector2i grid_position) const;
         int calculateRegionIndex(int x, int y)        const;

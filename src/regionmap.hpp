@@ -11,6 +11,7 @@
 #include "gui/minimap.hpp"
 #include "gui/widgetRegionStorage.hpp"
 #include "gui/tooltip.hpp"
+#include "gui/widgetQuest.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <map>

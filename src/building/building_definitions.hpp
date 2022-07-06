@@ -1,4 +1,4 @@
-#ifndef _BUILDING_DEFINITIONS_HPP_
+    #ifndef _BUILDING_DEFINITIONS_HPP_
 #define _BUILDING_DEFINITIONS_HPP_
 
 #include "building.hpp"
@@ -9,7 +9,6 @@
 #include "quarry.hpp"
 #include "woodcutter.hpp"
 #include "hunter.hpp"
-#include "animal_spot.hpp"
 #include "flint_collector.hpp"
 #include "well.hpp"
 #include "water_collector.hpp"
@@ -29,7 +28,7 @@ namespace iso {
     const Quarry         BUILDING_QUARRY;          // ID 5.
     const Woodcutter     BUILDING_WOODCUTTER;      // ID 6.
     const Hunter         BUILDING_HUNTER;          // ID 7.
-    const AnimalSpot     BUILDING_ANIMAL_SPOT;     // ID 8. Not listed, world generation specific building.
+    
     const FlintCollector BUILDING_FLINT_COLLECTOR; // ID 9.
     const Well           BUILDING_WELL;            // ID 10.
     const WaterCollector BUILDING_WATER_COLLECTOR; // ID 11.
@@ -47,6 +46,7 @@ namespace iso {
         std::shared_ptr <Building> (new Woodcutter()    ), // ID 6.  
         std::shared_ptr <Building> (new Hunter()        ), // ID 7.  
         std::shared_ptr <Building> (new FlintCollector()), // ID 9.  
+        
         std::shared_ptr <Building> (new Well()          ), // ID 10  
         std::shared_ptr <Building> (new WaterCollector()), // ID 11.  
         std::shared_ptr <Building> (new Toolmaker()     ), // ID 12.  

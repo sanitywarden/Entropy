@@ -2,6 +2,7 @@
 #define _BIOME_HPP_
 
 #include "colours.hpp"
+#include "gameObject.hpp"
 
 #include <vector>
 #include <string>

@@ -21,22 +21,22 @@ void WaterCollector::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    Resource water = RESOURCE_WATER;
+    StorageItem water = ITEM_WATER;
 
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
             
             if(!region->map[index].tiletype.is_terrain())
-                water.incrementQuantity();
+                water.quantity++;
         }
     }
 
     auto number_of_buildings = region->isBuildingInProximity(*this, building_index);
     if(number_of_buildings)
-        water.setQuantity(water.getQuantity() / number_of_buildings);
+        water.quantity /= number_of_buildings;
 
-    region->addResource(water);
+    region->addItem(water);
 }
 
 bool WaterCollector::isBuildingResourceTile(GameObject* object, int index) const {

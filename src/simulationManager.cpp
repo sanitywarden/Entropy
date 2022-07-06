@@ -6,6 +6,7 @@
 #include "nameGenerator.hpp"
 #include "menu.hpp"
 #include "tooltip.hpp"
+#include "colours.hpp"
 
 #include <iostream>
 
@@ -31,10 +32,15 @@ SimulationManager::SimulationManager() {
 
     // Global updates.
 
-    this->global_updates.insert({ "update_buildings",        std::pair(0, seconds_per_hour) }); // Update buildings in every region.
-    this->global_updates.insert({ "update_units",            std::pair(0, 1) });                // Move units.
-    this->global_updates.insert({ "update_population_needs", std::pair(0, seconds_per_day) });  // Distribute resources to pops.
-    this->global_updates.insert({ "gui_tooltip_timer",       std::pair(0, 2) });                // Measure the time to display a tooltip.
+    this->global_updates.insert({ "update_units",            std::pair(0, 1) }); // Move units.
+    this->global_updates.insert({ "gui_tooltip_timer",       std::pair(0, 2) }); // Measure the time to display a tooltip.
+    
+    // Simulation updates.
+
+    this->simulation_updates.insert({ "update_buildings",        std::pair(0, seconds_per_hour) }); // Update buildings in every region.
+    this->simulation_updates.insert({ "update_population_needs", std::pair(0, seconds_per_day)  }); // Distribute resources to pops.
+    this->simulation_updates.insert({ "event_timer",             std::pair(0, seconds_per_week) }); // Every week there should be a chance of a random event occuring.
+    this->simulation_updates.insert({ "update_quests",           std::pair(0, seconds_per_hour) }); // Update quests.
 }
 
 SimulationManager::~SimulationManager() {
@@ -75,6 +81,8 @@ void SimulationManager::loop() {
             if(this->time < INT_MAX && gamestate->state_id != "Menu")
                 this->time++;
 
+            this->updateSchedulerGlobal();
+
             updates = 0;
         }
 
@@ -99,7 +107,7 @@ void SimulationManager::loop() {
             }
 
             // Update global scheduler.
-            this->updateScheduler();
+            this->updateShedulerSimulation();
         }
     }
 }
@@ -132,10 +140,10 @@ void SimulationManager::prepare() {
         worldmap->centreOnCapital();
 }
 
-void SimulationManager::updateScheduler() {
+void SimulationManager::updateShedulerSimulation() {
     // Update buildings across all regions.
     
-    auto& update_buildings = this->global_updates.at("update_buildings");
+    auto& update_buildings = this->simulation_updates.at("update_buildings");
     if(update_buildings.first != update_buildings.second)
         update_buildings.first++;
     
@@ -144,6 +152,37 @@ void SimulationManager::updateScheduler() {
         update_buildings.first = 0;
     }
 
+    // Update pops in regions.
+    auto& update_pop_needs = this->simulation_updates.at("update_population_needs");
+    if(update_pop_needs.first != update_pop_needs.second)
+        update_pop_needs.first++;
+
+    if(update_pop_needs.first == update_pop_needs.second) {
+        this->updatePopulation();
+        update_pop_needs.first = 0;
+    }    
+
+    auto& random_event_timer = this->simulation_updates.at("event_timer");
+    if(random_event_timer.first != random_event_timer.second)
+        random_event_timer.first++;
+
+    if(random_event_timer.first == random_event_timer.second) {
+        this->updateRandomEvent();
+        random_event_timer.first = 0;
+    }
+
+    // Update quests.
+    auto& update_quests = this->simulation_updates.at("update_quests");
+    if(update_quests.first != update_quests.second)
+        update_quests.first++;
+
+    if(update_quests.first == update_quests.second) {
+        this->updateQuest();
+        update_quests.first = 0;
+    }
+}
+
+void SimulationManager::updateSchedulerGlobal() {
     // Update units on the worldmap.
 
     auto& update_units = this->global_updates.at("update_units");
@@ -155,15 +194,7 @@ void SimulationManager::updateScheduler() {
         update_units.first = 0;
     }
 
-    // Update pops in regions.
-    auto& update_pop_needs = this->global_updates.at("update_population_needs");
-    if(update_pop_needs.first != update_pop_needs.second)
-        update_pop_needs.first++;
-
-    if(update_pop_needs.first == update_pop_needs.second) {
-        this->updatePopulation();
-        update_pop_needs.first = 0;
-    }
+    // Update tooltip timer.
 
     auto& gui_tooltip_timer = this->global_updates.at("gui_tooltip_timer");
     auto const* gamestate = this->gamestate.getGamestate();
@@ -285,40 +316,55 @@ void SimulationManager::updatePopulation() {
             const auto new_malnourished = malnourished_people - dead_from_malnutrition;
                 this->people_malnourished = new_malnourished;
 
-            for(const auto& resource : RESOURCE_LOOKUP_TABLE) {
-                if(region.checkResourceExists(resource) && resource.getType() == ResourceType::TYPE_FOOD) {
+            for(const auto& item : ITEM_LOOKUP_TABLE) {
+                if(region.checkItemExists(item) && item.item_type == ItemType::TYPE_FOOD) {
                     // Find the food's share of all food. 
-                    const auto percent_of_all_food = (float)region.getResourceQuantity(resource) / (float)food_quantity; 
+                    const auto percent_of_all_food = (float)region.getItemQuantity(item) / (float)food_quantity; 
                     const auto percent_rounded = std::ceil(percent_of_all_food * 100) / 100;
 
                     // Calculate the equivalent percentage of this food in the smaller quantity.
                     const int quantity = percent_rounded * food_needed;                                                     
-                    const auto resource_copy = Resource(resource.getName(), -quantity);                                        
+                    const auto item_copy = StorageItem(item.item_name, -quantity, item.item_type);                                        
                     
                     if(this->debugModeEnabled())
-                        std::cout << "[] " << resource.getName() << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
+                        std::cout << "[] " << item.item_name << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
                     
-                    region.addResource(resource_copy);
+                    region.addItem(item_copy);
                 }
 
-                if(region.checkResourceExists(resource) && resource.getType() == ResourceType::TYPE_DRINKABLE_LIQUID) {
+                if(region.checkItemExists(item) && item.item_type == ItemType::TYPE_DRINKABLE_LIQUID) {
                     // Find the liquid's share of all liquids.
-                    const auto percent_of_all_liquids = (float)region.getResourceQuantity(resource) / (float)water_quantity;
+                    const auto percent_of_all_liquids = (float)region.getItemQuantity(item) / (float)water_quantity;
                     const auto percent_rounded = std::ceil(percent_of_all_liquids * 100) / 100;
                     
                     // Calculate the equivalent percentage of this liquid in the smaller quantity.
                     const int quantity = percent_rounded * water_needed;
-                    const auto resource_copy = Resource(resource.getName(), -quantity);
+                    const auto item_copy = StorageItem(item.item_name, -quantity, item.item_type);
 
                     if(this->debugModeEnabled())
-                        std::cout << "[] " << resource.getName() << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
+                        std::cout << "[] " << item.item_name << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
 
-                    region.addResource(resource_copy);
+                    region.addItem(item_copy);
                 }
             }
 
             if(this->debugModeEnabled())
                 std::cout << "=======[DEBUG]=======\n";
+        }
+    }
+}
+
+void SimulationManager::updateRandomEvent() {
+    
+}
+
+void SimulationManager::updateQuest() {
+    for(const auto& player : this->players) {
+        for(const auto& event : player.current_quests) {
+            if(event.get()->isFinishConditionSatisfied()) {
+                player.finishQuest(event);
+                player.removeQuest(event);
+            }
         }
     }
 }
@@ -668,6 +714,8 @@ void SimulationManager::initialise() {
 
     this->resource.loadFont("./res/font/proggy.ttf",   "proggy");
     this->resource.loadFont("./res/font/garamond.ttf", "garamond");
+
+    this->font_size = (this->window.windowWidth() + this->window.windowHeight()) / 160;
 }
 
 void SimulationManager::initialiseWorld() {

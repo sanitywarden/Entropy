@@ -1,7 +1,6 @@
 #include "regionmap.hpp"
 #include "generationSettings.hpp"
-
-#include <filesystem>
+#include "globalutilities.hpp"
 
 using namespace iso;
 
@@ -218,14 +217,17 @@ void Regionmap::handleInput() {
                 
                 // To avoid weird camera glitches, set the centre explicitly.
 
-                auto grid_position = this->manager->world.tileGridPosition(this->view_game.getCenter());
+                auto grid_position = tileGridPosition(this->manager->resource.getTexture("tile_template_direction"), this->view_game.getCenter());
                 auto index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y); 
                 auto tile_position = this->region->map[index].getPosition2D();
                 this->view_game.setCenter(tile_position);
                 this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
+                this->manager->font_size = (this->manager->window.windowWidth() + this->manager->window.windowHeight()) / 160;
 
+                this->manager->window.getWindow()->setView(this->view_interface);
                 this->resizeViews();
                 this->resizeUI();
+                this->manager->window.getWindow()->setView(this->view_game);
 
                 break; 
             }
@@ -659,7 +661,7 @@ void Regionmap::higlightTile() {
         (cell.y - tile_offset.y) - (cell.x - tile_offset.x)
     );
 
-    auto colour_name = this->manager->world.getTilePixelColour(offset);
+    auto colour_name = getTilePixelColour(this->manager->resource.getTexture("tile_template_direction") ,offset);
     if(colour_name == "Red")
         selected += sf::Vector2i(-1, 0);
 
@@ -729,7 +731,7 @@ void Regionmap::updateTile() {
     if(*building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
         auto building = building_menu->getBuilding();
         auto texture_size = this->manager->resource.getTextureSize(building.get()->getTextureName());
-        auto grid_position = this->manager->world.tileGridPosition(this->mouse_position_window);
+        auto grid_position = tileGridPosition(this->current_index);
         this->region->placeBuildingCheck(*building.get(), texture_size, grid_position);
         this->updatePaths(this->current_index);
         this->recalculate_tree_mesh = true;
@@ -826,7 +828,7 @@ void Regionmap::createUI() {
     static gui::WidgetMinimap       widget_minimap(this->manager);
     static gui::WidgetRegionStorage widget_region_storage(this->manager);
     static gui::Tooltip             tooltip(this->manager);
-
+    
     this->addInterfaceComponent(&widget_menu_building);
     this->addInterfaceComponent(&widget_performance_regionmap);
     this->addInterfaceComponent(&widget_minimap);
@@ -919,8 +921,10 @@ void Regionmap::gamestateLoad() {
 
     regionmap_mesh_tile.create(verticies_tilemap);
 
-    this->resizeUI();
+    this->manager->window.getWindow()->setView(this->view_interface);
     this->resizeViews();
+    this->resizeUI();
+    this->manager->window.getWindow()->setView(this->view_game);
 }
 
 void Regionmap::gamestateClose() {
@@ -942,7 +946,7 @@ void Regionmap::renderSelectedBuilding() {
         auto tile = this->region->map[this->current_index];
 
         auto building_size = building.get()->getBuildingArea();
-        auto grid_position = this->manager->world.tileGridPosition(this->mouse_position_window);
+        auto grid_position = tileGridPosition(this->current_index);
         
         for(int y = grid_position.y; y < grid_position.y + building_size.y; y++) {
             for(int x = grid_position.x; x < grid_position.x + building_size.x; x++) {

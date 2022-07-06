@@ -2,6 +2,7 @@
 #include "worldmap.hpp"
 #include "regionmap.hpp"
 #include "generationSettings.hpp"
+#include "globalutilities.hpp"
 
 using namespace gui;
 using namespace iso;
@@ -84,7 +85,7 @@ void DebugPerformance::updateUI() {
         const auto* region       = regionmap->getCurrentRegion();
         const auto& current_tile = region->map[current_index];
 
-        auto grid_position = this->manager->world.tileGridPosition(gamestate->mouse_position_window);
+        auto grid_position = tileGridPosition(this->manager->resource.getTexture("tile_template_direction"), gamestate->mouse_position_window);
         
         auto* widget_menu = static_cast<WidgetMenuBuilding*>(regionmap->getInterfaceComponent("component_widget_menu_building"));
         auto selected_building = widget_menu->getBuilding();

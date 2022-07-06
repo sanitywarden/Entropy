@@ -1,4 +1,5 @@
 #include "globalutilities.hpp"
+#include "generationSettings.hpp"
 
 /* Do not add 'using namespace iso' here.
  * If the implementation does not have iso namespace then the compiler will not associate the definitions with this implementation. 
@@ -240,4 +241,59 @@ std::string iso::capitalise(const std::string& str) {
     if(ascii_value >= 97 && ascii_value <= 122)
         lower[0] = char(ascii_value - 32);
     return lower;
+}
+
+sf::Vector2i iso::tileGridPosition(const sf::Texture& tile_template, sf::Vector2f tile_position) {
+    sf::Vector2i cell(
+        tile_position.x / world_settings.tileSize().x,
+        tile_position.y / world_settings.tileSize().y
+    );
+
+    sf::Vector2i selected(
+        (cell.y - world_settings.tileOffset().y) + (cell.x - world_settings.tileOffset().x),
+        (cell.y - world_settings.tileOffset().y) - (cell.x - world_settings.tileOffset().x)
+    );
+
+    sf::Vector2i position_within_tile(
+        (int)tile_position.x % (int)world_settings.tileSize().x,
+        (int)tile_position.y % (int)world_settings.tileSize().y
+    );
+
+    auto colour_name = iso::getTilePixelColour(tile_template, position_within_tile);
+    if(colour_name == "Red")
+        selected += sf::Vector2i(-1, 0);
+
+    if(colour_name == "Green")
+        selected += sf::Vector2i(1, 0);
+
+    if(colour_name == "Blue")
+        selected += sf::Vector2i(0, -1);
+    
+    if(colour_name == "Yellow")
+        selected += sf::Vector2i(1, 0);
+
+    return selected;
+}
+
+sf::Vector2i iso::tileGridPosition(int index) {
+    return sf::Vector2i(
+        index % world_settings.getRegionWidth(),
+        index / world_settings.getRegionWidth()
+    );
+}
+
+std::string iso::getTilePixelColour(const sf::Texture& tile_template, sf::Vector2i pixel) {
+    if(pixel.x < 0 || pixel.y < 0) 
+        return "Other";
+
+    if(pixel.x > world_settings.tileSize().x - 1 || pixel.y > world_settings.tileSize().y - 1) 
+        return "Other";
+
+    auto pixel_colour = tile_template.copyToImage().getPixel(pixel.x, pixel.y);
+
+    if(pixel_colour == sf::Color::Red)         return "Red";
+    else if(pixel_colour == sf::Color::Green)  return "Green";
+    else if(pixel_colour == sf::Color::Blue)   return "Blue";
+    else if(pixel_colour == sf::Color::Yellow) return "Yellow";
+    else return "Other";
 }

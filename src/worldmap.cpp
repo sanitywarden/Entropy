@@ -260,9 +260,12 @@ void Worldmap::handleInput() {
                 }
 
                 this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
+                this->manager->font_size = (this->manager->window.windowWidth() + this->manager->window.windowHeight()) / 160;
 
+                this->manager->window.getWindow()->setView(this->view_interface);
                 this->resizeViews();
                 this->resizeUI();
+                this->manager->window.getWindow()->setView(this->view_game);
 
                 break; 
             }
@@ -630,8 +633,10 @@ void Worldmap::gamestateLoad() {
         this->view_game.setCenter(position);
     }
 
-    this->resizeUI();
+    this->manager->window.getWindow()->setView(this->view_interface);
     this->resizeViews();
+    this->resizeUI();
+    this->manager->window.getWindow()->setView(this->view_game);
 
     this->mouse_moved = false;
     this->mouse_drag  = false;
