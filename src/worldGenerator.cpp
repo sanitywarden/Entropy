@@ -2,6 +2,7 @@
 #include "globalutilities.hpp"
 #include "generationSettings.hpp"
 #include "./building/building_definitions.hpp"
+#include "./resource/resource_definitions.hpp"
 
 using namespace iso;
 
@@ -821,44 +822,6 @@ void WorldGenerator::generateNoise(NoiseSettings& settings, NoiseContainer& stor
 // This function returns grid coordinate of a tile.
 // The range on these is from (for both x and y) (0, region_size).
 // Return value from this function is accepted by tilePositionScreen() to convert back to tile's original position.
-sf::Vector2i WorldGenerator::tileGridPosition(sf::Vector2f tile_position) const {
-    sf::Vector2i cell(
-        tile_position.x / world_settings.tileSize().x,
-        tile_position.y / world_settings.tileSize().y
-    );
-
-    sf::Vector2i selected(
-        (cell.y - world_settings.tileOffset().y) + (cell.x - world_settings.tileOffset().x),
-        (cell.y - world_settings.tileOffset().y) - (cell.x - world_settings.tileOffset().x)
-    );
-
-    sf::Vector2i position_within_tile(
-        (int)tile_position.x % (int)world_settings.tileSize().x,
-        (int)tile_position.y % (int)world_settings.tileSize().y
-    );
-
-    auto colour_name = this->getTilePixelColour(position_within_tile);
-    if(colour_name == "Red")
-        selected += sf::Vector2i(-1, 0);
-
-    if(colour_name == "Green")
-        selected += sf::Vector2i(1, 0);
-
-    if(colour_name == "Blue")
-        selected += sf::Vector2i(0, -1);
-    
-    if(colour_name == "Yellow")
-        selected += sf::Vector2i(1, 0);
-
-    return selected;
-}
-
-sf::Vector2i WorldGenerator::tileGridPosition(int index) const {
-    return sf::Vector2i(
-        index % world_settings.getRegionWidth(),
-        index / world_settings.getRegionWidth()
-    );
-}
 
 // This function accepts coordinates of the tile in a grid - not the tile position.
 // The first tile's coordinates in a grid are (0,0), but the position might be (128, 128) or some other point based on the offset. 
@@ -920,22 +883,6 @@ bool WorldGenerator::is_lake(int region_index) const {
 
 bool WorldGenerator::is_river(int region_index) const {
     return this->rivers.count(region_index);
-}
-
-std::string WorldGenerator::getTilePixelColour(sf::Vector2i pixel) {
-    if(pixel.x < 0 || pixel.y < 0) 
-        return "Other";
-
-    if(pixel.x > world_settings.tileSize().x - 1 || pixel.y > world_settings.tileSize().y - 1) 
-        return "Other";
-
-    auto pixel_colour = this->resource->getTexture("tile_template_direction").copyToImage().getPixel(pixel.x, pixel.y);
-
-    if(pixel_colour == sf::Color::Red)         return "Red";
-    else if(pixel_colour == sf::Color::Green)  return "Green";
-    else if(pixel_colour == sf::Color::Blue)   return "Blue";
-    else if(pixel_colour == sf::Color::Yellow) return "Yellow";
-    else return "Other";
 }
 
 // This function returns the name of the tile type under certain index.
@@ -1389,53 +1336,11 @@ void WorldGenerator::generateRegion(int region_index) {
         }
     }
 
-    // Generate flint.
-    std::string has_flint = "False";
-    bool did_flint_generate = this->regionGenerateResource(region, "tile_resource_flint", world_settings.getRegionFlintChance(), world_settings.getRegionFlintRadius());
-    if(did_flint_generate)
-        has_flint = "True";
+    this->generateResourcePatch(region, RESOURCE_STONE);
+    this->generateResourcePatch(region, RESOURCE_FLINT);
+    this->generateResourcePatch(region, RESOURCE_ANIMAL);
 
-    std::cout << "  [] Flint:\t" << has_flint << "\n";
-
-    // Generate stone.
-    std::string has_stone = "False";
-    bool did_stone_generate = this->regionGenerateResource(region, "tile_resource_stone", world_settings.getRegionStoneChance(), world_settings.getRegionStoneRadius());
-    if(did_stone_generate)
-        has_stone = "True";
-
-    std::cout << "  [] Stone:\t" << has_stone << "\n";
-
-    int animals_generated = 0;
-    for(int a = 0; a < world_settings.getRegionMaxAnimals(); a++) {
-        bool did_animal_spot_generate = false; 
-        
-        if(!animals_generated)
-            did_animal_spot_generate = (rand() % 100) > 100 - (100 * world_settings.getRegionAnimalChance());
-        
-        else 
-            did_animal_spot_generate = (rand() % 100) > 100 * world_settings.getRegionAnimalChance();
-
-        if(did_animal_spot_generate) {
-            animals_generated++;
-
-            bool animal_spot_valid = false;
-            while(!animal_spot_valid) {
-                int index = rand() % world_settings.getRegionSize();
-                auto grid_position = this->tileGridPosition(index);
-
-                if(region.isPositionValid(BUILDING_ANIMAL_SPOT, grid_position)) {
-                    auto texture_name = BUILDING_ANIMAL_SPOT.getTextureName();
-                    auto texture_size = this->resource->getTextureSize(texture_name);
-                    region.placeBuilding(BUILDING_ANIMAL_SPOT, texture_size, grid_position);
-                    animal_spot_valid = true;
-                }
-            }
-        }
-    }
-
-    std::string did_animal_generate = animals_generated > 0 ? "True" : "False";
-    std::cout << "  [] Animals:\t" << did_animal_generate << " (" << animals_generated << ")\n";
-
+    // TODO: Perhaps move this somewhere else.
     region.visited = true;
 
     const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
@@ -1456,71 +1361,84 @@ std::string WorldGenerator::extractBaseTexture(const std::string& id, const Biom
     return extract_string;
 }
 
-// This function generates resources in patches.
-// Only one patch of a resource may be generated per region.
-bool WorldGenerator::regionGenerateResource(Region& region, const std::string& resource_tile_texture, float chance, int radius) {
-    const int range = 100;
+bool WorldGenerator::generateResourcePatch(Region& region, const Resource& resource) {
+    auto resource_radius = world_settings.getRegionResourceRadius(resource);
+    int resource_patches_generated = 0;  
 
-    // Random value should be in range (0, 1)
-    // To achieve this, generate a value between (0, 100) and divide by 100.
-    const float random_value = (rand() % range) / (float)range;
+    for(int patch_no = 0; patch_no < resource.max_occurence; patch_no++) {
+        auto resource_chance = std::pow(world_settings.getRegionResourceGenerationChance(resource), patch_no + 1);
+        
+        float random_chance = (std::rand() % 100) / (float)100;
+        if(resource.min_occurence <= patch_no)
+            random_chance = 0.0f;
+
+        if(random_chance > resource_chance)
+            continue;
     
-    if(random_value < chance) {
         NoiseContainer container;
         NoiseSettings  settings = world_settings.getRegionResourceSettings();
         this->generateNoise(settings, container);
+
+        // Find a valid spot for this resource to be generated.
+
+        auto random_tile_index = -1;
+        auto spot_is_valid = false;
+        do { 
+            random_tile_index = std::rand() % world_settings.getRegionSize();
+            spot_is_valid = resource.isGenerationSpotValid(&region, random_tile_index); 
+        }
         
-        int random_index = -1;
-        while(true) {
-            random_index = rand() % world_settings.getRegionSize();
-            
-            if(world_settings.inRegionBounds(random_index))
-                if(region.map[random_index].tiletype.is_terrain())
-                    break;
+        while(!spot_is_valid);
+
+        const auto& tile_selected = region.map[random_tile_index];
+        const auto tile_selected_grid = tileGridPosition(random_tile_index);
+        auto angle = 0;
+
+        resource_patches_generated++;
+
+        if(resource.isSingleObject() && resource.isGenerationSpotValid(&region, random_tile_index)) {
+            resource.placeResource(&region, random_tile_index);
+            continue;
         }
 
-        const auto& tile_selected = region.map[random_index];
-        auto tile_selected_grid = this->tileGridPosition(tile_selected.getPosition2D());
-        
-        int angle = 0;
+        else {
+            // Without these checks X and Y can be smaller than 0 or bigger than region size.
+            // Because of that you have to check the bounds.
+            // You can not do that inside the loop because it would make it infinite.
 
-        // Without these checks X and Y can be smaller than 0 or bigger than region size.
-        // Because of that you have to check the bounds.
-        // You can not do that inside the loop because it would make it infinite.
+            int min_x = tile_selected_grid.x - resource_radius * resource_radius < 0 ? 0 : tile_selected_grid.x - resource_radius * resource_radius;
+            int min_y = tile_selected_grid.y - resource_radius * resource_radius < 0 ? 0 : tile_selected_grid.y - resource_radius * resource_radius;
+            int max_x = tile_selected_grid.x + resource_radius * resource_radius >= world_settings.getRegionWidth() ? world_settings.getRegionWidth() : tile_selected_grid.x + resource_radius * resource_radius;
+            int max_y = tile_selected_grid.y + resource_radius * resource_radius >= world_settings.getRegionWidth() ? world_settings.getRegionWidth() : tile_selected_grid.y + resource_radius * resource_radius;
 
-        int min_x = tile_selected_grid.x - radius * radius < 0 ? 0 : tile_selected_grid.x - radius * radius;
-        int min_y = tile_selected_grid.y - radius * radius < 0 ? 0 : tile_selected_grid.y - radius * radius;
-        int max_x = tile_selected_grid.x + radius * radius >= world_settings.getRegionWidth() ? world_settings.getRegionWidth() : tile_selected_grid.x + radius * radius;
-        int max_y = tile_selected_grid.y + radius * radius >= world_settings.getRegionWidth() ? world_settings.getRegionWidth() : tile_selected_grid.y + radius * radius;
+            for(int y = min_y; y < max_y; y++) {
+                for(int x = min_x; x < max_x; x++) {        
+                    const int index = world_settings.calculateRegionIndex(x, y);
+                    auto& tile      = region.map[index];
+                    
+                    const auto tile_centre = tile_selected.getPosition2D();
+                    const auto tile_point  = tile.getPosition2D();
+                    const auto grid_centre = sf::Vector2f(
+                        tileGridPosition(random_tile_index).x,
+                        tileGridPosition(random_tile_index).y
+                    );
 
-        for(int y = min_y; y < max_y; y++) {
-            for(int x = min_x; x < max_x; x++) {        
-                const int index = world_settings.calculateRegionIndex(x, y);
-                auto& tile      = region.map[index];
-                
-                const auto tile_centre = tile_selected.getPosition2D();
-                const auto tile_point  = tile.getPosition2D();
-                const auto grid_centre = sf::Vector2f(
-                    this->tileGridPosition(tile_centre).x,
-                    this->tileGridPosition(tile_centre).y
-                );
-
-                const auto grid_point  = sf::Vector2f(
-                    this->tileGridPosition(tile_point).x,
-                    this->tileGridPosition(tile_point).y
-                );
-                
-                const int radius_modified = radius * (1.00f + container[angle]);
-                const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
-                if(point_inside && tile.tiletype.is_terrain() && !region.isTree(index)) {
-                    tile.object_texture_name = resource_tile_texture;
-                    angle++;
+                    const auto grid_point  = sf::Vector2f(
+                        tileGridPosition(index).x,
+                        tileGridPosition(index).y
+                    );
+                    
+                    const int radius_modified = resource_radius * (1.00f + container[angle]);
+                    const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
+                    if(point_inside && resource.isGenerationSpotValid(&region, index)) {
+                        resource.placeResource(&region, index);
+                        angle++;
+                    }
                 }
             }
         }
-
-        return true;
     }
 
-    return false;
+    std::cout << "[World Generation][Resource Geneneration]: " << resource.resource_name << " patches generated: " << resource_patches_generated << ".\n";
+    return true;
 }

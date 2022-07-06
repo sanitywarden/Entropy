@@ -47,6 +47,7 @@ namespace iso {
             // Regionmap API.            
 
             bool regionGenerateResource(Region& region, const std::string& resource_tile_texture, float chance, int radius);
+            bool generateResourcePatch(Region& region, const Resource& resource);
 
         public:
             WorldGenerator();
@@ -58,15 +59,10 @@ namespace iso {
     
             void generateNoise(NoiseSettings& settings, NoiseContainer& container);
 
-            sf::Vector2i tileGridPosition(sf::Vector2f tile_position) const;
-            sf::Vector2i tileGridPosition(int index) const;
-
             sf::Vector3f tilePositionScreen(int x, int y);
             sf::Vector3f tilePositionScreen(sf::Vector2i grid_position);
             sf::Vector3f tilePositionScreen(sf::Vector2f grid_position);
             
-            std::string getTilePixelColour(sf::Vector2i);
-
             bool is_ocean        (int index) const;
             bool is_tropical     (int index) const;
             bool is_mediterranean(int index) const;
