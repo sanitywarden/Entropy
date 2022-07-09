@@ -1,17 +1,17 @@
-#include "flint.hpp"
+#include "copper.hpp"
 #include "region.hpp"
 #include "globalutilities.hpp"
 
 using namespace iso;
 
-Flint::Flint()
-    : Resource("Flint", ResourceType::TYPE_BASE_MATERIAL, "icon_item_flint", 0, 3)
+Copper::Copper()
+    : Resource("Copper", iso::ResourceType::TYPE_RAW_MATERIAL, "icon_item_copper", 0, 1)
 {}
 
-Flint::~Flint()
+Copper::~Copper()
 {}
 
-bool Flint::isGenerationSpotValid(GameObject* object, int index) const {
+bool Copper::isGenerationSpotValid(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
 
     if(region->isTree(index))
@@ -29,7 +29,12 @@ bool Flint::isGenerationSpotValid(GameObject* object, int index) const {
     return true;
 }
 
-void Flint::placeResource(GameObject* object, int index) const {
+void Copper::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
-    region->map[index].object_texture_name = "tile_resource_flint";
+
+    std::string variation = rand() % 100 < 25 
+        ? "tile_resource_copper_1"
+        : "tile_resource_copper_2";
+
+    region->map[index].object_texture_name = variation;
 }

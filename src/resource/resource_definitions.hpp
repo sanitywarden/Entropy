@@ -4,6 +4,8 @@
 #include "stone.hpp"
 #include "flint.hpp"
 #include "animal.hpp"
+#include "copper.hpp"
+#include "clay.hpp"
 
 #include <vector>
 #include <memory>
@@ -14,11 +16,15 @@ namespace iso {
     const Stone  RESOURCE_STONE;
     const Flint  RESOURCE_FLINT;
     const Animal RESOURCE_ANIMAL;
+    const Copper RESOURCE_COPPER;
+    const Clay   RESOURCE_CLAY;
 
     const static std::vector <std::shared_ptr<Resource>> RESOURCE_LOOKUP_TABLE = {
         std::shared_ptr <Resource> (new Stone()),
         std::shared_ptr <Resource> (new Flint()),
         std::shared_ptr <Resource> (new Animal()),
+        std::shared_ptr <Resource> (new Copper()),
+        std::shared_ptr <Resource> (new Clay()),
     };
 
     std::shared_ptr <Resource> getResourcePointer(const std::string& resource_name);

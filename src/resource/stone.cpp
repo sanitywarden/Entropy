@@ -17,6 +17,9 @@ bool Stone::isGenerationSpotValid(GameObject* object, int index) const {
     if(region->isTree(index))
         return false;
 
+    if(region->getBuildingAt(index))
+        return false;
+
     if(region->map[index].tiletype.is_water())
         return false;
 
