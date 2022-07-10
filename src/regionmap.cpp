@@ -69,8 +69,8 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_stone" ,   sf::IntRect(0, 64, 64, 32   ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_flint" ,   sf::IntRect(64, 64, 64, 32  ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_clay"  ,   sf::IntRect(128, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_copper_1", sf::IntRect(192, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_copper_2", sf::IntRect(256, 64, 64, 32 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_copper",   sf::IntRect(192, 64, 64, 32 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_tin"   ,   sf::IntRect(256, 64, 64, 32 ));
 
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_foliage_atlas");
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_beech"   , sf::IntRect(0, 0, 64, 96    ));

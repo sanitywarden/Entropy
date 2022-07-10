@@ -1,17 +1,17 @@
-#include "copper.hpp"
+#include "tin.hpp"
 #include "region.hpp"
 #include "globalutilities.hpp"
 
 using namespace iso;
 
-Copper::Copper()
-    : Resource("Copper", iso::ResourceType::TYPE_RAW_MATERIAL, "icon_item_copper", 0, 1)
+Tin::Tin()
+    : Resource("Tin", ResourceType::TYPE_RAW_MATERIAL, "icon_item_tin", 0, 1)
 {}
 
-Copper::~Copper()
+Tin::~Tin()
 {}
 
-bool Copper::isGenerationSpotValid(GameObject* object, int index) const {
+bool Tin::isGenerationSpotValid(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
 
     if(region->isTree(index))
@@ -29,7 +29,7 @@ bool Copper::isGenerationSpotValid(GameObject* object, int index) const {
     return true;
 }
 
-void Copper::placeResource(GameObject* object, int index) const {
+void Tin::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
-    region->map[index].object_texture_name = "tile_resource_copper";
+    region->map[index].object_texture_name = "tile_resource_tin";    
 }

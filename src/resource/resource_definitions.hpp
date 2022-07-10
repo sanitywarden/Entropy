@@ -4,8 +4,9 @@
 #include "stone.hpp"
 #include "flint.hpp"
 #include "animal.hpp"
-#include "copper.hpp"
 #include "clay.hpp"
+#include "copper.hpp"
+#include "tin.hpp"
 
 #include <vector>
 #include <memory>
@@ -16,24 +17,23 @@ namespace iso {
     const Stone  RESOURCE_STONE;
     const Flint  RESOURCE_FLINT;
     const Animal RESOURCE_ANIMAL;
-    const Copper RESOURCE_COPPER;
     const Clay   RESOURCE_CLAY;
+    const Copper RESOURCE_COPPER;
+    const Tin    RESOURCE_TIN;
 
     const static std::vector <std::shared_ptr<Resource>> RESOURCE_LOOKUP_TABLE = {
         std::shared_ptr <Resource> (new Stone()),
         std::shared_ptr <Resource> (new Flint()),
         std::shared_ptr <Resource> (new Animal()),
-        std::shared_ptr <Resource> (new Copper()),
         std::shared_ptr <Resource> (new Clay()),
+        std::shared_ptr <Resource> (new Copper()),
+        std::shared_ptr <Resource> (new Tin()),
     };
 
     std::shared_ptr <Resource> getResourcePointer(const std::string& resource_name);
 
     // TODO: Write files for these.
     
-    // const Resource RESOURCE_CLAY   ("Clay"   , ResourceType::TYPE_BASE_MATERIAL   , "icon_item_clay"  );
-    // const Resource RESOURCE_COPPER ("Copper" , ResourceType::TYPE_RAW_MATERIAL    , "icon_item_copper");
-    // const Resource RESOURCE_TIN    ("Tin"    , ResourceType::TYPE_RAW_MATERIAL    , "icon_item_tin"   );
     // const Resource RESOURCE_COAL   ("Coal"   , ResourceType::TYPE_RAW_MATERIAL    , "icon_item_coal"  );
     // const Resource RESOURCE_IRON   ("Iron"   , ResourceType::TYPE_RAW_MATERIAL    , "icon_item_iron"  );
     

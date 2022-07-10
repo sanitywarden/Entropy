@@ -46,8 +46,7 @@ namespace iso {
 
             // Regionmap API.            
 
-            bool regionGenerateResource(Region& region, const std::string& resource_tile_texture, float chance, int radius);
-            bool generateResourcePatch(Region& region, const Resource& resource);
+            void generateResourcePatch(Region& region, const Resource& resource);
 
         public:
             WorldGenerator();

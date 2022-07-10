@@ -1339,8 +1339,9 @@ void WorldGenerator::generateRegion(int region_index) {
     this->generateResourcePatch(region, RESOURCE_STONE);
     this->generateResourcePatch(region, RESOURCE_FLINT);
     this->generateResourcePatch(region, RESOURCE_ANIMAL);
-    this->generateResourcePatch(region, RESOURCE_COPPER);
     this->generateResourcePatch(region, RESOURCE_CLAY);
+    this->generateResourcePatch(region, RESOURCE_COPPER);
+    this->generateResourcePatch(region, RESOURCE_TIN);
 
     // TODO: Perhaps move this somewhere else.
     region.visited = true;
@@ -1363,19 +1364,19 @@ std::string WorldGenerator::extractBaseTexture(const std::string& id, const Biom
     return extract_string;
 }
 
-bool WorldGenerator::generateResourcePatch(Region& region, const Resource& resource) {
+void WorldGenerator::generateResourcePatch(Region& region, const Resource& resource) {
     auto resource_radius = world_settings.getRegionResourceRadius(resource);
     int resource_patches_generated = 0;  
 
     for(int patch_no = 0; patch_no < resource.max_occurence; patch_no++) {
         auto config_chance = world_settings.getRegionResourceGenerationChance(resource);
-        auto power = patch_no * patch_no > 0
-            ? patch_no * patch_no
+        auto power = resource_patches_generated > 0
+            ? (resource_patches_generated + 1) * (resource_patches_generated + 1)
             : 1;
 
         auto resource_chance = std::pow(config_chance, power);        
         float random_chance = (std::rand() % 100) / (float)100;
-        if(resource.min_occurence && resource.min_occurence <= patch_no)
+        if(resource.min_occurence > 0 && resource.min_occurence <= resource_patches_generated)
             random_chance = 0.0f;
 
         if(random_chance > resource_chance)
@@ -1446,5 +1447,4 @@ bool WorldGenerator::generateResourcePatch(Region& region, const Resource& resou
     }
 
     std::cout << "[World Generation][Resource Geneneration]: " << resource.resource_name << " patches generated: " << resource_patches_generated << ".\n";
-    return true;
 }
