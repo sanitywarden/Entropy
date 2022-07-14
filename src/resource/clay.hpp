@@ -11,5 +11,6 @@ namespace iso {
 
             bool isGenerationSpotValid(GameObject* object, int index) const override;
             void placeResource(GameObject* object, int index) const override;
+            bool canBeGenerated(GameObject* object) const override;
     };
 }

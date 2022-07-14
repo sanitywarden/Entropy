@@ -16,7 +16,7 @@ Clay::~Clay()
 
 bool Clay::isGenerationSpotValid(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
-    
+
     if(region->getBuildingAt(index))
         return false;
 
@@ -60,4 +60,9 @@ bool Clay::isGenerationSpotValid(GameObject* object, int index) const {
 void Clay::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
     region->map[index].object_texture_name = "tile_resource_clay";
+}
+
+bool Clay::canBeGenerated(GameObject* object) const {
+    auto* region = static_cast<Region*>(object);
+    return (region->regiontype.is_coast() || region->regiontype.is_river());
 }

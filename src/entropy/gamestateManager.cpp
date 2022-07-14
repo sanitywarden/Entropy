@@ -38,10 +38,9 @@ void gamestateManager::setGamestate(std::string id) {
     if(current_gamestate != nullptr)
         current_gamestate->gamestateClose();
 
+    this->m_current_gamestate = new_gamestate;
     if(new_gamestate != nullptr)
         new_gamestate->gamestateLoad();
-
-    this->m_current_gamestate = new_gamestate;
 }
 
 /* Returns current gamestate. */

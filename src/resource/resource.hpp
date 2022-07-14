@@ -36,7 +36,8 @@ namespace iso {
 
             virtual bool isGenerationSpotValid(GameObject* object, int index) const { return false; }
             virtual void placeResource(GameObject* object, int index) const { return; }
-            
+            virtual bool canBeGenerated(GameObject* object) const { return true; }
+
             // The resource might not be a patch, such as stone or flint.
             // Perhaps it is a Animal Spot which is only a single resource.
             virtual bool isSingleObject() const { return false; }

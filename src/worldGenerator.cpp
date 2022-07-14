@@ -1343,9 +1343,6 @@ void WorldGenerator::generateRegion(int region_index) {
     this->generateResourcePatch(region, RESOURCE_COPPER);
     this->generateResourcePatch(region, RESOURCE_TIN);
 
-    // TODO: Perhaps move this somewhere else.
-    region.visited = true;
-
     const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
     std::cout << "[World Generation]: Region generated in " << time_rounded << "s.\n"; 
     std::cout << "====================\n";
@@ -1368,78 +1365,80 @@ void WorldGenerator::generateResourcePatch(Region& region, const Resource& resou
     auto resource_radius = world_settings.getRegionResourceRadius(resource);
     int resource_patches_generated = 0;  
 
-    for(int patch_no = 0; patch_no < resource.max_occurence; patch_no++) {
-        auto config_chance = world_settings.getRegionResourceGenerationChance(resource);
-        auto power = resource_patches_generated > 0
-            ? (resource_patches_generated + 1) * (resource_patches_generated + 1)
-            : 1;
+    if(resource.canBeGenerated(&region)) {
+        for(int patch_no = 0; patch_no < resource.max_occurence; patch_no++) {
+            auto config_chance = world_settings.getRegionResourceGenerationChance(resource);
+            auto power = resource_patches_generated > 0
+                ? (resource_patches_generated + 1) * (resource_patches_generated + 1)
+                : 1;
 
-        auto resource_chance = std::pow(config_chance, power);        
-        float random_chance = (std::rand() % 100) / (float)100;
-        if(resource.min_occurence > 0 && resource.min_occurence <= resource_patches_generated)
-            random_chance = 0.0f;
+            auto resource_chance = std::pow(config_chance, power);        
+            float random_chance = (std::rand() % 100) / (float)100;
+            if(resource.min_occurence > 0 && resource.min_occurence <= resource_patches_generated)
+                random_chance = 0.0f;
 
-        if(random_chance > resource_chance)
-            continue;
-    
-        NoiseContainer container;
-        NoiseSettings  settings = world_settings.getRegionResourceSettings();
-        this->generateNoise(settings, container);
-
-        // Find a valid spot for this resource to be generated.
-
-        auto random_tile_index = -1;
-        auto spot_is_valid = false;
-        do { 
-            random_tile_index = std::rand() % world_settings.getRegionSize();
-            spot_is_valid = resource.isGenerationSpotValid(&region, random_tile_index); 
-        }
+            if(random_chance > resource_chance)
+                continue;
         
-        while(!spot_is_valid);
+            NoiseContainer container;
+            NoiseSettings  settings = world_settings.getRegionResourceSettings();
+            this->generateNoise(settings, container);
 
-        const auto& tile_selected = region.map[random_tile_index];
-        const auto tile_selected_grid = tileGridPosition(random_tile_index);
-        auto angle = 0;
+            // Find a valid spot for this resource to be generated.
 
-        resource_patches_generated++;
+            auto random_tile_index = -1;
+            auto spot_is_valid = false;
+            do { 
+                random_tile_index = std::rand() % world_settings.getRegionSize();
+                spot_is_valid = resource.isGenerationSpotValid(&region, random_tile_index); 
+            }
+            
+            while(!spot_is_valid);
 
-        if(resource.isSingleObject() && resource.isGenerationSpotValid(&region, random_tile_index)) {
-            resource.placeResource(&region, random_tile_index);
-            continue;
-        }
+            const auto& tile_selected = region.map[random_tile_index];
+            const auto tile_selected_grid = tileGridPosition(random_tile_index);
+            auto angle = 0;
 
-        else {
-            // Without these checks X and Y can be smaller than 0 or bigger than region size.
-            // Because of that you have to check the bounds.
-            // You can not do that inside the loop because it would make it infinite.
+            resource_patches_generated++;
 
-            int min_x = tile_selected_grid.x - resource_radius * resource_radius < 0 ? 0 : tile_selected_grid.x - resource_radius * resource_radius;
-            int min_y = tile_selected_grid.y - resource_radius * resource_radius < 0 ? 0 : tile_selected_grid.y - resource_radius * resource_radius;
-            int max_x = tile_selected_grid.x + resource_radius * resource_radius >= world_settings.getRegionWidth() ? world_settings.getRegionWidth() : tile_selected_grid.x + resource_radius * resource_radius;
-            int max_y = tile_selected_grid.y + resource_radius * resource_radius >= world_settings.getRegionWidth() ? world_settings.getRegionWidth() : tile_selected_grid.y + resource_radius * resource_radius;
+            if(resource.isSingleObject() && resource.isGenerationSpotValid(&region, random_tile_index)) {
+                resource.placeResource(&region, random_tile_index);
+                continue;
+            }
 
-            for(int y = min_y; y < max_y; y++) {
-                for(int x = min_x; x < max_x; x++) {        
-                    const int index = world_settings.calculateRegionIndex(x, y);
-                    auto& tile      = region.map[index];
-                    
-                    const auto tile_centre = tile_selected.getPosition2D();
-                    const auto tile_point  = tile.getPosition2D();
-                    const auto grid_centre = sf::Vector2f(
-                        tileGridPosition(random_tile_index).x,
-                        tileGridPosition(random_tile_index).y
-                    );
+            else {
+                // Without these checks X and Y can be smaller than 0 or bigger than region size.
+                // Because of that you have to check the bounds.
+                // You can not do that inside the loop because it would make it infinite.
 
-                    const auto grid_point  = sf::Vector2f(
-                        tileGridPosition(index).x,
-                        tileGridPosition(index).y
-                    );
-                    
-                    const int radius_modified = resource_radius * (1.00f + container[angle]);
-                    const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
-                    if(point_inside && resource.isGenerationSpotValid(&region, index)) {
-                        resource.placeResource(&region, index);
-                        angle++;
+                int min_x = tile_selected_grid.x - resource_radius * resource_radius < 0 ? 0 : tile_selected_grid.x - resource_radius * resource_radius;
+                int min_y = tile_selected_grid.y - resource_radius * resource_radius < 0 ? 0 : tile_selected_grid.y - resource_radius * resource_radius;
+                int max_x = tile_selected_grid.x + resource_radius * resource_radius >= world_settings.getRegionWidth() ? world_settings.getRegionWidth() : tile_selected_grid.x + resource_radius * resource_radius;
+                int max_y = tile_selected_grid.y + resource_radius * resource_radius >= world_settings.getRegionWidth() ? world_settings.getRegionWidth() : tile_selected_grid.y + resource_radius * resource_radius;
+
+                for(int y = min_y; y < max_y; y++) {
+                    for(int x = min_x; x < max_x; x++) {        
+                        const int index = world_settings.calculateRegionIndex(x, y);
+                        auto& tile      = region.map[index];
+                        
+                        const auto tile_centre = tile_selected.getPosition2D();
+                        const auto tile_point  = tile.getPosition2D();
+                        const auto grid_centre = sf::Vector2f(
+                            tileGridPosition(random_tile_index).x,
+                            tileGridPosition(random_tile_index).y
+                        );
+
+                        const auto grid_point  = sf::Vector2f(
+                            tileGridPosition(index).x,
+                            tileGridPosition(index).y
+                        );
+                        
+                        const int radius_modified = resource_radius * (1.00f + container[angle]);
+                        const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
+                        if(point_inside && resource.isGenerationSpotValid(&region, index)) {
+                            resource.placeResource(&region, index);
+                            angle++;
+                        }
                     }
                 }
             }

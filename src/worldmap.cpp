@@ -643,7 +643,7 @@ void Worldmap::gamestateLoad() {
 }
 
 void Worldmap::gamestateClose() {
-
+    
 }
 
 void Worldmap::updateScheduler() {

@@ -597,6 +597,8 @@ void Regionmap::setCurrentRegion(int region_index) {
     this->region       = &this->manager->world.world_map[region_index];
     this->region_index = region_index;
 
+    this->region->visited = true;
+
     // Tile index on which you centre the camera.
     auto tile_index = world_settings.calculateRegionIndex(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2);
 
