@@ -43,9 +43,8 @@ SimulationManager::SimulationManager() {
     this->simulation_updates.insert({ "update_quests",           std::pair(0, seconds_per_hour) }); // Update quests.
 }
 
-SimulationManager::~SimulationManager() {
-
-}
+SimulationManager::~SimulationManager() 
+{}
 
 void SimulationManager::loop() {
     this->m_measurement_clock = sf::Clock();
@@ -127,17 +126,14 @@ void SimulationManager::internalLoop(float delta_time) {
 }
 
 void SimulationManager::prepare() {
+    this->initialise();
     this->world.world_map = std::vector <Region> (world_settings.getWorldSize());
     this->world.forests   = std::map <int, GameObject> ();
     this->world.rivers    = std::map <int, GameObject> ();
     this->world.lakes     = std::map <int, GameObject> ();
     this->players         = std::vector <Player> ();
     this->world.generateWorld();
-    this->initialiseWorld();
-
-    auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestateByName("worldmap"));
-    if(worldmap)
-        worldmap->centreOnCapital();
+    this->generateCountries();
 }
 
 void SimulationManager::updateShedulerSimulation() {
@@ -718,62 +714,6 @@ void SimulationManager::initialise() {
     this->font_size = (this->window.windowWidth() + this->window.windowHeight()) / 160;
 }
 
-void SimulationManager::initialiseWorld() {
-    // Find spots suitable for settling.
-    // Spawn players.   
-
-    std::vector <int> occupied_regions;
-
-    // In the future this setting could be set by the human player.
-    const int number_of_players = world_settings.getPlayerQuantity();
-    this->players.resize(number_of_players);
-    for(int player_id = 0; player_id < number_of_players; player_id++) {
-        bool settle_spot_found = false;
-        int  settle_spot_index = -1;
-
-        while(!settle_spot_found) {
-            int index = rand() % world_settings.getWorldSize();
-            const auto& region = this->world.world_map[index];
-            if(region.regiontype.is_terrain() && std::find(occupied_regions.begin(), occupied_regions.end(), index) == occupied_regions.end()) {
-                settle_spot_found = true;    
-                settle_spot_index = index;
-                occupied_regions.push_back(index);
-            }
-        }
-
-        auto& player = this->players[player_id];
-        auto& region = this->world.world_map[settle_spot_index];
-
-        // Temporary colour, generated randomly.
-        // In the future it could maybe be less random. That would better it's visibility.
-        const auto generated_colour_full  = this->texturizer.getRandomColour();
-        const auto generated_country_name = generate(GenerationType::COUNTRY, 3);
-        
-        auto unit = std::shared_ptr <Unit> (new Unit("Settler"));
-        unit.get()->object_texture_name = "unit_worldmap_settler";
-        unit.get()->object_size         = region.getSize();
-        unit.get()->object_position     = region.getPosition();
-        unit.get()->current_index       = settle_spot_index;
-        unit.get()->owner_id            = player_id;
-        player.addUnit(unit);
-
-        for(int y = -2; y <= 2; y++) {
-            for(int x = -2; x <= 2; x++) {
-                const int index = settle_spot_index + world_settings.calculateWorldIndex(x, y);
-                player.discovered_regions.push_back(index);
-            }
-        }
-
-        region.unit = player.getUnit(unit.get()->getID());
-
-        player.setTeamColour(generated_colour_full);
-        player.setCountryName(generated_country_name);
-        
-        if(player_id == 0)
-            player.is_human = true;
-    }
-}
-
 int SimulationManager::getDrawCalls() const {
     return this->draw_calls;
 }
@@ -851,3 +791,118 @@ Unit* SimulationManager::getUnit(int unit_id) {
     }
     return nullptr;
 }
+
+void SimulationManager::generateCountries() {
+    // Find spots suitable for settling. 
+
+    std::vector <int> occupied_regions;
+
+    auto number_of_players = world_settings.getPlayerQuantity();
+    this->players.resize(number_of_players);
+    
+    for(int player_id = 0; player_id < number_of_players; player_id++) {
+        auto settle_spot_found = false;
+        auto settle_spot_index = -1;
+
+        while(!settle_spot_found) {
+            auto index = rand() % world_settings.getWorldSize();
+            const auto& region = this->world.world_map[index];
+            
+            if(region.regiontype.is_terrain() && std::find(occupied_regions.begin(), occupied_regions.end(), index) == occupied_regions.end()) {
+                settle_spot_found = true;    
+                settle_spot_index = index;
+                occupied_regions.push_back(index);
+            }
+        }
+
+        auto& player = this->players[player_id];
+        auto& region = this->world.world_map[settle_spot_index];
+
+        // Not transparent colour, generated randomly.
+        // The same colour will mark the player's regions on the worldmap, but it will have higher opacity.
+
+        auto generated_colour_full  = this->texturizer.getRandomColour();
+        auto generated_country_name = generate(GenerationType::COUNTRY, 3);
+        
+        player.setTeamColour(generated_colour_full);
+        player.setCountryName(generated_country_name);
+
+        auto unit = this->createUnit(UnitType::UNIT_SETTLER, settle_spot_index, &player); 
+        player.addUnit(unit);
+
+        for(int y = -2; y <= 2; y++) {
+            for(int x = -2; x <= 2; x++) {
+                const int index = settle_spot_index + world_settings.calculateWorldIndex(x, y);
+                player.discovered_regions.push_back(index);
+            }
+        }
+
+        region.unit = player.getUnit(unit.get()->getID());
+        
+        if(player_id == 0)
+            player.is_human = true;
+    }
+}
+
+std::shared_ptr <Unit> SimulationManager::createUnit(UnitType unit_type, int region_index, Player* owner) const {
+    const auto& region = this->world.world_map[region_index];
+    
+    if(region.isUnitPresent()) {
+        std::cout << "[DEBUG]: Could not spawn unit on region " << region_index << ": Unit is already present.\n";
+        return nullptr;
+    }
+
+    std::shared_ptr <Unit> unit;
+
+    switch(unit_type) {
+        default:
+            return nullptr;
+
+        case UnitType::UNIT_SETTLER: {
+            unit = std::shared_ptr <Unit> (new Unit("Settler"));
+            unit.get()->current_index = region_index;
+            unit.get()->object_texture_name = "unit_worldmap_settler";
+            
+            break;
+        }
+    }
+
+    unit.get()->object_position = region.getPosition();
+    unit.get()->object_size     = region.getSize();
+    unit.get()->owner_id        = owner->getID();
+    unit.get()->type            = unit_type;
+
+    return unit;
+}
+
+void SimulationManager::deleteUnit(int unit_id) {
+    auto* unit = this->getUnit(unit_id);
+    if(!unit)
+        return;
+
+    if(world_settings.inWorldBounds(unit->current_index)) {
+        auto& region = this->world.world_map[unit->current_index];
+        region.unit = nullptr; 
+    }
+    
+    auto* owner = this->getPlayer(unit->owner_id);
+    if(owner)
+        owner->removeUnit(unit_id); 
+
+    auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestateByName("worldmap"));
+    if(worldmap)
+        worldmap->selected_unit_id = -1; 
+}
+
+bool SimulationManager::regionCanBeColonised(int region_index) const {
+    if(!world_settings.inWorldBounds(region_index))
+        return false;
+    
+    const auto& region = this->world.world_map[region_index];
+    if(region.isOwned())
+        return false;
+    
+    if(region.regiontype.is_ocean())
+        return false;
+    return true;
+} 

@@ -41,6 +41,9 @@ namespace iso {
             // The resource might not be a patch, such as stone or flint.
             // Perhaps it is a Animal Spot which is only a single resource.
             virtual bool isSingleObject() const { return false; }
+
+            bool operator == (const Resource& resource) const;
+            bool operator != (const Resource& resource) const;
     };
 }
 

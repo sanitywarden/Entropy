@@ -138,7 +138,7 @@ void WidgetRegion::functionality() {
         if(!region.visited)
             this->manager->world.generateRegion(worldmap->selected_index);
 
-        regionmap->setCurrentRegion(worldmap->selected_index);
+        regionmap->region_index = worldmap->selected_index;
         this->manager->gamestate.setGamestate("regionmap");
         return;
     }

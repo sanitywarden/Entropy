@@ -243,14 +243,13 @@ void Worldmap::handleInput() {
                     this->event.size.height
                 );
 
+                auto centre_before_resize = this->view_game.getCenter();
+
                 // To avoid weird camera glitches, set the centre explicitly.
 
                 int human_player_capital = this->manager->getHumanPlayer()->getCapital();
                 if(human_player_capital == -1) {
-                    int index = world_settings.getWorldSize() / 2 - 1;
-                    const auto& region = this->manager->world.world_map[index];
-                    auto position      = region.getPosition2D();
-                    this->view_game.setCenter(position);
+                    this->view_game.setCenter(centre_before_resize);
                 }
 
                 else {
@@ -446,9 +445,30 @@ void Worldmap::renderWorld() {
 
                 sf::RenderStates panel_states;
                 panel_states.texture = &this->manager->resource.getTexture(region.getTextureName());
+            
                 this->manager->window.draw(region, panel_states);
                 gpu_draw_calls++;
             
+                if(region.isOwned()) {
+                    auto colour = region.owner->getTeamColourTransparent();
+
+                    sf::VertexArray region_owner_colour(sf::Quads, 4);
+
+                    region_owner_colour[0].position = region.getPosition2D();
+                    region_owner_colour[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0); 
+                    region_owner_colour[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y); 
+                    region_owner_colour[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
+
+                    region_owner_colour[0].color = colour;
+                    region_owner_colour[1].color = colour;
+                    region_owner_colour[2].color = colour;
+                    region_owner_colour[3].color = colour;
+
+                    this->manager->window.draw(region_owner_colour);
+                    gpu_draw_calls++;
+                }
+
+
                 // Draw panel details.
                 // Draw forest.
 
@@ -481,21 +501,6 @@ void Worldmap::renderWorld() {
                 }
             }
 
-            else {
-                sf::VertexArray fow(sf::Quads, 4);
-                fow[0].position = region.getPosition2D(); 
-                fow[1].position = region.getPosition2D() + sf::Vector2f(panel_size.x, 0);
-                fow[2].position = region.getPosition2D() + sf::Vector2f(panel_size.x, panel_size.y);
-                fow[3].position = region.getPosition2D() + sf::Vector2f(0, panel_size.y);
-
-                fow[0].color = COLOUR_BLACK;
-                fow[1].color = COLOUR_BLACK;
-                fow[2].color = COLOUR_BLACK;
-                fow[3].color = COLOUR_BLACK;
-                
-                this->manager->window.draw(fow);
-            }
-
             for(const auto& player : this->manager->players) {
                 for(const auto& unit : player.units) {
                     if(human_player->discoveredRegion(unit.get()->current_index)) {
@@ -505,24 +510,6 @@ void Worldmap::renderWorld() {
                     }
                 }
             }
-        }
-    }
-    // This is inefficient. You should not iterate through the world map two times.
-    for(const auto& region : this->manager->world.world_map) {
-        if(region.isOwned()) {
-            sf::VertexArray highlight(sf::Quads, 4);
-
-            highlight[0].position = region.getPosition2D() + sf::Vector2f(0, 0);
-            highlight[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0);
-            highlight[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y);
-            highlight[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
-
-            highlight[0].color = region.owner->getTeamColourTransparent();
-            highlight[1].color = region.owner->getTeamColourTransparent();
-            highlight[2].color = region.owner->getTeamColourTransparent();
-            highlight[3].color = region.owner->getTeamColourTransparent();
-
-            this->manager->window.draw(highlight);
         }
     }
 
@@ -688,21 +675,13 @@ void Worldmap::unselectUnit() {
 
 void Worldmap::selectUnitGoal() {
     if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
-        for(const auto& player : this->manager->players) {
-            Unit* pawn = nullptr;
-            for(auto& unit : player.units) {
-                if(this->selected_unit_id == unit.get()->getID()) {
-                    pawn = unit.get();
-                    break;
-                }
-            }
-    
-            if(pawn) {
-                pawn->goal = this->current_index;                
-                auto path  = this->manager->astar(pawn->current_index, pawn->goal);
-                pawn->setNewPath(path);
-            }
-        }
+        auto* pawn = this->manager->getUnit(this->selected_unit_id);
+        if(pawn) {
+            auto goal = this->current_index; 
+            auto path = this->manager->astar(pawn->current_index, goal);
+            pawn->goal = goal;
+            pawn->setNewPath(path);
+        }           
     }
 }
 

@@ -16,7 +16,6 @@ WidgetUnit::WidgetUnit(SimulationManager* manager) : InterfacePage(manager) {
     this->setWidgetID("component_widget_unit");
     this->createUI();
 
-    this->unit = nullptr;
     this->show = false;
 }
 
@@ -28,17 +27,21 @@ void WidgetUnit::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if(!this->manager)
         return;
 
-    if(!this->unit)
+    auto* worldmap = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
+    if(worldmap->selected_unit_id == -1)
         return;
 
     auto* widget = static_cast<Widget*>(this->getComponent("widget_unit"));
     if(widget)
         target.draw(*widget);
 
-    if(unit->isSameType(UNIT_SETTLER)) {
+    auto* unit = this->manager->getHumanPlayer()->getUnit(worldmap->selected_unit_id);
+    if(unit->isSameType(UnitType::UNIT_SETTLER)) {
         auto* button_colonise = static_cast<Button*>(this->getComponent("button_colonise"));
-        if(button_colonise->show)
+        button_colonise->show = this->manager->regionCanBeColonised(unit->current_index);
+        if(button_colonise->show) {
             target.draw(*button_colonise);
+        }
     }
 
     auto* button_dismantle = static_cast<Button*>(this->getComponent("button_dismantle"));
@@ -96,44 +99,42 @@ void WidgetUnit::updateUI() {
     auto* worldmap = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
     int selected_unit_id = worldmap->getSelectedUnitID();
 
-    this->unit = this->manager->getHumanPlayer()->getUnit(selected_unit_id);
-    if(!this->unit)
+    auto* unit = this->manager->getHumanPlayer()->getUnit(selected_unit_id);
+    if(!unit)
         return;
 
     std::string data = "";
-    data += this->manager->getHumanPlayer()->getCountryName() + " | " + this->unit->getUnitName() + "\n";
-    data += "Currently stationed at #" + std::to_string(this->unit->current_index) + "\n";
+    data += this->manager->getHumanPlayer()->getCountryName() + " | " + unit->getUnitName() + "\n";
+    data += "Currently stationed at #" + std::to_string(unit->current_index) + "\n";
 
     auto* label_component = static_cast<Label*>(this->getComponent("text_widget_unit"));
     label_component->setString(data);
-
-    // If the terrain is not colonised, display the "colonise" button.
-
-    auto* button_colonise = this->getComponent("button_colonise");
-    button_colonise->show = this->canColonise(this->unit->current_index);
 }
 
 void WidgetUnit::functionality() {
-    if(!this->unit)
+    auto* worldmap = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
+    if(worldmap->selected_unit_id == -1)
         return;
 
-    auto* worldmap    = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
-    auto region_index = this->unit->current_index;  
+    auto* unit = this->manager->getUnit(worldmap->selected_unit_id);
+    if(!unit)
+        return;
+    
+    auto region_index = unit->current_index;  
     auto& region      = this->manager->world.world_map[region_index];
 
-    if(this->unit) {
-        auto* button_dismantle = static_cast<Button*>(this->getComponent("button_dismantle"));
-        
+    if(unit) {
+        auto* button_dismantle = static_cast<Button*>(this->getComponent("button_dismantle"));    
         if(worldmap->controls.mouseLeftPressed() && button_dismantle->containsPoint(worldmap->mouse_position_interface)) {
-            this->deleteCurrentUnit();
+            this->manager->deleteUnit(unit->getID());
         }
     }
 
-    if(this->unit) {
-        if(unit->isSameType(UNIT_SETTLER)) {
+    if(unit) {
+        if(unit->isSameType(UnitType::UNIT_SETTLER)) {
             auto* button_colonise = this->getComponent("button_colonise");
             
-            if(this->canColonise(region_index) && worldmap->controls.mouseLeftPressed() && button_colonise->containsPoint(worldmap->mouse_position_interface)) {
+            if(this->manager->regionCanBeColonised(region_index) && worldmap->controls.mouseLeftPressed() && button_colonise->containsPoint(worldmap->mouse_position_interface)) {
                 // Region to be added to the player's territory.
                 auto* human_player = this->manager->getHumanPlayer();
 
@@ -154,42 +155,10 @@ void WidgetUnit::functionality() {
                 city_settle_gui->region_id = region_index;
 
                 // After colonising, it should be deleted.
-                this->deleteCurrentUnit();
+                this->manager->deleteUnit(unit->getID());
 
                 worldmap->setVisibilityFalse("component_widget_unit");
             }
-        }
-    }
-}
-
-bool WidgetUnit::canColonise(int index) const {
-    if(index == -1)
-        return false;
-
-    const auto& region = this->manager->world.world_map[index];
-    if(region.isOwned()) 
-        return false;
-    
-    if(region.regiontype.is_ocean())
-        return false;
-
-    return true;
-}
-
-void WidgetUnit::deleteCurrentUnit() {
-    auto* human_player = this->manager->getHumanPlayer();
-    auto& units        = human_player->units;
-    auto region_index  = this->unit->current_index;  
-    auto& region       = this->manager->world.world_map[region_index];
-    auto* worldmap     = static_cast<Worldmap*>(this->manager->gamestate.getGamestate());
-
-    for(auto it = units.begin(); it != units.end(); ++it) {
-        if((*it).get()->getID() == this->unit->getID()) {
-            units.erase(it);
-            this->unit  = nullptr;
-            region.unit = nullptr;
-            worldmap->selected_unit_id = -1;
-            return;
         }
     }
 }

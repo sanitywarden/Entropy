@@ -64,8 +64,6 @@ namespace iso {
             void update(float delta_time) override;
             void render(float delta_time) override;
 
-            void setCurrentRegion(int region_index);
-
             Region* getCurrentRegion();
             int getRegionIndex();
             int getCurrentIndex();

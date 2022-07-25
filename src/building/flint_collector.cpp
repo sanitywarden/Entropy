@@ -26,9 +26,12 @@ void FlintCollector::update(GameObject* object, int building_index) {
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
+            const auto& tile = region->map[index];
 
-            if(region->map[index].object_texture_name == "tile_resource_flint")
-                flint.quantity++;
+            if(tile.hasResource()) {
+                if(*tile.getResource() == RESOURCE_FLINT)
+                    flint.quantity++;
+            }
         }
     }
 
@@ -41,5 +44,9 @@ void FlintCollector::update(GameObject* object, int building_index) {
 
 bool FlintCollector::isBuildingResourceTile(GameObject* object, int index) const {
     auto region = static_cast<Region*>(object);
-    return region->map[index].object_texture_name == "tile_resource_flint";
+    const auto& tile = region->map[index];
+
+    return tile.hasResource()
+        ? *tile.getResource() == RESOURCE_FLINT
+        : false;
 }

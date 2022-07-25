@@ -593,52 +593,6 @@ void Regionmap::renderRegion() {
     this->manager->updateDrawCalls(gpu_draw_calls);
 }
 
-void Regionmap::setCurrentRegion(int region_index) {
-    this->region       = &this->manager->world.world_map[region_index];
-    this->region_index = region_index;
-
-    this->region->visited = true;
-
-    // Tile index on which you centre the camera.
-    auto tile_index = world_settings.calculateRegionIndex(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2);
-
-    // Here you can setup what to do when entering a region.
-    // For example, centre the camera.
-    sf::Vector2f first_tile_position = sf::Vector2f(
-        this->region->map[tile_index].getPosition().x + world_settings.tileSize().x / 2,
-        this->region->map[tile_index].getPosition().y
-    );
-
-    if(this->region->isOwned() && this->region->getPopulation() == 0) {
-        this->region->population.resize(world_settings.getRegionInitialPopulation());
-
-        std::vector <int> buffer;
-        std::vector <std::string> directions = { "_tl", "_tr", "_bl", "_br" };
-        for(int i = 0; i < world_settings.getRegionInitialPopulation(); i++) {
-            auto& pop = this->region->population[i];
-            auto  free_spot = this->region->findNotOccupiedTile(buffer);
-            pop.current_index = free_spot;
-
-            const auto& tile = this->region->map[free_spot];
-            const auto tile_position = tile.getPosition();
-            std::string base_texture = tile.tiletype.is_river() 
-                ? "unit_transport_arrow"
-                : "unit_classic_arrow";
-
-            pop.object_size         = sf::Vector2f(64, 96);
-            pop.object_position     = tile_position + sf::Vector3f(0, -(pop.object_size.y - world_settings.tileSize().y), 0);
-            pop.object_texture_name = base_texture + directions[rand() % directions.size()];
-
-            buffer.push_back(free_spot);
-        }
-    }
-
-    this->view_game.setCenter(first_tile_position);
-    
-    auto minimap = static_cast<gui::WidgetMinimap*>(this->getInterfaceComponent("component_minimap"));
-        minimap->should_redraw = true;
-}
-
 void Regionmap::higlightTile() {
     auto tile_size   = world_settings.tileSize();
     auto tile_offset = world_settings.tileOffset();
@@ -796,7 +750,6 @@ void Regionmap::updatePaths(int index) {
     };
 
     // Update the singular tile.
-    
     auto building_at_index = this->region->getBuildingAt(index);
     
     // Check if the pointer exists.
@@ -915,6 +868,10 @@ void Regionmap::updateScheduler() {
 }
 
 void Regionmap::gamestateLoad() {
+    // Region's index was set upon entering the region.
+    // It's set in widgetRegion.cpp
+    this->region = &this->manager->world.world_map[this->region_index];
+
     this->recalculate_mesh      = true;
     this->recalculate_tree_mesh = true;
 
@@ -930,6 +887,47 @@ void Regionmap::gamestateLoad() {
     this->resizeViews();
     this->resizeUI();
     this->manager->window.getWindow()->setView(this->view_game);
+
+    // Tile index on which you centre the camera.
+    auto tile_index = world_settings.calculateRegionIndex(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2);
+
+    // Here you can setup what to do when entering a region.
+    // For example, centre the camera.
+    sf::Vector2f first_tile_position = sf::Vector2f(
+        this->region->map[tile_index].getPosition().x + world_settings.tileSize().x / 2,
+        this->region->map[tile_index].getPosition().y
+    );
+
+    if(this->region->isOwned() && this->region->getPopulation() == 0) {
+        this->region->population.resize(world_settings.getRegionInitialPopulation());
+
+        std::vector <int> buffer;
+        std::vector <std::string> directions = { "_tl", "_tr", "_bl", "_br" };
+        for(int i = 0; i < world_settings.getRegionInitialPopulation(); i++) {
+            auto& pop = this->region->population[i];
+            auto  free_spot = this->region->findNotOccupiedTile(buffer);
+            pop.current_index = free_spot;
+
+            const auto& tile = this->region->map[free_spot];
+            const auto tile_position = tile.getPosition();
+            std::string base_texture = tile.tiletype.is_river() 
+                ? "unit_transport_arrow"
+                : "unit_classic_arrow";
+
+            pop.object_size         = sf::Vector2f(64, 96);
+            pop.object_position     = tile_position + sf::Vector3f(0, -(pop.object_size.y - world_settings.tileSize().y), 0);
+            pop.object_texture_name = base_texture + directions[rand() % directions.size()];
+
+            buffer.push_back(free_spot);
+        }
+    }
+
+    this->view_game.setCenter(first_tile_position);
+    
+    auto minimap = static_cast<gui::WidgetMinimap*>(this->getInterfaceComponent("component_minimap"));
+        minimap->should_redraw = true;
+
+    this->region->visited = true;
 }
 
 void Regionmap::gamestateClose() {

@@ -32,4 +32,5 @@ bool Copper::isGenerationSpotValid(GameObject* object, int index) const {
 void Copper::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
     region->map[index].object_texture_name = "tile_resource_copper";
+    region->map[index].resource = getResourcePointer("Copper");
 }

@@ -7,6 +7,13 @@
 #include <string>
 
 namespace iso {
+    enum class UnitType {
+        UNIT_SETTLER,
+        UNIT_WARRIOR,
+
+        UNITTYPES_TOTAL_QUANTITY
+    };
+    
     class Unit : public GameObject {
         private:
             int id;
@@ -18,6 +25,7 @@ namespace iso {
             int               current_index;
             int               goal;
             std::string       unit_name;     // Human readable unit name. 
+            UnitType          type;
 
         public:
             Unit();
@@ -33,7 +41,7 @@ namespace iso {
             const std::vector <int>& getAStarPath();
             int                      getNextMove();
             bool                     hasPath() const;
-            bool                     isSameType(const Unit& unit) const;
+            bool                     isSameType(UnitType type) const;
     };
 
     const Unit UNIT_SETTLER("Settler");

@@ -26,12 +26,12 @@ namespace iso {
             bool exists() const;
             bool contains(sf::Vector2f point) const;
 
-            std::string  getName()             const; 
-            sf::Vector3f getPosition()         const;
-            sf::Vector2f getPosition2D()       const;
-            sf::Vector2f getSize()             const;
-            std::string  getTextureName()      const;
-            sf::Color    getColour()           const;
+            std::string  getName()              const;
+            sf::Vector3f getPosition()          const;
+            sf::Vector2f getPosition2D()        const;
+            sf::Vector2f getSize()              const;
+            std::string  getTextureName()       const;
+            sf::Color    getColour()            const;
     };
 }
 

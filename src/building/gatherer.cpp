@@ -22,28 +22,40 @@ void Farmhouse::update(GameObject* object, int building_index) {
     auto region = static_cast<Region*>(object);
     auto production_area = this->getProductionArea();
 
-    StorageItem grain = ITEM_GRAIN;
+    // There might be more than 1 item collected.
+    std::vector <StorageItem> items;
 
-    // TODO: Rewrite this function to make it collect all types of collectable plants. 
-   
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
-
-            auto texture_name = region->map[index].getTextureName();
-            if(startsWith(texture_name, "tile_grass"))
-                grain.quantity++;
+            const auto& tile = region->map[index];
+            
+            if(tile.hasResource()) {
+                if(tile.getResource()->resource_type == ResourceType::TYPE_PLANT_RESOURCE || tile.getResource()->resource_type == ResourceType::TYPE_PLANT_FOOD) {
+                    for(auto it = items.begin(); it != items.end(); ++it) {
+                        auto item = *it;
+                        if(item.item_name == tile.getResource()->resource_name)
+                            item.quantity++;
+                    }
+                }     
+            }
         }
     }
 
     auto number_of_buildings = region->isBuildingInProximity(*this, building_index);
-    if(number_of_buildings)
-        grain.quantity /= number_of_buildings;
-
-    region->addItem(grain);
+    if(number_of_buildings) {
+        for(auto& item : items) {
+            item.quantity /= number_of_buildings;
+            region->addItem(item);
+        }
+    }
 }
 
 bool Farmhouse::isBuildingResourceTile(GameObject* object, int index) const { 
     auto region = static_cast<Region*>(object);
-    return startsWith(region->map[index].object_texture_name, "tile_grass");
+    const auto& tile = region->map[index];
+
+    return tile.hasResource() 
+        ? (tile.getResource()->resource_type == ResourceType::TYPE_PLANT_RESOURCE || tile.getResource()->resource_type == ResourceType::TYPE_PLANT_FOOD)
+        : false;
 }

@@ -57,7 +57,7 @@ const sf::Color Player::getTeamColourFull() const {
 }
 
 const sf::Color Player::getTeamColourTransparent() const {
-    return sf::Color(this->team_colour.r, this->team_colour.g, this->team_colour.b, 127);
+    return sf::Color(this->team_colour.r, this->team_colour.g, this->team_colour.b, 191);
 }
 
 void Player::setTeamColour(const sf::Color& team_colour) {
@@ -95,9 +95,13 @@ Unit* Player::getUnit(std::string unit_name) {
 }
 
 void Player::removeUnit(int unit_id) {
-    for(auto it = this->units.begin(); it != units.end(); ++it)
-        if((*it).get()->getID() == unit_id)
+    for(auto it = this->units.begin(); it != units.end(); ++it) {
+        auto unit = (*it).get();
+        if(unit->getID() == unit_id) {
             this->units.erase(it);
+            return;
+        }
+    }
 }
 
 bool Player::hasUnit(int unit_id) const {

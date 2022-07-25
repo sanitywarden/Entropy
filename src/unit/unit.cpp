@@ -14,6 +14,7 @@ Unit::Unit()
     
     this->current_index = 0;
     this->goal = 0;
+    this->type = UnitType::UNITTYPES_TOTAL_QUANTITY;
 
     this->path.resize(0);
 }
@@ -27,13 +28,13 @@ Unit::Unit(std::string unit_name)
     
     this->current_index = 0;
     this->goal = 0;
+    this->type = UnitType::UNITTYPES_TOTAL_QUANTITY;
 
     this->path.resize(0);
 }
 
-Unit::~Unit() {
-
-}
+Unit::~Unit() 
+{}
 
 const std::vector <int>& Unit::getAStarPath() {
     return this->path;
@@ -70,8 +71,8 @@ bool Unit::operator!= (const Unit& unit) const {
     return !(*this == unit);
 }
 
-bool Unit::isSameType(const Unit& unit) const {
-    return this->getUnitName() == unit.getUnitName();
+bool Unit::isSameType(UnitType type) const {
+    return this->type == type;
 }
 
 std::string Unit::getUnitName() const {

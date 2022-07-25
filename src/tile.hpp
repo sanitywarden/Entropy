@@ -3,8 +3,11 @@
 
 #include "tileType.hpp"
 #include "gameObject.hpp"
+#include "resource.hpp"
+#include "resource_definitions.hpp"
 
 #include <SFML/Graphics.hpp>
+#include <memory>
 
 namespace iso {    
     class Tile : public GameObject {
@@ -18,9 +21,13 @@ namespace iso {
             ~Tile();
 
             TileType tiletype;
+            std::shared_ptr <Resource> resource;
 
             void setElevation(int elevation);
             int getElevation() const;
+            
+            bool hasResource() const;
+            const Resource* getResource() const;
     };  
 }
 

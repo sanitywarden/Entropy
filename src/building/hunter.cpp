@@ -30,10 +30,10 @@ void Hunter::update(GameObject* object, int building_index) {
     for(int y = -production_area.y; y <= production_area.y; y++) {
         for(int x = -production_area.x; x <= production_area.x; x++) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
-            
-            auto building = region->getBuildingAt(index);
-            if(building) {
-                if(building->getBuildingName() == "Animal Spot") {
+            const auto& tile = region->map[index];
+
+            if(tile.hasResource()) {
+                if(tile.getResource()->resource_type == ResourceType::TYPE_ANIMAL_FOOD) {
                     meat.quantity    += 2;
                     leather.quantity += 1;
                 }
@@ -47,7 +47,9 @@ void Hunter::update(GameObject* object, int building_index) {
 
 bool Hunter::isBuildingResourceTile(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
-    return region->getBuildingAt(index)
-        ? region->getBuildingAt(index)->getBuildingName() == "Animal Spot"
+    const auto& tile = region->map[index];
+
+    return tile.hasResource()
+        ? tile.getResource()->resource_type == ResourceType::TYPE_ANIMAL_FOOD
         : false;
 }

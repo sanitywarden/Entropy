@@ -27,10 +27,10 @@ namespace iso {
 
     class SimulationManager : public Entropy {
         private:
+            void initialise();
             void internalLoop(float delta_time);
 
-            void initialise();
-            void initialiseWorld();
+            void generateCountries();
 
             void updateSchedulerGlobal();
             void updateShedulerSimulation();
@@ -75,13 +75,34 @@ namespace iso {
             bool isHumanPlayer(int player_id) const;
             Player* getHumanPlayer();
             Player* getPlayer(int player_id);
-            Unit* getUnit(int unit_id);
 
+            // Search for the requested unit in all players' armies.
+            // If not found return nullptr.
+            Unit* getUnit(int unit_id);
+            
+            // Creates a unit of certain type.
+            // The unit will be created if the specified region is able to support more units.
+            // The created unit has all required properties of the class.
+            std::shared_ptr <Unit> createUnit(UnitType unit_type, int region_index, Player* owner) const;
+            
+            // Deletes all existing data about the unit.
+            // Removes the unit pointer in the region (as the unit no longer stands there).
+            // Removes the unit from the player's army (from the vector of units in iso::Player class).
+            // Sets the selected_unit_id in iso::Worldmap to -1.
+            void deleteUnit(int unit_id); 
+
+            bool regionCanBeColonised(int region_index) const;
+
+            // A* algorithm to find the shortest path in the Worldmap stage.
             std::vector <int> astar(int start, int end) const;
+
+            // A* algorithm to find the shortest path in the Regionmap stage.
             std::vector <int> r_astar(int start, int end) const;
 
             void prepare();
             void loop() override;
+
+            void generateWorld();
     };
 }
 

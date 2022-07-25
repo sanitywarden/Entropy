@@ -92,11 +92,11 @@ void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     game_object[1].texCoords = sf::Vector2f(size.x, 0);
     game_object[2].texCoords = sf::Vector2f(size.x, size.y);
     game_object[3].texCoords = sf::Vector2f(0, size.y);
-    
+
     if(colour != COLOUR_BLACK) {
         game_object[0].color = colour;
         game_object[1].color = colour;
-        game_object[2].color = colour; 
+        game_object[2].color = colour;
         game_object[3].color = colour;
     }
 

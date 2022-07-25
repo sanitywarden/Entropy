@@ -21,3 +21,10 @@ Resource::Resource(const std::string& name, ResourceType type, const std::string
 Resource::~Resource() 
 {}
 
+bool Resource::operator== (const Resource& resource) const {
+    return this->resource_name == resource.resource_name; 
+}
+
+bool Resource::operator!= (const Resource& resource) const {
+    return !(*this == resource);
+}
