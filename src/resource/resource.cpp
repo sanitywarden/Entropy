@@ -28,3 +28,7 @@ bool Resource::operator== (const Resource& resource) const {
 bool Resource::operator!= (const Resource& resource) const {
     return !(*this == resource);
 }
+
+const std::string& Resource::getResourceName() const {
+    return this->resource_name;
+}

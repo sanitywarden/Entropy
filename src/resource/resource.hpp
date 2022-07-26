@@ -44,6 +44,8 @@ namespace iso {
 
             bool operator == (const Resource& resource) const;
             bool operator != (const Resource& resource) const;
+
+            const std::string& getResourceName() const;
     };
 }
 

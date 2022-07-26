@@ -6,6 +6,7 @@ using namespace iso;
 Tile::Tile() {
     this->_marked = false;
     this->resource = nullptr;
+    this->object_name = "Tile";
 }
 
 Tile::~Tile() {

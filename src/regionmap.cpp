@@ -633,11 +633,10 @@ void Regionmap::higlightTile() {
     if(colour_name == "Yellow")
         selected += sf::Vector2i(1, 0);
 
-
-    int index = world_settings.calculateRegionIndex(selected.x, selected.y);
-    if(!world_settings.inRegionBounds(index))
+    if(!world_settings.inRegionBounds(selected))
         return;
 
+    int index = world_settings.calculateRegionIndex(selected.x, selected.y);
     this->current_index = index;
     if(this->mouse_drag)
         return;
@@ -667,6 +666,28 @@ void Regionmap::higlightTile() {
     sf::RenderStates states;
     states.texture = &this->manager->resource.getTexture("tile_highlight_1x1");
     this->manager->window.draw(highlight, states);
+
+    const auto& current_tile = this->region->map[this->current_index];
+    
+    std::string tile_data;
+    tile_data += this->region->biome.biome_name + " " + current_tile.getName() + " | #" + std::to_string(this->current_index) + "\n";
+
+    if(current_tile.hasResource())
+        tile_data += current_tile.getResource()->getResourceName() + "\n";
+
+    auto cursor_offset = sf::Vector2f(
+        world_settings.tileSize().x / 2,
+        world_settings.tileSize().y / 2
+    );
+
+    gui::Label tile_information(this->manager, tile_data);
+    tile_information.setWidgetPosition(this->mouse_position_interface + cursor_offset);
+
+    auto current_view = this->manager->window.getWindow()->getView();
+     
+    this->manager->window.getWindow()->setView(this->view_interface);
+    this->manager->window.draw(tile_information);
+    this->manager->window.getWindow()->setView(current_view);
 }
 
 Region* Regionmap::getCurrentRegion() {
