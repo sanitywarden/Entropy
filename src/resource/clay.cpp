@@ -60,7 +60,7 @@ bool Clay::isGenerationSpotValid(GameObject* object, int index) const {
 void Clay::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
     region->map[index].object_texture_name = "tile_resource_clay";
-    region->map[index].resource = getResourcePointer("Clay");
+    region->resources[index] = getResourcePointer("Clay");
 }
 
 bool Clay::canBeGenerated(GameObject* object) const {

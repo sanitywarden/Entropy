@@ -32,5 +32,5 @@ bool Tin::isGenerationSpotValid(GameObject* object, int index) const {
 void Tin::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
     region->map[index].object_texture_name = "tile_resource_tin";    
-    region->map[index].resource = getResourcePointer("Tin");
+    region->resources[index] = getResourcePointer("Tin");
 }

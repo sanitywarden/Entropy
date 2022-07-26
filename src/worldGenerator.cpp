@@ -756,7 +756,7 @@ void WorldGenerator::generateNoise(NoiseSettings& settings, NoiseContainer& stor
     // Generate a random input sequence.
     std::vector <float> input(settings.size.x * settings.size.y);
     for(int i = 0; i < input.size(); i++) {
-        input[i] = (float)rand() / (float)RAND_MAX;
+        input[i] = 0; // (float)rand() / (float)RAND_MAX;
     }
 
     storage.resize(settings.size.x * settings.size.y);

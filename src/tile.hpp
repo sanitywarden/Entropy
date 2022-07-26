@@ -21,13 +21,9 @@ namespace iso {
             ~Tile();
 
             TileType tiletype;
-            std::shared_ptr <Resource> resource;
 
             void setElevation(int elevation);
-            int getElevation() const;
-            
-            bool hasResource() const;
-            const Resource* getResource() const;
+            int getElevation() const;    
     };  
 }
 

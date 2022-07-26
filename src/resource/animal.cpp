@@ -41,7 +41,7 @@ bool Animal::isGenerationSpotValid(GameObject* object, int index) const {
 void Animal::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
     region->placeBuilding(*this, this->getSize(), tileGridPosition(index));
-    region->map[index].resource = getResourcePointer("Animal Spot");
+    region->resources[index] = getResourcePointer("Animal Spot");
 }
 
 void Animal::draw(sf::RenderTarget& target, sf::RenderStates states) const {

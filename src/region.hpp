@@ -58,8 +58,7 @@ namespace iso {
             void removeBuilding(int index);
             void removeBuildingCost(const Building& building);
             int  getPopulation() const;
-
-            bool isUnitPresent()   const;
+            bool isUnitPresent() const;
             bool isTree(int index) const;
             bool isPath(int index) const;
             bool isSpotOccupied(int index) const;
@@ -72,6 +71,8 @@ namespace iso {
             int isBuildingInProximity(const Building& building, int building_index) const;
             bool isSameBuilding(const Building& building, int building_index, int index) const;
             int findNotOccupiedTile(std::vector <int> buffer) const;
+            bool tileHasResource(int index) const;
+            const Resource* getTileResource(int index) const;
 
         public:
             RegionType regiontype;
@@ -88,6 +89,7 @@ namespace iso {
             std::map    <int, GameObject>                trees;
             std::map    <int, std::vector<GameObject>>   sides;
             std::map    <int, std::shared_ptr<Building>> buildings;
+            std::map    <int, std::shared_ptr<Resource>> resources;
     }; 
 }
 

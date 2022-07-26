@@ -398,3 +398,13 @@ bool Region::isPassableAStar(int index) const {
         return false;
     return true;
 }
+
+bool Region::tileHasResource(int index) const {
+    return this->resources.count(index);
+}
+
+const Resource* Region::getTileResource(int index) const {
+    return this->tileHasResource(index)
+        ? this->resources.at(index).get()
+        : nullptr;
+}

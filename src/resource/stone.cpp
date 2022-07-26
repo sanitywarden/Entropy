@@ -32,5 +32,5 @@ bool Stone::isGenerationSpotValid(GameObject* object, int index) const {
 void Stone::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
     region->map[index].object_texture_name = "tile_resource_stone";
-    region->map[index].resource = getResourcePointer("Stone");
+    region->resources[index] = getResourcePointer("Stone");
 }

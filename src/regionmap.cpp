@@ -672,8 +672,8 @@ void Regionmap::higlightTile() {
     std::string tile_data;
     tile_data += this->region->biome.biome_name + " " + current_tile.getName() + " | #" + std::to_string(this->current_index) + "\n";
 
-    if(current_tile.hasResource())
-        tile_data += current_tile.getResource()->getResourceName() + "\n";
+    if(this->region->tileHasResource(this->current_index))
+        tile_data += this->region->getTileResource(this->current_index)->getResourceName() + "\n";
 
     auto cursor_offset = sf::Vector2f(
         world_settings.tileSize().x / 2,

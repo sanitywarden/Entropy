@@ -5,7 +5,6 @@ using namespace iso;
 
 Tile::Tile() {
     this->_marked = false;
-    this->resource = nullptr;
     this->object_name = "Tile";
 }
 
@@ -19,12 +18,4 @@ void Tile::setElevation(int elevation) {
 
 int Tile::getElevation() const {
     return -this->object_position.z / (world_settings.tileSize().y / 2);
-}
-
-bool Tile::hasResource() const {
-    return this->resource.get() != nullptr;
-}
-
-const Resource* Tile::getResource() const {
-    return this->resource.get();
 }

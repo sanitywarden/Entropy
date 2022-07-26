@@ -30,11 +30,11 @@ void Farmhouse::update(GameObject* object, int building_index) {
             const int index = building_index + world_settings.calculateRegionIndex(x, y);
             const auto& tile = region->map[index];
             
-            if(tile.hasResource()) {
-                if(tile.getResource()->resource_type == ResourceType::TYPE_PLANT_RESOURCE || tile.getResource()->resource_type == ResourceType::TYPE_PLANT_FOOD) {
+            if(region->tileHasResource(index)) {
+                if(region->getTileResource(index)->getResourceType() == ResourceType::TYPE_PLANT_RESOURCE || region->getTileResource(index)->getResourceType() == ResourceType::TYPE_PLANT_FOOD) {
                     for(auto it = items.begin(); it != items.end(); ++it) {
                         auto item = *it;
-                        if(item.item_name == tile.getResource()->resource_name)
+                        if(item.item_name == region->getTileResource(index)->getResourceName())
                             item.quantity++;
                     }
                 }     
@@ -53,9 +53,7 @@ void Farmhouse::update(GameObject* object, int building_index) {
 
 bool Farmhouse::isBuildingResourceTile(GameObject* object, int index) const { 
     auto region = static_cast<Region*>(object);
-    const auto& tile = region->map[index];
-
-    return tile.hasResource() 
-        ? (tile.getResource()->resource_type == ResourceType::TYPE_PLANT_RESOURCE || tile.getResource()->resource_type == ResourceType::TYPE_PLANT_FOOD)
+    return region->tileHasResource(index) 
+        ? region->getTileResource(index)->getResourceType() == ResourceType::TYPE_PLANT_RESOURCE || region->getTileResource(index)->getResourceType() == ResourceType::TYPE_PLANT_FOOD
         : false;
 }

@@ -32,5 +32,5 @@ bool Flint::isGenerationSpotValid(GameObject* object, int index) const {
 void Flint::placeResource(GameObject* object, int index) const {
     auto* region = static_cast<Region*>(object);
     region->map[index].object_texture_name = "tile_resource_flint";
-    region->map[index].resource = getResourcePointer("Flint");
+    region->resources[index] = getResourcePointer("Flint");
 }

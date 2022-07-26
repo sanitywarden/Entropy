@@ -32,3 +32,7 @@ bool Resource::operator!= (const Resource& resource) const {
 const std::string& Resource::getResourceName() const {
     return this->resource_name;
 }
+
+ResourceType Resource::getResourceType() const {
+    return this->resource_type;
+}

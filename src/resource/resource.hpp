@@ -46,6 +46,7 @@ namespace iso {
             bool operator != (const Resource& resource) const;
 
             const std::string& getResourceName() const;
+            ResourceType getResourceType() const;
     };
 }
 
