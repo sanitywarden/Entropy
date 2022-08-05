@@ -2,8 +2,8 @@
 #define _GUI_WIDGET_MENU_BUILDING_HPP_
 
 #include "gui/base/interfacePage.hpp"
-#include "./building/building_definitions.hpp"
 #include "globalutilities.hpp"
+#include "building.hpp"
 
 namespace gui {
     class WidgetMenuBuilding : public InterfacePage {
@@ -13,7 +13,7 @@ namespace gui {
             void findBuilding();   
             sf::Vector2f calculateItemPosition(int building_no, int building_total); 
         private:
-            std::string last_selected_building;
+            iso::Building last_selected_building;
         
         public:
             WidgetMenuBuilding();
@@ -22,7 +22,7 @@ namespace gui {
 
             void updateUI() override;
             void resetBuilding();
-            std::shared_ptr <iso::Building> getBuilding();
+            const iso::Building& getBuilding() const;
     };
 }
 

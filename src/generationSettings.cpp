@@ -1,481 +1,141 @@
 #include "generationSettings.hpp"
 #include "globalutilities.hpp"
 
-#include <iostream>
-#include <fstream>
-
 using namespace iso;
 
-WorldData::WorldData() {
-    this->world_panel_size   = 128;
-    this->region_tile_offset = sf::Vector2f(100, 100);
-    this->region_tile_size   = sf::Vector2f(64, 32);
-    this->region_size        = this->world_panel_size;
+GameSettings::GameSettings() 
+{}
 
-    this->loadSettingsFromFile();
-
-    this->world_margin_island   = this->world_size / 24;
-    this->world_margin_poles    = this->world_size / 10;
-    this->world_river_quantity  = this->world_size / 8;
-    this->world_river_scan_size = this->world_size / 8;
-
-    this->player_quantity = this->world_size / 10;
-
-    this->world_noise.size    = sf::Vector2f(this->world_size, this->world_size);
-    this->world_forest.size   = sf::Vector2f(this->world_size, this->world_size);
-    this->world_moisture.size = sf::Vector2f(this->world_size, this->world_size);
-    this->world_gradient.size = sf::Vector2f(this->world_size, this->world_size);
-}   
-
-WorldData::~WorldData() {
-
+GameSettings::GameSettings(const GameSettings& settings) {
+    this->persistence = settings.persistence;
+    this->simulation_update_frequency = settings.simulation_update_frequency;
+    this->world_width = settings.world_width;
+    this->terrain_from = settings.terrain_from;
+    this->forest_from = settings.forest_from;
+    this->region_width = settings.region_width;
+    this->initial_population = settings.initial_population;
+    this->population_needs_enabled = settings.population_needs_enabled;
+    this->building_cost_enabled = settings.building_cost_enabled;
+    this->astar_pathfinding_enabled = settings.astar_pathfinding_enabled;
 }
 
-void WorldData::loadSettingsFromFile() {
-    const std::string config_file_path = "./data/world_generation.config";
-    std::fstream config_file(config_file_path);
+GameSettings::~GameSettings() 
+{}
 
-    if(!config_file.good()) {
-        std::cout << "[Generation Settings]: Could not open config file: " << config_file_path << ".\n";
-        exit(1);
-    }
-
-    std::cout << "[Generation Settings]: Reading world generation properties.\n";
-
-    std::string line_delimiter  = ",";   // What char marks that a line ends.
-    std::string read_value_from = ":";   // What char marks that value is afterwards.
-    char comment_indicator = '#';        // What char marks a comment.
-    int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
-    
-    std::string line_content;
-    while(std::getline(config_file, line_content)) {
-        if(line_content[0] == comment_indicator || (int)line_content[0] == ascii_empty_line_indicator)
-            continue;
-
-        auto index = find(line_content, read_value_from);
-        std::string property_name  = readBefore(line_content, read_value_from);  
-        std::string property_value = read(line_content, index + 1, line_content.length() - 1);
-
-        if(property_name == "WORLDSIZE") {
-            this->world_size = std::stoi(property_value);
-            std::cout << "[Generation Settings]: World size:\t\t" << this->world_size << "x" << this->world_size << "\n";
-            std::cout << "[Generation Settings]: Region size:\t\t" << this->world_size << "x" << this->world_size << "\n";
-            continue;
-        }
-
-        if(property_name == "WORLD_MARGIN") {
-            this->world_margin_island = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_TERRAIN") {
-            this->world_noise_terrain = std::stof(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_FOREST") {
-            this->world_noise_forest = std::stof(property_value);
-            continue;
-        }
-
-        if(property_name == "REGION_RESOURCE_CHANCE_FLINT") {
-            this->resource_flint_chance = std::stof(property_value);
-            continue;
-        }        
-
-        if(property_name == "REGION_RESOURCE_CHANCE_STONE") {
-            this->resource_stone_chance = std::stof(property_value);
-            continue;
-        } 
-
-        if(property_name == "REGION_RESOURCE_CHANCE_ANIMAL") {
-            this->resource_animal_chance = std::stof(property_value);
-            continue;
-        } 
-
-        if(property_name == "REGION_RESOURCE_RADIUS_DIV_FLINT") {
-            this->resource_flint_radius = this->region_size / std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "REGION_RESOURCE_RADIUS_DIV_STONE") {
-            this->resource_stone_radius = this->region_size / std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "REGION_RESOURCE_MINIMUM_WOOD") {
-            this->tree_noise_minimum = std::stof(property_value);
-            continue;
-        } 
-
-        if(property_name == "REGION_RESOURCE_MINIMUM_FLINT") {
-            this->flint_noise_minimum = std::stof(property_value);
-            continue;
-        } 
-
-        if(property_name == "REGION_RESOURCE_MINIMUM_STONE") {
-            this->stone_noise_minimum = std::stof(property_value);
-            continue;
-        } 
-
-        if(property_name == "REGION_MAX_ANIMALSPOT") {
-            this->region_animals_max = std::stoi(property_value);
-            continue;   
-        }
-
-        if(property_name == "REGION_INITIAL_POPULATION") {
-            this->region_initial_population = std::stoi(property_value);
-            std::cout << "[Generation Settings]: Region population:\t" << this->region_initial_population << "\n";
-            continue;
-        }
-
-        if(property_name == "POPULATION_NEEDS_ENABLED") {
-            this->population_needs_enabled = std::stoi(property_value);
-            std::cout << "[Generation Settings]: Population needs:\t" << asBool(this->population_needs_enabled) << "\n";
-            continue;
-        }
-
-        if(property_name == "BUILDING_COST_ENABLED") {
-            this->building_cost_enabled = std::stoi(property_value);
-            std::cout << "[Generation Settings]: Building cost:\t\t" << asBool(this->building_cost_enabled) << "\n";
-            continue;
-        }
-
-        if(property_name == "ASTAR_PATHING_ENABLED") {
-            this->astar_enabled = std::stoi(property_value);
-            std::cout << "[Generation Settings]: A* AI enabled:\t\t" << asBool(this->astar_enabled) << "\n";
-            continue;
-        }
-
-        if(property_name == "SIMULATION_UPDATE_SPEED") {
-            this->simulation_speed = std::stof(property_value);
-            std::cout << "[Generation Settings]: Simulation speed:\t" << this->simulation_speed << "\n";
-            continue;
-        }
-
-        // WORLD NOISE.
-
-        if(property_name == "WORLD_NOISE_O") {
-            this->world_noise.octaves = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_NOISE_P") {
-            this->world_noise.persistence = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_NOISE_B") {
-            this->world_noise.bias = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_NOISE_M") {
-            this->world_noise.multiplier = std::stof(property_value);
-            continue;
-        }
-
-        // MOISTURE NOISE.
-
-        if(property_name == "WORLD_MOISTURE_NOISE_O") {
-            this->world_moisture.octaves = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_MOISTURE_NOISE_P") {
-            this->world_moisture.persistence = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_MOISTURE_NOISE_B") {
-            this->world_moisture.bias = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_MOISTURE_NOISE_M") {
-            this->world_moisture.multiplier = std::stof(property_value);
-            continue;
-        }
-
-        // ISLAND NOISE.
-        
-        if(property_name == "WORLD_ISLAND_NOISE_O") {
-            this->world_gradient.octaves = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_ISLAND_NOISE_P") {
-            this->world_gradient.persistence = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_ISLAND_NOISE_B") {
-            this->world_gradient.bias = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_ISLAND_NOISE_M") {
-            this->world_gradient.multiplier = std::stof(property_value);
-            continue;
-        }
-
-        // FOREST NOISE.
-
-        if(property_name == "WORLD_FOREST_NOISE_O") {
-            this->world_forest.octaves = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_FOREST_NOISE_P") {
-            this->world_forest.persistence = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_FOREST_NOISE_B") {
-            this->world_forest.bias = std::stoi(property_value);
-            continue;
-        }
-
-        if(property_name == "WORLD_FOREST_NOISE_M") {
-            this->world_forest.multiplier = std::stof(property_value);
-            continue;
-        }
-    }
-
-    config_file.close();
+int GameSettings::getWorldSize() const { 
+    return this->world_width * this->world_width;
 }
 
-int WorldData::getWorldSize() const { 
-    return this->world_size * this->world_size;
+int GameSettings::getWorldWidth() const {
+    return this->world_width;
 }
 
-int WorldData::getWorldWidth() const {
-    return this->world_size;
+int GameSettings::calculateWorldIndex(int x, int y) const {
+    return y * this->world_width + x;
 }
 
-int WorldData::getWorldMargin() const {
-    return this->world_margin_island;
-}
-
-int WorldData::getWorldMarginPolar() const {
-    return this->world_margin_poles;
-}
-
-int WorldData::getWorldRiverQuantity() const {
-    return this->world_river_quantity;
-}
-
-int WorldData::getWorldRiverScan() const {
-    return this->world_river_scan_size;
-}
-
-float WorldData::getWorldTerrainMin() const {
-    return this->world_noise_terrain;
-}
-
-float WorldData::getWorldForestMin() const {
-    return this->world_noise_forest;
-}
-
-int WorldData::calculateWorldIndex(int x, int y) const {
-    return y * this->world_size + x;
-}
-
-bool WorldData::inWorldBounds(int index) const {
+bool GameSettings::inWorldBounds(int index) const {
     return (index >= 0 && index < this->getWorldSize());
 }
 
-bool WorldData::inWorldBounds(sf::Vector2i grid_position) const {
-    return (grid_position.x >= 0 && grid_position.y >= 0 && grid_position.x < this->getWorldWidth() && grid_position.y < this->getWorldWidth());
+bool GameSettings::inWorldBounds(sf::Vector2i grid) const {
+    return (grid.x >= 0 && grid.y >= 0 && grid.x < this->getWorldWidth() && grid.y < this->getWorldWidth());
 }
 
-NoiseSettings WorldData::getWorldNoiseSettings() const {
-    return world_noise;
+int GameSettings::getRegionSize() const {
+    return this->region_width * this->region_width;
 }
 
-NoiseSettings WorldData::getWorldMoistureSettings() const {
-    return world_moisture;
+int GameSettings::getRegionWidth() const {
+    return this->region_width;
 }
 
-NoiseSettings WorldData::getWorldGradientSettings() const {
-    return world_gradient;
+int GameSettings::calculateRegionIndex(int x, int y) const {
+    return y * this->region_width + x;
 }
 
-NoiseSettings WorldData::getWorldForestSettings() const {
-    return world_forest;
+int GameSettings::calculateRegionIndex(sf::Vector2i grid) const {
+    return this->calculateRegionIndex(grid.x, grid.y);
 }
 
-int WorldData::getRegionSize() const {
-    return this->region_size * this->region_size;
-}
-
-int WorldData::getRegionWidth() const {
-    return this->region_size;
-}
-
-int WorldData::calculateRegionIndex(int x, int y) const {
-    return y * this->region_size + x;
-}
-
-bool WorldData::inRegionBounds(int index) const {
+bool GameSettings::inRegionBounds(int index) const {
     return (index >= 0 && index < this->getRegionSize());
 }
 
-bool WorldData::inRegionBounds(sf::Vector2i grid_position) const {
+bool GameSettings::inRegionBounds(sf::Vector2i grid_position) const {
     return (
         grid_position.x >= 0 && grid_position.x < this->getRegionWidth() && 
         grid_position.y >= 0 && grid_position.y < this->getRegionWidth()
     );
 }
 
-NoiseSettings WorldData::getRegionForestSettingsDense() const {
-    return NoiseSettings(this->region_size, 8, 16, 4, 1.00f);
-}
-
-NoiseSettings WorldData::getRegionForestSettingsSparse() const {
-    return NoiseSettings(this->region_size, 8, 16, 4, 0.70f);
-}
-
-NoiseSettings WorldData::getRegionResourceSettings() const {
-    return NoiseSettings(this->region_size, 8, 16, 4, 1.50f);
-}
-
-float WorldData::getRegionFlintChance() const {
-    return this->resource_flint_chance;
-}
-
-float WorldData::getRegionStoneChance() const {
-    return this->resource_flint_chance;
-}
-
-float WorldData::getRegionAnimalChance() const {
-    return this->resource_animal_chance;
-}
-
-int WorldData::getRegionMaxAnimals() const {
-    return this->region_animals_max;
-}
-
-int WorldData::getRegionInitialPopulation() const {
-    return this->region_initial_population;
-}
-
-int WorldData::getRegionFlintRadius() const {
-    return this->resource_flint_radius;
-}
-
-int WorldData::getRegionStoneRadius() const {
-    return this->resource_stone_radius;
-}
-
-float WorldData::getRegionTreeMin() const {
-    return this->tree_noise_minimum;
-}
-
-float WorldData::getRegionFlintMin() const {
-    return this->flint_noise_minimum;
-}
-
-float WorldData::getRegionStoneMin() const {
-    return this->stone_noise_minimum;
-}
-
-bool WorldData::populationNeedsEnabled() const {
+bool GameSettings::populationNeedsEnabled() const {
     return this->population_needs_enabled;
 }
 
-bool WorldData::buildingCostEnabled() const {
+bool GameSettings::buildingCostEnabled() const {
     return this->building_cost_enabled;
 }
 
-bool WorldData::astarEnabled() const {
-    return this->astar_enabled;
+bool GameSettings::astarEnabled() const {
+    return this->astar_pathfinding_enabled;
 }
 
-int WorldData::panelSize() const {
-    return this->world_panel_size;
+bool GameSettings::fogOfWarEnabled() const {
+    return this->fog_of_war_enabled;
 }
 
-sf::Vector2f WorldData::tileSize() const {
-    return this->region_tile_size;
+int GameSettings::panelSize() const {
+    return 128;
 }
 
-sf::Vector2f WorldData::tileOffset() const {
-    return this->region_tile_offset;
+sf::Vector2f GameSettings::tileSize() const {
+    return sf::Vector2f(64, 32);
 }
 
-int WorldData::getPlayerQuantity() const {
-    return this->player_quantity;
+sf::Vector2f GameSettings::tileOffset() const {
+    return sf::Vector2f(100, 100);
 }
 
-float WorldData::simulationSpeed() const {
-    return this->simulation_speed;
+float GameSettings::simulationSpeed() const {
+    return this->simulation_update_frequency;
 }
 
-int WorldData::getRegionResourceRadius(const Resource& resource) const {
-    auto resource_name_higher = toHigher(resource.resource_name);
-
-    const std::string config_file_path = "./data/world_generation.config";
-    std::fstream config_file(config_file_path);
-
-    if(!config_file.good()) {
-        std::cout << "[Generation Settings]: Could not open config file: " << config_file_path << ".\n";
-        exit(1);
-    }
-
-    std::string line_delimiter  = ",";   // What char marks that a line ends.
-    std::string read_value_from = ":";   // What char marks that value is afterwards.
-    char comment_indicator = '#';        // What char marks a comment.
-    int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
-    
-    std::string line_content;
-    while(std::getline(config_file, line_content)) {
-        if(line_content[0] == comment_indicator || (int)line_content[0] == ascii_empty_line_indicator)
-            continue;
-
-        auto index = find(line_content, read_value_from);
-        std::string property_name  = readBefore(line_content, read_value_from);  
-        std::string property_value = read(line_content, index + 1, line_content.length() - 1);
-
-        if(property_name == "REGION_RESOURCE_RADIUS_DIV_" + resource_name_higher) {
-            auto value = std::stoi(property_value);
-            return value;
-        }
-    }
-
-    return 0;
+int GameSettings::getRegionPersistence() const {
+    return this->persistence;
 }
 
-float WorldData::getRegionResourceGenerationChance(const Resource& resource) const {
-    auto resource_name_higher = toHigher(resource.resource_name);
+bool GameSettings::inSameRow(int check, int same_as) const {
+    auto check_grid   = tileGridPosition(check);
+    auto same_as_grid = tileGridPosition(same_as);
 
-    const std::string config_file_path = "./data/world_generation.config";
-    std::fstream config_file(config_file_path);
+    return check_grid.y == same_as_grid.y; 
+}
 
-    if(!config_file.good()) {
-        std::cout << "[Generation Settings]: Could not open config file: " << config_file_path << ".\n";
-        exit(1);
-    }
+int GameSettings::getWorldMargin() const {
+    return 3;
+}
 
-    std::string line_delimiter  = ",";   // What char marks that a line ends.
-    std::string read_value_from = ":";   // What char marks that value is afterwards.
-    char comment_indicator = '#';        // What char marks a comment.
-    int  ascii_empty_line_indicator = 0; // What value marks that a line is empty (ASCII NULL).
-    
-    std::string line_content;
-    while(std::getline(config_file, line_content)) {
-        if(line_content[0] == comment_indicator || (int)line_content[0] == ascii_empty_line_indicator)
-            continue;
+int GameSettings::getWorldMarginPolar() const {
+    return 3; 
+}
 
-        auto index = find(line_content, read_value_from);
-        std::string property_name  = readBefore(line_content, read_value_from);  
-        std::string property_value = read(line_content, index + 1, line_content.length() - 1);
+float GameSettings::getWorldTerrainMin() const {
+    return this->terrain_from;
+}
 
-        if(property_name == "REGION_RESOURCE_CHANCE_" + resource_name_higher) {
-            auto value =  std::stof(property_value);
-            return value;
-        }
-    }
+int GameSettings::getWorldRiverQuantity() const {
+    return 5;
+}
 
-    return 0.0f;
+float GameSettings::getWorldForestMin() const {
+    return this->forest_from;
+}
+
+float GameSettings::getRegionTreeMin() const {
+    return 0.6f;
+}
+
+int GameSettings::getPlayerQuantity() const {
+    return 4;
 }

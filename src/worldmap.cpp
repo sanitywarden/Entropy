@@ -35,8 +35,8 @@ void Worldmap::initialise() {
 
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
     this->view_game.setCenter(sf::Vector2f(
-        world_settings.panelSize() * world_settings.getWorldWidth(),
-        world_settings.panelSize() * world_settings.getWorldWidth()
+        game_settings.panelSize() * game_settings.getWorldWidth(),
+        game_settings.panelSize() * game_settings.getWorldWidth()
     ));
 
     this->controls.addKeyMappingCheck("key_f3",                sf::Keyboard::Key::F3);
@@ -154,8 +154,8 @@ void Worldmap::loadResources() {
 
 void Worldmap::moveCamera() {
     auto distance = sf::Vector2f(
-        (this->position_pressed.x - this->position_released.x) / world_settings.panelSize() / 2,       
-        (this->position_pressed.y - this->position_released.y) / world_settings.panelSize() / 2
+        (this->position_pressed.x - this->position_released.x) / game_settings.panelSize() / 2,       
+        (this->position_pressed.y - this->position_released.y) / game_settings.panelSize() / 2
     );
 
     // Multipliers for faster camera movement. 
@@ -163,18 +163,21 @@ void Worldmap::moveCamera() {
     const float y_multiplier = (this->current_zoom + 1) * 5.00f;    
 
     const auto tile_top_left     = this->manager->world.world_map[0];
-    const auto tile_bottom_right = this->manager->world.world_map[world_settings.getWorldSize() - 1];
+    const auto tile_bottom_right = this->manager->world.world_map[game_settings.getWorldSize() - 1];
     
-    const auto left_bound   = tile_top_left.getPosition2D().x + -(world_settings.getWorldWidth() * world_settings.panelSize() / 8); 
-    const auto right_bound  = tile_bottom_right.getPosition2D().x + world_settings.getWorldWidth() * world_settings.panelSize() / 8;
-    const auto top_bound    = tile_top_left.getPosition2D().y + -(world_settings.getWorldWidth() * world_settings.panelSize() / 8);
-    const auto bottom_bound = tile_bottom_right.getPosition2D().y + world_settings.getWorldWidth() * world_settings.panelSize() / 8;
-
-    if(this->view_game.getCenter().x + distance.x * x_multiplier > left_bound - this->view_game.getSize().x / 4 && this->view_game.getCenter().x + distance.x * x_multiplier < right_bound + this->view_game.getSize().x / 4)
-        this->view_game.move(distance.x * x_multiplier, 0);
-
-    if(this->view_game.getCenter().y + distance.y * y_multiplier > top_bound - this->view_game.getSize().y / 4 && this->view_game.getCenter().y + distance.y * y_multiplier < bottom_bound + this->view_game.getSize().y / 4)
-        this->view_game.move(0, distance.y * y_multiplier);
+    auto top_left     = sf::Vector2f(0, 0) - sf::Vector2f(this->view_game.getSize().x / 4, this->view_game.getSize().y / 4);
+    auto bottom_right = sf::Vector2f(game_settings.getWorldWidth() * game_settings.panelSize() + game_settings.panelSize(), game_settings.getWorldWidth() * game_settings.panelSize() + game_settings.panelSize()) + sf::Vector2f(this->view_game.getSize().x / 4, this->view_game.getSize().y / 4);
+    
+    auto length = sf::Vector2f(std::abs(top_left.x - bottom_right.x), std::abs(top_left.y - bottom_right.y));
+    sf::FloatRect rect(top_left, length);
+    auto movement_vector = sf::Vector2f(distance.x * x_multiplier, distance.y * y_multiplier);
+    auto new_position = sf::Vector2f(this->view_game.getCenter().x + movement_vector.x, this->view_game.getCenter().y + movement_vector.y);
+    
+    if(rect.contains(sf::Vector2f(new_position.x, this->view_game.getCenter().y)))
+        this->view_game.move(movement_vector.x, 0);
+    
+    if(rect.contains(sf::Vector2f(this->view_game.getCenter().x, new_position.y)))
+        this->view_game.move(0, movement_vector.y);
 
     this->move_camera = false;
 }
@@ -315,28 +318,28 @@ void Worldmap::handleInput() {
                 }
 
                 const auto tile_top_left     = this->manager->world.world_map[0];
-                const auto tile_bottom_right = this->manager->world.world_map[world_settings.getWorldSize() - 1];
+                const auto tile_bottom_right = this->manager->world.world_map[game_settings.getWorldSize() - 1];
                 
-                const auto left_bound   = tile_top_left.getPosition2D().x + -(world_settings.getWorldWidth() * world_settings.panelSize() / 8); 
-                const auto right_bound  = tile_bottom_right.getPosition2D().x + world_settings.getWorldWidth() * world_settings.panelSize() / 8;
-                const auto top_bound    = tile_top_left.getPosition2D().y + -(world_settings.getWorldWidth() * world_settings.panelSize() / 8);
-                const auto bottom_bound = tile_bottom_right.getPosition2D().y + world_settings.getWorldWidth() * world_settings.panelSize() / 8;
+                const auto left_bound   = tile_top_left.getPosition2D().x + -(game_settings.getWorldWidth() * game_settings.panelSize() / 8); 
+                const auto right_bound  = tile_bottom_right.getPosition2D().x + game_settings.getWorldWidth() * game_settings.panelSize() / 8;
+                const auto top_bound    = tile_top_left.getPosition2D().y + -(game_settings.getWorldWidth() * game_settings.panelSize() / 8);
+                const auto bottom_bound = tile_bottom_right.getPosition2D().y + game_settings.getWorldWidth() * game_settings.panelSize() / 8;
 
                 if(this->controls.keyState("arrow_left"))
-                    if(this->view_game.getCenter().x + world_settings.panelSize() >= left_bound)
-                        this->view_game.move(-world_settings.panelSize(), 0);
+                    if(this->view_game.getCenter().x + game_settings.panelSize() >= left_bound)
+                        this->view_game.move(-game_settings.panelSize(), 0);
 
                 if(this->controls.keyState("arrow_right"))
-                    if(this->view_game.getCenter().x + world_settings.panelSize() <= right_bound)
-                        this->view_game.move(world_settings.panelSize(), 0);
+                    if(this->view_game.getCenter().x + game_settings.panelSize() <= right_bound)
+                        this->view_game.move(game_settings.panelSize(), 0);
 
                 if(this->controls.keyState("arrow_down"))
-                    if(this->view_game.getCenter().y + world_settings.panelSize() <= bottom_bound)
-                        this->view_game.move(0, world_settings.panelSize());
+                    if(this->view_game.getCenter().y + game_settings.panelSize() <= bottom_bound)
+                        this->view_game.move(0, game_settings.panelSize());
 
                 if(this->controls.keyState("arrow_up"))
-                    if(this->view_game.getCenter().x + (world_settings.panelSize()) <= top_bound)
-                        this->view_game.move(0, -world_settings.panelSize());
+                    if(this->view_game.getCenter().x + (game_settings.panelSize()) <= top_bound)
+                        this->view_game.move(0, -game_settings.panelSize());
 
                 break;
             }
@@ -363,22 +366,23 @@ void Worldmap::handleInput() {
                     this->position_pressed = this->mouse_position_window;
                 
                 Region& current_region = this->manager->world.world_map[this->current_index];
-                const bool unit_exists = current_region.isUnitPresent();
-                if(this->controls.mouseLeftPressed()) {
-                    if(unit_exists && current_region.unit->contains(this->mouse_position_window)) {
-                        this->selectUnit();
-                    }
+                
+                // const bool unit_exists = current_region.isUnitPresent();
+                // if(this->controls.mouseLeftPressed()) {
+                //     if(unit_exists && current_region.unit->contains(this->mouse_position_window)) {
+                //         this->selectUnit();
+                //     }
     
-                    else {
-                        this->selectPanel();
-                    }
-                }
+                    // else {
+                this->selectPanel();
+                    // }
+                // }
                 
-                if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
-                    this->selectUnitGoal();
-                }
+                // if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
+                //     this->selectUnitGoal();
+                // }
                 
-                this->unselectUnit();
+                // this->unselectUnit();
                 this->unselectPanel();
 
                 break;
@@ -431,7 +435,7 @@ void Worldmap::renderWorld() {
 
     const sf::Vector2f camera_size   = this->view_game.getSize();
     const sf::Vector2f camera_centre = this->view_game.getCenter();
-    const sf::Vector2f panel_size    = sf::Vector2f(world_settings.panelSize(), world_settings.panelSize());
+    const sf::Vector2f panel_size    = sf::Vector2f(game_settings.panelSize(), game_settings.panelSize());
     sf::Rect camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
     auto* human_player = this->manager->getHumanPlayer();
 
@@ -440,7 +444,7 @@ void Worldmap::renderWorld() {
         sf::Rect region_screen_space(region.getPosition2D(), region.getSize());
 
         if(camera_screen_area.intersects(region_screen_space)) {
-            if(human_player->discoveredRegion(i)) {
+            if(human_player->discoveredRegion(i) || !game_settings.fogOfWarEnabled()) {
                 // Draw panel.
 
                 sf::RenderStates panel_states;
@@ -449,25 +453,24 @@ void Worldmap::renderWorld() {
                 this->manager->window.draw(region, panel_states);
                 gpu_draw_calls++;
             
-                if(region.isOwned()) {
-                    auto colour = region.owner->getTeamColourTransparent();
+                // if(region.isOwned()) {
+                //     auto colour = region.owner->getTeamColourTransparent();
 
-                    sf::VertexArray region_owner_colour(sf::Quads, 4);
+                //     sf::VertexArray region_owner_colour(sf::Quads, 4);
 
-                    region_owner_colour[0].position = region.getPosition2D();
-                    region_owner_colour[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0); 
-                    region_owner_colour[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y); 
-                    region_owner_colour[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
+                //     region_owner_colour[0].position = region.getPosition2D();
+                //     region_owner_colour[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0); 
+                //     region_owner_colour[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y); 
+                //     region_owner_colour[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
 
-                    region_owner_colour[0].color = colour;
-                    region_owner_colour[1].color = colour;
-                    region_owner_colour[2].color = colour;
-                    region_owner_colour[3].color = colour;
+                //     region_owner_colour[0].color = colour;
+                //     region_owner_colour[1].color = colour;
+                //     region_owner_colour[2].color = colour;
+                //     region_owner_colour[3].color = colour;
 
-                    this->manager->window.draw(region_owner_colour);
-                    gpu_draw_calls++;
-                }
-
+                //     this->manager->window.draw(region_owner_colour);
+                //     gpu_draw_calls++;
+                // }
 
                 // Draw panel details.
                 // Draw forest.
@@ -500,16 +503,6 @@ void Worldmap::renderWorld() {
                     gpu_draw_calls++;
                 }
             }
-
-            for(const auto& player : this->manager->players) {
-                for(const auto& unit : player.units) {
-                    if(human_player->discoveredRegion(unit.get()->current_index)) {
-                        sf::RenderStates states;
-                        states.texture = &this->manager->resource.getTexture(unit.get()->getTextureName());
-                        this->manager->window.draw(*unit.get(), states);
-                    }
-                }
-            }
         }
     }
 
@@ -518,7 +511,7 @@ void Worldmap::renderWorld() {
 
 void Worldmap::selectPanel() {
     auto* human_player = this->manager->getHumanPlayer();
-    if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI() && human_player->discoveredRegion(this->current_index)) {
+    if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI() && (human_player->discoveredRegion(this->current_index) || !game_settings.fogOfWarEnabled())) {
         const auto& region = this->manager->world.world_map[this->current_index];
         if(region.regiontype.is_ocean()) {
             this->setVisibilityFalse("component_widget_region");
@@ -526,11 +519,11 @@ void Worldmap::selectPanel() {
         }
 
         sf::Vector2i panel_grid_position = sf::Vector2i(
-            this->mouse_position_window.x / world_settings.panelSize(),
-            this->mouse_position_window.y / world_settings.panelSize()
+            this->mouse_position_window.x / game_settings.panelSize(),
+            this->mouse_position_window.y / game_settings.panelSize()
         );
 
-        const int index = panel_grid_position.y * world_settings.getWorldWidth() + panel_grid_position.x;
+        const int index = panel_grid_position.y * game_settings.getWorldWidth() + panel_grid_position.x;
         this->selected_index = index;
 
         this->setVisibilityFalse("component_widget_unit");
@@ -548,34 +541,34 @@ void Worldmap::unselectPanel() {
 
 void Worldmap::highlightPanel() {
     sf::Vector2i tile_grid = sf::Vector2i(
-        this->mouse_position_window.x / world_settings.panelSize(),
-        this->mouse_position_window.y / world_settings.panelSize()
+        this->mouse_position_window.x / game_settings.panelSize(),
+        this->mouse_position_window.y / game_settings.panelSize()
     );
     
-    this->current_index = world_settings.calculateWorldIndex(tile_grid.x, tile_grid.y);
+    this->current_index = game_settings.calculateWorldIndex(tile_grid.x, tile_grid.y);
     
     if(this->mouse_drag)
         return;
     
-    if(!world_settings.inWorldBounds(tile_grid))
+    if(!game_settings.inWorldBounds(tile_grid))
         return;
 
     auto panel_grid_position = sf::Vector2i(
-        this->mouse_position_window.x / world_settings.panelSize(),
-        this->mouse_position_window.y / world_settings.panelSize()
+        this->mouse_position_window.x / game_settings.panelSize(),
+        this->mouse_position_window.y / game_settings.panelSize()
     );
 
     auto highlight_position = sf::Vector2f(
-        panel_grid_position.x * world_settings.panelSize(),
-        panel_grid_position.y * world_settings.panelSize()
+        panel_grid_position.x * game_settings.panelSize(),
+        panel_grid_position.y * game_settings.panelSize()
     );
 
     sf::VertexArray highlight(sf::Quads, 4);
 
     highlight[0].position = highlight_position;
-    highlight[1].position = highlight_position + sf::Vector2f(world_settings.panelSize(), 0);
-    highlight[2].position = highlight_position + sf::Vector2f(world_settings.panelSize(), world_settings.panelSize());
-    highlight[3].position = highlight_position + sf::Vector2f(0, world_settings.panelSize());
+    highlight[1].position = highlight_position + sf::Vector2f(game_settings.panelSize(), 0);
+    highlight[2].position = highlight_position + sf::Vector2f(game_settings.panelSize(), game_settings.panelSize());
+    highlight[3].position = highlight_position + sf::Vector2f(0, game_settings.panelSize());
 
     highlight[0].color = COLOUR_WHITE_TRANSPARENT_QUARTER;
     highlight[1].color = COLOUR_WHITE_TRANSPARENT_QUARTER;
@@ -588,13 +581,11 @@ void Worldmap::highlightPanel() {
 void Worldmap::createUI() {
     static gui::WidgetRegion     widget_region(this->manager);
     static gui::DebugPerformance widget_performance_worldmap(this->manager);
-    static gui::WidgetUnit       widget_unit(this->manager);
     static gui::WidgetSettleCity widget_settle_city(this->manager);
     static gui::Tooltip          tooltip(this->manager);
 
     this->addInterfaceComponent(&widget_region);
     this->addInterfaceComponent(&widget_performance_worldmap);
-    this->addInterfaceComponent(&widget_unit);
     this->addInterfaceComponent(&widget_settle_city);
     this->addInterfaceComponent(&tooltip);
 }
@@ -608,17 +599,8 @@ void Worldmap::gamestateLoad() {
         ? static_cast<Regionmap*>(this->manager->gamestate.getGamestateByName("regionmap"))
         : nullptr;
     
-    if(human_player) {
-        auto* first_unit = human_player->getUnit("Settler");
-
-        int index = (!regionmap && first_unit)
-            ? first_unit->current_index    // If loaded in for the first time.
-            : regionmap->getRegionIndex(); // If exiting a region.
-        
-        const auto& region  = this->manager->world.world_map[index];
-        auto position = region.getPosition2D();
-        this->view_game.setCenter(position);
-    }
+    auto tile = this->manager->world.world_map[game_settings.getWorldSize() / 2 + game_settings.getWorldWidth() / 2];
+    this->view_game.setCenter(tile.getPosition2D());
 
     this->manager->window.getWindow()->setView(this->view_interface);
     this->resizeViews();
@@ -637,60 +619,61 @@ void Worldmap::updateScheduler() {
 
 }
 
-void Worldmap::selectUnit() {
-    const auto& region = this->manager->world.world_map[this->current_index];
-    auto* unit = region.unit;
-    auto* human_player = this->manager->getHumanPlayer();
+// void Worldmap::selectUnit() {
+    // const auto& region = this->manager->world.world_map[this->current_index];
+    // auto* unit = region.unit;
+    // auto* human_player = this->manager->getHumanPlayer();
 
-    if(unit) {
-        if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && human_player->hasUnit(unit->getID()) && human_player->discoveredRegion(unit->current_index)) {
-            this->selected_unit_id = unit->getID();
-            this->setVisibilityTrue("component_widget_unit");
-            this->setVisibilityFalse("component_widget_region");
-        }
-    }
-}
+    // if(unit) {
+    //     if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && human_player->hasUnit(unit->getID()) && human_player->discoveredRegion(unit->current_index)) {
+    //         this->selected_unit_id = unit->getID();
+    //         this->setVisibilityTrue("component_widget_unit");
+    //         this->setVisibilityFalse("component_widget_region");
+    //     }
+    // }
+// }
 
-void Worldmap::unselectUnit() {
-    Unit* pawn = nullptr;
-    for(const auto& player : this->manager->players) {
-        for(auto& unit : player.units) {
-            if(unit.get()->getID() == this->selected_unit_id) {
-                pawn = unit.get();
-                break;
-            }
-        }
-    }
+// void Worldmap::unselectUnit() {
+//     Unit* pawn = nullptr;
+//     for(const auto& player : this->manager->players) {
+//         for(auto& unit : player.units) {
+//             if(unit.get()->getID() == this->selected_unit_id) {
+//                 pawn = unit.get();
+//                 break;
+//             }
+//         }
+//     }
 
-    if(pawn) {
-        if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI() && !pawn->contains(this->mouse_position_window)) {
-            this->selected_unit_id = -1;
-        }
-    }
+//     if(pawn) {
+//         if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI() && !pawn->contains(this->mouse_position_window)) {
+//             this->selected_unit_id = -1;
+//         }
+//     }
 
-    if(this->controls.mouseLeftPressed() && this->selected_unit_id == -1) {
-        this->setVisibilityFalse("component_widget_unit");
-    }
-}
+//     if(this->controls.mouseLeftPressed() && this->selected_unit_id == -1) {
+//         this->setVisibilityFalse("component_widget_unit");
+//     }
+// }
 
-void Worldmap::selectUnitGoal() {
-    if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
-        auto* pawn = this->manager->getUnit(this->selected_unit_id);
-        if(pawn) {
-            auto goal = this->current_index; 
-            auto path = this->manager->astar(pawn->current_index, goal);
-            pawn->goal = goal;
-            pawn->setNewPath(path);
-        }           
-    }
-}
+// void Worldmap::selectUnitGoal() {
+//     if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
+//         auto* pawn = this->manager->getUnit(this->selected_unit_id);
+//         if(pawn) {
+//             auto goal = this->current_index; 
+//             auto path = this->manager->astar(pawn->current_index, goal);
+//             pawn->goal = goal;
+//             pawn->setNewPath(path);
+//         }           
+//     }
+// }
 
 GameObject* Worldmap::getSelectedObject() {
-    Region* region = &this->manager->world.world_map[this->current_index];
-    if(region->isUnitPresent())
-        if(region->unit->contains(this->mouse_position_window))
-            return region->unit;
-    return region;
+    return nullptr;
+    // Region* region = &this->manager->world.world_map[this->current_index];
+    // if(region->isUnitPresent())
+    //     if(region->unit->contains(this->mouse_position_window))
+    //         return region->unit;
+    // return region;
 }
 
 int Worldmap::getSelectedUnitID() {
@@ -716,7 +699,7 @@ void Worldmap::centreOnCapital() {
 
     auto capital_index = player->getCapital();
     const auto& region = this->manager->world.world_map[capital_index];
-    auto position = region.getPosition2D() + sf::Vector2f(world_settings.panelSize() / 2, world_settings.panelSize() / 2);
+    auto position = region.getPosition2D() + sf::Vector2f(game_settings.panelSize() / 2, game_settings.panelSize() / 2);
 
     this->view_game.setCenter(position);
 }

@@ -19,8 +19,8 @@ namespace iso {
         public:
             GameObject();
             GameObject(const GameObject& gameobject);
-            GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf::Vector2f size, std::string texture_name);
-            GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf::Vector2f size, std::string texture_name, std::string object_name);
+            GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf::Vector2f size, const std::string& texture_name);
+            GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf::Vector2f size, const std::string& texture_name, const std::string& object_name);
             ~GameObject();
             
             bool exists() const;

@@ -1,96 +1,95 @@
-#ifndef _REGION_HPP_
-#define _REGION_HPP_
+#pragma once
 
+#include "gameObject.hpp"
+#include "regionType.hpp"
 #include "biome.hpp"
 #include "tile.hpp"
-#include "regionType.hpp"
-#include "gameObject.hpp"
-#include "player.hpp"
 #include "resource.hpp"
+#include "building.hpp"
 #include "item.hpp"
-#include "./building/building.hpp"
-#include "./unit/unit.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
-#include <memory>
 
 namespace iso {
-    enum class RiverDirection {
-        RIVER_HORIZONTAL,
-        RIVER_VERTICAL,
-        RIVER_NORTH_TO_EAST,
-        RIVER_NORTH_TO_WEST,
-        RIVER_SOUTH_TO_EAST,
-        RIVER_SOUTH_TO_WEST, 
-        RIVER_NONE,          // River does not exist.
-        RIVER_ORIGIN         // Beginning of the river, first tile.
-    };
+enum class RiverDirection {
+    RIVER_HORIZONTAL,
+    RIVER_VERTICAL,
+    RIVER_NORTH_TO_EAST,
+    RIVER_NORTH_TO_WEST,
+    RIVER_SOUTH_TO_EAST,
+    RIVER_SOUTH_TO_WEST, 
+    RIVER_NONE,          // River does not exist.
+    RIVER_ORIGIN         // Beginning of the river, first tile.
+};
 
-    class Region : public GameObject {
-        friend class WorldGenerator;
-        friend class SimulationManager;
+class Region : public GameObject {
+    friend class WorldGenerator;
+    friend class SimulationManager;
 
-        protected:
-            bool           _marked; 
-            RiverDirection _direction;      
-            float          height;
-            float          moisture;
-            float          temperature;
-            float          latitude;
+    protected:
+        bool           _marked; 
+        RiverDirection _direction;      
+        float          height;
+        float          moisture;
+        float          temperature;
+        float          latitude;
 
-        public:
-            Region();
-            ~Region();
-            
-            RiverDirection riverDirection();
-            bool isOwned() const;
-            void addItem(StorageItem item);
-            int  getItemQuantity(StorageItem item) const;
-            bool checkItemExists(StorageItem item) const;
+    public:
+        Region();
+        ~Region();
+        
+        RiverDirection riverDirection();
+        
+        bool isBuildingPositionValid(const Building& building, sf::Vector2i grid) const;
+        void removeBuildingCost(const Building& building);
 
-            int  getFoodQuantity() const;
-            int  getDrinkableLiquidQuantity() const;
-            bool isBuildingAffordable(const Building& building) const;
-            bool isPositionValid(const Building& building, sf::Vector2i grid_position) const;
-            void placeBuilding(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position);
-            bool placeBuildingCheck(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position);
-            void removeBuilding(int index);
-            void removeBuildingCost(const Building& building);
-            int  getPopulation() const;
-            bool isUnitPresent() const;
-            bool isTree(int index) const;
-            bool isPath(int index) const;
-            bool isSpotOccupied(int index) const;
-            bool isSpotOccupied(sf::Vector2i grid_position) const;
-            bool isPassableAStar(int index) const;
+        bool isOwned() const;
+        int  getOwnerId() const;
 
-            // If building exists at provided index, return pointer.
-            // Else returns nullptr.
-            Building* getBuildingAt(int index) const;
-            int isBuildingInProximity(const Building& building, int building_index) const;
-            bool isSameBuilding(const Building& building, int building_index, int index) const;
-            int findNotOccupiedTile(std::vector <int> buffer) const;
-            bool tileHasResource(int index) const;
-            const Resource* getTileResource(int index) const;
+        bool isPassableWorldmap() const;
+        bool isSpotOccupied(int index) const;
+        bool isSpotOccupied(sf::Vector2i grid) const;
+        bool isPassableRegionmap(int index) const;
+        bool isPassableRegionmap(sf::Vector2i) const;
 
-        public:
-            RegionType regiontype;
-            Biome      biome;
-            Unit*      unit;
-            Player*    owner; // Pointer to the player that owns this region. If no player controls this region, it's a nullptr.
+        void stockpileAdd(StorageItem item);
+        void stockpileRemove(StorageItem item);
+        int  itemQuantity(const StorageItem& item) const;
+        bool itemExists(const StorageItem& item) const; 
 
-            bool visited;
-            std::string settlement_name; // Settlement's human readable name. If there is no settlement, it's "*".
+        bool resourceExistsAt(int index) const;
+        bool resourceExistsAt(sf::Vector2i grid) const;
+        const Resource& getResourceAt(int index) const;
+        const Resource& getResourceAt(sf::Vector2i grid) const;
 
-            std::vector <Tile>                           map;
-            std::vector <Unit>                           population;
-            std::vector <StorageItem>                    storage;  // These are resources that are already owned by a player. They are not placed in a "global" stockpile, they exist inside the region.
-            std::map    <int, GameObject>                trees;
-            std::map    <int, std::vector<GameObject>>   sides;
-            std::map    <int, std::shared_ptr<Building>> buildings;
-            std::map    <int, std::shared_ptr<Resource>> resources;
-    }; 
+        bool treeExistsAt(int index) const;
+        bool treeExistsAt(sf::Vector2i grid) const;
+
+        bool buildingExistsAt(int index) const;
+        bool buildingExistsAt(sf::Vector2i grid) const;
+        const Building& getBuildingAt(int index) const;
+        const Building& getBuildingAt(sf::Vector2i grid) const;
+
+    public:
+        RegionType regiontype;
+        Biome      biome;
+
+        bool visited;
+        std::string settlement_name; // Settlement's human readable name. If there is no settlement, it's "*".
+
+        std::vector <Tile> map;
+
+        // These are resources that are already owned by a player. 
+        // They are not placed in a global stockpile, they are stored in the region.
+        // Who controls the region, controls the stockpile.
+        std::vector <StorageItem> stockpile; 
+        std::map <int, Building>  buildings;
+        std::map <int, Resource>  resources;
+        // std::vector <Unit> worldmap_units;   // Worldmap units that station in the region. 
+        // std::vector <Unit> regionmap_units;  // Regionmap units.
+        
+        std::map <int, GameObject>                trees;
+        std::map <int, std::vector<GameObject>>   sides;
+}; 
 }
-
-#endif

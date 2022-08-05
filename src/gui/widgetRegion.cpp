@@ -85,9 +85,9 @@ void WidgetRegion::updateUI() {
     auto index = worldmap->getSelectedIndex();
     const auto& region = this->manager->world.world_map[index];
 
-    std::string owner = region.isOwned()
-        ? region.owner->getCountryName()
-        : "Uncolonised";
+    std::string owner = "Uncolonised"; // region.isOwned()
+        // ? region.owner->getCountryName()
+        // : "Uncolonised";
 
     std::string additional_data = region.regiontype.is_forest()
         ? "Forest"
@@ -96,8 +96,8 @@ void WidgetRegion::updateUI() {
     std::string display_text;
     display_text += "Region #" + std::to_string(index) + "\n";
     
-    if(region.isOwned())
-        display_text += region.owner->getCountryName() + " | " + region.settlement_name + "\n";
+    // if(region.isOwned())
+    //     display_text += region.owner->getCountryName() + " | " + region.settlement_name + "\n";
     
     display_text += region.biome.biome_name + " " + additional_data + "\n";
 

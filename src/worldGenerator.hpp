@@ -1,11 +1,11 @@
-#ifndef _WORLD_GENERATOR_HPP_
-#define _WORLD_GENERATOR_HPP_
+#pragma once
 
 #include "entropy/entropy.hpp"
 #include "texturizer.hpp"
 #include "region.hpp"
 #include "biome.hpp"
 #include "noiseSettings.hpp"
+#include "noise.hpp"
 
 #include <SFML/System.hpp>
 #include <vector>
@@ -21,8 +21,9 @@ namespace iso {
             Region m_region;
             Tile   m_tile;
 
-            resourceManager* resource;
-            Texturizer*               texturizer;
+            resourceManager*     resource;
+            Texturizer*          texturizer;
+            wgn::NoiseAlgorithms noise;     
             std::vector <float> m_gradient; 
         
         private:
@@ -57,6 +58,7 @@ namespace iso {
             void generateRegion(int region_index);
     
             void generateNoise(NoiseSettings& settings, NoiseContainer& container);
+            void generateChunkNoise(NoiseContainer& container, sf::Vector2i chunk_grid);
 
             sf::Vector3f tilePositionScreen(int x, int y);
             sf::Vector3f tilePositionScreen(sf::Vector2i grid_position);
@@ -81,5 +83,3 @@ namespace iso {
             std::map    <int, GameObject> lakes;
     };
 }
-
-#endif

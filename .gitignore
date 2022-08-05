@@ -2,9 +2,8 @@
 .vscode
 
 /res
+/page
 /screenshot
 /bin
-/config/*.*
-/data/*.*
 NOTES.txt
 TODO.txt

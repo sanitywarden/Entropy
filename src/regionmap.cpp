@@ -129,7 +129,7 @@ void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/ui/buildings/icon_building_woodcutter.png"     , "icon_template_building_woodcutter",      sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/buildings/icon_building_quarry.png"         , "icon_template_building_quarry",          sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/buildings/icon_building_house.png"          , "icon_template_building_house",           sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_flint.png"          , "icon_template_building_flint",           sf::IntRect(0, 0, 48, 48));
+    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_flint.png"          , "icon_template_building_flint_collector", sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/buildings/icon_building_hunter.png"         , "icon_template_building_hunter",          sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/buildings/icon_building_toolmaker.png"      , "icon_template_building_toolmaker",       sf::IntRect(0, 0, 48, 48));
     this->manager->resource.loadTexture("./res/ui/buildings/icon_building_well.png"           , "icon_template_building_well",            sf::IntRect(0, 0, 48, 48));
@@ -221,7 +221,7 @@ void Regionmap::handleInput() {
                 // To avoid weird camera glitches, set the centre explicitly.
 
                 auto grid_position = tileGridPosition(this->manager->resource.getTexture("tile_template_direction"), this->view_game.getCenter());
-                auto index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y); 
+                auto index = game_settings.calculateRegionIndex(grid_position.x, grid_position.y); 
                 auto tile_position = this->region->map[index].getPosition2D();
                 this->view_game.setCenter(tile_position);
                 this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
@@ -272,7 +272,8 @@ void Regionmap::handleInput() {
 
                 if(this->controls.keyState("key_remove_building")) {
                     if(this->region->buildings.count(this->current_index)) {
-                        this->region->removeBuilding(this->current_index);
+                        auto* human = this->manager->getHumanPlayer();
+                        human->destroyBuilding(*this->region, tileGridPosition(this->current_index));
                         this->updatePaths(this->current_index);
                         this->recalculate_tree_mesh = true;
                     }
@@ -286,12 +287,12 @@ void Regionmap::handleInput() {
                 }
 
                 if(this->controls.keyState("key_centre_view")) {
-                    auto tile_index = world_settings.calculateRegionIndex(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2);
+                    auto tile_index = game_settings.calculateRegionIndex(game_settings.getRegionWidth() / 2, game_settings.getRegionWidth() / 2);
 
                     // Here you can setup what to do when entering a region.
                     // For example, centre the camera.
                     sf::Vector2f first_tile_position = sf::Vector2f(
-                        this->region->map[tile_index].getPosition().x + world_settings.tileSize().x / 2,
+                        this->region->map[tile_index].getPosition().x + game_settings.tileSize().x / 2,
                         this->region->map[tile_index].getPosition().y
                     );
 
@@ -303,9 +304,9 @@ void Regionmap::handleInput() {
                 }
 
                 const auto& tile_top    = this->region->map[0];
-                const auto& tile_left   = this->region->map[world_settings.calculateRegionIndex(0, world_settings.getRegionWidth() - 1)];
-                const auto& tile_right  = this->region->map[world_settings.calculateRegionIndex(world_settings.getRegionWidth() - 1, 0)];
-                const auto& tile_bottom = this->region->map[world_settings.calculateRegionIndex(world_settings.getRegionWidth() - 1, world_settings.getRegionWidth() - 1)];
+                const auto& tile_left   = this->region->map[game_settings.calculateRegionIndex(0, game_settings.getRegionWidth() - 1)];
+                const auto& tile_right  = this->region->map[game_settings.calculateRegionIndex(game_settings.getRegionWidth() - 1, 0)];
+                const auto& tile_bottom = this->region->map[game_settings.calculateRegionIndex(game_settings.getRegionWidth() - 1, game_settings.getRegionWidth() - 1)];
 
                 const auto bound_top    = tile_top.getPosition2D().y;
                 const auto bound_left   = tile_left.getPosition2D().x;
@@ -313,20 +314,20 @@ void Regionmap::handleInput() {
                 const auto bound_bottom = tile_bottom.getPosition2D().y;
 
                 if(this->controls.keyState("arrow_left"))
-                    if(this->view_game.getCenter().x - world_settings.tileSize().x >= bound_left)
-                        this->view_game.move(-world_settings.tileSize().x, 0);
+                    if(this->view_game.getCenter().x - game_settings.tileSize().x >= bound_left)
+                        this->view_game.move(-game_settings.tileSize().x, 0);
 
                 if(this->controls.keyState("arrow_right"))
-                    if(this->view_game.getCenter().x + world_settings.tileSize().x <= bound_right)
-                        this->view_game.move(world_settings.tileSize().x, 0);
+                    if(this->view_game.getCenter().x + game_settings.tileSize().x <= bound_right)
+                        this->view_game.move(game_settings.tileSize().x, 0);
 
                 if(this->controls.keyState("arrow_down"))
-                    if(this->view_game.getCenter().y + world_settings.tileSize().y <= bound_bottom)
-                        this->view_game.move(0, world_settings.tileSize().y);
+                    if(this->view_game.getCenter().y + game_settings.tileSize().y <= bound_bottom)
+                        this->view_game.move(0, game_settings.tileSize().y);
 
                 if(this->controls.keyState("arrow_up"))
-                    if(this->view_game.getCenter().y - (world_settings.tileSize().y) >= bound_top)
-                        this->view_game.move(0, -world_settings.tileSize().y);
+                    if(this->view_game.getCenter().y - (game_settings.tileSize().y) >= bound_top)
+                        this->view_game.move(0, -game_settings.tileSize().y);
 
                 break;
             }
@@ -402,8 +403,8 @@ void Regionmap::handleInput() {
 
 void Regionmap::moveCamera() {
     auto distance = sf::Vector2f(
-        (this->position_pressed.x - this->position_released.x) / world_settings.tileSize().x,       
-        (this->position_pressed.y - this->position_released.y) / world_settings.tileSize().y
+        (this->position_pressed.x - this->position_released.x) / game_settings.tileSize().x,       
+        (this->position_pressed.y - this->position_released.y) / game_settings.tileSize().y
     );
 
     // Multipliers for faster camera movement. 
@@ -411,14 +412,14 @@ void Regionmap::moveCamera() {
     float y_multiplier = 6.0f;    
 
     auto top_tile    = this->region->map[0];
-    auto left_tile   = this->region->map[world_settings.getRegionSize() - world_settings.getRegionWidth()];
-    auto right_tile  = this->region->map[world_settings.getRegionWidth() - 1];
-    auto bottom_tile = this->region->map[world_settings.getRegionSize() - 1];
+    auto left_tile   = this->region->map[game_settings.getRegionSize() - game_settings.getRegionWidth()];
+    auto right_tile  = this->region->map[game_settings.getRegionWidth() - 1];
+    auto bottom_tile = this->region->map[game_settings.getRegionSize() - 1];
 
     const int left_bound   = left_tile.getPosition().x;
-    const int right_bound  = right_tile.getPosition().x + world_settings.tileSize().x;
+    const int right_bound  = right_tile.getPosition().x + game_settings.tileSize().x;
     const int top_bound    = top_tile.getPosition().y;
-    const int bottom_bound = bottom_tile.getPosition().y + world_settings.tileSize().y;
+    const int bottom_bound = bottom_tile.getPosition().y + game_settings.tileSize().y;
 
     if(this->view_game.getCenter().x + distance.x * x_multiplier > left_bound - this->view_game.getSize().x / 4 && this->view_game.getCenter().x + distance.x * x_multiplier < right_bound + this->view_game.getSize().x / 4)
         this->view_game.move(distance.x * x_multiplier, 0);
@@ -462,7 +463,7 @@ void Regionmap::renderRegion() {
     const sf::Vector2f camera_size   = this->view_game.getSize();
     const sf::Vector2f camera_centre = this->view_game.getCenter();
     const sf::Rect     camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
-    const sf::Vector2f tile_size = world_settings.tileSize();
+    const sf::Vector2f tile_size = game_settings.tileSize();
 
     int gpu_draw_calls = 0;
 
@@ -479,7 +480,7 @@ void Regionmap::renderRegion() {
         if(!regionmap_mesh_tile.getVertexCount())
             regionmap_mesh_tile.create(verticies_tilemap);
 
-        for(int index = 0; index < world_settings.getRegionSize(); index++) {
+        for(int index = 0; index < game_settings.getRegionSize(); index++) {
             sf::Vertex* quad = &verticies_tiles[verticies_index * 4];
             
             auto& tile          = this->region->map.at(index);
@@ -532,19 +533,19 @@ void Regionmap::renderRegion() {
     if(this->recalculate_tree_mesh) {
         draw_order = std::vector<GameObject>();
 
-        for(int i = 0; i < world_settings.getRegionSize(); i++) {
+        for(int i = 0; i < game_settings.getRegionSize(); i++) {
             if(this->region->trees.count(i))
                 draw_order.push_back(this->region->trees[i]);
             
-            if(this->region->buildings.count(i)) {
-                if(*this->region->buildings[i] != BUILDING_EMPTY)
-                    draw_order.push_back(*this->region->buildings[i]);
+            if(this->region->buildingExistsAt(i)) {
+                if(this->region->buildings[i] != BUILDING_EMPTY)
+                    draw_order.push_back(this->region->getBuildingAt(i));
             }
         }
 
-        for(int i = 0; i < this->region->getPopulation(); i++) {
-            draw_order.push_back(this->region->population[i]);
-        }
+        // for(int i = 0; i < this->region->getPopulation(); i++) {
+        //     draw_order.push_back(this->region->population[i]);
+        // }
 
         const auto compare = [](const GameObject& o1, const GameObject& o2) {
             auto o1_y = o1.getPosition2D().y + o1.getSize().y;
@@ -594,9 +595,9 @@ void Regionmap::renderRegion() {
 }
 
 void Regionmap::higlightTile() {
-    auto tile_size   = world_settings.tileSize();
-    auto tile_offset = world_settings.tileOffset();
-    auto region_size = world_settings.getRegionSize();
+    auto tile_size   = game_settings.tileSize();
+    auto tile_offset = game_settings.tileOffset();
+    auto region_size = game_settings.getRegionSize();
 
     sf::Vector2i mouse_position(
         this->mouse_position_window.x,
@@ -633,10 +634,10 @@ void Regionmap::higlightTile() {
     if(colour_name == "Yellow")
         selected += sf::Vector2i(1, 0);
 
-    if(!world_settings.inRegionBounds(selected))
+    if(!game_settings.inRegionBounds(selected))
         return;
 
-    int index = world_settings.calculateRegionIndex(selected.x, selected.y);
+    int index = game_settings.calculateRegionIndex(selected.x, selected.y);
     this->current_index = index;
     if(this->mouse_drag)
         return;
@@ -645,7 +646,7 @@ void Regionmap::higlightTile() {
         return;
 
     auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-    if(*building_menu->getBuilding() != BUILDING_EMPTY)
+    if(building_menu->getBuilding() != BUILDING_EMPTY)
         return;
 
     const auto& tile   = this->region->map[index];
@@ -672,12 +673,12 @@ void Regionmap::higlightTile() {
     std::string tile_data;
     tile_data += this->region->biome.biome_name + " " + current_tile.getName() + " | #" + std::to_string(this->current_index) + "\n";
 
-    if(this->region->tileHasResource(this->current_index))
-        tile_data += this->region->getTileResource(this->current_index)->getResourceName() + "\n";
+    if(this->region->resourceExistsAt(this->current_index))
+        tile_data += this->region->getResourceAt(this->current_index).getResourceName() + "\n";
 
     auto cursor_offset = sf::Vector2f(
-        world_settings.tileSize().x / 2,
-        world_settings.tileSize().y / 2
+        game_settings.tileSize().x / 2,
+        game_settings.tileSize().y / 2
     );
 
     gui::Label tile_information(this->manager, tile_data);
@@ -703,22 +704,20 @@ int Regionmap::getCurrentIndex() {
 }
 
 void Regionmap::updateTile() {
-    auto* human_player = this->manager->getHumanPlayer();
-    if(!human_player->ownsRegion(this->region_index))
-        return;
-
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
-    if(*building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
+    if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
         auto building = building_menu->getBuilding();
-        auto texture_size = this->manager->resource.getTextureSize(building.get()->getTextureName());
         auto grid_position = tileGridPosition(this->current_index);
-        this->region->placeBuildingCheck(*building.get(), texture_size, grid_position);
+        auto* human = this->manager->getHumanPlayer();
+        
+        human->placeBuildingCheck(*this->region, building, grid_position);
         this->updatePaths(this->current_index);
         this->recalculate_tree_mesh = true;
     }
 }
 
 void Regionmap::updatePaths(int index) {
+    /*
     if(!this->region->getBuildingAt(index) || *this->region->getBuildingAt(index) == BUILDING_EMPTY)
         return;
 
@@ -779,8 +778,8 @@ void Regionmap::updatePaths(int index) {
         if(*building_at_index == BUILDING_PATH_DIRT || *building_at_index == BUILDING_PATH_STONE) {
             bool LEFT  = this->region->isPath(index - 1);
             bool RIGHT = this->region->isPath(index + 1);
-            bool TOP   = this->region->isPath(index - world_settings.getRegionWidth());
-            bool DOWN  = this->region->isPath(index + world_settings.getRegionWidth());
+            bool TOP   = this->region->isPath(index - game_settings.getRegionWidth());
+            bool DOWN  = this->region->isPath(index + game_settings.getRegionWidth());
             
             directions(LEFT, RIGHT, TOP, DOWN, index);
         }
@@ -793,12 +792,13 @@ void Regionmap::updatePaths(int index) {
         if(this->region->isPath(i)) {
             bool LEFT  = this->region->isPath(i - 1);
             bool RIGHT = this->region->isPath(i + 1);
-            bool TOP   = this->region->isPath(i - world_settings.getRegionWidth());
-            bool DOWN  = this->region->isPath(i + world_settings.getRegionWidth());
+            bool TOP   = this->region->isPath(i - game_settings.getRegionWidth());
+            bool DOWN  = this->region->isPath(i + game_settings.getRegionWidth());
             
             directions(LEFT, RIGHT, TOP, DOWN, i);
         }
     }
+    */
 }
 
 void Regionmap::createUI() {
@@ -816,76 +816,76 @@ void Regionmap::createUI() {
 }
 
 void Regionmap::updateScheduler() {    
-    if(world_settings.astarEnabled()) {
-        auto& update_population_path = this->scheduler.at("update_path");
-        if(update_population_path.first != update_population_path.second)
-            update_population_path.first++;
+    // if(game_settings.astarEnabled()) {
+    //     auto& update_population_path = this->scheduler.at("update_path");
+    //     if(update_population_path.first != update_population_path.second)
+    //         update_population_path.first++;
 
-        if(update_population_path.first == update_population_path.second) {
-            for(auto& unit : this->region->population) {
-                if(!unit.hasPath()) {
-                    auto random_index = rand() % world_settings.getRegionSize();
-                    auto found = false;
-                    while(!found) {
-                        random_index = rand() % world_settings.getRegionSize();
-                        if(this->region->map[random_index].tiletype.is_terrain() && !this->region->isTree(random_index) && !this->region->getBuildingAt(region_index)) {
-                            found = true;
-                            break;
-                        }
-                    } 
+    //     if(update_population_path.first == update_population_path.second) {
+    //         for(auto& unit : this->region->population) {
+    //             if(!unit.hasPath()) {
+    //                 auto random_index = rand() % game_settings.getRegionSize();
+    //                 auto found = false;
+    //                 while(!found) {
+    //                     random_index = rand() % game_settings.getRegionSize();
+    //                     if(this->region->map[random_index].tiletype.is_terrain() && !this->region->isTree(random_index) && !this->region->getBuildingAt(region_index)) {
+    //                         found = true;
+    //                         break;
+    //                     }
+    //                 } 
 
-                    auto path = this->manager->r_astar(unit.current_index, random_index);
-                    unit.setNewPath(path);
+    //                 auto path = this->manager->r_astar(unit.current_index, random_index);
+    //                 unit.setNewPath(path);
                     
-                    this->recalculate_mesh = true;
-                }
-            }
+    //                 this->recalculate_mesh = true;
+    //             }
+    //         }
 
-            update_population_path.first = 0;
-        }
+    //         update_population_path.first = 0;
+    //     }
 
-        auto& update_population_movement = this->scheduler.at("update_movement");
-        if(update_population_movement.first != update_population_movement.second)
-            update_population_movement.first++;
+    //     auto& update_population_movement = this->scheduler.at("update_movement");
+    //     if(update_population_movement.first != update_population_movement.second)
+    //         update_population_movement.first++;
         
-        if(update_population_movement.first == update_population_movement.second) {
-            for(auto& unit : this->region->population) {
-                if(unit.hasPath()) {
-                    auto current = unit.current_index;
-                    auto next    = unit.getNextMove();
+    //     if(update_population_movement.first == update_population_movement.second) {
+    //         for(auto& unit : this->region->population) {
+    //             if(unit.hasPath()) {
+    //                 auto current = unit.current_index;
+    //                 auto next    = unit.getNextMove();
                 
-                    const auto& tile  = this->region->map[next];
-                    auto new_position = tile.getPosition();
+    //                 const auto& tile  = this->region->map[next];
+    //                 auto new_position = tile.getPosition();
 
-                    unit.object_position = new_position + sf::Vector3f(0, -(unit.object_size.y - world_settings.tileSize().y), 0);
-                    unit.current_index   = next;
+    //                 unit.object_position = new_position + sf::Vector3f(0, -(unit.object_size.y - game_settings.tileSize().y), 0);
+    //                 unit.current_index   = next;
 
-                    // Assign texture.
+    //                 // Assign texture.
                     
-                    std::string texture_base = tile.tiletype.is_river()
-                        ? "unit_transport_arrow"
-                        : "unit_classic_arrow";
+    //                 std::string texture_base = tile.tiletype.is_river()
+    //                     ? "unit_transport_arrow"
+    //                     : "unit_classic_arrow";
 
-                    auto index_difference = next - current;
+    //                 auto index_difference = next - current;
                     
-                    if(index_difference == 1)
-                        unit.object_texture_name = texture_base + "_br";
+    //                 if(index_difference == 1)
+    //                     unit.object_texture_name = texture_base + "_br";
 
-                    else if(index_difference == -1)
-                        unit.object_texture_name = texture_base + "_tl";
+    //                 else if(index_difference == -1)
+    //                     unit.object_texture_name = texture_base + "_tl";
 
-                    else if(index_difference == world_settings.getRegionWidth())
-                        unit.object_texture_name = texture_base + "_bl";
+    //                 else if(index_difference == game_settings.getRegionWidth())
+    //                     unit.object_texture_name = texture_base + "_bl";
 
-                    else if(index_difference == -world_settings.getRegionWidth())
-                        unit.object_texture_name = texture_base + "_tr";
-                }
-            }
+    //                 else if(index_difference == -game_settings.getRegionWidth())
+    //                     unit.object_texture_name = texture_base + "_tr";
+    //             }
+    //         }
             
-            this->recalculate_tree_mesh = true;
-            update_population_movement.first = 0;
-        }
-    }
+    //         this->recalculate_tree_mesh = true;
+    //         update_population_movement.first = 0;
+    //     }
+    // }
 }
 
 void Regionmap::gamestateLoad() {
@@ -910,38 +910,38 @@ void Regionmap::gamestateLoad() {
     this->manager->window.getWindow()->setView(this->view_game);
 
     // Tile index on which you centre the camera.
-    auto tile_index = world_settings.calculateRegionIndex(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2);
+    auto tile_index = game_settings.calculateRegionIndex(game_settings.getRegionWidth() / 2, game_settings.getRegionWidth() / 2);
 
     // Here you can setup what to do when entering a region.
     // For example, centre the camera.
     sf::Vector2f first_tile_position = sf::Vector2f(
-        this->region->map[tile_index].getPosition().x + world_settings.tileSize().x / 2,
+        this->region->map[tile_index].getPosition().x + game_settings.tileSize().x / 2,
         this->region->map[tile_index].getPosition().y
     );
 
-    if(this->region->isOwned() && this->region->getPopulation() == 0) {
-        this->region->population.resize(world_settings.getRegionInitialPopulation());
+    // if(this->region->isOwned() && this->region->getPopulation() == 0) {
+    //     this->region->population.resize(game_settings.getRegionInitialPopulation());
 
-        std::vector <int> buffer;
-        std::vector <std::string> directions = { "_tl", "_tr", "_bl", "_br" };
-        for(int i = 0; i < world_settings.getRegionInitialPopulation(); i++) {
-            auto& pop = this->region->population[i];
-            auto  free_spot = this->region->findNotOccupiedTile(buffer);
-            pop.current_index = free_spot;
+    //     std::vector <int> buffer;
+    //     std::vector <std::string> directions = { "_tl", "_tr", "_bl", "_br" };
+    //     for(int i = 0; i < game_settings.getRegionInitialPopulation(); i++) {
+    //         auto& pop = this->region->population[i];
+    //         auto  free_spot = this->region->findNotOccupiedTile(buffer);
+    //         pop.current_index = free_spot;
 
-            const auto& tile = this->region->map[free_spot];
-            const auto tile_position = tile.getPosition();
-            std::string base_texture = tile.tiletype.is_river() 
-                ? "unit_transport_arrow"
-                : "unit_classic_arrow";
+    //         const auto& tile = this->region->map[free_spot];
+    //         const auto tile_position = tile.getPosition();
+    //         std::string base_texture = tile.tiletype.is_river() 
+    //             ? "unit_transport_arrow"
+    //             : "unit_classic_arrow";
 
-            pop.object_size         = sf::Vector2f(64, 96);
-            pop.object_position     = tile_position + sf::Vector3f(0, -(pop.object_size.y - world_settings.tileSize().y), 0);
-            pop.object_texture_name = base_texture + directions[rand() % directions.size()];
+    //         pop.object_size         = sf::Vector2f(64, 96);
+    //         pop.object_position     = tile_position + sf::Vector3f(0, -(pop.object_size.y - game_settings.tileSize().y), 0);
+    //         pop.object_texture_name = base_texture + directions[rand() % directions.size()];
 
-            buffer.push_back(free_spot);
-        }
-    }
+    //         buffer.push_back(free_spot);
+    //     }
+    // }
 
     this->view_game.setCenter(first_tile_position);
     
@@ -965,30 +965,31 @@ void Regionmap::recalculateMesh() {
 void Regionmap::renderSelectedBuilding() {
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
     auto  building      = building_menu->getBuilding();
-    
-    if(*building != BUILDING_EMPTY && building_menu->isVisible()) {
+    if(building != BUILDING_EMPTY && building_menu->isVisible()) {
         auto tile = this->region->map[this->current_index];
 
-        auto building_size = building.get()->getBuildingArea();
+        auto building_size = building.getBuildingArea();
         auto grid_position = tileGridPosition(this->current_index);
         
         for(int y = grid_position.y; y < grid_position.y + building_size.y; y++) {
             for(int x = grid_position.x; x < grid_position.x + building_size.x; x++) {
                 auto grid = sf::Vector2i(x, y);
-
-                if(!world_settings.inRegionBounds(grid)) 
+                if(!game_settings.inRegionBounds(grid)) 
                     return;
             }
         }
         
-        building.get()->object_position = tile.getPosition();
+        building.object_position = tile.getPosition();
         
         const int a1_w = 0; 
-        const int a1_h = world_settings.tileSize().y; 
-        const int r_w  = world_settings.tileSize().x / 2;
-        const int r_h  = world_settings.tileSize().y;    
-        const int n    = building.get()->getBuildingArea().x;                    
+        const int a1_h = game_settings.tileSize().y; 
+        const int r_w  = game_settings.tileSize().x / 2;
+        const int r_h  = game_settings.tileSize().y;    
         
+        // This takes only one dimension into account because this engine currently
+        // does not support non-square buildings.
+        const int n = building.getBuildingArea().x;                    
+
         // Here you adjust the origin of buildings with sizes of n > 0.
         // Texture size scale are arithmetic series.
         auto offset = sf::Vector2f(0, 0);  
@@ -1001,14 +1002,13 @@ void Regionmap::renderSelectedBuilding() {
 
         // First draw the border of the building.
         // Afterwards, draw the building highlight itself.
-
         // Border.
 
         sf::VertexArray building_surround_highlight(sf::Lines, 8);
         
-        auto building_area = building.get()->getBuildingArea().x;
-        auto tile_size     = world_settings.tileSize(); 
-        auto br            = building.get()->getPosition2D() + offset + sf::Vector2f(building.get()->getSize().x, building.get()->getSize().y); ;
+        auto building_area = building.getBuildingArea().x;
+        auto tile_size     = game_settings.tileSize(); 
+        auto br            = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); ;
         auto br_corrected  = br + sf::Vector2f(-building_area / 2 * tile_size.x, 0);
 
         building_surround_highlight[0].position = br_corrected + sf::Vector2f(0, -building_area * tile_size.y);
@@ -1035,17 +1035,17 @@ void Regionmap::renderSelectedBuilding() {
 
         sf::VertexArray building_highlight(sf::Quads, 4);
 
-        building_highlight[0].position = building.get()->getPosition2D() + offset;
-        building_highlight[1].position = building.get()->getPosition2D() + offset + sf::Vector2f(building.get()->getSize().x, 0);
-        building_highlight[2].position = building.get()->getPosition2D() + offset + sf::Vector2f(building.get()->getSize().x, building.get()->getSize().y); 
-        building_highlight[3].position = building.get()->getPosition2D() + offset + sf::Vector2f(0, building.get()->getSize().y);
+        building_highlight[0].position = building.getPosition2D() + offset;
+        building_highlight[1].position = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, 0);
+        building_highlight[2].position = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); 
+        building_highlight[3].position = building.getPosition2D() + offset + sf::Vector2f(0, building.getSize().y);
 
         building_highlight[0].texCoords = sf::Vector2f(0, 0);
-        building_highlight[1].texCoords = sf::Vector2f(building.get()->getSize().x, 0); 
-        building_highlight[2].texCoords = sf::Vector2f(building.get()->getSize().x, building.get()->getSize().y); 
-        building_highlight[3].texCoords = sf::Vector2f(0, building.get()->getSize().y);
+        building_highlight[1].texCoords = sf::Vector2f(building.getSize().x, 0); 
+        building_highlight[2].texCoords = sf::Vector2f(building.getSize().x, building.getSize().y); 
+        building_highlight[3].texCoords = sf::Vector2f(0, building.getSize().y);
 
-        auto invalid_position = !this->region->isPositionValid(*building, grid_position); 
+        auto invalid_position = !this->region->isBuildingPositionValid(building, grid_position); 
         if(invalid_position) {
             building_highlight[0].color = COLOUR_RED;
             building_highlight[1].color = COLOUR_RED;
@@ -1053,28 +1053,27 @@ void Regionmap::renderSelectedBuilding() {
             building_highlight[3].color = COLOUR_RED;
         }
 
-        const auto texture = building.get()->getTextureName();
+        const auto texture = building.getTextureName();
         
         sf::RenderStates states;
         states.texture = &this->manager->resource.getTexture(texture);
         this->manager->window.draw(building_highlight, states);
 
-        const int area_x = building.get()->getProductionArea().x;
-        const int area_y = building.get()->getProductionArea().y;
+        const int area_x = building.getBuildingScanArea().x;
+        const int area_y = building.getBuildingScanArea().y;
         
         if(area_x > 1 && area_y > 1) {
             int vertex_index = 0; 
-            const size_t vertex_count = 4 * (2 * building.get()->getProductionArea().x + building_area) * (2 * building.get()->getProductionArea().y + building_area);
+            const size_t vertex_count = 4 * (2 * building.getBuildingScanArea().x + building_area) * (2 * building.getBuildingScanArea().y + building_area);
             sf::Vertex vertex[vertex_count];
             for(int y = -area_y; y <= area_y + building_area - 1; y++) {
                 for(int x = -area_x; x <= area_x + building_area - 1; x++) {
-                    const int index = this->current_index + world_settings.calculateRegionIndex(x, y);
+                    const int index = this->current_index + game_settings.calculateRegionIndex(x, y);
 
-                    if(!world_settings.inRegionBounds(index))
+                    if(!game_settings.inRegionBounds(index))
                         continue;
 
                     auto& tile = this->region->map[index];
-                    auto* building_on_tile = this->region->getBuildingAt(index);
                     auto tile_position = tile.getPosition2D();
                     auto tile_size     = tile.getSize();
 
@@ -1091,7 +1090,7 @@ void Regionmap::renderSelectedBuilding() {
                     quad[3].texCoords = sf::Vector2f(0, tile_size.y);
 
                     auto colour = COLOUR_WHITE_TRANSPARENT90PERCENT;
-                    if(building.get()->isBuildingResourceTile(region, index))
+                    if(building.isTileHarvestable(this->region, index))
                         colour = COLOUR_GREEN_TRANSPARENT90PERCENT;
 
                     else if(region->isSpotOccupied(index))

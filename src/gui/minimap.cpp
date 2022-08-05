@@ -41,21 +41,21 @@ void WidgetMinimap::updateUI() {
         auto* current_region = regionmap->getCurrentRegion();
 
         auto image_size = this->minimap_image.getSize();
-        const int scale_difference = image_size.x / world_settings.getRegionWidth(); 
+        const int scale_difference = image_size.x / game_settings.getRegionWidth(); 
 
         for(int y = 0; y < image_size.y; y++) {
             for(int x = 0; x < image_size.x; x++) {
                 const int scaled_x = x / scale_difference;
                 const int scaled_y = y / scale_difference;
                 
-                const int index  = world_settings.calculateRegionIndex(scaled_x, scaled_y);
+                const int index  = game_settings.calculateRegionIndex(scaled_x, scaled_y);
                 const auto& tile = current_region->map[index]; 
 
                 // Set pixel colours.
                 if(tile.tiletype.is_water())
                     this->minimap_image.setPixel(x, y, COLOUR_BLUE);
                 
-                else if(current_region->isTree(index))
+                else if(current_region->treeExistsAt(index))
                     this->minimap_image.setPixel(x, y, COLOUR_GREEN);
 
                 else if(tile.getTextureName() == "tile_resource_flint")

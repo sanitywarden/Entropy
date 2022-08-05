@@ -58,14 +58,14 @@ void DebugPerformance::updateUI() {
         auto* worldmap = static_cast<Worldmap*>(gamestate);
         
         sf::Vector2i tile_grid = sf::Vector2i(
-            worldmap->mouse_position_window.x / world_settings.panelSize(),
-            worldmap->mouse_position_window.y / world_settings.panelSize()
+            worldmap->mouse_position_window.x / game_settings.panelSize(),
+            worldmap->mouse_position_window.y / game_settings.panelSize()
         );
         
         int selected_index = worldmap->getSelectedIndex(); 
         int current_index  = -1;
-        if(world_settings.inWorldBounds(tile_grid)) {
-            current_index = world_settings.calculateWorldIndex(tile_grid.x, tile_grid.y);
+        if(game_settings.inWorldBounds(tile_grid)) {
+            current_index = game_settings.calculateWorldIndex(tile_grid.x, tile_grid.y);
 
             data += "Current index:  " + std::to_string(current_index)  + "\n";
             data += "Terrain: "        + std::to_string(this->manager->world.world_map[current_index].regiontype.is_terrain()) + "\n";
@@ -92,11 +92,10 @@ void DebugPerformance::updateUI() {
 
         data += "Current index: "        + std::to_string(current_index)                        + "\n";
         data += "Selected: "             + std::to_string(grid_position.x) + " " + std::to_string(grid_position.y) + "\n";
-        data += "Selected building: "    + selected_building.get()->getBuildingName() + "\n";
+        data += "Selected building: "    + selected_building.getBuildingName() + "\n";
 
         data += "Tree quantity: "        + std::to_string(region->trees.size())     + "\n";
         data += "Building quantity: "    + std::to_string(region->buildings.size()) + "\n";
-        data += "Population quantitiy: " + std::to_string(region->getPopulation())  + "\n";
         
         data += "Tile elevation: "       + std::to_string(region->map[current_index].getElevation()) + "\n";
         data += "Tile position: "        + std::to_string((int)current_tile.getPosition().x) + " " + std::to_string((int)current_tile.getPosition().y) + " " + std::to_string((int)current_tile.getPosition().z) + "\n";

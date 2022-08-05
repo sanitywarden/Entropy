@@ -6,6 +6,7 @@
 #include "worldGenerator.hpp"
 #include "texturizer.hpp"
 #include "noiseSettings.hpp"
+#include "luadriver.hpp"
 
 #include <SFML/System.hpp>
 #include <vector>
@@ -38,7 +39,7 @@ namespace iso {
             void updateUnits();
             void updatePopulation();
             void updateRandomEvent();
-            void updateQuest();
+            // void updateQuest();
         private:
             int draw_calls;
             int people_dehydrated;   // Number of people with water needs not satisfied.
@@ -50,7 +51,6 @@ namespace iso {
 
             Scheduler global_updates;
             Scheduler simulation_updates;
-
 
         public:
             Texturizer texturizer;
@@ -78,18 +78,18 @@ namespace iso {
 
             // Search for the requested unit in all players' armies.
             // If not found return nullptr.
-            Unit* getUnit(int unit_id);
+            // Unit* getUnit(int unit_id);
             
             // Creates a unit of certain type.
             // The unit will be created if the specified region is able to support more units.
             // The created unit has all required properties of the class.
-            std::shared_ptr <Unit> createUnit(UnitType unit_type, int region_index, Player* owner) const;
+            // std::shared_ptr <Unit> createUnit(UnitType unit_type, int region_index, Player* owner) const;
             
             // Deletes all existing data about the unit.
             // Removes the unit pointer in the region (as the unit no longer stands there).
             // Removes the unit from the player's army (from the vector of units in iso::Player class).
             // Sets the selected_unit_id in iso::Worldmap to -1.
-            void deleteUnit(int unit_id); 
+            // void deleteUnit(int unit_id); 
 
             bool regionCanBeColonised(int region_index) const;
 

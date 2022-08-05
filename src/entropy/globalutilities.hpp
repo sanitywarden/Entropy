@@ -22,8 +22,7 @@ namespace iso {
     std::string capitalise(const std::string& str);
     sf::Vector2i tileGridPosition(const sf::Texture& texture, sf::Vector2f tile_position);
     sf::Vector2i tileGridPosition(int index);    
-    std::string getTilePixelColour(const sf::Texture& texture, sf::Vector2i pixel);
-
+    std::string getTilePixelColour(const sf::Texture& texture, sf::Vector2i pixel); 
 }
 
 #endif

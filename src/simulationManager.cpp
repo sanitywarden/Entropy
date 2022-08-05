@@ -12,7 +12,9 @@
 
 using namespace iso;
 
-SimulationManager::SimulationManager() {
+SimulationManager::SimulationManager() 
+    : Entropy(lua_driver.getApplicationSettings())
+{
     this->initialise();
     this->texturizer = Texturizer(&this->resource);
 
@@ -28,7 +30,7 @@ SimulationManager::SimulationManager() {
     this->world = WorldGenerator(&this->resource, &this->texturizer);
     this->prepare();
 
-    this->simulation_speed = world_settings.simulationSpeed();
+    this->simulation_speed = game_settings.simulationSpeed();
 
     // Global updates.
 
@@ -40,7 +42,7 @@ SimulationManager::SimulationManager() {
     this->simulation_updates.insert({ "update_buildings",        std::pair(0, seconds_per_hour) }); // Update buildings in every region.
     this->simulation_updates.insert({ "update_population_needs", std::pair(0, seconds_per_day)  }); // Distribute resources to pops.
     this->simulation_updates.insert({ "event_timer",             std::pair(0, seconds_per_week) }); // Every week there should be a chance of a random event occuring.
-    this->simulation_updates.insert({ "update_quests",           std::pair(0, seconds_per_hour) }); // Update quests.
+    // this->simulation_updates.insert({ "update_quests",           std::pair(0, seconds_per_hour) }); // Update quests.
 }
 
 SimulationManager::~SimulationManager() 
@@ -127,7 +129,7 @@ void SimulationManager::internalLoop(float delta_time) {
 
 void SimulationManager::prepare() {
     this->initialise();
-    this->world.world_map = std::vector <Region> (world_settings.getWorldSize());
+    this->world.world_map = std::vector <Region> (game_settings.getWorldSize());
     this->world.forests   = std::map <int, GameObject> ();
     this->world.rivers    = std::map <int, GameObject> ();
     this->world.lakes     = std::map <int, GameObject> ();
@@ -168,14 +170,14 @@ void SimulationManager::updateShedulerSimulation() {
     }
 
     // Update quests.
-    auto& update_quests = this->simulation_updates.at("update_quests");
-    if(update_quests.first != update_quests.second)
-        update_quests.first++;
+    // auto& update_quests = this->simulation_updates.at("update_quests");
+    // if(update_quests.first != update_quests.second)
+    //     update_quests.first++;
 
-    if(update_quests.first == update_quests.second) {
-        this->updateQuest();
-        update_quests.first = 0;
-    }
+    // if(update_quests.first == update_quests.second) {
+    //     this->updateQuest();
+    //     update_quests.first = 0;
+    // }
 }
 
 void SimulationManager::updateSchedulerGlobal() {
@@ -217,6 +219,7 @@ void SimulationManager::updateBuildings() {
     for(int world_index = 0; world_index < this->world.world_map.size(); world_index++) {
         auto& region = this->world.world_map[world_index];
 
+        /*
         if(region.buildings.size()) {
             for(auto& pair : region.buildings) {
                 int   building_index = pair.first;        // Index of the tile on which a building stands.
@@ -225,145 +228,146 @@ void SimulationManager::updateBuildings() {
                 building->update(&region, building_index);
             }
         }
+        */
     }
 }
 
 void SimulationManager::updateUnits() {
-    for(auto& player : this->players) {
-        for(auto& unit : player.units) {
-            if(unit.get()->hasPath()) {
-                auto current   = unit.get()->current_index;
-                auto next_move = unit.get()->getNextMove();
+    // for(auto& player : this->players) {
+    //     for(auto& unit : player.units) {
+    //         if(unit.get()->hasPath()) {
+    //             auto current   = unit.get()->current_index;
+    //             auto next_move = unit.get()->getNextMove();
                 
-                const auto& region = this->world.world_map[next_move];
-                unit.get()->object_position = region.getPosition();
+    //             const auto& region = this->world.world_map[next_move];
+    //             unit.get()->object_position = region.getPosition();
 
-                // TODO: This line will be a problem, because 2 units can not stand on the same tile,
-                // but currently there is nothing that makes it impossible for two units to cross each other's paths. 
-                this->world.world_map[next_move].unit = unit.get();
-                this->world.world_map[current].unit   = nullptr;
+    //             // TODO: This line will be a problem, because 2 units can not stand on the same tile,
+    //             // but currently there is nothing that makes it impossible for two units to cross each other's paths. 
+    //             this->world.world_map[next_move].unit = unit.get();
+    //             this->world.world_map[current].unit   = nullptr;
     
-                unit.get()->current_index = next_move;
+    //             unit.get()->current_index = next_move;
 
-                for(int y = -1; y <= 1; y++) {
-                    for(int x = -1; x <= 1; x++) {
-                        const int index = next_move + world_settings.calculateWorldIndex(x, y);
+    //             for(int y = -1; y <= 1; y++) {
+    //                 for(int x = -1; x <= 1; x++) {
+    //                     const int index = next_move + game_settings.calculateWorldIndex(x, y);
 
-                        if(!player.discoveredRegion(index)) 
-                            player.discovered_regions.push_back(index);
-                    }
-                }
-            }
-        }
-    }
+    //                     if(!player.discoveredRegion(index)) 
+    //                         player.discovered_regions.push_back(index);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 void SimulationManager::updatePopulation() {
-    for(auto& region : this->world.world_map) {
-        if(region.getPopulation() && region.visited && world_settings.populationNeedsEnabled()) {
-            // Calculate people with their needs not fullfilled currently.
+    // for(auto& region : this->world.world_map) {
+    //     if(region.getPopulation() && region.visited && game_settings.populationNeedsEnabled()) {
+    //         // Calculate people with their needs not fullfilled currently.
 
-            const auto water_quantity      = region.getDrinkableLiquidQuantity();
-            const auto pop_needs_met_water = water_quantity / water_consumed_per_pop;
-            const auto water_needed        = region.getPopulation() * water_consumed_per_pop;
-            const auto dehydrated_people   = region.getPopulation() - pop_needs_met_water <= 0
-                ? 0
-                : region.getPopulation() - pop_needs_met_water;
+    //         const auto water_quantity      = region.getDrinkableLiquidQuantity();
+    //         const auto pop_needs_met_water = water_quantity / water_consumed_per_pop;
+    //         const auto water_needed        = region.getPopulation() * water_consumed_per_pop;
+    //         const auto dehydrated_people   = region.getPopulation() - pop_needs_met_water <= 0
+    //             ? 0
+    //             : region.getPopulation() - pop_needs_met_water;
             
-            const auto food_quantity       = region.getFoodQuantity();
-            const auto pop_needs_met_food  = food_quantity / food_consumed_per_pop;
-            const auto food_needed         = region.getPopulation() * food_consumed_per_pop;
-            const auto malnourished_people = region.getPopulation() - pop_needs_met_food <= 0
-                ? 0
-                : region.getPopulation() - pop_needs_met_food; 
+    //         const auto food_quantity       = region.getFoodQuantity();
+    //         const auto pop_needs_met_food  = food_quantity / food_consumed_per_pop;
+    //         const auto food_needed         = region.getPopulation() * food_consumed_per_pop;
+    //         const auto malnourished_people = region.getPopulation() - pop_needs_met_food <= 0
+    //             ? 0
+    //             : region.getPopulation() - pop_needs_met_food; 
 
 
-            // Calculate the number of dead people, including people with their needs not fullfilled from previous updates.
-            // Select the smaller number.
-            const auto dead_from_dehydration = this->people_dehydrated > dehydrated_people
-                ? dehydrated_people
-                : this->people_dehydrated;
+    //         // Calculate the number of dead people, including people with their needs not fullfilled from previous updates.
+    //         // Select the smaller number.
+    //         const auto dead_from_dehydration = this->people_dehydrated > dehydrated_people
+    //             ? dehydrated_people
+    //             : this->people_dehydrated;
 
-            // Select the smaller number.
-            const auto dead_from_malnutrition = this->people_malnourished > malnourished_people
-                ? malnourished_people
-                : this->people_malnourished;
+    //         // Select the smaller number.
+    //         const auto dead_from_malnutrition = this->people_malnourished > malnourished_people
+    //             ? malnourished_people
+    //             : this->people_malnourished;
 
-            const auto dead_average = (dead_from_dehydration + dead_from_malnutrition) / 2;
-            auto survive = region.getPopulation() - dead_average; 
+    //         const auto dead_average = (dead_from_dehydration + dead_from_malnutrition) / 2;
+    //         auto survive = region.getPopulation() - dead_average; 
 
-            if(this->debugModeEnabled()) {
-                std::cout << "=======[DEBUG]=======\n";
-                std::cout << "[] Water needs met: " << pop_needs_met_water << " / " << region.getPopulation() << " people.\n";
-                std::cout << "[] Food needs met:  " << pop_needs_met_food  << " / " << region.getPopulation() << " people.\n";
-                std::cout << "[] Dehydrated currently:   " << dehydrated_people   << " | Dehydrated last time:   " << this->people_dehydrated   << "\n";
-                std::cout << "[] Malnourished currently: " << malnourished_people << " | Malnourished last time: " << this->people_malnourished << "\n";
-                std::cout << "[] Dead:    " << dead_average << "\n";
-                std::cout << "[] Survive: " << survive      << "\n";
-            }
+    //         if(this->debugModeEnabled()) {
+    //             std::cout << "=======[DEBUG]=======\n";
+    //             std::cout << "[] Water needs met: " << pop_needs_met_water << " / " << region.getPopulation() << " people.\n";
+    //             std::cout << "[] Food needs met:  " << pop_needs_met_food  << " / " << region.getPopulation() << " people.\n";
+    //             std::cout << "[] Dehydrated currently:   " << dehydrated_people   << " | Dehydrated last time:   " << this->people_dehydrated   << "\n";
+    //             std::cout << "[] Malnourished currently: " << malnourished_people << " | Malnourished last time: " << this->people_malnourished << "\n";
+    //             std::cout << "[] Dead:    " << dead_average << "\n";
+    //             std::cout << "[] Survive: " << survive      << "\n";
+    //         }
 
-            while(region.getPopulation() != survive) {
-                region.population.resize(region.population.size() - 1);
-            }
+    //         while(region.getPopulation() != survive) {
+    //             region.population.resize(region.population.size() - 1);
+    //         }
 
-            const auto new_dehydrated = dehydrated_people - dead_from_dehydration;
-                this->people_dehydrated = new_dehydrated;
+    //         const auto new_dehydrated = dehydrated_people - dead_from_dehydration;
+    //             this->people_dehydrated = new_dehydrated;
 
-            const auto new_malnourished = malnourished_people - dead_from_malnutrition;
-                this->people_malnourished = new_malnourished;
+    //         const auto new_malnourished = malnourished_people - dead_from_malnutrition;
+    //             this->people_malnourished = new_malnourished;
 
-            for(const auto& item : ITEM_LOOKUP_TABLE) {
-                if(region.checkItemExists(item) && item.item_type == ItemType::TYPE_FOOD) {
-                    // Find the food's share of all food. 
-                    const auto percent_of_all_food = (float)region.getItemQuantity(item) / (float)food_quantity; 
-                    const auto percent_rounded = std::ceil(percent_of_all_food * 100) / 100;
+    //         for(const auto& item : ITEM_LOOKUP_TABLE) {
+    //             if(region.checkItemExists(item) && item.item_type == ItemType::TYPE_FOOD) {
+    //                 // Find the food's share of all food. 
+    //                 const auto percent_of_all_food = (float)region.getItemQuantity(item) / (float)food_quantity; 
+    //                 const auto percent_rounded = std::ceil(percent_of_all_food * 100) / 100;
 
-                    // Calculate the equivalent percentage of this food in the smaller quantity.
-                    const int quantity = percent_rounded * food_needed;                                                     
-                    const auto item_copy = StorageItem(item.item_name, -quantity, item.item_type);                                        
+    //                 // Calculate the equivalent percentage of this food in the smaller quantity.
+    //                 const int quantity = percent_rounded * food_needed;                                                     
+    //                 const auto item_copy = StorageItem(item.item_name, -quantity, item.item_type);                                        
                     
-                    if(this->debugModeEnabled())
-                        std::cout << "[] " << item.item_name << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
+    //                 if(this->debugModeEnabled())
+    //                     std::cout << "[] " << item.item_name << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
                     
-                    region.addItem(item_copy);
-                }
+    //                 region.addItem(item_copy);
+    //             }
 
-                if(region.checkItemExists(item) && item.item_type == ItemType::TYPE_DRINKABLE_LIQUID) {
-                    // Find the liquid's share of all liquids.
-                    const auto percent_of_all_liquids = (float)region.getItemQuantity(item) / (float)water_quantity;
-                    const auto percent_rounded = std::ceil(percent_of_all_liquids * 100) / 100;
+    //             if(region.checkItemExists(item) && item.item_type == ItemType::TYPE_DRINKABLE_LIQUID) {
+    //                 // Find the liquid's share of all liquids.
+    //                 const auto percent_of_all_liquids = (float)region.getItemQuantity(item) / (float)water_quantity;
+    //                 const auto percent_rounded = std::ceil(percent_of_all_liquids * 100) / 100;
                     
-                    // Calculate the equivalent percentage of this liquid in the smaller quantity.
-                    const int quantity = percent_rounded * water_needed;
-                    const auto item_copy = StorageItem(item.item_name, -quantity, item.item_type);
+    //                 // Calculate the equivalent percentage of this liquid in the smaller quantity.
+    //                 const int quantity = percent_rounded * water_needed;
+    //                 const auto item_copy = StorageItem(item.item_name, -quantity, item.item_type);
 
-                    if(this->debugModeEnabled())
-                        std::cout << "[] " << item.item_name << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
+    //                 if(this->debugModeEnabled())
+    //                     std::cout << "[] " << item.item_name << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
 
-                    region.addItem(item_copy);
-                }
-            }
+    //                 region.addItem(item_copy);
+    //             }
+    //         }
 
-            if(this->debugModeEnabled())
-                std::cout << "=======[DEBUG]=======\n";
-        }
-    }
+    //         if(this->debugModeEnabled())
+    //             std::cout << "=======[DEBUG]=======\n";
+    //     }
+    // }
 }
 
 void SimulationManager::updateRandomEvent() {
     
 }
 
-void SimulationManager::updateQuest() {
-    for(const auto& player : this->players) {
-        for(const auto& event : player.current_quests) {
-            if(event.get()->isFinishConditionSatisfied()) {
-                player.finishQuest(event);
-                player.removeQuest(event);
-            }
-        }
-    }
-}
+// void SimulationManager::updateQuest() {
+    // for(const auto& player : this->players) {
+    //     for(const auto& event : player.current_quests) {
+    //         if(event.get()->isFinishConditionSatisfied()) {
+    //             player.finishQuest(event);
+    //             player.removeQuest(event);
+    //         }
+    //     }
+    // }
+// }
 
 struct aNode {
     int x;
@@ -385,20 +389,20 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         auto grid_left  = grid_position + sf::Vector2i(-1, 0);
         auto grid_right = grid_position + sf::Vector2i(1, 0);
 
-        auto index = world_settings.calculateWorldIndex(grid_position.x, grid_position.y);
+        auto index = game_settings.calculateWorldIndex(grid_position.x, grid_position.y);
 
         std::vector <int> neighbours;
-        if(world_settings.inWorldBounds(grid_left))
+        if(game_settings.inWorldBounds(grid_left))
             neighbours.push_back(index - 1);
 
-        if(world_settings.inWorldBounds(grid_right))
+        if(game_settings.inWorldBounds(grid_right))
             neighbours.push_back(index + 1);
 
-        if(world_settings.inWorldBounds(grid_up))
-            neighbours.push_back(index - world_settings.getWorldWidth());
+        if(game_settings.inWorldBounds(grid_up))
+            neighbours.push_back(index - game_settings.getWorldWidth());
 
-        if(world_settings.inWorldBounds(grid_down))
-            neighbours.push_back(index + world_settings.getWorldWidth());
+        if(game_settings.inWorldBounds(grid_down))
+            neighbours.push_back(index + game_settings.getWorldWidth());
 
         return neighbours;
     };
@@ -407,24 +411,16 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         const auto& region = this->world.world_map[index];
         if(region.regiontype.is_ocean())
             return false;
-
-        auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestate());
-        auto* unit     = this->getUnit(worldmap->selected_unit_id);
-        if(unit && region.unit) {
-            if(*unit != *region.unit)
-                return false;
-        }
-
         return true;
     };
 
-    std::vector <aNode> nodes(world_settings.getWorldSize());
+    std::vector <aNode> nodes(game_settings.getWorldSize());
     
     
 
-    for(int y = 0; y < world_settings.getWorldWidth(); y++) {
-        for(int x = 0; x < world_settings.getWorldWidth(); x++) {
-            const int index = world_settings.calculateWorldIndex(x, y);
+    for(int y = 0; y < game_settings.getWorldWidth(); y++) {
+        for(int x = 0; x < game_settings.getWorldWidth(); x++) {
+            const int index = game_settings.calculateWorldIndex(x, y);
             aNode& node = nodes[index];
 
             node.index = index;        
@@ -516,53 +512,53 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
         auto grid_left  = grid_position + sf::Vector2i(-1, 0);
         auto grid_right = grid_position + sf::Vector2i(1, 0);
 
-        auto index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y);
+        auto index = game_settings.calculateRegionIndex(grid_position.x, grid_position.y);
 
         std::vector <int> neighbours;
         
-        if(world_settings.inRegionBounds(grid_left))
-            if(region.isPassableAStar(world_settings.calculateRegionIndex(grid_left.x, grid_right.y)))
+        if(game_settings.inRegionBounds(grid_left))
+            if(region.isPassableRegionmap(game_settings.calculateRegionIndex(grid_left.x, grid_right.y)))
                 neighbours.push_back(index - 1);
 
-        if(world_settings.inRegionBounds(grid_right))
-            if(region.isPassableAStar(world_settings.calculateRegionIndex(grid_right.x, grid_right.y)))
+        if(game_settings.inRegionBounds(grid_right))
+            if(region.isPassableRegionmap(game_settings.calculateRegionIndex(grid_right.x, grid_right.y)))
                 neighbours.push_back(index + 1);
 
-        if(world_settings.inRegionBounds(grid_up))
-            if(region.isPassableAStar(world_settings.calculateRegionIndex(grid_up.x, grid_up.y)))
-                neighbours.push_back(index - world_settings.getRegionWidth());
+        if(game_settings.inRegionBounds(grid_up))
+            if(region.isPassableRegionmap(game_settings.calculateRegionIndex(grid_up.x, grid_up.y)))
+                neighbours.push_back(index - game_settings.getRegionWidth());
 
-        if(world_settings.inRegionBounds(grid_down))
-            if(region.isPassableAStar(world_settings.calculateRegionIndex(grid_down.x, grid_down.y)))
-                neighbours.push_back(index + world_settings.getRegionWidth());
+        if(game_settings.inRegionBounds(grid_down))
+            if(region.isPassableRegionmap(game_settings.calculateRegionIndex(grid_down.x, grid_down.y)))
+                neighbours.push_back(index + game_settings.getRegionWidth());
 
         return neighbours;
     };
     
-    std::vector <aNode> nodes(world_settings.getRegionSize());
+    std::vector <aNode> nodes(game_settings.getRegionSize());
     auto& node_start = nodes[start];
     auto& node_end   = nodes[end];
 
     node_start.index = start;
-    node_start.passable = region.isPassableAStar(start);
+    node_start.passable = region.isPassableRegionmap(start);
 
     node_end.index = end;
-    node_end.passable = region.isPassableAStar(end);
+    node_end.passable = region.isPassableRegionmap(end);
 
     if(!node_end.passable) {
         std::cout << "[DEBUG][A*]: End node is unpassable.\n";
         return std::vector<int> ();
     }
 
-    for(int y = 0; y < world_settings.getRegionWidth(); y++) {
-        for(int x = 0; x < world_settings.getRegionWidth(); x++) {
-            const int index = world_settings.calculateRegionIndex(x, y);
+    for(int y = 0; y < game_settings.getRegionWidth(); y++) {
+        for(int x = 0; x < game_settings.getRegionWidth(); x++) {
+            const int index = game_settings.calculateRegionIndex(x, y);
             aNode& node = nodes[index];
 
             node.index = index;        
             node.x = x;
             node.y = y;
-            node.passable = region.isPassableAStar(index); 
+            node.passable = region.isPassableRegionmap(index); 
             node.h_cost = H(node, node_end);
             node.g_cost = G(node_start, node);
         }
@@ -583,7 +579,7 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
         if(region.map[current.index].tiletype.is_river())
             return 3;
     
-        if(region.isTree(current.index))
+        if(region.treeExistsAt(current.index))
             return 5;
 
         return 1;
@@ -781,23 +777,23 @@ bool SimulationManager::isHumanPlayer(int player_id) const {
     return this->getHumanPlayer()->getID() == player_id;
 }
 
-Unit* SimulationManager::getUnit(int unit_id) {
-    for(Player& player : this->players) {
-        for(auto& unit_sp : player.units) {
-            auto* unit = unit_sp.get();
-            if(unit->getID() == unit_id)
-                return unit;
-        }
-    }
-    return nullptr;
-}
+// Unit* SimulationManager::getUnit(int unit_id) {
+//     for(Player& player : this->players) {
+//         for(auto& unit_sp : player.units) {
+//             auto* unit = unit_sp.get();
+//             if(unit->getID() == unit_id)
+//                 return unit;
+//         }
+//     }
+//     return nullptr;
+// }
 
 void SimulationManager::generateCountries() {
     // Find spots suitable for settling. 
 
     std::vector <int> occupied_regions;
 
-    auto number_of_players = world_settings.getPlayerQuantity();
+    auto number_of_players = game_settings.getPlayerQuantity();
     this->players.resize(number_of_players);
     
     for(int player_id = 0; player_id < number_of_players; player_id++) {
@@ -805,7 +801,7 @@ void SimulationManager::generateCountries() {
         auto settle_spot_index = -1;
 
         while(!settle_spot_found) {
-            auto index = rand() % world_settings.getWorldSize();
+            auto index = rand() % game_settings.getWorldSize();
             const auto& region = this->world.world_map[index];
             
             if(region.regiontype.is_terrain() && std::find(occupied_regions.begin(), occupied_regions.end(), index) == occupied_regions.end()) {
@@ -827,75 +823,78 @@ void SimulationManager::generateCountries() {
         player.setTeamColour(generated_colour_full);
         player.setCountryName(generated_country_name);
 
-        auto unit = this->createUnit(UnitType::UNIT_SETTLER, settle_spot_index, &player); 
-        player.addUnit(unit);
+        // auto unit = this->createUnit(UnitType::UNIT_SETTLER, settle_spot_index, &player); 
+        // if(unit)
+        //     player.addUnit(unit);
 
         for(int y = -2; y <= 2; y++) {
             for(int x = -2; x <= 2; x++) {
-                const int index = settle_spot_index + world_settings.calculateWorldIndex(x, y);
+                const int index = settle_spot_index + game_settings.calculateWorldIndex(x, y);
                 player.discovered_regions.push_back(index);
             }
         }
 
-        region.unit = player.getUnit(unit.get()->getID());
+        // region.unit = player.getUnit(unit.get()->getID());
         
         if(player_id == 0)
             player.is_human = true;
     }
 }
 
-std::shared_ptr <Unit> SimulationManager::createUnit(UnitType unit_type, int region_index, Player* owner) const {
-    const auto& region = this->world.world_map[region_index];
+// std::shared_ptr <Unit> SimulationManager::createUnit(UnitType unit_type, int region_index, Player* owner) const {
+//     return nullptr;
+
+//     const auto& region = this->world.world_map[region_index];
     
-    if(region.isUnitPresent()) {
-        std::cout << "[DEBUG]: Could not spawn unit on region " << region_index << ": Unit is already present.\n";
-        return nullptr;
-    }
+//     // if(region.isUnitPresent()) {
+//     //     std::cout << "[DEBUG]: Could not spawn unit on region " << region_index << ": Unit is already present.\n";
+//     //     return nullptr;
+//     // }
 
-    std::shared_ptr <Unit> unit;
+//     std::shared_ptr <Unit> unit;
 
-    switch(unit_type) {
-        default:
-            return nullptr;
+//     switch(unit_type) {
+//         default:
+//             return nullptr;
 
-        case UnitType::UNIT_SETTLER: {
-            unit = std::shared_ptr <Unit> (new Unit("Settler"));
-            unit.get()->current_index = region_index;
-            unit.get()->object_texture_name = "unit_worldmap_settler";
+//         case UnitType::UNIT_SETTLER: {
+//             unit = std::shared_ptr <Unit> (new Unit("Settler"));
+//             unit.get()->current_index = region_index;
+//             unit.get()->object_texture_name = "unit_worldmap_settler";
             
-            break;
-        }
-    }
+//             break;
+//         }
+//     }
 
-    unit.get()->object_position = region.getPosition();
-    unit.get()->object_size     = region.getSize();
-    unit.get()->owner_id        = owner->getID();
-    unit.get()->type            = unit_type;
+//     unit.get()->object_position = region.getPosition();
+//     unit.get()->object_size     = region.getSize();
+//     unit.get()->owner_id        = owner->getID();
+//     unit.get()->type            = unit_type;
 
-    return unit;
-}
+//     return unit;
+// }
 
-void SimulationManager::deleteUnit(int unit_id) {
-    auto* unit = this->getUnit(unit_id);
-    if(!unit)
-        return;
+// void SimulationManager::deleteUnit(int unit_id) {
+//     auto* unit = this->getUnit(unit_id);
+//     if(!unit)
+//         return;
 
-    if(world_settings.inWorldBounds(unit->current_index)) {
-        auto& region = this->world.world_map[unit->current_index];
-        region.unit = nullptr; 
-    }
+//     if(game_settings.inWorldBounds(unit->current_index)) {
+//         auto& region = this->world.world_map[unit->current_index];
+//         region.unit = nullptr; 
+//     }
     
-    auto* owner = this->getPlayer(unit->owner_id);
-    if(owner)
-        owner->removeUnit(unit_id); 
+//     auto* owner = this->getPlayer(unit->owner_id);
+//     if(owner)
+//         owner->removeUnit(unit_id); 
 
-    auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestateByName("worldmap"));
-    if(worldmap)
-        worldmap->selected_unit_id = -1; 
-}
+//     auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestateByName("worldmap"));
+//     if(worldmap)
+//         worldmap->selected_unit_id = -1; 
+// }
 
 bool SimulationManager::regionCanBeColonised(int region_index) const {
-    if(!world_settings.inWorldBounds(region_index))
+    if(!game_settings.inWorldBounds(region_index))
         return false;
     
     const auto& region = this->world.world_map[region_index];

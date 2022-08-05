@@ -13,9 +13,9 @@ Tile::~Tile() {
 }
 
 void Tile::setElevation(int elevation) {
-    this->object_position.z = -elevation * world_settings.tileSize().y / 2;
+    this->object_position.z = -elevation * game_settings.tileSize().y / 2;
 }
 
 int Tile::getElevation() const {
-    return -this->object_position.z / (world_settings.tileSize().y / 2);
+    return -this->object_position.z / (game_settings.tileSize().y / 2);
 }

@@ -81,33 +81,34 @@ void Tooltip::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 }
 
 bool Tooltip::intersectsSupportedUI() const {
-    auto* gamestate = this->manager->gamestate.getGamestate();
-    auto* widget_text = static_cast<Label*>(this->getComponent("tooltip_text"));
-        widget_text->setString("");
+    // auto* gamestate = this->manager->gamestate.getGamestate();
+    // auto* widget_text = static_cast<Label*>(this->getComponent("tooltip_text"));
+    //     widget_text->setString("");
 
-    // This is a dirty solution to the problem.
+    // // This is a dirty solution to the problem.
 
-    if(gamestate->state_id == "Worldmap") {
-        auto* worldmap = static_cast<Worldmap*>(gamestate);    
-    }
+    // if(gamestate->state_id == "Worldmap") {
+    //     auto* worldmap = static_cast<Worldmap*>(gamestate);    
+    // }
 
-    if(gamestate->state_id == "Regionmap") {
-        auto* regionmap = static_cast<Regionmap*>(gamestate);
+    // if(gamestate->state_id == "Regionmap") {
+    //     auto* regionmap = static_cast<Regionmap*>(gamestate);
 
-        // Show the tooltip when hovering over images in the regionmap building menu interface.
-        if(regionmap->mouseIntersectsUI("component_widget_menu_building") && regionmap->isComponentVisible("component_widget_menu_building")) {
-            auto* building_menu = static_cast<WidgetMenuBuilding*>(regionmap->getInterfaceComponent("component_widget_menu_building"));
+    //     // Show the tooltip when hovering over images in the regionmap building menu interface.
+    //     if(regionmap->mouseIntersectsUI("component_widget_menu_building") && regionmap->isComponentVisible("component_widget_menu_building")) {
+            // auto* building_menu = static_cast<WidgetMenuBuilding*>(regionmap->getInterfaceComponent("component_widget_menu_building"));
 
-            for(const auto& pair : building_menu->interface) {
-                auto id        = pair.first;
-                auto component = pair.second.get();
+            // for(const auto& pair : building_menu->interface) {
+            //     auto id        = pair.first;
+            //     auto component = pair.second.get();
 
-                if(startsWith(id, "imageholder")) {
-                    if(component->containsPoint(regionmap->mouse_position_interface)) {
-                        auto building_texture = readAfter(id, "imageholder_");
+            //     if(startsWith(id, "imageholder")) {
+            //         if(component->containsPoint(regionmap->mouse_position_interface)) {
+            //             auto building_texture = readAfter(id, "imageholder_");
 
                         // Empty building.
 
+                        /*
                         auto building = BUILDING_LOOKUP_TABLE[0];
                         for(auto building_sp : BUILDING_LOOKUP_TABLE) {
                             if(building_sp.get()->getTextureName() == building_texture) {
@@ -129,51 +130,51 @@ bool Tooltip::intersectsSupportedUI() const {
 
                         widget_text->setString(data);
                         return true;
-                    }
-                }
-            }
-        }
+                        */
+            //         }
+            //     }
+            // }
+        // }
 
-        else if(regionmap->mouseIntersectsUI("component_widget_region_storage") && regionmap->isComponentVisible("component_widget_region_storage")) {
-            auto* region_storage = static_cast<WidgetRegionStorage*>(regionmap->getInterfaceComponent("component_widget_region_storage"));
+        // else if(regionmap->mouseIntersectsUI("component_widget_region_storage") && regionmap->isComponentVisible("component_widget_region_storage")) {
+        //     auto* region_storage = static_cast<WidgetRegionStorage*>(regionmap->getInterfaceComponent("component_widget_region_storage"));
 
-            for(const auto& pair : region_storage->interface) {
-                auto id        = pair.first;
-                auto component = pair.second.get();
+        //     for(const auto& pair : region_storage->interface) {
+        //         auto id        = pair.first;
+        //         auto component = pair.second.get();
 
-                if(startsWith(id, "imageholder")) {
-                    if(component->containsPoint(regionmap->mouse_position_interface)) {
-                        auto resource_name = readAfter(id, "imageholder_");
+        //         if(startsWith(id, "imageholder")) {
+        //             if(component->containsPoint(regionmap->mouse_position_interface)) {
+        //                 auto resource_name = readAfter(id, "imageholder_");
 
-                        auto resource = ITEM_EMPTY;
-                        for(const auto& item_template : ITEM_LOOKUP_TABLE) {
-                            if(toLower(resource_name) == toLower(item_template.item_name)) {
-                                resource = item_template;
-                                break;
-                            }
-                        }
+        //                 auto resource = ITEM_EMPTY;
+        //                 for(const auto& item_template : ITEM_LOOKUP_TABLE) {
+        //                     if(toLower(resource_name) == toLower(item_template.item_name)) {
+        //                         resource = item_template;
+        //                         break;
+        //                     }
+        //                 }
 
-                        if(resource.item_name == ITEM_EMPTY.item_name)
-                            return false;
+        //                 if(resource.item_name == ITEM_EMPTY.item_name)
+        //                     return false;
 
-                        std::string data;
-                        data += resource.item_name + "\n";
+        //                 std::string data;
+        //                 data += resource.item_name + "\n";
                         
-                        auto* region = regionmap->getCurrentRegion();
-                        if(!region)
-                            return false;
+        //                 auto* region = regionmap->getCurrentRegion();
+        //                 if(!region)
+        //                     return false;
 
-                        auto quantity = region->getItemQuantity(resource);
-                        data += std::to_string(quantity) + "\n";
+        //                 auto quantity = region->itemQuantity(resource);
+        //                 data += std::to_string(quantity) + "\n";
 
-                        widget_text->setString(data);
-                        return true;
-                    }
-                }
-            }
-        }
-
-    }
+        //                 widget_text->setString(data);
+        //                 return true;
+        //             }
+        //         }
+        //     }
+        // }
+    // }
 
     return false;
 }

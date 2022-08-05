@@ -22,12 +22,13 @@ namespace iso {
             int       m_time_per_frame;
         public:
             Entropy();
+            Entropy(const Settings& settings);
             ~Entropy();
             
-            resourceManager     resource;
-            gamestateManager    gamestate;
-            windowManager       window;
-            applicationSettings settings;
+            resourceManager  resource;
+            gamestateManager gamestate;
+            windowManager    window;
+            Settings         settings;
 
             virtual void loop();
             int getFramesPerSecond();

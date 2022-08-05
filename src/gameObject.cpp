@@ -21,7 +21,7 @@ GameObject::GameObject(const GameObject& gameobject) {
     this->object_colour       = gameobject.getColour();
 }
 
-GameObject::GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf::Vector2f size, std::string texture_name) {
+GameObject::GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf::Vector2f size, const std::string& texture_name) {
     this->object_name         = "*";
     this->object_position     = position + relative_position;
     this->object_size         = size;
@@ -29,7 +29,7 @@ GameObject::GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf
     this->object_colour       = COLOUR_BLACK;
 }
 
-GameObject::GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf::Vector2f size, std::string texture_name, std::string object_name) {
+GameObject::GameObject(sf::Vector3f position, sf::Vector3f relative_position, sf::Vector2f size, const std::string& texture_name, const std::string& object_name) {
     this->object_name         = object_name;
     this->object_position     = position + relative_position;
     this->object_size         = size;

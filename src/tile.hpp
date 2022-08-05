@@ -1,10 +1,7 @@
-#ifndef _TILE_HPP_
-#define _TILE_HPP_
+#pragma once 
 
 #include "tileType.hpp"
 #include "gameObject.hpp"
-#include "resource.hpp"
-#include "resource_definitions.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <memory>
@@ -26,5 +23,3 @@ namespace iso {
             int getElevation() const;    
     };  
 }
-
-#endif

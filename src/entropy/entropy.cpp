@@ -6,30 +6,51 @@
 using namespace iso;
 
 Entropy::Entropy() {
-    auto settings = this->settings.userSettings();
+    this->settings = Settings();
 
-    this->resource  = resourceManager(settings);
-    this->gamestate = gamestateManager(settings);
-    this->window    = windowManager(settings);
+    this->resource  = resourceManager(this->settings);
+    this->gamestate = gamestateManager(this->settings);
+    this->window    = windowManager(this->settings);
     
-    if(this->settings.userSettings().window_fullscreen) 
+    if(this->settings.window_fullscreen) 
         this->window.createFullscreenWindow();
     
     else 
-        this->window.createWindow(this->settings.userSettings().window_size);
+        this->window.createWindow(sf::Vector2f(this->settings.window_size));
 
     this->window.setTitle("Entropy Application");
 
-    this->window.setVsync(this->settings.userSettings().window_vsync);
-    this->window.setMaxFramerate(this->settings.userSettings().window_refresh_rate);
+    this->window.setVsync(this->settings.window_vsync);
+    this->window.setMaxFramerate(this->settings.window_refresh_rate);
 
-    std::cout << "[Entropy Engine]: Configuration finished.\n";
+    std::cout << "[Entropy Engine]: Application created with default settings.\n";
     std::cout << "[Entropy Engine]: Greetings from Entropy Game Engine.\n";   
 }
 
-Entropy::~Entropy() {
+Entropy::Entropy(const Settings& settings) {
+    this->settings = settings;
     
+    this->resource  = resourceManager(this->settings);
+    this->gamestate = gamestateManager(this->settings);
+    this->window    = windowManager(this->settings);
+    
+    if(this->settings.window_fullscreen) 
+        this->window.createFullscreenWindow();
+    
+    else 
+        this->window.createWindow(sf::Vector2f(this->settings.window_size));
+
+    this->window.setTitle("Entropy Application");
+
+    this->window.setVsync(this->settings.window_vsync);
+    this->window.setMaxFramerate(this->settings.window_refresh_rate);
+
+    std::cout << "[Entropy Engine]: Application created with custom settings.\n";
+    std::cout << "[Entropy Engine]: Greetings from Entropy Game Engine.\n";   
 }
+
+Entropy::~Entropy() 
+{}
 
 void Entropy::loop() {        
     this->m_measurement_clock = sf::Clock();
@@ -89,5 +110,5 @@ void Entropy::exitApplication(int code) {
 }
 
 bool Entropy::debugModeEnabled() const {
-    return this->settings.userSettings().application_debug_mode;
+    return this->settings.application_debug_mode;
 }

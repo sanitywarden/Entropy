@@ -1,54 +1,95 @@
 #include "item.hpp"
+#include "resource.hpp"
 
 using namespace iso;
 
 StorageItem::StorageItem() 
-    : quantity(0), item_type(ItemType::TYPE_UNCATEGORISED), item_name("Item"), item_icon("icon_default")
 {}
 
-StorageItem::StorageItem(const std::string& name, int quantity, ItemType type)
-    : quantity(quantity), item_type(type), item_name(name), item_icon("icon_default")
+StorageItem::StorageItem(const StorageItem& item)
+    : data(item.data)
 {}
 
-StorageItem::StorageItem(const std::string& name, int quantity, ItemType type, const std::string& icon)
-    : quantity(quantity), item_type(type), item_name(name), item_icon(icon)
+StorageItem::StorageItem(const ItemData& data)
+    : data(data)
 {}
 
 StorageItem::~StorageItem()
 {}
 
 StorageItem& StorageItem::operator+= (const StorageItem& item) {
-    this->quantity += item.quantity;
+    this->data.amount += item.data.amount;
     return *this;
 }
 
 StorageItem& StorageItem::operator-= (const StorageItem& item) {
-    this->quantity -= item.quantity;
+    this->data.amount -= item.data.amount;
     return *this;
 }
 
 StorageItem StorageItem::operator+ (const StorageItem& item) {
-    StorageItem temporary(this->item_name, this->quantity, this->item_type, this->item_icon);
-    return temporary += item;
+    StorageItem temp(item);
+    return temp += item;
 }
 
 StorageItem StorageItem::operator- (const StorageItem& item) {
-    StorageItem temporary(this->item_name, this->quantity, this->item_type, this->item_icon);
-    return temporary -= item;
+    StorageItem temp(item);
+    return temp -= item;
 }
 
 bool StorageItem::operator> (const StorageItem& item) const {
-    return this->quantity > item.quantity;
+    return this->data.amount > item.data.amount;
 }
 
 bool StorageItem::operator>= (const StorageItem& item) const {
-    return this->quantity >= item.quantity;
+    return this->data.amount >= item.data.amount;
 }
 
 bool StorageItem::operator< (const StorageItem& item) const {
-    return this->quantity < item.quantity;
+    return this->data.amount < item.data.amount;
 }
 
 bool StorageItem::operator<= (const StorageItem& item) const {
-    return this->quantity >= item.quantity;
+    return this->data.amount <= item.data.amount;
+}
+
+StorageItem& StorageItem::operator= (const Resource& resource) {
+    this->data.name         = resource.getResourceName();
+    this->data.description  = resource.getResourceDescription();
+    this->data.icon_size    = resource.getIconTextureSize();
+    this->data.icon_texture = resource.getIconTexture();
+    this->data.type         = resource.getResourceType();
+    return *this;
+}
+
+const std::string& StorageItem::getDefinitionFilename() const {
+    return this->data.filename;
+}
+
+const std::string& StorageItem::getItemName() const {
+    return this->data.name;
+}
+
+const std::string& StorageItem::getItemDescription() const {
+    return this->data.description;
+}
+
+const std::string& StorageItem::getIconTexture() const {
+    return this->data.icon_texture;
+}
+
+const sf::Vector2i StorageItem::getIconTextureSize() const {
+    return this->data.icon_size;
+}
+
+const std::string& StorageItem::getItemType() const {
+    return this->data.type;
+}
+
+int StorageItem::getAmount() const {
+    return this->data.amount;
+}
+
+void StorageItem::setAmount(int amount) {
+    this->data.amount = amount;
 }

@@ -1,8 +1,6 @@
 #include "region.hpp"
-#include "./building/building_definitions.hpp"
 #include "globalutilities.hpp"
 #include "generationSettings.hpp"
-#include "resource_definitions.hpp"
 
 #include <iostream>
 #include <string>
@@ -10,7 +8,7 @@
 using namespace iso;
 
 Region::Region() 
-    : GameObject(VECTOR0X0X0, VECTOR0X0X0, VECTOR0X0, "*", "Region") 
+    : GameObject(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0), sf::Vector2f(0, 0), "*", "Region") 
 {
     this->_marked    = false;
     this->_direction = RiverDirection::RIVER_NONE;
@@ -23,122 +21,146 @@ Region::Region()
     this->temperature = 0.0f;
     this->visited     = false;
     
-    this->owner = nullptr;
-    this->unit  = nullptr;
-    
     this->map.resize(0);
-    this->population.resize(0);
-    this->storage.resize(0);
+    this->stockpile.resize(0);
 }
 
-Region::~Region() {
-
-}
+Region::~Region() 
+{}
 
 RiverDirection Region::riverDirection() {
     return this->_direction;
 }
 
 bool Region::isOwned() const {
-    return this->owner != nullptr;
+    return false;
 }
 
-void Region::addItem(StorageItem item) {
-    if(this->checkItemExists(item)) {
-        for(auto it = this->storage.begin(); it != this->storage.end(); ++it) {
+int Region::getOwnerId() const {
+    return -1;
+}
+
+void Region::stockpileAdd(StorageItem item) {
+    if(this->itemExists(item)) {
+        for(auto it = this->stockpile.begin(); it != this->stockpile.end(); ++it) {
             auto storage_item = *it;
 
-            if(storage_item.item_name == item.item_name) {
-                storage_item.quantity += item.quantity;
+            if(storage_item.getItemName() == item.getItemName()) {
+                storage_item.setAmount(storage_item.getAmount() + item.getAmount());
                 return;
             }
         }
     }
-
-    this->storage.push_back(item);
+    
+    this->stockpile.push_back(item);
 }
 
-int Region::getItemQuantity(StorageItem item) const {
-    if(this->checkItemExists(item)) {
-        for(auto it = this->storage.begin(); it != this->storage.end(); ++it) {
-            auto stored_item = *it;
-            if(stored_item.item_name == item.item_name)
-                return stored_item.quantity;
+void Region::stockpileRemove(StorageItem item) {
+    if(this->itemExists(item)) {
+        for(auto it = this->stockpile.begin(); it != this->stockpile.end(); ++it) {
+            auto storage_item = *it;
+
+            if(storage_item.getItemName() == item.getItemName())
+                this->stockpile.erase(it);
+        }
+    }
+}
+
+int Region::itemQuantity(const StorageItem& item) const {
+    if(this->itemExists(item)) {
+        for(auto it = this->stockpile.begin(); it != this->stockpile.end(); ++it) {
+            auto storage_item = *it;
+            
+            if(storage_item.getItemName() == item.getItemName())
+                return storage_item.getAmount();
         }
     }
 
     return 0;
 }
 
-bool Region::checkItemExists(StorageItem item) const {
-    for(auto it = this->storage.begin(); it != this->storage.end(); ++it) {
-        auto stored_item = *it;
-        if(stored_item.item_name == item.item_name)
+bool Region::itemExists(const StorageItem& item) const {
+    for(auto it = this->stockpile.begin(); it != this->stockpile.end(); ++it) {
+        auto storage_item = *it;
+        
+        if(storage_item.getItemName() == item.getItemName())
             return true;
     }
 
     return false;
 }
 
-int Region::getFoodQuantity() const {
-    int quantity = 0;
-    for(const auto& item : ITEM_LOOKUP_TABLE) {
-        if(this->checkItemExists(item) && item.item_type == ItemType::TYPE_FOOD) {
-            quantity += this->getItemQuantity(item);
-        }
-    }  
-
-    return quantity;
+bool Region::isPassableWorldmap() const {
+    return false;
 }
 
-int Region::getDrinkableLiquidQuantity() const {
-    int quantity = 0;
-    for(const auto& item : ITEM_LOOKUP_TABLE) {
-        if(this->checkItemExists(item) && item.item_type == ItemType::TYPE_DRINKABLE_LIQUID) {
-            quantity += this->getItemQuantity(item);
-        }
-    }  
+bool Region::isPassableRegionmap(int index) const {
+    return false;
+} 
 
-    return quantity;
+bool Region::isPassableRegionmap(sf::Vector2i grid) const {
+    return false;
 }
 
-bool Region::isBuildingAffordable(const Building& building) const {
-    return true;
-    // return (this->resources >= building.getBuildingCost());
-}
+// int Region::getFoodQuantity() const {
+//     int quantity = 0;
+//     for(const auto& item : ITEM_LOOKUP_TABLE) {
+//         if(this->checkItemExists(item) && item.item_type == ItemType::TYPE_FOOD) {
+//             quantity += this->getItemQuantity(item);
+//         }
+//     }  
+
+//     return quantity;
+// }
+
+// int Region::getDrinkableLiquidQuantity() const {
+//     int quantity = 0;
+//     for(const auto& item : ITEM_LOOKUP_TABLE) {
+//         if(this->checkItemExists(item) && item.item_type == ItemType::TYPE_DRINKABLE_LIQUID) {
+//             quantity += this->getItemQuantity(item);
+//         }
+//     }  
+
+//     return quantity;
+// }
+
+// bool Region::isBuildingAffordable(const Building& building) const {
+//  return (this->resources >= building.getBuildingCost());
+// }
 
 /* Remove the resources needed to construct provided building from region's resource pool. */
-void Region::removeBuildingCost(const Building& building) {
+// void Region::removeBuildingCost(const Building& building) {
     // this->resources -= building.getBuildingCost();
-}
+// }
 
-bool Region::isPositionValid(const Building& building, sf::Vector2i grid_position) const {
-    int index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y);
-    const auto building_size             = building.getBuildingArea();
+bool Region::isBuildingPositionValid(const Building& building, sf::Vector2i grid) const {
+    auto index = game_settings.calculateRegionIndex(grid);
+    auto building_size = building.getBuildingArea();
 
-    if(!world_settings.inRegionBounds(grid_position))
+    if(!game_settings.inRegionBounds(grid))
         return false;
     
-    if(!world_settings.inRegionBounds(grid_position + sf::Vector2i(building_size.x - 1, building_size.y - 1)))
+    if(!game_settings.inRegionBounds(grid + sf::Vector2i(building_size.x - 1, building_size.y - 1)))
         return false;
 
     for(int y = 0; y < building_size.y; y++) {
         for(int x = 0; x < building_size.x; x++) {
-            const int i = world_settings.calculateRegionIndex(grid_position.x, grid_position.y) + world_settings.calculateRegionIndex(x, y);
+            auto grid_copy = grid + sf::Vector2i(x, y);
+            auto loop_index = game_settings.calculateRegionIndex(grid_copy);
 
-            if(!world_settings.inRegionBounds(i))
+            if(!game_settings.inRegionBounds(loop_index))
                 return false;
 
-            if(this->map.at(i).getElevation() != this->map.at(index).getElevation())
+            if(this->map.at(loop_index).getElevation() != this->map.at(index).getElevation())
                 return false;
 
-            if(!this->map.at(i).tiletype.is_terrain())
+            if(!this->map.at(loop_index).tiletype.is_terrain())
                 return false;
 
-            if(this->trees.count(i))
+            if(this->treeExistsAt(grid_copy))
                 return false;
 
-            if(this->buildings.count(i))
+            if(this->buildingExistsAt(grid_copy))
                 return false;
         }
     }
@@ -146,265 +168,202 @@ bool Region::isPositionValid(const Building& building, sf::Vector2i grid_positio
     return true;
 }
 
+void Region::removeBuildingCost(const Building& building) {
+    // TODO: Write implementation.
+}
+
 bool Region::isSpotOccupied(int index) const {
+    if(!game_settings.inRegionBounds(index))
+        return false;
+
     if(!this->map.at(index).tiletype.is_terrain())
         return true;
     
-    if(this->isTree(index))
+    if(this->treeExistsAt(index))
         return true;
     
-    if(this->getBuildingAt(index) != nullptr)
+    if(this->buildingExistsAt(index))
         return true;
-    
     return false;
 }
 
 bool Region::isSpotOccupied(sf::Vector2i grid_position) const {
-    auto index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y);
+    auto index = game_settings.calculateRegionIndex(grid_position.x, grid_position.y);
     return this->isSpotOccupied(index);
 }
 
-void Region::placeBuilding(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
-    int index = world_settings.calculateRegionIndex(grid_position.x, grid_position.y);
-    const Tile& tile         = this->map[index];
-    building.object_position = tile.getPosition();
+// void Region::placeBuilding(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
 
-    const int a1_w = 0; 
-    const int a1_h = world_settings.tileSize().y; 
-    const int r_w  = world_settings.tileSize().x / 2;
-    const int r_h  = world_settings.tileSize().y;    
-    const int n    = building.getBuildingArea().x;                    
-    
-    // Here you adjust the origin of buildings with sizes of n > 0.
-    // Texture size scale are arithmetic series.
-    auto offset = sf::Vector3f(0, 0, 0);  
-    if(n > 0) {
-        offset = sf::Vector3f(
-            -(a1_w + (n - 1) * r_w),
-            -(a1_h + (n - 1) * r_h),
-            0
-        );
-    }
+// }
 
-    building.object_position += offset;
-
-    std::shared_ptr <Building> sp_building = nullptr;
-    if(building == BUILDING_PATH_DIRT)
-        sp_building = std::shared_ptr <Building> (new PathDirt());
-
-    else if(building == BUILDING_PATH_STONE)
-        sp_building = std::shared_ptr <Building> (new PathStone());
-
-    else if(building == BUILDING_HOUSE_SMALL) 
-        sp_building = std::shared_ptr <Building> (new HouseSmall());
-
-    else if(building == BUILDING_FARM) 
-        sp_building = std::shared_ptr <Building> (new Farmhouse());
-
-    else if(building == BUILDING_QUARRY)
-        sp_building = std::shared_ptr <Building> (new Quarry());
-
-    else if(building == BUILDING_WOODCUTTER) 
-        sp_building = std::shared_ptr <Building> (new Woodcutter());
-    
-    else if(building == BUILDING_HUNTER)
-        sp_building = std::shared_ptr <Building> (new Hunter());
-
-    else if(building == RESOURCE_ANIMAL)
-        sp_building = std::shared_ptr <Building> (new Animal());
-
-    else if(building == BUILDING_FLINT_COLLECTOR)
-        sp_building = std::shared_ptr <Building> (new FlintCollector());
-
-    else if(building == BUILDING_WELL)
-        sp_building = std::shared_ptr <Building> (new Well());
-
-    else if(building == BUILDING_WATER_COLLECTOR)
-        sp_building = std::shared_ptr <Building> (new WaterCollector());
-
-    else if(building == BUILDING_TOOLMAKER)
-        sp_building = std::shared_ptr <Building> (new Toolmaker());
-
-    else
-        std::cout << "[Region][Place Building]: Undefined building type: " << building.getName() << "\n";
-
-    for(int y = 0; y < building.getBuildingArea().y; y++) {
-        for(int x = 0; x < building.getBuildingArea().x; x++) {
-            const int i = index + world_settings.calculateRegionIndex(x, y);
-
-            this->buildings[i] = std::shared_ptr <Building> (new Building());
-            
-            // The "empty" buildings are named to help recognise multi-tile structures.
-            this->buildings[i].get()->setBuildingName(sp_building.get()->getBuildingName());
-        }
-    }
-    
-    sp_building.get()->assignAllProperties(building);
-    this->buildings[index] = sp_building;
-}
-
-bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
-    if(this->isPositionValid(building, grid_position) && this->isBuildingAffordable(building)) {
-        this->placeBuilding(building, texture_size, grid_position);
+// bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
+//     if(this->isPositionValid(building, grid_position) && this->isBuildingAffordable(building)) {
+//         this->placeBuilding(building, texture_size, grid_position);
         
-        if(world_settings.buildingCostEnabled())
-            this->removeBuildingCost(building);
+//         if(game_settings.buildingCostEnabled())
+//             this->removeBuildingCost(building);
         
-        return true;
-    }
+//         return true;
+//     }
 
-    return false;
-}
+//     return false;
+// }
 
-void Region::removeBuilding(int index) {
-    if(this->buildings.count(index)) {
-        auto building = this->buildings.at(index).get();
+// void Region::removeBuilding(int index) {
+//     if(this->buildings.count(index)) {
+//         auto building = this->buildings.at(index).get();
         
-        if(!building->isRemovable())
-            return;
+//         if(!building->isRemovable())
+//             return;
         
-        if(world_settings.buildingCostEnabled()) {
-            auto refund = building->getBuildingRefund();
-            for(auto resource : refund) {
-                this->addItem(resource);
-            }
-        }
+//         if(game_settings.buildingCostEnabled()) {
+//             auto refund = building->getBuildingRefund();
+//             for(auto resource : refund) {
+//                 this->addItem(resource);
+//             }
+//         }
         
-        for(int y = 0; y < building->getBuildingArea().y; y++) {
-            for(int x = 0; x < building->getBuildingArea().x; x++) {
-                const int i = index + world_settings.calculateRegionIndex(x, y);
-                this->buildings.erase(i);
-            }
-        }
-    }
-}
-
-bool Region::isUnitPresent() const {
-    return this->unit != nullptr;
-}
-
-bool Region::isTree(int index) const {
-    return this->trees.count(index);
-}
-
-Building* Region::getBuildingAt(int index) const {
-    if(this->buildings.count(index))
-        return this->buildings.at(index).get();
-    return nullptr;    
-}   
+//         for(int y = 0; y < building->getBuildingArea().y; y++) {
+//             for(int x = 0; x < building->getBuildingArea().x; x++) {
+//                 const int i = index + game_settings.calculateRegionIndex(x, y);
+//                 this->buildings.erase(i);
+//             }
+//         }
+//     }
+// }   
 
 // Returns the number of buildings buildings in proximity.
 // Proximity is understood as the building's production area.
-int Region::isBuildingInProximity(const Building& building, int building_index) const {
-    const auto search_area = building.getProductionArea();
-    int buildings_in_proximity = 0;
+// int Region::isBuildingInProximity(const Building& building, int building_index) const {
+//     const auto search_area = building.getBuildingScanArea();
+//     int buildings_in_proximity = 0;
 
-    for(int y = -search_area.y; y <= search_area.y; y++) {
-        for(int x = -search_area.x; x <= search_area.x; x++) {
-            const int index = building_index + world_settings.calculateRegionIndex(x, y);
+//     for(int y = -search_area.y; y <= search_area.y; y++) {
+//         for(int x = -search_area.x; x <= search_area.x; x++) {
+//             const int index = building_index + game_settings.calculateRegionIndex(x, y);
 
-            // Building or a nullptr.
-            auto tile_building = this->getBuildingAt(index);
-            if(tile_building) {
-                if(!this->isSameBuilding(*tile_building, building_index, index) && *tile_building == building)
-                    buildings_in_proximity++;
-            }
-        }
-    } 
+//             // Building or a nullptr.
+//             auto tile_building = this->getBuildingAt(index);
+//             if(tile_building) {
+//                 if(!this->isSameBuilding(*tile_building, building_index, index) && *tile_building == building)
+//                     buildings_in_proximity++;
+//             }
+//         }
+//     } 
 
-    return buildings_in_proximity;
-}
+//     return buildings_in_proximity;
+// }
 
-bool Region::isSameBuilding(const Building& building, int building_index, int index) const {
-    bool same_building = false;
+// bool Region::isSameBuilding(const Building& building, int building_index, int index) const {
+//     bool same_building = false;
 
-    if(building.getBuildingArea().x == 1)
-        return building_index == index;
+//     if(building.getBuildingArea().x == 1)
+//         return building_index == index;
 
-    auto building_size = building.getBuildingArea();
+//     auto building_size = building.getBuildingArea();
 
-    for(int y = -building_size.y; y <= building_size.y; y++) {
-        for(int x = -building_size.x; x <= building_size.x; x++) {
-            const int index = building_index + world_settings.calculateRegionIndex(x, y);
+//     for(int y = -building_size.y; y <= building_size.y; y++) {
+//         for(int x = -building_size.x; x <= building_size.x; x++) {
+//             const int index = building_index + game_settings.calculateRegionIndex(x, y);
             
-            if(building_index == index)
-                return true;
-        }
-    }
+//             if(building_index == index)
+//                 return true;
+//         }
+//     }
 
-    return false;
-}
-
-bool Region::isPath(int index) const {
-    auto* building = this->getBuildingAt(index);
-
-    if(building) {
-        const auto& texture_name = building->getTextureName();
-        return startsWith(texture_name, "path");
-    }
-
-    return false;
-}
+//     return false;
+// }
 
 // Returns the index of a closest free (not occupied) tile relative to the centre of the map.
 // If no free spot is found, returns -1.
-int Region::findNotOccupiedTile(std::vector <int> buffer) const {
-    sf::Vector2i middle = world_settings.getWorldWidth() % 2 == 0
-        ? sf::Vector2i(world_settings.getRegionWidth() / 2, world_settings.getRegionWidth() / 2)
-        : sf::Vector2i(world_settings.getRegionWidth() / 2 + 1, world_settings.getRegionWidth() / 2 + 1);
+// int Region::findNotOccupiedTile(std::vector <int> buffer) const {
+//     sf::Vector2i middle = game_settings.getWorldWidth() % 2 == 0
+//         ? sf::Vector2i(game_settings.getRegionWidth() / 2, game_settings.getRegionWidth() / 2)
+//         : sf::Vector2i(game_settings.getRegionWidth() / 2 + 1, game_settings.getRegionWidth() / 2 + 1);
     
-    const int middle_index = world_settings.calculateRegionIndex(middle.x, middle.y); 
+//     const int middle_index = game_settings.calculateRegionIndex(middle.x, middle.y); 
 
-    int size = 1;
-    while(true) {
-        for(int y = -size; y <= size; y++) {
-            for(int x = -size; x <= size; x++) {
-                sf::Vector2i normalised_grid;
-                normalised_grid.x = (x <= 0)
-                    ? x + world_settings.getRegionWidth() / 2
-                    : x + world_settings.getRegionWidth() / 2 - 1;
+//     int size = 1;
+//     while(true) {
+//         for(int y = -size; y <= size; y++) {
+//             for(int x = -size; x <= size; x++) {
+//                 sf::Vector2i normalised_grid;
+//                 normalised_grid.x = (x <= 0)
+//                     ? x + game_settings.getRegionWidth() / 2
+//                     : x + game_settings.getRegionWidth() / 2 - 1;
 
-                normalised_grid.y = (y <= 0)
-                    ? y + world_settings.getRegionWidth() / 2
-                    : y + world_settings.getRegionWidth() / 2 - 1;
+//                 normalised_grid.y = (y <= 0)
+//                     ? y + game_settings.getRegionWidth() / 2
+//                     : y + game_settings.getRegionWidth() / 2 - 1;
 
-                const int index     = middle_index + world_settings.calculateRegionIndex(x, y);
-                const bool occupied = this->isSpotOccupied(index);
+//                 const int index     = middle_index + game_settings.calculateRegionIndex(x, y);
+//                 const bool occupied = this->isSpotOccupied(index);
                 
-                if((occupied || std::find(buffer.begin(), buffer.end(), index) != buffer.end()) && y == size - 1 && x == size - 1) {
-                    size++;
-                    y = -size;
-                }
+//                 if((occupied || std::find(buffer.begin(), buffer.end(), index) != buffer.end()) && y == size - 1 && x == size - 1) {
+//                     size++;
+//                     y = -size;
+//                 }
 
-                // If the index is not marked as unacceptable, then it is a free spot.
-                else if(!occupied && std::find(buffer.begin(), buffer.end(), index) == buffer.end())
-                    return index;
-            }
-        }
-    }
+//                 // If the index is not marked as unacceptable, then it is a free spot.
+//                 else if(!occupied && std::find(buffer.begin(), buffer.end(), index) == buffer.end())
+//                     return index;
+//             }
+//         }
+//     }
 
-    return -1;
-}
+//     return -1;
+// }
 
-int Region::getPopulation() const {
-    return this->population.size();
-}
-
-bool Region::isPassableAStar(int index) const {
-    if(this->map[index].tiletype.is_ocean())
-        return false;
+// bool Region::isPassableRegionmap(int index) const {
+//     if(this->map[index].tiletype.is_ocean())
+//         return false;
     
-    if(this->getBuildingAt(index))
-        return false;
-    return true;
+//     if(this->buildingExistsAt(index))
+//         return false;
+//     return true;
+// }
+
+bool Region::treeExistsAt(int index) const {
+    return this->trees.count(index);
 }
 
-bool Region::tileHasResource(int index) const {
+bool Region::treeExistsAt(sf::Vector2i grid) const {
+    auto index = game_settings.calculateRegionIndex(grid);
+    return this->treeExistsAt(index);
+}
+
+bool Region::resourceExistsAt(int index) const {
     return this->resources.count(index);
 }
 
-const Resource* Region::getTileResource(int index) const {
-    return this->tileHasResource(index)
-        ? this->resources.at(index).get()
-        : nullptr;
+bool Region::resourceExistsAt(sf::Vector2i grid) const {
+    auto index = game_settings.calculateRegionIndex(grid);
+    return this->resourceExistsAt(index);
+}
+
+const Resource& Region::getResourceAt(int index) const {
+    return this->resources.at(index);
+}
+
+const Resource& Region::getResourceAt(sf::Vector2i grid) const {
+    auto index = game_settings.calculateRegionIndex(grid);
+    return this->getResourceAt(index);
+}
+
+bool Region::buildingExistsAt(int index) const {
+    return this->buildings.count(index);
+}
+
+bool Region::buildingExistsAt(sf::Vector2i grid) const {
+    auto index = game_settings.calculateRegionIndex(grid);
+    return this->buildingExistsAt(index);
+}
+
+const Building& Region::getBuildingAt(int index) const {
+    return this->buildings.at(index);
+}
+
+const Building& Region::getBuildingAt(sf::Vector2i grid) const {
+    auto index = game_settings.calculateRegionIndex(grid);
+    return this->getBuildingAt(index);
 }

@@ -6,11 +6,9 @@
 #include "worldGenerator.hpp"
 #include "simulationManager.hpp"
 #include "regionmap.hpp"
-#include "./unit/unit.hpp"
 
 #include "gui/performance.hpp"
 #include "gui/widgetRegion.hpp"
-#include "gui/widgetUnit.hpp"
 #include "gui/widgetNameCity.hpp"
 #include "gui/tooltip.hpp"
 
@@ -28,7 +26,7 @@ namespace iso {
         public:
             Region             region;
             SimulationManager* manager;
-            std::vector <Unit> units;
+            // std::vector <Unit> units;
 
             std::map <std::string, gui::InterfacePage*> interface;
             
@@ -61,9 +59,9 @@ namespace iso {
 
             void renderWorld();
 
-            void selectUnit();
-            void unselectUnit();
-            void selectUnitGoal();
+            // void selectUnit();
+            // void unselectUnit();
+            // void selectUnitGoal();
 
             void centreOnCapital();
 
