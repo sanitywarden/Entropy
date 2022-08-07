@@ -204,207 +204,103 @@ void Regionmap::render(float delta_time) {
 }
 
 void Regionmap::handleInput() {
-    while(this->manager->window.getWindow()->pollEvent(this->event)) {    
-        switch(this->event.type) {
-            case sf::Event::Closed: {
-                this->manager->exitApplication(0);
-                break;
-            }
+    if(event_queue.size()) {
+        const auto& event_name = event_queue.at(0);
 
-            case sf::Event::Resized: {
-                auto new_window_size = sf::Vector2f(
-                    this->event.size.width,
-                    this->event.size.height
-                );
+        if(event_name == "WINDOW_RESIZE") {
             
-                
-                // To avoid weird camera glitches, set the centre explicitly.
-
-                auto grid_position = tileGridPosition(this->manager->resource.getTexture("tile_template_direction"), this->view_game.getCenter());
-                auto index = game_settings.calculateRegionIndex(grid_position.x, grid_position.y); 
-                auto tile_position = this->region->map[index].getPosition2D();
-                this->view_game.setCenter(tile_position);
-                this->view_interface.setCenter(new_window_size.x / 2, new_window_size.y / 2);
-                this->manager->font_size = (this->manager->window.windowWidth() + this->manager->window.windowHeight()) / 160;
-
-                this->manager->window.getWindow()->setView(this->view_interface);
-                this->resizeViews();
-                this->resizeUI();
-                this->manager->window.getWindow()->setView(this->view_game);
-
-                break; 
-            }
-
-            case sf::Event::KeyPressed: {
-                for(const auto& pair : this->controls.key_map) {
-                    const auto& name  = pair.first;
-                    const int   state = this->controls.isKeyPressed(name);
-
-                    if(this->controls.key_state.count(name))
-                        this->controls.key_state[name] = state;
-                    else this->controls.key_state.insert({ name, state });
-                }
-
-                if(this->controls.keyState("key_f3")) {
-                    this->toggleComponentVisibility("component_debug_performance");
-                }
-
-                if(this->controls.keyState("key_toggle_minimap")) {
-                    this->toggleComponentVisibility("component_minimap");
-                }
-
-                if(this->controls.keyState("key_toggle_storage")) {
-                    this->toggleComponentVisibility("component_widget_region_storage");
-                    this->setVisibilityFalse("component_widget_building_menu");
-                }
-
-                if(this->controls.keyState("key_toggle_buildmenu")) {
-                    this->toggleComponentVisibility("component_widget_menu_building");
-                    this->setVisibilityFalse("component_widget_region_storage");
-
-                    auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-                    building_menu->resetBuilding();
-                }
-
-                if(this->controls.keyState("key_escape")) {
-                    this->manager->gamestate.setGamestate("worldmap");
-                }
-
-                if(this->controls.keyState("key_remove_building")) {
-                    if(this->region->buildings.count(this->current_index)) {
-                        auto* human = this->manager->getHumanPlayer();
-                        human->destroyBuilding(*this->region, tileGridPosition(this->current_index));
-                        this->updatePaths(this->current_index);
-                        this->recalculate_tree_mesh = true;
-                    }
-                }
-
-                if(this->controls.keyState("key_removeresource_tree")) {
-                    if(this->region->trees.count(this->current_index)) {
-                        this->region->trees.erase(this->current_index);
-                        this->recalculate_tree_mesh = true; 
-                    }
-                }
-
-                if(this->controls.keyState("key_centre_view")) {
-                    auto tile_index = game_settings.calculateRegionIndex(game_settings.getRegionWidth() / 2, game_settings.getRegionWidth() / 2);
-
-                    // Here you can setup what to do when entering a region.
-                    // For example, centre the camera.
-                    sf::Vector2f first_tile_position = sf::Vector2f(
-                        this->region->map[tile_index].getPosition().x + game_settings.tileSize().x / 2,
-                        this->region->map[tile_index].getPosition().y
-                    );
-
-                    this->view_game.setCenter(first_tile_position);
-                }
-
-                if(this->controls.keyState("key_screenshot")) {
-                    this->manager->window.takeScreenshot();                  
-                }
-
-                const auto& tile_top    = this->region->map[0];
-                const auto& tile_left   = this->region->map[game_settings.calculateRegionIndex(0, game_settings.getRegionWidth() - 1)];
-                const auto& tile_right  = this->region->map[game_settings.calculateRegionIndex(game_settings.getRegionWidth() - 1, 0)];
-                const auto& tile_bottom = this->region->map[game_settings.calculateRegionIndex(game_settings.getRegionWidth() - 1, game_settings.getRegionWidth() - 1)];
-
-                const auto bound_top    = tile_top.getPosition2D().y;
-                const auto bound_left   = tile_left.getPosition2D().x;
-                const auto bound_right  = tile_right.getPosition2D().x;
-                const auto bound_bottom = tile_bottom.getPosition2D().y;
-
-                if(this->controls.keyState("arrow_left"))
-                    if(this->view_game.getCenter().x - game_settings.tileSize().x >= bound_left)
-                        this->view_game.move(-game_settings.tileSize().x, 0);
-
-                if(this->controls.keyState("arrow_right"))
-                    if(this->view_game.getCenter().x + game_settings.tileSize().x <= bound_right)
-                        this->view_game.move(game_settings.tileSize().x, 0);
-
-                if(this->controls.keyState("arrow_down"))
-                    if(this->view_game.getCenter().y + game_settings.tileSize().y <= bound_bottom)
-                        this->view_game.move(0, game_settings.tileSize().y);
-
-                if(this->controls.keyState("arrow_up"))
-                    if(this->view_game.getCenter().y - (game_settings.tileSize().y) >= bound_top)
-                        this->view_game.move(0, -game_settings.tileSize().y);
-
-                break;
-            }
-
-            case sf::Event::KeyReleased: {
-                for(const auto& pair : this->controls.key_map) {
-                    const auto& name          = pair.first;
-                    const int   state_old     = this->controls.key_state[name];
-                    const int   state_current = this->controls.isKeyPressed(name);
-
-                    if(!(state_old && state_current))
-                        this->controls.key_state[name] = state_current;  
-                }
-                break;
-            }
-
-            case sf::Event::MouseButtonPressed: {
-                this->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
-                this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
-                this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
-                
-                if(this->controls.mouseMiddlePressed())
-                    this->position_pressed = this->mouse_position_window;
-                
-                if(this->controls.mouseLeftPressed())
-                    this->updateTile();
-
-                break;
-            }
-
-            case sf::Event::MouseButtonReleased: {
-                this->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left);
-                this->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right);
-                this->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Middle);
-                
-                this->mouse_drag = false;
-                break;
-            }
-
-            case sf::Event::MouseWheelScrolled: {
-                this->controls.mouse_middle_up   = this->event.mouseWheelScroll.delta ==  1 ? 1 : 0;
-                this->controls.mouse_middle_down = this->event.mouseWheelScroll.delta == -1 ? 1 : 0;
-                
-                if(this->controls.mouse_middle_up || this->controls.mouse_middle_down)
-                    this->zoom_camera = true;
-
-                break;
-            }
-
-            case sf::Event::MouseMoved: {
-                this->mouse_moved = true;
-                
-                if(!this->mouse_drag)
-                    break;
-
-                this->position_released = this->mouse_position_window;
-                if(this->mouse_drag && this->mouse_moved && std::abs(this->position_pressed.x - this->position_released.x) > 5 && std::abs(this->position_pressed.y - this->position_released.y) > 5)
-                    this->move_camera = true;
-
-                break;
-            }
         }
-    }
 
-    if(this->mouse_moved && this->controls.mouseMiddlePressed())
-        this->mouse_drag = true;
+        if(event_name == "BUTTON_PRESSED") {
+            if(this->controls.isKeyPressed("F3")) {
+                this->toggleComponentVisibility("component_debug_performance");
+            }
 
-    else {
-        this->mouse_drag  = false;
-        this->mouse_moved = false;
+            if(this->controls.isKeyPressed("F12")) {
+                this->manager->window.takeScreenshot();
+            }
+
+            if(this->controls.isKeyPressed("ESCAPE")) {
+                this->manager->gamestate.setGamestate("worldmap");
+            }
+
+            if(this->controls.isKeyPressed("M")) {
+                this->toggleComponentVisibility("component_minimap");
+            }
+
+            if(this->controls.isKeyPressed("I")) {
+                this->toggleComponentVisibility("component_widget_region_storage");
+                this->setVisibilityFalse("component_widget_building_menu");
+            }
+            
+            if(this->controls.isKeyPressed("B")) {
+                this->toggleComponentVisibility("component_widget_menu_building");
+                this->setVisibilityFalse("component_widget_region_storage");
+
+                auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
+                building_menu->resetBuilding();
+            }
+
+            const auto& tile_top    = this->region->map[0];
+            const auto& tile_left   = this->region->map[game_settings.calculateRegionIndex(0, game_settings.getRegionWidth() - 1)];
+            const auto& tile_right  = this->region->map[game_settings.calculateRegionIndex(game_settings.getRegionWidth() - 1, 0)];
+            const auto& tile_bottom = this->region->map[game_settings.calculateRegionIndex(game_settings.getRegionWidth() - 1, game_settings.getRegionWidth() - 1)];
+
+            const auto bound_top    = tile_top.getPosition2D().y;
+            const auto bound_left   = tile_left.getPosition2D().x;
+            const auto bound_right  = tile_right.getPosition2D().x;
+            const auto bound_bottom = tile_bottom.getPosition2D().y;
+
+            if(this->controls.isKeyPressed("ARROW_LEFT"))
+                if(this->view_game.getCenter().x - game_settings.tileSize().x >= bound_left)
+                    this->view_game.move(-game_settings.tileSize().x, 0);
+
+            if(this->controls.isKeyPressed("ARROW_RIGHT"))
+                if(this->view_game.getCenter().x + game_settings.tileSize().x <= bound_right)
+                    this->view_game.move(game_settings.tileSize().x, 0);
+
+            if(this->controls.isKeyPressed("ARROW_DOWN"))
+                if(this->view_game.getCenter().y + game_settings.tileSize().y <= bound_bottom)
+                    this->view_game.move(0, game_settings.tileSize().y);
+
+            if(this->controls.isKeyPressed("ARROW_UP"))
+                if(this->view_game.getCenter().y - (game_settings.tileSize().y) >= bound_top)
+                    this->view_game.move(0, -game_settings.tileSize().y);
+        }
+
+        if(event_name == "LMB_PRESSED") {
+            this->updateTile();
+        }
+
+        if(event_name == "RMB_PRESSED") {
+
+        }
+
+        if(event_name == "MMB_PRESSED") {
+
+        }
+
+        if(event_name == "MOUSE_BUTTON_RELEASED") {
+
+        }
+
+        if(event_name == "MOUSE_MOVED") {
+            auto position_requirement = std::abs(this->controls.button_position_pressed.x - this->controls.button_position_released.x) > 5 && std::abs(this->controls.button_position_pressed.y - this->controls.button_position_released.y) > 5;
+            if(this->controls.mouse_dragged && this->controls.mouse_moved && position_requirement)
+                this->move_camera = true;  
+        }
+
+        if(event_name == "MOUSE_WHEEL_SCROLLED") {
+            if(this->controls.mouse_middle_down || this->controls.mouse_middle_up)
+                this->zoom_camera = true;
+        }
     }
 }
 
 void Regionmap::moveCamera() {
     auto distance = sf::Vector2f(
-        (this->position_pressed.x - this->position_released.x) / game_settings.tileSize().x,       
-        (this->position_pressed.y - this->position_released.y) / game_settings.tileSize().y
+        (this->controls.button_position_pressed.x - this->controls.button_position_released.x) / game_settings.tileSize().x,       
+        (this->controls.button_position_pressed.y - this->controls.button_position_released.y) / game_settings.tileSize().y
     );
 
     // Multipliers for faster camera movement. 
@@ -704,7 +600,7 @@ int Regionmap::getCurrentIndex() {
 }
 
 void Regionmap::updateTile() {
-    auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
+    auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
     if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
         auto building = building_menu->getBuilding();
         auto grid_position = tileGridPosition(this->current_index);
@@ -802,17 +698,17 @@ void Regionmap::updatePaths(int index) {
 }
 
 void Regionmap::createUI() {
-    static gui::WidgetMenuBuilding  widget_menu_building(this->manager);
-    static gui::DebugPerformance    widget_performance_regionmap(this->manager);
-    static gui::WidgetMinimap       widget_minimap(this->manager);
-    static gui::WidgetRegionStorage widget_region_storage(this->manager);
-    static gui::Tooltip             tooltip(this->manager);
+    auto widget_menu_building = gui::InterfaceComponent(new gui::WidgetMenuBuilding(this->manager));
+    auto widget_performance   = gui::InterfaceComponent(new gui::DebugPerformance(this->manager));
+    auto widget_minimap       = gui::InterfaceComponent(new gui::WidgetMinimap(this->manager));
+    auto widget_storage       = gui::InterfaceComponent(new gui::WidgetRegionStorage(this->manager));
+    auto widget_tooltip       = gui::InterfaceComponent(new gui::Tooltip(this->manager));
     
-    this->addInterfaceComponent(&widget_menu_building);
-    this->addInterfaceComponent(&widget_performance_regionmap);
-    this->addInterfaceComponent(&widget_minimap);
-    this->addInterfaceComponent(&widget_region_storage);
-    this->addInterfaceComponent(&tooltip);
+    this->addInterfaceComponent(widget_menu_building);
+    this->addInterfaceComponent(widget_performance);
+    this->addInterfaceComponent(widget_minimap);
+    this->addInterfaceComponent(widget_storage);
+    this->addInterfaceComponent(widget_tooltip);
 }
 
 void Regionmap::updateScheduler() {    
@@ -963,7 +859,7 @@ void Regionmap::recalculateMesh() {
 }
 
 void Regionmap::renderSelectedBuilding() {
-    auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->interface["component_widget_menu_building"]);
+    auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
     auto  building      = building_menu->getBuilding();
     if(building != BUILDING_EMPTY && building_menu->isVisible()) {
         auto tile = this->region->map[this->current_index];
@@ -1110,13 +1006,4 @@ void Regionmap::renderSelectedBuilding() {
             this->manager->window.getWindow()->draw(vertex, vertex_count, sf::Quads, states);
         }
     }
-}
-
-void Regionmap::resizeViews() {
-    auto window_size = this->manager->window.windowSize();
-    this->view_interface.setSize(window_size);
-    this->view_game.setSize(sf::Vector2f(
-        window_size.x * (this->current_zoom + 1),
-        window_size.y * (this->current_zoom + 1) 
-    ));
 }

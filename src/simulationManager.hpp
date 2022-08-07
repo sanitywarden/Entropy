@@ -76,6 +76,9 @@ namespace iso {
             Player* getHumanPlayer();
             Player* getPlayer(int player_id);
 
+            void emitEvents();
+            void popEvents();
+
             // Search for the requested unit in all players' armies.
             // If not found return nullptr.
             // Unit* getUnit(int unit_id);

@@ -8,6 +8,8 @@ namespace iso {
         friend class SimulationManager;
 
         public:
+            int spawn_spot_index;
+
             // std::vector <std::shared_ptr <Unit>> units;
             std::vector <int>         owned_regions;      // Indexes of the player owned regions. 
             std::vector <int>         discovered_regions;

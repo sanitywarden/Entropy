@@ -8,16 +8,15 @@ Controls::Controls() {
     this->mouse_middle      = false;
     this->mouse_middle_up   = false;  
     this->mouse_middle_down = false;
+    this->mouse_moved       = false;
 }
 
-Controls::~Controls() {
-
-}
+Controls::~Controls() 
+{}
 
 void Controls::addKeyMapping(std::string id, sf::Keyboard::Key key) {
     this->key_map.insert({ id, key });
 }
-
 
 bool Controls::addKeyMappingCheck(std::string id, sf::Keyboard::Key key) {
     if(this->checkKeyMappingExists(id))
@@ -31,16 +30,14 @@ void Controls::removeKeyMapping(std::string id) {
     this->key_map.erase(id);
 }
 
-sf::Keyboard::Key Controls::getKeyMapping(std::string id) {
-    return this->key_map[id];
-}
-
 bool Controls::checkKeyMappingExists(std::string id) {
     return this->key_map.count(id);
 }
 
 bool Controls::isKeyPressed(std::string id) {
-    return sf::Keyboard::isKeyPressed(this->getKeyMapping(id));
+    if(this->checkKeyMappingExists(id))
+        return this->key_state[id];
+    return false;
 }
 
 bool Controls::mouseLeftPressed() {
@@ -61,12 +58,4 @@ bool Controls::mouseMiddleUp() {
 
 bool Controls::mouseMiddleDown() {
     return this->mouse_middle_down;
-}
-
-/* If id exists, returns state.
- * If id does not exist, returns 0. */
-bool Controls::keyState(std::string id) {
-    return this->key_state.count(id)
-        ? this->key_state[id]
-        : 0;
 }

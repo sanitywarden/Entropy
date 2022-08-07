@@ -1,5 +1,4 @@
-#ifndef _ENTROPY_GAMESTATE_HPP_
-#define _ENTROPY_GAMESTATE_HPP_
+#pragma once
 
 #include "entropy.hpp"
 #include "controls.hpp"
@@ -17,7 +16,7 @@ namespace iso {
         public:
             Entropy* engine;
             Controls controls;
-            std::map <std::string, gui::InterfacePage*> interface;
+            std::map <std::string, std::shared_ptr<gui::InterfacePage>> interface;
             bool block_keybinds; // When true, the pressed keys will not affect the game.
 
             std::string  state_id;
@@ -76,14 +75,14 @@ namespace iso {
             bool shouldCameraZoom() const;
 
             void renderUI() const;
-            void updateUI() const;
             void resizeUI() const;
+            void updateUI();
             bool mouseIntersectsUI() const;
             bool pointIntersectsUI(sf::Vector2f point) const;
             bool mouseIntersectsUI(const std::string& component_name) const;
             bool pointIntersectsUI(sf::Vector2f point, const std::string& component_name) const;
 
-            void addInterfaceComponent(gui::InterfacePage* interface_component);
+            void addInterfaceComponent(gui::InterfaceComponent interface_component);
             gui::InterfacePage* getInterfaceComponent(std::string interface_id);
             bool checkComponentExist(std::string interface_id) const;
             void toggleComponentVisibility(std::string interface_id);
@@ -92,5 +91,3 @@ namespace iso {
             void setVisibilityFalse(std::string interface_id);
     };
 }
-
-#endif

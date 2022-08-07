@@ -10,6 +10,7 @@ Player::Player() {
     this->country_name = "*";
     this->capital_region = -1;
     this->player_id      = -1;
+    this->spawn_spot_index = -1;
 }
 
 Player::~Player() {

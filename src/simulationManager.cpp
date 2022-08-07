@@ -4,7 +4,6 @@
 #include "regionmap.hpp"
 #include "generationSettings.hpp"
 #include "nameGenerator.hpp"
-#include "menu.hpp"
 #include "tooltip.hpp"
 #include "colours.hpp"
 
@@ -21,14 +20,12 @@ SimulationManager::SimulationManager()
     this->window.setTitle("Entropy by Vivit");
     this->window.setKeyHold(false);
 
-    static Menu menu(this);
-    this->gamestate.addGamestate("menu", menu);
-    this->gamestate.setGamestate("menu");
-
     static Worldmap worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
     this->world = WorldGenerator(&this->resource, &this->texturizer);
     this->prepare();
+
+    this->gamestate.setGamestate("worldmap");
 
     this->simulation_speed = game_settings.simulationSpeed();
 
@@ -120,11 +117,13 @@ void SimulationManager::internalLoop(float delta_time) {
         this->exitApplication(1);
     } 
 
+    this->emitEvents();
+
     // Player updates.
     gamestate->update(delta_time);
     gamestate->render(delta_time);
 
-    // AI updates.
+    this->popEvents();    
 }
 
 void SimulationManager::prepare() {
@@ -836,8 +835,10 @@ void SimulationManager::generateCountries() {
 
         // region.unit = player.getUnit(unit.get()->getID());
         
-        if(player_id == 0)
+        if(player_id == 0) {
             player.is_human = true;
+            player.spawn_spot_index = settle_spot_index;
+        }
     }
 }
 
@@ -904,4 +905,201 @@ bool SimulationManager::regionCanBeColonised(int region_index) const {
     if(region.regiontype.is_ocean())
         return false;
     return true;
-} 
+}
+
+void SimulationManager::emitEvents() {
+    auto* gamestate = this->gamestate.getGamestate();
+       
+    std::map <std::string, sf::Keyboard::Key> keys = {
+        { "A", sf::Keyboard::Key::A },
+        { "B", sf::Keyboard::Key::B },
+        { "C", sf::Keyboard::Key::C },
+        { "D", sf::Keyboard::Key::D },
+        { "E", sf::Keyboard::Key::E },
+        { "F", sf::Keyboard::Key::F },
+        { "G", sf::Keyboard::Key::G },
+        { "H", sf::Keyboard::Key::H },
+        { "I", sf::Keyboard::Key::I },
+        { "J", sf::Keyboard::Key::J },
+        { "K", sf::Keyboard::Key::K },
+        { "L", sf::Keyboard::Key::L },
+        { "M", sf::Keyboard::Key::M },
+        { "N", sf::Keyboard::Key::N },
+        { "O", sf::Keyboard::Key::O },
+        { "P", sf::Keyboard::Key::P },
+        { "R", sf::Keyboard::Key::R },
+        { "S", sf::Keyboard::Key::S },
+        { "T", sf::Keyboard::Key::T },
+        { "U", sf::Keyboard::Key::U },
+        { "W", sf::Keyboard::Key::W },
+        { "V", sf::Keyboard::Key::V },
+        { "Q", sf::Keyboard::Key::Q },
+        { "X", sf::Keyboard::Key::X },
+        { "Y", sf::Keyboard::Key::Y },
+        { "Z", sf::Keyboard::Key::Z },
+
+        { "0", sf::Keyboard::Key::Num0 },
+        { "1", sf::Keyboard::Key::Num1 },
+        { "2", sf::Keyboard::Key::Num2 },
+        { "3", sf::Keyboard::Key::Num3 },
+        { "4", sf::Keyboard::Key::Num4 },
+        { "5", sf::Keyboard::Key::Num5 },
+        { "6", sf::Keyboard::Key::Num6 },
+        { "7", sf::Keyboard::Key::Num7 },
+        { "8", sf::Keyboard::Key::Num8 },
+        { "9", sf::Keyboard::Key::Num9 },
+
+        { "F1", sf::Keyboard::Key::F1 },
+        { "F2", sf::Keyboard::Key::F2 },
+        { "F3", sf::Keyboard::Key::F3 },
+        { "F4", sf::Keyboard::Key::F4 },
+        { "F5", sf::Keyboard::Key::F5 },
+        { "F6", sf::Keyboard::Key::F6 },
+        { "F7", sf::Keyboard::Key::F7 },
+        { "F8", sf::Keyboard::Key::F8 },
+        { "F9", sf::Keyboard::Key::F9 },
+        { "F10", sf::Keyboard::Key::F10 },
+        { "F11", sf::Keyboard::Key::F11 },
+        { "F12", sf::Keyboard::Key::F12 },
+
+        { "ARROW_LEFT" , sf::Keyboard::Key::Left  },
+        { "ARROW_RIGHT", sf::Keyboard::Key::Right },
+        { "ARROW_UP"   , sf::Keyboard::Key::Up    },
+        { "ARROW_DOWN" , sf::Keyboard::Key::Down  },
+
+        { "SPACEBAR" , sf::Keyboard::Key::Space     },
+        { "TAB"      , sf::Keyboard::Key::Tab       },
+        { "ENTER"    , sf::Keyboard::Key::Enter     },
+        { "BACKSPACE", sf::Keyboard::Key::Backspace },
+        { "ESCAPE"   , sf::Keyboard::Key::Escape    },
+        { "MENU"     , sf::Keyboard::Key::Menu      },
+
+        // It does not matter that the mapped key is left.
+        // It's overriden by the KeyPressed and KeyReleased event to check for both the keys.
+        { "SHIFT" , sf::Keyboard::Key::LShift   },
+        { "CTRL"  , sf::Keyboard::Key::LControl },
+        { "ALT"   , sf::Keyboard::Key::LAlt     },
+        { "SYSTEM", sf::Keyboard::Key::LSystem  },
+    };
+
+    if(gamestate->controls.addKeyMappingCheck("A", keys["A"])) {
+        for(const auto& pair : keys) {
+            gamestate->controls.addKeyMappingCheck(pair.first, pair.second);
+        }
+    }
+
+    gamestate->controls.mouse_dragged = gamestate->controls.mouse_moved && gamestate->controls.mouse_middle;
+
+    while(this->window.getWindow()->pollEvent(gamestate->event)) {
+        switch(gamestate->event.type) {
+            case sf::Event::Closed: {
+                this->exitApplication(0);
+                break;
+            }
+
+            case sf::Event::Resized: {
+                event_queue.push_back("WINDOW_RESIZE");
+                gamestate->controls.resized = sf::Vector2f(gamestate->event.size.width, gamestate->event.size.height);
+                
+                auto new_window_size = this->window.windowSize();
+                this->font_size = (this->window.windowWidth() + this->window.windowHeight()) / 160;
+            
+                break;
+            }
+
+            case sf::Event::KeyPressed: {
+                event_queue.push_back("BUTTON_PRESSED");
+                
+                for(const auto& pair : gamestate->controls.key_map) {
+                    const auto& name  = pair.first;
+                    const auto  state = sf::Keyboard::isKeyPressed(gamestate->controls.key_map[name]);
+
+                    if(gamestate->controls.key_state.count(name)) {
+                        gamestate->controls.key_state[name] = state;
+                    }
+                    else gamestate->controls.key_state.insert({ name, state });
+                }
+                
+                break;
+            }
+
+            case sf::Event::KeyReleased: {
+                event_queue.push_back("BUTTON_RELEASEED");
+                
+                for(const auto& pair : gamestate->controls.key_map) {
+                    const auto& name  = pair.first;
+                    const auto  state = sf::Keyboard::isKeyPressed(gamestate->controls.key_map[name]);
+
+                    if(gamestate->controls.key_state.count(name)) {
+                        gamestate->controls.key_state[name] = state;
+                    }
+                    else gamestate->controls.key_state.insert({ name, state });
+                }
+                
+                break;
+            }
+
+            case sf::Event::MouseButtonPressed: {
+                gamestate->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left); 
+                gamestate->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right); 
+                gamestate->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Button::Middle);
+
+                if(gamestate->controls.mouse_middle)
+                    gamestate->controls.button_position_pressed = gamestate->mouse_position_window;
+
+                if(gamestate->controls.mouse_left)
+                    for(const auto& pair : gamestate->interface)
+                        pair.second->functionality();
+
+                if(gamestate->controls.mouse_left)
+                    event_queue.push_back("LMB_PRESSED");
+                
+                if(gamestate->controls.mouse_right)
+                    event_queue.push_back("RMB_PRESSED");
+
+                if(gamestate->controls.mouse_middle)
+                    event_queue.push_back("MMB_PRESSED");
+                
+                break;
+            }
+
+            case sf::Event::MouseButtonReleased: {
+                auto was_middle_pressed = gamestate->controls.mouse_middle;
+
+                gamestate->controls.mouse_left   = sf::Mouse::isButtonPressed(sf::Mouse::Button::Left); 
+                gamestate->controls.mouse_right  = sf::Mouse::isButtonPressed(sf::Mouse::Button::Right); 
+                gamestate->controls.mouse_middle = sf::Mouse::isButtonPressed(sf::Mouse::Button::Middle);
+
+                gamestate->controls.mouse_dragged = false;
+
+                if(was_middle_pressed && !gamestate->controls.mouse_middle)
+                    gamestate->controls.button_position_released = gamestate->mouse_position_window;
+
+                event_queue.push_back("MOUSE_BUTTON_RELEASED");
+                break;
+            }
+
+            case sf::Event::MouseMoved: {
+                gamestate->controls.mouse_moved = true;
+                
+                if(gamestate->controls.mouse_dragged)
+                    gamestate->controls.button_position_released = gamestate->mouse_position_window;
+
+                event_queue.push_back("MOUSE_MOVED");
+                break;
+            }
+
+            case sf::Event::MouseWheelScrolled: {
+                event_queue.push_back("MOUSE_WHEEL_SCROLLED");
+                gamestate->controls.mouse_middle_down = gamestate->event.mouseWheelScroll.delta == -1;
+                gamestate->controls.mouse_middle_up   = gamestate->event.mouseWheelScroll.delta == 1;
+                break;
+            }
+        }
+    }
+}
+
+void SimulationManager::popEvents() {
+    if(event_queue.size())
+        event_queue.erase(event_queue.begin());
+}

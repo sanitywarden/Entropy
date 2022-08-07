@@ -17,6 +17,8 @@ std::vector <iso::StorageItem> items;
 
 lua::driver::Driver lua_driver;
 
+std::vector <std::string> event_queue;
+
 int main() {
     static iso::SimulationManager game_manager;
     game_manager.loop();

@@ -20,24 +20,29 @@ namespace iso {
             bool mouse_middle;
             bool mouse_middle_up;   // Up 1, Down 0.
             bool mouse_middle_down; // Down 1, Up 0.
+            bool mouse_moved;
+            bool mouse_dragged;
+
+            sf::Vector2f button_position_pressed;
+            sf::Vector2f button_position_released;
+
+            sf::Vector2f resized;
+
         public:
             Controls();
             ~Controls();
 
             void addKeyMapping(std::string id, sf::Keyboard::Key key);
-            sf::Keyboard::Key getKeyMapping(std::string id);
+            bool addKeyMappingCheck(std::string id, sf::Keyboard::Key key);
             bool isKeyPressed(std::string id);        
+            void removeKeyMapping(std::string id);
+            bool checkKeyMappingExists(std::string id);
 
             bool mouseLeftPressed();
             bool mouseRightPressed();
             bool mouseMiddlePressed();
             bool mouseMiddleUp();
             bool mouseMiddleDown();
-            bool keyState(std::string id);
-
-            bool addKeyMappingCheck(std::string id, sf::Keyboard::Key key);
-            void removeKeyMapping(std::string id);
-            bool checkKeyMappingExists(std::string id);
     };
 }
 

@@ -58,15 +58,15 @@ bool Gamestate::shouldCameraZoom() const {
     return this->zoom_camera;
 }
 
-void Gamestate::addInterfaceComponent(gui::InterfacePage* interface_component) {
-    std::string id = interface_component->getWidgetID();
+void Gamestate::addInterfaceComponent(gui::InterfaceComponent interface_component) {
+    std::string id = interface_component.get()->getWidgetID();
     this->interface[id] = interface_component;
 }
 
 gui::InterfacePage* Gamestate::getInterfaceComponent(std::string interface_id) {
     if(this->checkComponentExist(interface_id)) {
         auto interface_page = this->interface.at(interface_id);
-        return interface_page;
+        return interface_page.get();
     }
 
     return nullptr;
@@ -78,8 +78,8 @@ bool Gamestate::checkComponentExist(std::string interface_id) const {
 
 bool Gamestate::isComponentVisible(std::string interface_id) const {
     if(this->checkComponentExist(interface_id)) {
-        auto* component = this->interface.at(interface_id);
-        return component->isVisible();
+        auto component = this->interface.at(interface_id);
+        return component.get()->isVisible();
     }
     
     return false;
@@ -88,37 +88,37 @@ bool Gamestate::isComponentVisible(std::string interface_id) const {
 void Gamestate::toggleComponentVisibility(std::string interface_id) {
     if(this->checkComponentExist(interface_id)) {
         auto interface_page = this->interface.at(interface_id);
-        interface_page->show = !interface_page->show;  
+        interface_page.get()->show = !interface_page.get()->show;  
     }
 }
 
 void Gamestate::setVisibilityTrue(std::string interface_id) {
     if(this->checkComponentExist(interface_id)) {
         auto interface_page = this->interface.at(interface_id);
-        interface_page->show = true;
+        interface_page.get()->show = true;
     }
 }
 
 void Gamestate::setVisibilityFalse(std::string interface_id) {
     if(this->checkComponentExist(interface_id)) {
         auto interface_page = this->interface.at(interface_id);
-        interface_page->show = false;
+        interface_page.get()->show = false;
     }
 }
 
 void Gamestate::renderUI() const {
     // Pages with lower priority end up first in the vector.
     const auto compare = [](
-        const std::pair<std::string, gui::InterfacePage*> pair1, 
-        const std::pair<std::string, gui::InterfacePage*> pair2
+        const std::pair<std::string, std::shared_ptr<gui::InterfacePage>> pair1, 
+        const std::pair<std::string, std::shared_ptr<gui::InterfacePage>> pair2
     ) {
-        auto* page1 = pair1.second;
-        auto* page2 = pair2.second;
+        auto page1 = pair1.second;
+        auto page2 = pair2.second;
 
-        return page1->getDrawingPriority() < page2->getDrawingPriority(); 
+        return page1.get()->getDrawingPriority() < page2.get()->getDrawingPriority(); 
     };
 
-    std::vector <std::pair<std::string, gui::InterfacePage*>> copied_interface;
+    std::vector <std::pair<std::string, std::shared_ptr<gui::InterfacePage>>> copied_interface;
     if(!copied_interface.size())
         for(auto pair : this->interface)
             copied_interface.push_back(pair);
@@ -129,21 +129,26 @@ void Gamestate::renderUI() const {
     
     // Draw the pages in the correct order.
     for(const auto& pair : copied_interface) {
-        auto* component = pair.second;
+        auto component = pair.second;
         if(component)
-            if(component->isVisible())
-                this->engine->window.draw(*component);
+            if(component.get()->isVisible())
+                this->engine->window.draw(*component.get());
     }
 }
 
-void Gamestate::updateUI() const {
+void Gamestate::updateUI() {
+    this->view_interface.setCenter(
+        this->view_interface.getSize().x / 2,
+        this->view_interface.getSize().y / 2
+    );
+
     for(const auto& pair : this->interface) {
-        auto* component = pair.second;
+        auto component = pair.second;
         
         if(component) {
-            if(component->isVisible()) {
-                component->updateUI();
-                component->functionality();
+            if(component.get()->isVisible()) {
+                component.get()->updateUI();
+                component.get()->functionality();
             }
         }
     }
@@ -151,21 +156,17 @@ void Gamestate::updateUI() const {
 
 void Gamestate::resizeUI() const {
     for(const auto& pair : this->interface) {
-        auto* component = pair.second;
-
-        if(component) {
-            component->createUI();
-        }
+        auto component = pair.second;
+        component.get()->createUI();
     }
 }
 
 bool Gamestate::mouseIntersectsUI() const {
     for(const auto& pair : this->interface) {
-        const auto* component = pair.second;
+        auto component = pair.second;
         
-        if(component)
-            if(component->intersectsUI(this->mouse_position_interface) && component->isVisible())
-                return true;
+        if(component.get()->intersectsUI(this->mouse_position_interface) && component.get()->isVisible())
+            return true;
     }
     
     return false;
@@ -173,11 +174,10 @@ bool Gamestate::mouseIntersectsUI() const {
 
 bool Gamestate::pointIntersectsUI(sf::Vector2f point) const {
     for(const auto& pair : this->interface) {
-        const auto* component = pair.second;
+        auto component = pair.second;
         
-        if(component)
-            if(component->intersectsUI(point) && component->isVisible())
-                return true;
+        if(component.get()->intersectsUI(point) && component.get()->isVisible())
+            return true;
     }
     
     return false;
@@ -199,10 +199,12 @@ bool Gamestate::pointIntersectsUI(sf::Vector2f point, const std::string& compone
 void Gamestate::resizeViews() {
     auto window_size = this->engine->window.windowSize();
     auto scaled_size = sf::Vector2f(
-        window_size.x * this->current_zoom,
-        window_size.y * this->current_zoom
+        window_size.x * (this->current_zoom + 1),
+        window_size.y * (this->current_zoom + 1)
     );
 
     this->view_game.setSize(scaled_size);
+    
     this->view_interface.setSize(window_size);
+    this->view_interface.setCenter(window_size.x / 2, window_size.y / 2);
 }

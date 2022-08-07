@@ -8,6 +8,9 @@
 #include "building.hpp"
 #include "entropy/engineSettings.hpp"
 
+// TODO: Move this to a file better suited for events.
+extern std::vector <std::string> event_queue;
+
 namespace lua {
 namespace driver {
 class Driver {

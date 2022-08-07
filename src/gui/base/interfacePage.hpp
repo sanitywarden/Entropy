@@ -50,6 +50,8 @@ namespace gui {
             void            setDrawingPriority(int priority);
             int             getDrawingPriority() const;        
     };
+
+    typedef std::shared_ptr <InterfacePage> InterfaceComponent;
 }
 
 #endif
