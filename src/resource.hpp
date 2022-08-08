@@ -5,33 +5,23 @@
 #include <vector>
 #include <string>
 
-
 namespace iso {
 
-// Classification of resources.
-enum class ResourceType {
-    TYPE_UNCATEGORISED,
-    TYPE_PLANT_RESOURCE,   // Cotton, Silk etc.
-    TYPE_PLANT_FOOD,       // Apple, Pear  etc.
-    TYPE_ANIMAL_FOOD,      // Meat
-    TYPE_BASE_MATERIAL,    // Wood, Stone  etc.
-    TYPE_RAW_MATERIAL,     // Copper, Tin  etc.
-    TYPE_DRINKABLE_LIQUID, // Water, Wine  etc.
-};
-
 struct ResourceData {
-    std::string       filename;      // Path to the definition file of the resource.
-    std::string       name;          // Human readable name.
-    std::string       description;   // Human readable description.
-    std::string       texture;       // Resource texture.
-    sf::Vector2i      texture_size;  // Texture size in pixels.
-    std::string       icon_texture;  // Icon texture.
-    sf::Vector2i      icon_size;     // Icon size in pixels.
-    std::string       type;          // Resource type.
-    int               min_occurence; // How many patches of this resource should be generated.
-    int               max_occurence; // How many patches of this resource may be generated.
-    float             chance;        // Generation chance (0.0 : 1.0).
-    int               patch_size;    // Certain resources generate in patches.
+    std::string  filename;      // Path to the definition file of the resource.
+    std::string  name;          // Human readable name.
+    std::string  description;   // Human readable description.
+    std::string  texture;       // Resource texture.
+    sf::Vector2i texture_size;  // Texture size in pixels.
+    std::string  icon_texture;  // Icon texture.
+    sf::Vector2i icon_size;     // Icon size in pixels.
+    std::string  type;          // Resource type.
+    int          min_occurence; // How many patches of this resource should be generated.
+    int          max_occurence; // How many patches of this resource may be generated.
+    float        chance;        // Generation chance (0.0 : 1.0).
+    int          patch_size;    // Certain resources generate in patches.
+    std::vector <std::string> tile_requirements;   // Resource requires the tile to have these properties.
+    std::vector <std::string> region_requirements; // Resource requires the region to have these properties.
 };
 
 // Resource is a special commodity that may be generated in a region upon visiting.
@@ -59,13 +49,14 @@ class Resource {
         int   getMaximumOccurence() const;
         float getGenerationChance() const;
         int   getPatchSize()        const;
+        bool  canBeGenerated(GameObject* object) const;
 
         // Is tile valid for resource placement.
-        bool isTileValid(GameObject* tile) const;
+        bool isTileValid(GameObject* region, int index) const;
         
         // Is region valid for resource generation.
         bool isRegionValid(GameObject* region) const;
-        void placeResource(GameObject* region, GameObject* tile, int index) const;
+        void placeResource(GameObject* region, int index) const;
         
         // The resource might not be a patch, such as stone or flint.
         // Perhaps it is a Animal Spot which is only a single resource.

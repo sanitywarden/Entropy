@@ -15,14 +15,11 @@ Resource = {
     minimum_occurence = 0,
     maximum_occurence = 1,
     generation_chance = 0.2, 
-    patch_size = 2
+    patch_size = 4,
+    region = {
+        "ALL",
+    },
+    tile = {
+        "TERRAIN", "UNOCCUPIED",
+    }
 }
-
---[[
-valid_biomes = {
-    "ALL", "NONE", "COLD", "WARM", "TROPICAL", 
-}
-valid_tiles = {
-    "ALL", "NONE", "GRASS", "WATER",
-}
-]]

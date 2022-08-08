@@ -2,6 +2,7 @@
 
 #include <Lua/lua.hpp>
 #include <SFML/System/Vector2.hpp>
+
 #include <string>
 #include <vector>
 
@@ -31,9 +32,11 @@ class Driver {
         
         std::vector <iso::BuildingHarvest>    getHarvestedResourceList(const std::string& filename) const;
         std::vector <iso::BuildingProduction> getProducedResourceList(const std::string& filename) const;
+        
+        std::vector <std::string>             getRegionRequirements(const std::string& filename) const;
+        std::vector <std::string>             getTileRequirements(const std::string& filename) const;
 
-
-        // Definitions of lua exposed functions.                
+        // Expose C++ functions to Lua.          
         
     private:
         lua_State* L;

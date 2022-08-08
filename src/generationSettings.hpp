@@ -43,7 +43,12 @@ class GameSettings {
         bool inRegionBounds(sf::Vector2i grid) const;
         int calculateRegionIndex(int x, int y) const;
         int calculateRegionIndex(sf::Vector2i grid) const;
+        
+        // Check if both indexes have the same y coordinate.
         bool inSameRow(int index1, int index2) const;
+        
+        // Check if both indexes have the same x coordinate.
+        bool inSameColumn(int index1, int index2) const;
 
         int panelSize() const;
         sf::Vector2f tileSize() const;

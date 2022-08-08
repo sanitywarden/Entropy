@@ -105,11 +105,18 @@ int GameSettings::getRegionPersistence() const {
     return this->persistence;
 }
 
-bool GameSettings::inSameRow(int check, int same_as) const {
-    auto check_grid   = tileGridPosition(check);
-    auto same_as_grid = tileGridPosition(same_as);
+bool GameSettings::inSameRow(int index1, int index2) const {
+    auto grid1 = tileGridPosition(index1);
+    auto grid2 = tileGridPosition(index2);
 
-    return check_grid.y == same_as_grid.y; 
+    return grid1.y == grid2.y; 
+}
+
+bool GameSettings::inSameColumn(int index1, int index2) const {
+    auto grid1 = tileGridPosition(index1);
+    auto grid2 = tileGridPosition(index2);
+
+    return grid1.x == grid2.x; 
 }
 
 int GameSettings::getWorldMargin() const {
@@ -133,7 +140,7 @@ float GameSettings::getWorldForestMin() const {
 }
 
 float GameSettings::getRegionTreeMin() const {
-    return 0.6f;
+    return this->forest_from;
 }
 
 int GameSettings::getPlayerQuantity() const {

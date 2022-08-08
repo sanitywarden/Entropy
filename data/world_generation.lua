@@ -1,5 +1,6 @@
 GameSettings = {
     World = {
+        -- Higher values might result in the application crashing.
         size = 128,
         terrain_from = 0.2,
         forest_from = 0.6,
@@ -7,6 +8,8 @@ GameSettings = {
     },
 
     Region = {
+        -- Higher values might result in the application crashing.
+        -- Option not implemented, must not change size.
         size = 128,
         initial_population = 5,
         population_needs_enabled = false,

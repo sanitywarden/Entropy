@@ -7,19 +7,19 @@
 #include <memory>
 
 namespace iso {    
-    class Tile : public GameObject {
-        friend class WorldGenerator;
+class Tile : public GameObject {
+    friend class WorldGenerator;
 
-        protected:
-            bool _marked;
+    protected:
+        bool _marked;
 
-        public:
-            Tile();
-            ~Tile();
+    public:
+        Tile();
+        ~Tile();
 
-            TileType tiletype;
+        TileType tiletype;
 
-            void setElevation(int elevation);
-            int getElevation() const;    
-    };  
+        void setElevation(int elevation);
+        int getElevation() const;    
+};  
 }

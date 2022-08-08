@@ -15,5 +15,11 @@ Resource = {
     minimum_occurence = 0,
     maximum_occurence = 1,
     generation_chance = 0.1,
-    patch_size = 2
+    patch_size = 4,
+    region = {
+        "ALL",
+    },
+    tile = {
+        "TERRAIN", "UNOCCUPIED", 
+    }
 }

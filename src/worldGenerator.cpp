@@ -273,6 +273,7 @@ void WorldGenerator::generateWorld() {
 
             if(!region.regiontype.is_ocean() && !region.regiontype.is_forest() && !region.regiontype.is_river() && !this->is_lake(index) && !region.regiontype.is_coast()) {
                 this->lakes[index] = GameObject(region.getPosition(), sf::Vector3f(), region.getSize(), this->getTileVariation("panel_lake"));
+                region.regiontype.set_lake();
                 conditions_met = true;
             }
         }
@@ -1257,6 +1258,34 @@ void WorldGenerator::generateRegion(int region_index) {
         }  
     }
 
+    // Mark coastal tiles.
+    // Coastal tiles neighbour at least one water tile in any major direction. 
+
+    for(int index = 0; index < region.map.size(); index++) {
+        if(region.map[index].tiletype.is_water())
+            continue;
+        
+        int index_left = index - 1;
+        if(game_settings.inRegionBounds(index_left) && game_settings.inSameRow(index, index_left))
+            if(region.map[index_left].tiletype.is_water())
+                region.map[index].tiletype.set_coast();
+
+        int index_right = index + 1;
+        if(game_settings.inRegionBounds(index_right) && game_settings.inSameRow(index, index_right))
+            if(region.map[index_right].tiletype.is_water())
+                region.map[index].tiletype.set_coast();
+
+        int index_top = index - game_settings.getRegionWidth();
+        if(game_settings.inRegionBounds(index_top) && game_settings.inSameColumn(index, index_top))
+            if(region.map[index_top].tiletype.is_water())
+                region.map[index].tiletype.set_coast();
+
+        int index_bottom = index + game_settings.getRegionWidth();
+        if(game_settings.inRegionBounds(index_bottom) && game_settings.inSameColumn(index, index_bottom))
+            if(region.map[index_bottom].tiletype.is_water())
+                region.map[index].tiletype.set_coast();
+    }
+
     // Fill in blank spots created by tile elevation.
     {
         for(int y = 0; y < game_settings.getRegionWidth(); y++) {
@@ -1363,12 +1392,10 @@ void WorldGenerator::generateRegion(int region_index) {
         }
     }
 
-    // this->generateResourcePatch(region, RESOURCE_STONE);
-    // this->generateResourcePatch(region, RESOURCE_FLINT);
-    // this->generateResourcePatch(region, RESOURCE_ANIMAL);
-    // this->generateResourcePatch(region, RESOURCE_CLAY);
-    // this->generateResourcePatch(region, RESOURCE_COPPER);
-    // this->generateResourcePatch(region, RESOURCE_TIN);
+    std::cout << "[World Generation]: Generating resources.\n";
+    for(const auto& resource: resources) {
+        this->generateResourcePatch(region, resource);
+    }
 
     const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
     std::cout << "[World Generation]: Region generated in " << time_rounded << "s.\n"; 
@@ -1389,88 +1416,95 @@ std::string WorldGenerator::extractBaseTexture(const std::string& id, const Biom
 }
 
 void WorldGenerator::generateResourcePatch(Region& region, const Resource& resource) {
-    // auto resource_radius = game_settings.getRegionResourceRadius(resource);
-    // int resource_patches_generated = 0;  
+    auto patch_size = resource.getPatchSize();
 
-    // if(resource.canBeGenerated(&region)) {
-    //     for(int patch_no = 0; patch_no < resource.max_occurence; patch_no++) {
-    //         auto config_chance = game_settings.getRegionResourceGenerationChance(resource);
-    //         auto power = resource_patches_generated > 0
-    //             ? (resource_patches_generated + 1) * (resource_patches_generated + 1)
-    //             : 1;
+    auto already_generated_patches = 0;
 
-    //         auto resource_chance = std::pow(config_chance, power);        
-    //         float random_chance = (std::rand() % 100) / (float)100;
-    //         if(resource.min_occurence > 0 && resource.min_occurence <= resource_patches_generated)
-    //             random_chance = 0.0f;
+    // TODO: Create a universal template tile for all climates, that will be coloured depending on the biome.
+    // Tiles should have variations.
+    // Actual tiles should be generated automatically.
+    // Tiles and the way they are created should be declared in a single file.
+    // Tiles should hold data about what biome they can be generated in.
 
-    //         if(random_chance > resource_chance)
-    //             continue;
+    if(resource.isRegionValid(&region)) {
+        for(int patch_no = 0; patch_no < resource.getMaximumOccurence(); patch_no++) {
+            auto base_generation_chance = resource.getGenerationChance();
+            auto power = already_generated_patches > 0
+                ? (already_generated_patches + 1) * (already_generated_patches + 1)
+                : 1;
         
-    //         NoiseContainer container;
-    //         NoiseSettings  settings = game_settings.getRegionResourceSettings();
-    //         this->generateNoise(settings, container);
+            auto current_generation_chance = std::pow(base_generation_chance, power);
+            auto random_chance = (float)rand() / (float)RAND_MAX;
 
-    //         // Find a valid spot for this resource to be generated.
+            if(resource.getMinimumOccurence() > 0 && resource.getMinimumOccurence() < already_generated_patches)
+                random_chance = 0.0f;
 
-    //         auto random_tile_index = -1;
-    //         auto spot_is_valid = false;
-    //         do { 
-    //             random_tile_index = std::rand() % game_settings.getRegionSize();
-    //             spot_is_valid = resource.isGenerationSpotValid(&region, random_tile_index); 
-    //         }
-            
-    //         while(!spot_is_valid);
+            if(random_chance > current_generation_chance)
+                continue;
 
-    //         const auto& tile_selected = region.map[random_tile_index];
-    //         const auto tile_selected_grid = tileGridPosition(random_tile_index);
-    //         auto angle = 0;
+            auto patch_tile_index = -1;
+            bool spot_is_valid = false;
 
-    //         resource_patches_generated++;
+            while(!spot_is_valid) {
+                patch_tile_index = rand() % game_settings.getRegionSize();
+                spot_is_valid = resource.isTileValid(&region, patch_tile_index);
+            }
 
-    //         if(resource.isSingleObject() && resource.isGenerationSpotValid(&region, random_tile_index)) {
-    //             resource.placeResource(&region, random_tile_index);
-    //             continue;
-    //         }
+            already_generated_patches++;
+            const auto& tile_selected = region.map[patch_tile_index];
+            const auto  tile_grid = tileGridPosition(patch_tile_index);
 
-    //         else {
-    //             // Without these checks X and Y can be smaller than 0 or bigger than region size.
-    //             // Because of that you have to check the bounds.
-    //             // You can not do that inside the loop because it would make it infinite.
+            if(resource.isSingleObject() && resource.isTileValid(&region, patch_tile_index)) {
+                resource.placeResource(&region, patch_tile_index);
+                continue;
+            }
 
-    //             int min_x = tile_selected_grid.x - resource_radius * resource_radius < 0 ? 0 : tile_selected_grid.x - resource_radius * resource_radius;
-    //             int min_y = tile_selected_grid.y - resource_radius * resource_radius < 0 ? 0 : tile_selected_grid.y - resource_radius * resource_radius;
-    //             int max_x = tile_selected_grid.x + resource_radius * resource_radius >= game_settings.getRegionWidth() ? game_settings.getRegionWidth() : tile_selected_grid.x + resource_radius * resource_radius;
-    //             int max_y = tile_selected_grid.y + resource_radius * resource_radius >= game_settings.getRegionWidth() ? game_settings.getRegionWidth() : tile_selected_grid.y + resource_radius * resource_radius;
+            else {
+                // Without these checks X and Y can be smaller than 0 or bigger than region size.
+                // Because of that you have to check the bounds.
+                // You can not do that inside the loop because it would make it infinite.
 
-    //             for(int y = min_y; y < max_y; y++) {
-    //                 for(int x = min_x; x < max_x; x++) {        
-    //                     const int index = game_settings.calculateRegionIndex(x, y);
-    //                     auto& tile      = region.map[index];
+                // Possibly something that is not so random.
+                // Maybe depending on the perlin noise which generates the region.  
+
+                NoiseContainer container;
+                auto grid = sf::Vector2i(region.getPosition2D().x / game_settings.panelSize(), region.getPosition2D().y / game_settings.panelSize());
+                this->generateChunkNoise(container, grid);
+
+                int angle = 0;
+                int min_x = tile_grid.x - patch_size * patch_size < 0 ? 0 : tile_grid.x - patch_size * patch_size;
+                int min_y = tile_grid.y - patch_size * patch_size < 0 ? 0 : tile_grid.y - patch_size * patch_size;
+                int max_x = tile_grid.x + patch_size * patch_size >= game_settings.getRegionWidth() ? game_settings.getRegionWidth() : tile_grid.x + patch_size * patch_size;
+                int max_y = tile_grid.y + patch_size * patch_size >= game_settings.getRegionWidth() ? game_settings.getRegionWidth() : tile_grid.y + patch_size * patch_size;
+                
+                for(int y = min_y; y < max_y; y++) {
+                    for(int x = min_x; x < max_x; x++) {        
+                        const int index = game_settings.calculateRegionIndex(x, y);
+                        auto& tile      = region.map[index];
                         
-    //                     const auto tile_centre = tile_selected.getPosition2D();
-    //                     const auto tile_point  = tile.getPosition2D();
-    //                     const auto grid_centre = sf::Vector2f(
-    //                         tileGridPosition(random_tile_index).x,
-    //                         tileGridPosition(random_tile_index).y
-    //                     );
+                        const auto tile_centre = tile_selected.getPosition2D();
+                        const auto tile_point  = tile.getPosition2D();
+                        const auto grid_centre = sf::Vector2f(
+                            tileGridPosition(patch_tile_index).x,
+                            tileGridPosition(patch_tile_index).y
+                        );
 
-    //                     const auto grid_point  = sf::Vector2f(
-    //                         tileGridPosition(index).x,
-    //                         tileGridPosition(index).y
-    //                     );
+                        const auto grid_point  = sf::Vector2f(
+                            tileGridPosition(index).x,
+                            tileGridPosition(index).y
+                        );
                         
-    //                     const int radius_modified = resource_radius * (1.00f + container[angle]);
-    //                     const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
-    //                     if(point_inside && resource.isGenerationSpotValid(&region, index)) {
-    //                         resource.placeResource(&region, index);
-    //                         angle++;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+                        const int radius_modified = patch_size * (1.00f + container[angle]);
+                        const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
+                        if(point_inside && resource.isTileValid(&region, index)) {
+                            resource.placeResource(&region, index);
+                            angle++;
+                        }
+                    }
+                }    
+            }                
+        }
+    }
 
-    // std::cout << "[World Generation][Resource Geneneration]: " << resource.resource_name << " patches generated: " << resource_patches_generated << ".\n";
+    std::cout << "  [] Generated " << resource.getResourceName() << " (" << already_generated_patches << ")\n"; 
 }

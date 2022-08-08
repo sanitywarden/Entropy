@@ -21,12 +21,15 @@ namespace iso {
             bool is_river()   const;
             bool is_coast()   const;
             bool is_forest()  const;
+            bool is_lake()    const;
+            bool is_water()   const;
 
             void set_terrain();
             void set_ocean();
             void set_river();
             void set_coast();
             void set_forest();
+            void set_lake();
 
             void unset_coast();
     };

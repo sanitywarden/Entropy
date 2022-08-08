@@ -3,6 +3,8 @@
 #include "globalutilities.hpp"
 #include "generationSettings.hpp"
 
+#include "tileType.hpp"
+
 #include <filesystem>
 #include <iostream>
 
@@ -46,7 +48,7 @@ namespace driver {
             settings.population_needs_enabled    = this->getNestedFieldValueBoolean("GameSettings", "Region", "population_needs_enabled");
             settings.building_cost_enabled       = this->getNestedFieldValueBoolean("GameSettings", "Region", "building_cost_enabled");
             settings.astar_pathfinding_enabled   = this->getNestedFieldValueBoolean("GameSettings", "Region", "astar_pathfinding_enabled");
-            
+    
             game_settings = settings;
         }
 
@@ -99,6 +101,8 @@ namespace driver {
                     data.max_occurence = this->getFieldValueInteger("Resource", "maximum_occurence");
                     data.chance        = this->getFieldValueFloat("Resource", "generation_chance");
                     data.patch_size    = this->getFieldValueInteger("Resource", "patch_size");
+                    data.tile_requirements   = this->getTileRequirements(data.filename);
+                    data.region_requirements = this->getRegionRequirements(data.filename); 
 
                     iso::Resource resource(data);
                     resources.push_back(resource);   
@@ -561,6 +565,92 @@ namespace driver {
         }
 
         // Pop 'produces' and 'Building' from the stack.
+        lua_pop(this->L, 2);
+        return list;
+    }
+
+    std::vector <std::string> Driver::getRegionRequirements(const std::string& filename) const {
+        luaL_dofile(this->L, filename.c_str());
+
+        std::vector <std::string> list;
+        int result_global = lua_getglobal(this->L, "Resource");
+        if(result_global == LUA_TNIL)
+            return list;
+        
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: Could not get table 'Resource' from " << filename << "\n";
+            return list;
+        }
+
+        lua_pushstring(this->L, "region");
+        int result_table = lua_gettable(this->L, -2);
+        if(result_table == LUA_TNIL)
+            return list;
+        
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: There is no 'region' table.\n";
+            return list;
+        }
+
+        // Get length of 'region'
+        int array_length = lua_rawlen(this->L, -1);
+
+        for(int i = 0; i < array_length; i++) {
+            // Lua indexes start at 1, and not 0.
+            int lua_index = i + 1;
+
+            lua_rawgeti(this->L, -1, lua_index);
+            std::string region_property = lua_tostring(this->L, -1);
+            list.push_back(region_property);
+
+            // Pop the pushed index from stack.
+            lua_pop(this->L, 1); 
+        }
+
+        // Pop 'region' and 'Resource' from the stack.
+        lua_pop(this->L, 2);
+        return list;
+    }
+
+    std::vector <std::string> Driver::getTileRequirements(const std::string& filename) const {
+        luaL_dofile(this->L, filename.c_str());
+
+        std::vector <std::string> list;
+        int result_global = lua_getglobal(this->L, "Resource");
+        if(result_global == LUA_TNIL)
+            return list;
+        
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: Could not get table 'Resource' from " << filename << "\n";
+            return list;
+        }
+
+        lua_pushstring(this->L, "tile");
+        int result_table = lua_gettable(this->L, -2);
+        if(result_table == LUA_TNIL)
+            return list;
+        
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: There is no 'tile' table.\n";
+            return list;
+        }
+
+        // Get length of 'tile'
+        int array_length = lua_rawlen(this->L, -1);
+
+        for(int i = 0; i < array_length; i++) {
+            // Lua indexes start at 1, and not 0.
+            int lua_index = i + 1;
+
+            lua_rawgeti(this->L, -1, lua_index);
+            std::string region_property = lua_tostring(this->L, -1);
+            list.push_back(region_property);
+
+            // Pop the pushed index from stack.
+            lua_pop(this->L, 1); 
+        }
+
+        // Pop 'tile' and 'Resource' from the stack.
         lua_pop(this->L, 2);
         return list;
     }
