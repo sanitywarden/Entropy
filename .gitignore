@@ -6,5 +6,6 @@
 /screenshot
 /bin
 /include/LuaBridge
+/data/examples
 NOTES.txt
 TODO.txt

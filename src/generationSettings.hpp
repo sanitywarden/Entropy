@@ -11,6 +11,8 @@ class GameSettings {
         ~GameSettings();
 
         int persistence;
+        int world_persistence;
+
         float simulation_update_frequency;
 
         // World
@@ -18,6 +20,8 @@ class GameSettings {
         int world_width;
         float terrain_from;
         float forest_from;
+        float temperature_multiplier;
+        float moisture_multiplier;
 
         // Region
 

@@ -25,7 +25,7 @@ namespace iso {
             Entropy(const Settings& settings);
             ~Entropy();
             
-            resourceManager  resource;
+            ResourceManager  resource;
             gamestateManager gamestate;
             windowManager    window;
             Settings         settings;

@@ -128,6 +128,18 @@ bool Resource::isRegionValid(GameObject* object) const {
 
         if(property == "FOREST" && region->regiontype.is_forest())
             requirements_passed++;
+
+        if(property == "COLD" && region->temperature_text == "COLD")
+            requirements_passed++;
+        
+        if(property == "WARM" && region->temperature_text == "WARM")
+            requirements_passed++;
+        
+        if(property == "TROPICAL" && region->temperature_text == "TROPICAL")
+            requirements_passed++;
+        
+        if(property == "HOT" && region->temperature_text == "HOT")
+            requirements_passed++;
     }
 
     return requirements_passed == requirements_all;

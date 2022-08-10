@@ -6,7 +6,10 @@
 #include "nameGenerator.hpp"
 #include "tooltip.hpp"
 #include "colours.hpp"
+#include "luadriver.hpp"
+#include "noiseSettings.hpp"
 
+#include <queue>
 #include <iostream>
 
 using namespace iso;
@@ -22,7 +25,7 @@ SimulationManager::SimulationManager()
 
     static Worldmap worldmap(this);
     this->gamestate.addGamestate("worldmap", worldmap);
-    this->world = WorldGenerator(&this->resource, &this->texturizer);
+    
     this->prepare();
 
     this->gamestate.setGamestate("worldmap");
@@ -128,6 +131,7 @@ void SimulationManager::internalLoop(float delta_time) {
 
 void SimulationManager::prepare() {
     this->initialise();
+    this->world = WorldGenerator(&this->resource, &this->texturizer);
     this->world.world_map = std::vector <Region> (game_settings.getWorldSize());
     this->world.forests   = std::map <int, GameObject> ();
     this->world.rivers    = std::map <int, GameObject> ();

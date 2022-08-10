@@ -9,6 +9,7 @@
 #include <vector>
 #include <fstream>
 #include <map>
+#include <random>
 
 bool iso::startsWith(const std::string& str, const std::string& phrase) {
     if(str.length() < phrase.length())
@@ -296,4 +297,9 @@ std::string iso::getTilePixelColour(const sf::Texture& tile_template, sf::Vector
     else if(pixel_colour == sf::Color::Blue)   return "Blue";
     else if(pixel_colour == sf::Color::Yellow) return "Yellow";
     else return "Other";
+}
+
+int iso::randomInclusiveBetween(int min, int max) {
+    int number = std::rand() % max + min;
+    return number;
 }

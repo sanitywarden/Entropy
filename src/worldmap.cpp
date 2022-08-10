@@ -31,6 +31,8 @@ void Worldmap::initialise() {
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 2;
 
+    this->lens = "NORMAL";
+
     this->resizeViews();
 
     this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
@@ -220,7 +222,7 @@ void Worldmap::update(float delta_time) {
 }
 
 void Worldmap::render(float delta_time) {
-    this->manager->window.clear(COLOUR_BLACK);
+    this->manager->window.clear(COLOUR_BLUE_OCEAN);
     this->manager->window.getWindow()->setView(this->view_game);
 
     this->renderWorld();
@@ -275,6 +277,21 @@ void Worldmap::handleInput() {
             if(this->controls.isKeyPressed("F12")) {
                 this->manager->window.takeScreenshot();
             }
+
+            if(this->controls.isKeyPressed("H"))
+                this->lens = "HEIGHT";
+
+            if(this->controls.isKeyPressed("L"))
+                this->lens = "LATITUDE";
+
+            if(this->controls.isKeyPressed("N"))
+                this->lens = "NORMAL";
+
+            if(this->controls.isKeyPressed("M"))
+                this->lens = "MOISTURE";
+
+            if(this->controls.isKeyPressed("T"))
+                this->lens = "TEMPERATURE";
 
             const auto tile_top_left     = this->manager->world.world_map[0];
             const auto tile_bottom_right = this->manager->world.world_map[game_settings.getWorldSize() - 1];
@@ -344,33 +361,88 @@ void Worldmap::renderWorld() {
         sf::Rect region_screen_space(region.getPosition2D(), region.getSize());
 
         if(camera_screen_area.intersects(region_screen_space)) {
-            if(human_player->discoveredRegion(i) || !game_settings.fogOfWarEnabled()) {
+            if(human_player->discoveredRegion(i) || !game_settings.fogOfWarEnabled() && !region.regiontype.is_ocean()) {
                 // Draw panel.
 
-                sf::RenderStates panel_states;
-                panel_states.texture = &this->manager->resource.getTexture(region.getTextureName());
-            
-                this->manager->window.draw(region, panel_states);
-                gpu_draw_calls++;
-            
-                // if(region.isOwned()) {
-                //     auto colour = region.owner->getTeamColourTransparent();
+                if(this->lens == "NORMAL") {
+                    sf::RenderStates panel_states;
+                    panel_states.texture = &this->manager->resource.getTexture(region.getTextureName());
+                
+                    this->manager->window.draw(region, panel_states);
+                    gpu_draw_calls++;
+                }
 
-                //     sf::VertexArray region_owner_colour(sf::Quads, 4);
+                else if(this->lens == "LATITUDE") {
+                    auto colour = sf::Color(0, 0, region.latitude * 255);
+                    sf::VertexArray r(sf::Quads, 4);
+    
+                    r[0].position = region.getPosition2D();
+                    r[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0); 
+                    r[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y); 
+                    r[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
+    
+                    r[0].color = colour;
+                    r[1].color = colour;
+                    r[2].color = colour;
+                    r[3].color = colour;
+    
+                    this->manager->window.draw(r);
+                    gpu_draw_calls++;
+                }
 
-                //     region_owner_colour[0].position = region.getPosition2D();
-                //     region_owner_colour[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0); 
-                //     region_owner_colour[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y); 
-                //     region_owner_colour[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
+                else if(this->lens == "TEMPERATURE") {
+                    auto colour = sf::Color(region.temperature * 255, 0, 0);
+                    sf::VertexArray r(sf::Quads, 4);
+    
+                    r[0].position = region.getPosition2D();
+                    r[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0); 
+                    r[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y); 
+                    r[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
+    
+                    r[0].color = colour;
+                    r[1].color = colour;
+                    r[2].color = colour;
+                    r[3].color = colour;
+    
+                    this->manager->window.draw(r);
+                    gpu_draw_calls++;
+                }
 
-                //     region_owner_colour[0].color = colour;
-                //     region_owner_colour[1].color = colour;
-                //     region_owner_colour[2].color = colour;
-                //     region_owner_colour[3].color = colour;
+                else if(this->lens == "MOISTURE") {
+                    auto colour = sf::Color(0, 0, region.moisture * 255);
+                    sf::VertexArray r(sf::Quads, 4);
+    
+                    r[0].position = region.getPosition2D();
+                    r[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0); 
+                    r[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y); 
+                    r[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
+    
+                    r[0].color = colour;
+                    r[1].color = colour;
+                    r[2].color = colour;
+                    r[3].color = colour;
+    
+                    this->manager->window.draw(r);
+                    gpu_draw_calls++;
+                }
 
-                //     this->manager->window.draw(region_owner_colour);
-                //     gpu_draw_calls++;
-                // }
+                else if(this->lens == "HEIGHT") {
+                    auto colour = sf::Color(region.height * 255, region.height * 255, region.height * 255);
+                    sf::VertexArray r(sf::Quads, 4);
+    
+                    r[0].position = region.getPosition2D();
+                    r[1].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, 0); 
+                    r[2].position = region.getPosition2D() + sf::Vector2f(region.getSize().x, region.getSize().y); 
+                    r[3].position = region.getPosition2D() + sf::Vector2f(0, region.getSize().y);
+    
+                    r[0].color = colour;
+                    r[1].color = colour;
+                    r[2].color = colour;
+                    r[3].color = colour;
+    
+                    this->manager->window.draw(r);
+                    gpu_draw_calls++;
+                }
 
                 // Draw panel details.
                 // Draw forest.
@@ -433,11 +505,11 @@ void Worldmap::selectPanel() {
 }
 
 void Worldmap::unselectPanel() {
-    if(this->selected_index != -1) {
+    if(game_settings.inWorldBounds(this->selected_index)) {
         const auto& region = this->manager->world.world_map[this->selected_index];
         if(!region.contains(this->mouse_position_window)) {
             this->selected_index = -1;
-            this->toggleComponentVisibility("component_widget_region");
+            this->setVisibilityFalse("component_widget_region");
         }
     }
 }
@@ -494,9 +566,6 @@ void Worldmap::createUI() {
 }
 
 void Worldmap::gamestateLoad() {
-    // Centre the camera on current tile.
-    // Current tile is the capital (when first loaded in) or a tile the player was visiting.
-
     auto* human_player = this->manager->getHumanPlayer();
     auto* regionmap = this->manager->gamestate.getGamestateByName("regionmap")
         ? static_cast<Regionmap*>(this->manager->gamestate.getGamestateByName("regionmap"))
@@ -513,6 +582,14 @@ void Worldmap::gamestateLoad() {
 
     this->mouse_moved = false;
     this->mouse_drag  = false;
+
+    this->selected_index = -1;
+    this->current_index  = -1;
+
+    for(auto& pair : this->interface) {
+        auto* component = pair.second.get();
+        this->setVisibilityFalse(component->getWidgetID());
+    }
 }
 
 void Worldmap::gamestateClose() {

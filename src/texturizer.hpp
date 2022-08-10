@@ -10,10 +10,10 @@
 namespace iso {
     class Texturizer {
         private:
-            resourceManager* resource;
+            ResourceManager* resource;
         public:
             Texturizer();
-            Texturizer(resourceManager* resource_manager);
+            Texturizer(ResourceManager* resource_manager);
             ~Texturizer();
 
             std::string createColouredWorldmapTexture(const std::string& id, const std::string& save_as, const sf::Color& replacement_black, const sf::Color& replacement_white);      

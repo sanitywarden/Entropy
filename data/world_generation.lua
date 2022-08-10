@@ -2,9 +2,11 @@ GameSettings = {
     World = {
         -- Higher values might result in the application crashing.
         size = 128,
-        terrain_from = 0.2,
-        forest_from = 0.6,
-        fog_of_war_enabled = false
+        terrain_from = 0.01,
+        forest_from = 0.4,
+        fog_of_war_enabled = false,
+        multiplier_moisture = 0.3,   -- Increasing will result in more tropical world
+        multiplier_temperature = 0.4 -- Increasing will result in more arid world.
     },
 
     Region = {
@@ -17,7 +19,9 @@ GameSettings = {
         astar_pathfinding_enabled = false
     },
     
-    -- Persistence of the noise generating function.
+    world_persistence = 8,
+
+    -- Persistence of the region noise generating function.
     -- The higher the value, the more persistent terrain.
     persistence = 64,
     

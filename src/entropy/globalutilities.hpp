@@ -1,5 +1,4 @@
-#ifndef _GLOBAL_UTILITIES_HPP_
-#define _GLOBAL_UTILITIES_HPP_
+#pragma once
 
 #include <string>
 #include <SFML/System/Vector2.hpp>
@@ -23,6 +22,5 @@ namespace iso {
     sf::Vector2i tileGridPosition(const sf::Texture& texture, sf::Vector2f tile_position);
     sf::Vector2i tileGridPosition(int index);    
     std::string getTilePixelColour(const sf::Texture& texture, sf::Vector2i pixel); 
+    int randomInclusiveBetween(int min, int max);
 }
-
-#endif

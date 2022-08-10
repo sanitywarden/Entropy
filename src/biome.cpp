@@ -1,28 +1,82 @@
 #include "biome.hpp"
+#include "globalutilities.hpp"
 
 using namespace iso;
 
 Biome::Biome()
-    : biome_name("Biomeless"), biome_colour(COLOUR_WHITE), biome_texture_tile(0), biome_texture_tree(0) {}
+{}
 
-Biome::Biome(std::string name, sf::Color colour) 
-    : biome_name(name), biome_colour(colour), biome_texture_tile(0), biome_texture_tree(0) {}
+Biome::Biome(const Biome& biome)
+    : data(biome.data)
+{}
 
-Biome::Biome(std::string name, sf::Color colour, std::vector <std::string> tileset, std::vector <std::string> treeset)
-    : biome_name(name), biome_colour(colour), biome_texture_tile(tileset), biome_texture_tree(treeset) {}
+Biome::Biome(const BiomeData& data)
+    : data(data)
+{}
 
-Biome::~Biome() {
-    
+Biome::~Biome()
+{}
+
+const std::string& Biome::getDefinitionFilename() const {
+    return this->data.filename;
 }
 
-bool Biome::operator== (const Biome& biome) const {
-    return this->biome_name == biome.biome_name;
+const std::string& Biome::getBiomeName() const {
+    return this->data.name;
 }
 
-std::string Biome::getTile() const {
-    return this->biome_texture_tile[std::rand() % this->biome_texture_tile.size()];
+const std::string& Biome::getBiomeId() const {
+    return this->data.id;
 }
 
-std::string Biome::getTree() const {
-    return this->biome_texture_tree[std::rand() % this->biome_texture_tree.size()];
+const std::string& Biome::getBiomeDescription() const {
+    return this->data.description;
+}
+
+const sf::Color Biome::getBiomeWorldmapColour() const {
+    return this->data.colour_wmap;
+}
+
+const sf::Color Biome::getBiomeRegionmapColour() const {
+    return this->data.colour_rmap;
+}
+
+const std::string& Biome::getBiomeTemperature() const {
+    return this->data.temperature;
+}
+
+const std::string& Biome::getBiomeMoisture() const {
+    return this->data.moisture;
+}
+
+const std::string& Biome::getBiomeLatitude() const {
+    return this->data.latitude;
+}
+
+const std::string& Biome::getBiomeElevation() const {
+    return this->data.elevation;
+}
+
+const std::string& Biome::getWorldmapForestTexture() const {
+    return this->data.forest_texture_worldmap;
+}
+
+const std::vector <std::string>& Biome::getBiomeTileList() const {
+    return this->data.tiles;
+}
+
+const std::vector <std::string>& Biome::getBiomeTreeList() const {
+    return this->data.trees;
+}
+
+const std::string& Biome::getRandomTile() const {
+    return this->data.tiles[randomInclusiveBetween(0, this->data.tiles.size())];
+}
+
+const std::string& Biome::getRandomTree() const {
+    return this->data.trees[randomInclusiveBetween(0, this->data.trees.size())];
+}
+
+bool Biome::canBeForest() const {
+    return this->data.can_be_forest;
 }

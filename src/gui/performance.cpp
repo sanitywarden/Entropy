@@ -66,14 +66,22 @@ void DebugPerformance::updateUI() {
         int current_index  = -1;
         if(game_settings.inWorldBounds(tile_grid)) {
             current_index = game_settings.calculateWorldIndex(tile_grid.x, tile_grid.y);
+            const auto& region = this->manager->world.world_map[current_index];
 
             data += "Current index:  " + std::to_string(current_index)  + "\n";
-            data += "Terrain: "        + std::to_string(this->manager->world.world_map[current_index].regiontype.is_terrain()) + "\n";
-            data += "Coast: "          + std::to_string(this->manager->world.world_map[current_index].regiontype.is_coast())   + "\n";
+            data += "Terrain: "        + std::to_string(region.regiontype.is_terrain()) + "\n";
+            data += "Ocean: "          + std::to_string(region.regiontype.is_ocean())   + "\n";
+            data += "Coast: "          + std::to_string(region.regiontype.is_coast())   + "\n";
             data += "Forest: "         + std::to_string(this->manager->world.forests.count(current_index)) + "\n";
             data += "Lake: "           + std::to_string(this->manager->world.is_lake(current_index)) + "\n";
-        }
+            
+            if(region.regiontype.is_terrain())    
+                data += "Climate: " + region.temperature_text + " " + region.moisture_text + "\n"; 
+            
+            data += "Texture: " + region.getTextureName() + "\n";
 
+        }
+        
         if(selected_index != -1)    
             data += "Selected index: " + std::to_string(selected_index) + "\n";       
     }

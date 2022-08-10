@@ -3,7 +3,7 @@ Appconfig = {
         x = 1200,
         y = 800
     },
-    fulscreen = false,
+    fullscreen = false,
     vsync = false,
     refresh_rate = 144,
     debug_mode = true

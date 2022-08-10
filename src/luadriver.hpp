@@ -9,9 +9,6 @@
 #include "building.hpp"
 #include "entropy/engineSettings.hpp"
 
-// TODO: Move this to a file better suited for events.
-extern std::vector <std::string> event_queue;
-
 namespace lua {
 namespace driver {
 class Driver {
@@ -23,21 +20,27 @@ class Driver {
         float getFieldValueFloat(const std::string& field, const std::string& key) const;
         bool getFieldValueBoolean(const std::string& field, const std::string& key) const;
         sf::Vector2i getFieldValueVector2i(const std::string& field, const std::string& key1, const std::string& key2) const;
-        
+
         std::string getNestedFieldValueString(const std::string& field1, const std::string& field2, const std::string& key) const;
         int getNestedFieldValueInteger(const std::string& field1, const std::string& field2, const std::string& key) const;
         float getNestedFieldValueFloat(const std::string& field1, const std::string& field2, const std::string& key) const;
         bool getNestedFieldValueBoolean(const std::string& field1, const std::string& field2, const std::string& key) const;
         sf::Vector2i getNestedFieldValueVector2i(const std::string& field1, const std::string& field2, const std::string& key1, const std::string& key2) const;
-        
+        sf::Color getNestedFieldValueColor(const std::string& field1, const std::string& field2) const;
+
         std::vector <iso::BuildingHarvest>    getHarvestedResourceList(const std::string& filename) const;
         std::vector <iso::BuildingProduction> getProducedResourceList(const std::string& filename) const;
         
-        std::vector <std::string>             getRegionRequirements(const std::string& filename) const;
-        std::vector <std::string>             getTileRequirements(const std::string& filename) const;
+        std::vector <std::string> getRegionRequirements(const std::string& filename) const;
+        std::vector <std::string> getTileRequirements(const std::string& filename) const;
+
+        std::vector <std::string> readBiomeTiles(const std::string& filename) const;
+        std::vector <std::string> readBiomeTrees(const std::string& filename) const;
 
         // Expose C++ functions to Lua.          
         
+        void registerFunctions() const;
+
     private:
         lua_State* L;
         iso::Settings app_settings;

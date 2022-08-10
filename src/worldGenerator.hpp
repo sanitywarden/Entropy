@@ -21,7 +21,7 @@ namespace iso {
             Region m_region;
             Tile   m_tile;
 
-            resourceManager*     resource;
+            ResourceManager*     resource;
             Texturizer*          texturizer;
             wgn::NoiseAlgorithms noise;     
             std::vector <float> m_gradient; 
@@ -38,10 +38,18 @@ namespace iso {
 
             // Worldmap API.
             
+            // This function returns the name of the tile type under certain index.
+            // Exact result is the name of a worldmap tile without type ID.
+            // For example: "panel_island" instead of "panel_island_0";
             std::string getWorldmapTile(int index) const;
+            // const Biome& getBiome(float temperature, float moisture, float elevation) const;
+
+            // Get a tile variation from "./res/worldmap/panel_atlas.png".
             std::string getTileVariation(const std::string& id) const;
+
+            // Use the texture templates from "./res/worldmap/panel_atlas.png" to create their biome specific variations.
             std::string createBiomeSpecificTexture(const std::string& id, Biome biome) const;
-            std::string getWorldmapTreeTextureName(const Biome& biome) const;
+            
             std::string getRiverTileVariation(const std::string& id) const;
             std::string extractBaseTexture(const std::string& id, const Biome& biome) const;
 
@@ -51,7 +59,7 @@ namespace iso {
 
         public:
             WorldGenerator();
-            WorldGenerator(resourceManager* resource, Texturizer* texturizer);
+            WorldGenerator(ResourceManager* resource, Texturizer* texturizer);
             ~WorldGenerator();
 
             void generateWorld();

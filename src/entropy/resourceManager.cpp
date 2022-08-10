@@ -5,18 +5,17 @@
 
 using namespace iso;
 
-resourceManager::resourceManager() {
-}
+ResourceManager::ResourceManager() 
+{}
 
-resourceManager::resourceManager(const Settings& settings) {
-    this->m_settings = settings;
-}
+ResourceManager::ResourceManager(const Settings& settings) 
+    : m_settings(settings)
+{}
 
-resourceManager::~resourceManager() {
+ResourceManager::~ResourceManager() 
+{}
 
-}
-
-void resourceManager::loadTexture(const std::string filename, const std::string id, const sf::IntRect area) {
+void ResourceManager::loadTexture(const std::string filename, const std::string id, sf::IntRect area) {
     sf::Texture texture;
     if(!texture.loadFromFile(filename, area)) {
         std::cout << "[Entropy Engine][Resource Manager]: Could not load texture: " << filename << " with id: " << id << ".\n";
@@ -27,12 +26,12 @@ void resourceManager::loadTexture(const std::string filename, const std::string 
     this->m_textures[id]   = texture;
 }
 
-void resourceManager::addTexture(const std::string& id, sf::Texture texture, const sf::IntRect area) {
+void ResourceManager::addTexture(const std::string& id, sf::Texture texture, const sf::IntRect area) {
     this->m_dimensions[id] = area;
     this->m_textures[id]   = texture;
 }
 
-void resourceManager::unloadTexture(const std::string id) {
+void ResourceManager::unloadTexture(const std::string id) {
     if(this->checkTextureExists(id)) {
         this->m_textures.erase(id);
         this->m_dimensions.erase(id);
@@ -42,18 +41,18 @@ void resourceManager::unloadTexture(const std::string id) {
     std::cout << "[Entropy Engine][Resource Manager]: Could not unload texture: " << id << ".\n";
 }
 
-bool resourceManager::checkTextureExists(const std::string id) const {
+bool ResourceManager::checkTextureExists(const std::string id) const {
     return this->m_textures.count(id);
 }
 
-sf::Texture& resourceManager::getTexture(const std::string id) {
+sf::Texture& ResourceManager::getTexture(const std::string id) {
     return this->m_textures[id];
 }
 
 // If a texture was loaded from a bigger texture it can be used for drawing with Vertex Arrays.
 // Manually writing a table with positions of a texture would be boring and frustrating,
 // so you can reuse the infromation provided when loading the texture. 
-sf::Vector2f resourceManager::getTexturePosition(const std::string& id) const {
+sf::Vector2f ResourceManager::getTexturePosition(const std::string& id) const {
     try {
         sf::Vector2f position = sf::Vector2f(
             this->m_dimensions.at(id).left,
@@ -70,7 +69,7 @@ sf::Vector2f resourceManager::getTexturePosition(const std::string& id) const {
     return sf::Vector2f(0, 0);
 } 
 
-sf::Vector2f resourceManager::getTextureSize(const std::string& id) const {
+sf::Vector2f ResourceManager::getTextureSize(const std::string& id) const {
     try {
         sf::Vector2f size = sf::Vector2f(
             this->m_dimensions.at(id).width,
@@ -87,17 +86,17 @@ sf::Vector2f resourceManager::getTextureSize(const std::string& id) const {
     return sf::Vector2f(0, 0);
 }
 
-sf::IntRect resourceManager::getTextureIntRect(const std::string& id) const {
+sf::IntRect ResourceManager::getTextureIntRect(const std::string& id) const {
     if(this->m_dimensions.count(id))
         return this->m_dimensions.at(id);
     return sf::IntRect(0, 0, 0, 0);
 }
 
-const std::map <std::string, sf::Texture>& resourceManager::getTextureCollection() const {
+const std::map <std::string, sf::Texture>& ResourceManager::getTextureCollection() const {
     return this->m_textures; 
 }
 
-void resourceManager::loadFont(const std::string filename, const std::string id) {
+void ResourceManager::loadFont(const std::string filename, const std::string id) {
     sf::Font font;
     if(!font.loadFromFile(filename)) {
         std::cout << "[Entropy Engine][Resource Manager]: Could not load font: " << filename << " with id: " << id << ".\n";
@@ -107,7 +106,7 @@ void resourceManager::loadFont(const std::string filename, const std::string id)
     this->m_fonts[id] = font;
 }
 
-void resourceManager::unloadFont(const std::string id) {
+void ResourceManager::unloadFont(const std::string id) {
     if(this->checkFontExists(id)) {
         this->m_fonts.erase(id);
         return;
@@ -116,14 +115,14 @@ void resourceManager::unloadFont(const std::string id) {
     std::cout << "[Entropy Engine][Resource Manager]: Could not unload font: " << id << ".\n";
 }
 
-bool resourceManager::checkFontExists(const std::string id) {
+bool ResourceManager::checkFontExists(const std::string id) {
     return this->m_fonts.count(id);
 }
 
-sf::Font& resourceManager::getFont(const std::string id) {
+sf::Font& ResourceManager::getFont(const std::string id) {
     return this->m_fonts[id];
 }
 
-const std::map <std::string, sf::Font>& resourceManager::getFontCollection() {
+const std::map <std::string, sf::Font>& ResourceManager::getFontCollection() {
     return this->m_fonts;
 }

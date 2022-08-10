@@ -6,7 +6,9 @@
 #include <SFML/Window.hpp>
 #include <string>
 #include <map>
+#include <vector>
 
+extern std::vector <std::string> event_queue;
 
 namespace iso {    
     class Controls {

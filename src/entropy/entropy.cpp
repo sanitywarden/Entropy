@@ -8,7 +8,7 @@ using namespace iso;
 Entropy::Entropy() {
     this->settings = Settings();
 
-    this->resource  = resourceManager(this->settings);
+    this->resource  = ResourceManager(this->settings);
     this->gamestate = gamestateManager(this->settings);
     this->window    = windowManager(this->settings);
     
@@ -30,7 +30,7 @@ Entropy::Entropy() {
 Entropy::Entropy(const Settings& settings) {
     this->settings = settings;
     
-    this->resource  = resourceManager(this->settings);
+    this->resource  = ResourceManager(this->settings);
     this->gamestate = gamestateManager(this->settings);
     this->window    = windowManager(this->settings);
     

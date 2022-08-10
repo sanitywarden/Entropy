@@ -1,5 +1,4 @@
-#ifndef _ENTROPY_RESOURCE_MANAGER_HPP_
-#define _ENTROPY_RESOURCE_MANAGER_HPP_
+#pragma once
 
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Font.hpp>
@@ -12,7 +11,7 @@ namespace iso {
     // This class works as a easy to use resource manager.
     // It is used by Entropy, and there is only one instance of it per instance of the engine.
     // This allows to manage when to load or unload resources that the application uses. 
-    class resourceManager {
+    class ResourceManager {
         private:
             Settings m_settings;
             
@@ -20,11 +19,11 @@ namespace iso {
             std::map <std::string, sf::IntRect> m_dimensions;
             std::map <std::string, sf::Font>    m_fonts;
         public:
-            resourceManager();
-            resourceManager(const Settings& settings);
-            ~resourceManager();
+            ResourceManager();
+            ResourceManager(const Settings& settings);
+            ~ResourceManager();
 
-            void loadTexture(const std::string filename, const std::string id, const sf::IntRect area = sf::IntRect());
+            void loadTexture(const std::string filename, const std::string id, sf::IntRect area = sf::IntRect());
             void addTexture(const std::string& id, sf::Texture texture, const sf::IntRect area = sf::IntRect());
             void unloadTexture(const std::string id);
             bool checkTextureExists(const std::string id) const;
@@ -41,5 +40,3 @@ namespace iso {
             const std::map <std::string, sf::Font>& getFontCollection();
     };
 }
-
-#endif

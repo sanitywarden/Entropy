@@ -2,16 +2,25 @@
 #include "building.hpp"
 #include "globalutilities.hpp"
 #include "generationSettings.hpp"
+#include "biome.hpp"
+#include "entropy/resourceManager.hpp"
 
 #include "tileType.hpp"
 
+#include <LuaBridge/LuaBridge.h>
+#include <SFML/System/Clock.hpp>
 #include <filesystem>
 #include <iostream>
+#include <cmath>
 
 namespace lua {
 namespace driver {
     Driver::Driver() {
+        sf::Clock clock;
+
         this->L = luaL_newstate();
+
+        this->registerFunctions();
 
         // Read data from directories.
         namespace fs = std::filesystem;
@@ -28,6 +37,8 @@ namespace driver {
             settings.window_vsync           = this->getFieldValueBoolean("Appconfig", "vsync");
             settings.window_refresh_rate    = this->getFieldValueInteger("Appconfig", "refresh_rate");
             settings.application_debug_mode = this->getFieldValueBoolean("Appconfig", "debug_mode");
+
+            this->app_settings = settings;
         }
 
         // Read world generation data.
@@ -38,6 +49,7 @@ namespace driver {
 
             iso::GameSettings settings;
             settings.persistence                 = this->getFieldValueInteger("GameSettings", "persistence");
+            settings.world_persistence           = this->getFieldValueInteger("GameSettings", "world_persistence");
             settings.simulation_update_frequency = this->getFieldValueFloat("GameSettings", "simulation_update_frequency");
             settings.world_width                 = this->getNestedFieldValueInteger("GameSettings", "World", "size");
             settings.terrain_from                = this->getNestedFieldValueFloat("GameSettings", "World", "terrain_from");
@@ -48,7 +60,9 @@ namespace driver {
             settings.population_needs_enabled    = this->getNestedFieldValueBoolean("GameSettings", "Region", "population_needs_enabled");
             settings.building_cost_enabled       = this->getNestedFieldValueBoolean("GameSettings", "Region", "building_cost_enabled");
             settings.astar_pathfinding_enabled   = this->getNestedFieldValueBoolean("GameSettings", "Region", "astar_pathfinding_enabled");
-    
+            settings.temperature_multiplier      = this->getNestedFieldValueFloat("GameSettings", "World", "multiplier_temperature");
+            settings.moisture_multiplier         = this->getNestedFieldValueFloat("GameSettings", "World", "multiplier_moisture");
+
             game_settings = settings;
         }
 
@@ -110,7 +124,7 @@ namespace driver {
             }
         }
 
-        // Read buildings data.
+        // Read building data.
         {
             std::string buildingdata_path = "./data/building/";
             std::cout << "[Lua Driver]: Loading buildings.\n";
@@ -141,10 +155,47 @@ namespace driver {
                 }
             }
         }
+
+        // Read biome data.
+        {
+            std::string biomedata_path = "./data/biome/";
+            std::cout << "[Lua Driver]: Loading biomes.\n";
+            for(const auto& file : fs::directory_iterator(biomedata_path)) {
+                const auto& file_path = file.path().string();                        // Whole filename.
+                const auto& file_path_extension = file.path().extension().string();  // Just the extension.     
+
+                if(file_path_extension == ".lua") {
+                    std::cout << "[Lua Driver]: Registering biome '" << file_path << "'.\n";
+                    luaL_dofile(this->L, file_path.c_str()); 
+
+                    iso::BiomeData data;
+                    data.filename                = file_path;
+                    data.name                    = this->getFieldValueString("Biome", "name");
+                    data.id                      = this->getFieldValueString("Biome", "id");
+                    data.description             = this->getFieldValueString("Biome", "description");
+                    data.colour_wmap             = this->getNestedFieldValueColor("Biome", "colour_wmap");
+                    data.colour_rmap             = this->getNestedFieldValueColor("Biome", "colour_rmap");
+                    data.temperature             = this->getFieldValueString("Biome", "temperature"); 
+                    data.moisture                = this->getFieldValueString("Biome", "moisture"); 
+                    data.latitude                = this->getFieldValueString("Biome", "latitude"); 
+                    data.elevation               = this->getFieldValueString("Biome", "elevation");
+                    data.forest_texture_worldmap = this->getFieldValueString("Biome", "forest_texture_worldmap");
+                    data.tiles                   = this->readBiomeTiles(data.filename);
+                    data.trees                   = this->readBiomeTrees(data.filename);
+                    data.can_be_forest           = this->getFieldValueBoolean("Biome", "can_be_forest");
+
+                    iso::Biome biome(data);
+                    biomes.push_back(biome);
+                }
+            } 
+        }
+    
+        const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
+        std::cout << "[Lua Driver]: Loaded data in " << time_rounded << "s.\n";
     }
 
     Driver::~Driver() {
-        lua_close(L);
+        lua_close(this->L);
     }
 
     // Lua wrapper functions.
@@ -412,8 +463,46 @@ namespace driver {
         return result;
     }
 
+    sf::Color Driver::getNestedFieldValueColor(const std::string& field1, const std::string& field2) const {
+        int result_global = lua_getglobal(this->L, field1.c_str());
+        if(result_global == LUA_TNIL)
+            return sf::Color(0, 0, 0);
+
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: " << field1 << " is not a table.\n";
+            return sf::Color(0, 0, 0);
+        }
+
+        lua_pushstring(this->L, field2.c_str());
+        int result_table = lua_gettable(this->L, -2);
+        if(result_table == LUA_TNIL)
+            return sf::Color(0, 0, 0);
+
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: " << field2 << " is not a table.\n";
+            return sf::Color(0, 0, 0);
+        }
+
+        sf::Color colour;
+        lua_pushstring(this->L, "r");
+        lua_gettable(this->L, -2);
+        colour.r = lua_tointeger(this->L, -1);
+        lua_pop(this->L, 1);
+
+        lua_pushstring(this->L, "g");
+        lua_gettable(this->L, -2);
+        colour.g = lua_tointeger(this->L, -1);
+        lua_pop(this->L, 1);
+
+        lua_pushstring(this->L, "b");
+        lua_gettable(this->L, -2);
+        colour.b = lua_tointeger(this->L, -1);
+        lua_pop(this->L, 1);
+
+        return colour;
+    }
+
     std::vector <iso::BuildingHarvest> Driver::getHarvestedResourceList(const std::string& filename) const {
-        
         luaL_dofile(this->L, filename.c_str());
         
         std::vector <iso::BuildingHarvest> list;
@@ -690,6 +779,96 @@ namespace driver {
 
     iso::Settings Driver::getApplicationSettings() const {
         return this->app_settings;
+    }
+
+    std::vector <std::string> Driver::readBiomeTiles(const std::string& filename) const {
+        luaL_dofile(this->L, filename.c_str());
+
+        std::vector <std::string> list;
+        int result_global = lua_getglobal(this->L, "Biome");
+        if(result_global == LUA_TNIL)
+            return list;
+        
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: Could not get table 'Biome' from " << filename << "\n";
+            return list;
+        }
+
+        lua_pushstring(this->L, "tiles");
+        int result_table = lua_gettable(this->L, -2);
+        if(result_table == LUA_TNIL)
+            return list;
+        
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: There is no 'tiles' table.\n";
+            return list;
+        }
+
+        // Get length of 'tiles'
+        int array_length = lua_rawlen(this->L, -1);
+
+        for(int i = 0; i < array_length; i++) {
+            // Lua indexes start at 1, and not 0.
+            int lua_index = i + 1;
+
+            lua_rawgeti(this->L, -1, lua_index);
+            std::string tile_texture = lua_tostring(this->L, -1);
+            list.push_back(tile_texture);
+
+            // Pop texture from stack.
+            lua_pop(this->L, 1);
+        }
+
+        // Pop 'tiles' and 'Biome' from the stack.
+        lua_pop(this->L, 2);
+        return list;
+    }
+
+    std::vector <std::string> Driver::readBiomeTrees(const std::string& filename) const {
+        luaL_dofile(this->L, filename.c_str());
+
+        std::vector <std::string> list;
+        int result_global = lua_getglobal(this->L, "Biome");
+        if(result_global == LUA_TNIL)
+            return list;
+        
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: Could not get table 'Biome' from " << filename << "\n";
+            return list;
+        }
+
+        lua_pushstring(this->L, "trees");
+        int result_table = lua_gettable(this->L, -2);
+        if(result_table == LUA_TNIL)
+            return list;
+        
+        if(!lua_istable(this->L, -1)) {
+            std::cout << "[Lua Driver Error]: There is no 'trees' table.\n";
+            return list;
+        }
+
+        // Get length of 'trees'
+        int array_length = lua_rawlen(this->L, -1);
+
+        for(int i = 0; i < array_length; i++) {
+            // Lua indexes start at 1, and not 0.
+            int lua_index = i + 1;
+
+            lua_rawgeti(this->L, -1, lua_index);
+            std::string tile_texture = lua_tostring(this->L, -1);
+            list.push_back(tile_texture);
+
+            // Pop texture from stack.
+            lua_pop(this->L, 1);
+        }
+
+        // Pop 'trees' and 'Biome' from the stack.
+        lua_pop(this->L, 2);
+        return list;
+    }
+
+    void Driver::registerFunctions() const {
+        
     }
 }
 }

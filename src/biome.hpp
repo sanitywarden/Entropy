@@ -1,47 +1,55 @@
-#ifndef _BIOME_HPP_
-#define _BIOME_HPP_
+#pragma once
 
-#include "colours.hpp"
 #include "gameObject.hpp"
 
 #include <vector>
 #include <string>
 
 namespace iso {
-    class Biome {
-        public:
-            std::string biome_name;   // Name used for biome recognition. Human readable.
-            sf::Color   biome_colour; // Colour of the biome. Used for colouring worldmap textures.
-            std::vector <std::string> biome_texture_tree;
-            std::vector <std::string> biome_texture_tile;
+struct BiomeData {
+    std::string filename;    // Path to the definition file of the biome.
+    std::string name;        // Human readable name.
+    std::string id;          // Code id. Used for texture naming. 
+    std::string description; // Human readable description.
+    sf::Color   colour_wmap; // Colour of the region in the worldmap view.
+    sf::Color   colour_rmap; // Colour of the tiles in the regionmap view.
+    std::string temperature; // Temperature (COLD, WARM, TROPICAL, HOT).
+    std::string moisture;    // Moisture    (DRY, NORMAL, MOIST, TROPICAL).
+    std::string latitude;    // Latitude    (POLAR, SUBPOLAR, BETWEEN, EQUATOR)
+    std::string elevation;   // Elevation   (FLAT, HILLS, MOUNTAIN)
+    std::string forest_texture_worldmap; // Texture of the forest in the worldmap view.
+    std::vector <std::string> tiles;     // Terrain tiles of which the region consists.
+    std::vector <std::string> trees;     // Trees of which the forest consists.
+    bool can_be_forest;                  // Can generate a forest.
+};
 
-            Biome();
-            Biome(std::string name, sf::Color colour);
-            Biome(std::string name, sf::Color colour, std::vector <std::string> tileset, std::vector <std::string> treeset);
-            ~Biome();
+class Biome {
+    protected:
+        BiomeData data;
+        
+    public:
+        Biome();
+        Biome(const Biome& biome);
+        Biome(const BiomeData& data);
+        ~Biome();
 
-            bool operator== (const Biome& biome) const;
-
-            std::string getTile() const;
-            std::string getTree() const;
-    };
-
-    static Biome BIOME_OCEAN("Ocean", COLOUR_BLUE_OCEAN);
-    static Biome BIOME_TEMPERATE("Temperate", COLOUR_GREEN_TEMPERATE, 
-        { "tile_grass_warm" }, 
-        { "tile_tree_beech", "tile_tree_oak", "tile_tree_maple" });
-    static Biome BIOME_CONTINENTAL("Continental", COLOUR_GREEN_CONTINENTAL, 
-        { "tile_grass_cold" }, 
-        { "tile_tree_spruce_1", "tile_tree_spruce_2", "tile_tree_pine" }); 
-    static Biome BIOME_MEDITERRANEAN("Mediterranean", COLOUR_GREEN_MEDITERRANEAN, 
-        { "tile_grass_subtropical" }, 
-        { "tile_tree_cypress", "tile_tree_acacia" }); 
-    static Biome BIOME_TROPICAL("Tropical", COLOUR_GREEN_TROPICAL, 
-        { "tile_grass_tropical" }, 
-        { "tile_tree_cypress", "tile_tree_acacia", "tile_tree_palm" });
-    static Biome BIOME_TUNDRA("Tundra", COLOUR_BROWN_TUNDRA, 
-        { "tile_grass_tundra" }, 
-        { "tile_tree_spruce_1", "tile_tree_spruce_2" });
+        const std::string& getDefinitionFilename()    const;
+        const std::string& getBiomeName()             const;
+        const std::string& getBiomeId()               const;
+        const std::string& getBiomeDescription()      const;
+        const sf::Color    getBiomeWorldmapColour()   const;
+        const sf::Color    getBiomeRegionmapColour()  const;
+        const std::string& getBiomeTemperature()      const;
+        const std::string& getBiomeMoisture()         const;
+        const std::string& getBiomeLatitude()         const;
+        const std::string& getBiomeElevation()        const;
+        const std::string& getWorldmapForestTexture() const;
+        const std::vector <std::string>& getBiomeTileList() const;
+        const std::vector <std::string>& getBiomeTreeList() const;
+        const std::string& getRandomTile() const;
+        const std::string& getRandomTree() const;
+        bool               canBeForest()   const;
+};
 }
 
-#endif
+extern std::vector <iso::Biome> biomes;

@@ -83,6 +83,10 @@ void WidgetRegion::updateUI() {
     auto* gamestate = this->manager->gamestate.getGamestate();
     auto* worldmap  = static_cast<Worldmap*>(gamestate);
     auto index = worldmap->getSelectedIndex();
+
+    if(!game_settings.inWorldBounds(index))
+        return;
+
     const auto& region = this->manager->world.world_map[index];
 
     std::string owner = "Uncolonised"; // region.isOwned()
@@ -99,7 +103,7 @@ void WidgetRegion::updateUI() {
     // if(region.isOwned())
     //     display_text += region.owner->getCountryName() + " | " + region.settlement_name + "\n";
     
-    display_text += region.biome.biome_name + " " + additional_data + "\n";
+    display_text += region.biome.getBiomeName() + " " + additional_data + "\n";
 
     auto* label_component = static_cast<Label*>(this->getComponent("text_region_index"));
         label_component->setString(display_text);
@@ -114,7 +118,7 @@ void WidgetRegion::functionality() {
 
         // You check for these things here to avoid calling functions responsible for world generation.
         // Biomes: arctic, ocean and sea do not have planned content.
-        if(region.biome == BIOME_OCEAN) {
+        if(region.regiontype.is_ocean()) {
             std::cout << "[Button Visit Region]: Requested to generate a region not meant for visiting.\n";
             worldmap->selected_index = -1;
             return;

@@ -28,8 +28,6 @@ namespace iso {
             SimulationManager* manager;
             // std::vector <Unit> units;
 
-            std::map <std::string, gui::InterfacePage*> interface;
-            
             bool mouse_moved;
             bool mouse_drag;
             
@@ -39,7 +37,9 @@ namespace iso {
             int selected_unit_id;
             int current_index;
             int selected_index;
-        
+
+            std::string lens;
+
         private:
             void handleInput()     override;
             void initialise()      override;

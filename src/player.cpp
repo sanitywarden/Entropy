@@ -189,7 +189,7 @@ void Player::placeBuilding(Region& region, Building building, sf::Vector2i grid)
     
     // n takes into account only one dimension,
     // because non-square buildings are not currently supported.
-    const int n    = building.getBuildingArea().x;                    
+    const int n = building.getBuildingArea().x;                    
     
     // Here you adjust the origin of buildings with sizes of n > 0.
     // Texture size scale are arithmetic series.
@@ -206,7 +206,7 @@ void Player::placeBuilding(Region& region, Building building, sf::Vector2i grid)
 
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
-            auto loop_index = game_settings.calculateRegionIndex(x, y);
+            auto loop_index = index + game_settings.calculateRegionIndex(x, y);
             region.buildings[loop_index] = BUILDING_EMPTY;
             region.buildings[loop_index].setBuildingName(building.getBuildingName());
         }
@@ -216,5 +216,17 @@ void Player::placeBuilding(Region& region, Building building, sf::Vector2i grid)
 }
 
 void Player::destroyBuilding(Region& region, sf::Vector2i grid) const {
+    auto index = game_settings.calculateRegionIndex(grid);
 
+    if(!region.buildingExistsAt(index))
+        return;
+
+    auto building = region.getBuildingAt(index);
+
+    for(int y = 0; building.getBuildingArea().y; y++) {
+        for(int x = 0; x < building.getBuildingArea().x; x++) {
+            auto loop_index = index + game_settings.calculateRegionIndex(x, y);
+            region.buildings.erase(loop_index);
+        }
+    }
 }
