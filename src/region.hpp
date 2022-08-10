@@ -27,12 +27,10 @@ class Region : public GameObject {
     friend class WorldGenerator;
     friend class SimulationManager;
 
-    protected:
+    public:
         bool           _marked; 
         RiverDirection _direction;      
         float          height;
-        float          moisture;
-        float          temperature;
         float          latitude;
 
     public:
@@ -74,6 +72,12 @@ class Region : public GameObject {
     public:
         RegionType regiontype;
         Biome      biome;
+
+        float moisture;
+        std::string moisture_text;
+
+        float temperature;
+        std::string temperature_text;
 
         bool visited;
         std::string settlement_name; // Settlement's human readable name. If there is no settlement, it's "*".

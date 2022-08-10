@@ -567,7 +567,7 @@ void Regionmap::higlightTile() {
     const auto& current_tile = this->region->map[this->current_index];
     
     std::string tile_data;
-    tile_data += this->region->biome.biome_name + " " + current_tile.getName() + " | #" + std::to_string(this->current_index) + "\n";
+    tile_data += this->region->biome.getBiomeName() + " " + current_tile.getName() + " | #" + std::to_string(this->current_index) + "\n";
 
     if(this->region->resourceExistsAt(this->current_index))
         tile_data += this->region->getResourceAt(this->current_index).getResourceName() + "\n";
@@ -845,6 +845,11 @@ void Regionmap::gamestateLoad() {
         minimap->should_redraw = true;
 
     this->region->visited = true;
+
+    for(auto& pair : this->interface) {
+        auto* component = pair.second.get();
+        this->setVisibilityFalse(component->getWidgetID());
+    }
 }
 
 void Regionmap::gamestateClose() {
@@ -864,7 +869,7 @@ void Regionmap::renderSelectedBuilding() {
     if(building != BUILDING_EMPTY && building_menu->isVisible()) {
         auto tile = this->region->map[this->current_index];
 
-        auto building_size = building.getBuildingArea();
+        auto building_size = building.getBuildingArea(); 
         auto grid_position = tileGridPosition(this->current_index);
         
         for(int y = grid_position.y; y < grid_position.y + building_size.y; y++) {
@@ -899,22 +904,27 @@ void Regionmap::renderSelectedBuilding() {
         // First draw the border of the building.
         // Afterwards, draw the building highlight itself.
         // Border.
-
-        sf::VertexArray building_surround_highlight(sf::Lines, 8);
         
         auto building_area = building.getBuildingArea().x;
         auto tile_size     = game_settings.tileSize(); 
-        auto br            = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); ;
-        auto br_corrected  = br + sf::Vector2f(-building_area / 2 * tile_size.x, 0);
+        int  highlight_size_x = building_area * tile_size.x;
+        int  highlight_size_y = building_area * tile_size.y;
 
-        building_surround_highlight[0].position = br_corrected + sf::Vector2f(0, -building_area * tile_size.y);
-        building_surround_highlight[1].position = br + sf::Vector2f(0, -building_area / 2 * tile_size.y);
-        building_surround_highlight[2].position = br_corrected;
-        building_surround_highlight[3].position = br + sf::Vector2f(0, -building_area / 2 * tile_size.y);
-        building_surround_highlight[4].position = br + sf::Vector2f(-building_area * tile_size.x, -building_area / 2 * tile_size.y);
-        building_surround_highlight[5].position = br_corrected;
-        building_surround_highlight[6].position = br + sf::Vector2f(-building_area * tile_size.x, -building_area / 2 * tile_size.y);
-        building_surround_highlight[7].position = br_corrected + sf::Vector2f(0, -building_area * tile_size.y);
+        auto top    = building.getPosition2D() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x / 2, 0);
+        auto right  = building.getPosition2D() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x, highlight_size_y / 2);
+        auto left   = building.getPosition2D() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(0, highlight_size_y / 2);
+        auto bottom = building.getPosition2D() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x / 2, highlight_size_y);  
+
+        sf::VertexArray building_surround_highlight(sf::Lines, 8);
+
+        building_surround_highlight[0].position = top; 
+        building_surround_highlight[1].position = right;
+        building_surround_highlight[2].position = right;
+        building_surround_highlight[3].position = bottom;
+        building_surround_highlight[4].position = bottom;
+        building_surround_highlight[5].position = left;
+        building_surround_highlight[6].position = left;
+        building_surround_highlight[7].position = top;
 
         building_surround_highlight[0].color = COLOUR_BLUE_RIVER;
         building_surround_highlight[1].color = COLOUR_BLUE_RIVER;
