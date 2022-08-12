@@ -1,30 +1,17 @@
 Building = {
     name = "Toolmaker",
     description = "Toolmaker produces basic tools",
-    size = {
-        x = 2,
-        y = 2
-    },
+    size = Vector2i(2, 2),
     texture = "building_toolmaker",
-    texture_size = {
-        x = 128,
-        y = 128
-    },
+    texture_size = Vector2i(128, 128),
     icon_texture = "icon_building_toolmaker",
-    icon_size = {
-        x = 48,
-        y = 48
-    },
+    icon_size = Vector2i(48, 48),
     removable = true,
     cost = {
         Wood = 15,
     },
     refund = {
         Wood = 5
-    },
-    scan_area = {
-        x = 3,
-        y = 3
     },
     produces = {
         {

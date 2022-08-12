@@ -2,11 +2,7 @@ Biome = {
     name = "Grassland",
     id = "grassland",
     description = "Description",
-    colour_wmap = {
-        r = 91,
-        g = 171,
-        b = 25    
-    },
+    colour_wmap = Colour(91, 171, 25),
     temperature = "HOT",
     moisture = "NORMAL",
     can_be_forest = false,

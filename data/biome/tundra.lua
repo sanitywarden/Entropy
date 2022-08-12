@@ -2,11 +2,7 @@ Biome = {
     name = "Tundra",
     id = "tundra",
     description = "Description",
-    colour_wmap = {
-        r = 56,
-        g = 79,
-        b = 33     
-    },
+    colour_wmap = Colour(56, 79, 33),
     temperature = "COLD",
     moisture = "DRY",
     can_be_forest = true,

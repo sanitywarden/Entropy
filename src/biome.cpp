@@ -34,11 +34,7 @@ const std::string& Biome::getBiomeDescription() const {
 }
 
 const sf::Color Biome::getBiomeWorldmapColour() const {
-    return this->data.colour_wmap;
-}
-
-const sf::Color Biome::getBiomeRegionmapColour() const {
-    return this->data.colour_rmap;
+    return this->data.colour_wmap.asSFMLColour();
 }
 
 const std::string& Biome::getBiomeTemperature() const {
@@ -47,14 +43,6 @@ const std::string& Biome::getBiomeTemperature() const {
 
 const std::string& Biome::getBiomeMoisture() const {
     return this->data.moisture;
-}
-
-const std::string& Biome::getBiomeLatitude() const {
-    return this->data.latitude;
-}
-
-const std::string& Biome::getBiomeElevation() const {
-    return this->data.elevation;
 }
 
 const std::string& Biome::getWorldmapForestTexture() const {

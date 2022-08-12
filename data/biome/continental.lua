@@ -2,11 +2,7 @@ Biome = {
     name = "Continental",
     id = "continental",
     description = "Description",
-    colour_wmap = {
-        r = 107,
-        g = 107,
-        b = 61     
-    },
+    colour_wmap = Colour(107, 107, 61),
     temperature = "COLD",
     moisture = "NORMAL",
     can_be_forest = true,

@@ -2,11 +2,7 @@ Biome = {
     name = "Temperate Green",
     id = "temperate_green",
     description = "Description",
-    colour_wmap = {
-        r = 46,
-        g = 131,
-        b = 31     
-    },
+    colour_wmap = Colour(46, 131, 31),
     temperature = "WARM",
     moisture = "NORMAL",
     can_be_forest = true,

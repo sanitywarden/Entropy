@@ -1,6 +1,8 @@
 #include "resource.hpp"
 #include "region.hpp"
 
+#include <iostream>
+
 using namespace iso;
 
 Resource::Resource() 
@@ -34,7 +36,7 @@ const std::string& Resource::getResourceTexture() const {
 }
 
 const sf::Vector2i Resource::getResourceTextureSize() const {
-    return this->data.texture_size;
+    return this->data.texture_size.asSFMLVector2i();
 }
 
 const std::string& Resource::getIconTexture() const {
@@ -42,7 +44,7 @@ const std::string& Resource::getIconTexture() const {
 }
 
 const sf::Vector2i Resource::getIconTextureSize() const {
-    return this->data.icon_size;
+    return this->data.icon_size.asSFMLVector2i();
 }
 
 const std::string& Resource::getResourceType() const {
@@ -148,6 +150,7 @@ bool Resource::isRegionValid(GameObject* object) const {
 void Resource::placeResource(GameObject* object, int index) const {
     auto* region = (Region*)(object);
     region->map[index].object_texture_name = this->getResourceTexture();
+    region->resources[index] = *this;
 }
 
 bool Resource::isSingleObject() const {

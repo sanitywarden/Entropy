@@ -56,7 +56,7 @@ bool StorageItem::operator<= (const StorageItem& item) const {
 StorageItem& StorageItem::operator= (const Resource& resource) {
     this->data.name         = resource.getResourceName();
     this->data.description  = resource.getResourceDescription();
-    this->data.icon_size    = resource.getIconTextureSize();
+    this->data.icon_size    = core::Vector2i(resource.getIconTextureSize().x, resource.getIconTextureSize().y);
     this->data.icon_texture = resource.getIconTexture();
     this->data.type         = resource.getResourceType();
     return *this;
@@ -79,7 +79,7 @@ const std::string& StorageItem::getIconTexture() const {
 }
 
 const sf::Vector2i StorageItem::getIconTextureSize() const {
-    return this->data.icon_size;
+    return this->data.icon_size.asSFMLVector2i();
 }
 
 const std::string& StorageItem::getItemType() const {

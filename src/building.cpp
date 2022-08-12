@@ -1,10 +1,8 @@
 #include "building.hpp"
 #include "region.hpp"
-#include "luadriver.hpp"
 #include "globalutilities.hpp"
 
 #include <iostream>
-#include <fstream>
 
 using namespace iso;
 
@@ -21,7 +19,7 @@ Building::Building(const Building& building)
 }
 
 Building::Building(const BuildingData& data)
-    : GameObject(sf::Vector3f(), sf::Vector3f(), sf::Vector2f(data.texture_size), data.texture)
+    : GameObject(sf::Vector3f(), sf::Vector3f(), data.texture_size.asSFMLVector2f(), data.texture)
 {
     this->data = data;
 }
@@ -61,11 +59,11 @@ const std::string& Building::getBuildingDescription() const {
 }
 
 const sf::Vector2i Building::getBuildingArea() const {
-    return this->data.size;
+    return this->data.size.asSFMLVector2i();
 }
 
 const sf::Vector2i Building::getBuildingScanArea() const {
-    return this->data.scan_area;
+    return this->data.scan_area.asSFMLVector2i();
 }
 
 const ResourceList& Building::getBuildingCost() const {
@@ -81,7 +79,7 @@ const std::string& Building::getBuildingIcon() const {
 }
 
 const sf::Vector2i Building::getBuildingIconSize() const {
-    return this->data.icon_size;
+    return this->data.icon_size.asSFMLVector2i();
 }
 
 bool Building::isRemovable() const {
@@ -97,11 +95,11 @@ const std::vector<BuildingProduction>& Building::getBuildingProduction() const {
 }
 
 bool Building::isProductionBuilding() const {
-    return this->data.produces.size();
+    return this->data.produces.size() > 0;
 }
 
 bool Building::isHarvestBuilding() const {
-    return this->data.harvests.size();
+    return this->data.harvests.size() > 0;
 }
 
 bool Building::operator== (const Building& building) const {
@@ -117,15 +115,23 @@ bool Building::isTileHarvestable(GameObject* object, int index) const {
         return false;
 
     auto* region = static_cast<Region*>(object); 
-    if(!region->resourceExistsAt(index))
-        return false;
-
-    const auto& resource = region->getResourceAt(index);
-    for(const auto& item : this->data.harvests) {
-        if(item.name == resource.getResourceName())
-            return true;
+    
+    if(region->resourceExistsAt(index)) {
+        const auto& resource = region->getResourceAt(index);
+        for(const auto& item : this->data.harvests) {
+            if(item.name == resource.getResourceName())
+                return true;
+    
+        }
     }
 
+    else {
+        for(const auto& item : this->data.harvests) {
+            if(item.name == "Tree" && region->treeExistsAt(index))
+                return true;
+        }
+    }
+    
     return false;
 }
 

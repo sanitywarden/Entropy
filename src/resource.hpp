@@ -1,25 +1,25 @@
 #pragma once
 
 #include "gameObject.hpp"
+#include "types.hpp"
 
 #include <vector>
 #include <string>
 
 namespace iso {
-
 struct ResourceData {
-    std::string  filename;      // Path to the definition file of the resource.
-    std::string  name;          // Human readable name.
-    std::string  description;   // Human readable description.
-    std::string  texture;       // Resource texture.
-    sf::Vector2i texture_size;  // Texture size in pixels.
-    std::string  icon_texture;  // Icon texture.
-    sf::Vector2i icon_size;     // Icon size in pixels.
-    std::string  type;          // Resource type.
-    int          min_occurence; // How many patches of this resource should be generated.
-    int          max_occurence; // How many patches of this resource may be generated.
-    float        chance;        // Generation chance (0.0 : 1.0).
-    int          patch_size;    // Certain resources generate in patches.
+    std::string    filename;      // Path to the definition file of the resource.
+    std::string    name;          // Human readable name.
+    std::string    description;   // Human readable description.
+    std::string    texture;       // Resource texture.
+    core::Vector2i texture_size;  // Texture size in pixels.
+    std::string    icon_texture;  // Icon texture.
+    core::Vector2i icon_size;     // Icon size in pixels.
+    std::string     type;          // Resource type.
+    int             min_occurence; // How many patches of this resource should be generated.
+    int             max_occurence; // How many patches of this resource may be generated.
+    float           chance;        // Generation chance (0.0 : 1.0).
+    int             patch_size;    // Certain resources generate in patches.
     std::vector <std::string> tile_requirements;   // Resource requires the tile to have these properties.
     std::vector <std::string> region_requirements; // Resource requires the region to have these properties.
 };

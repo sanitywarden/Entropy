@@ -2,11 +2,7 @@ Biome = {
     name = "Subtropical Green",
     id = "subtropical_green",
     description = "Description",
-    colour_wmap = {
-        r = 62,
-        g = 142,
-        b = 26     
-    },
+    colour_wmap = Colour(62, 142, 26),
     temperature = "WARM",
     moisture = "MOIST",
     can_be_forest = true,

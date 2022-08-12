@@ -1,12 +1,12 @@
 GameSettings = {
     World = {
         -- Higher values might result in the application crashing.
-        size = 128,
-        terrain_from = 0.01,
-        forest_from = 0.4,
+        size = 64,
+        terrain_from = 0.0,
+        forest_from = 0.5,
         fog_of_war_enabled = false,
-        multiplier_moisture = 0.3,   -- Increasing will result in more tropical world
-        multiplier_temperature = 0.4 -- Increasing will result in more arid world.
+        multiplier_moisture = 2.0,   -- Increasing will result in more tropical world.
+        multiplier_temperature = 1.0 -- Increasing will result in more arid world.
     },
 
     Region = {
@@ -23,7 +23,7 @@ GameSettings = {
 
     -- Persistence of the region noise generating function.
     -- The higher the value, the more persistent terrain.
-    persistence = 64,
+    region_persistence = 64,
     
     -- Frequence of simulation updates.
     -- Update include the frequency of events, building updates, population updates etc.

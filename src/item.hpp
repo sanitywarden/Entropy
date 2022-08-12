@@ -1,18 +1,20 @@
 #pragma once
 
+#include "types.hpp"
+
 #include <SFML/System/Vector2.hpp>
 #include <string>
 #include <vector>
 
 namespace iso {
 struct ItemData {
-    std::string  filename;     // Path to the definition file of the item.
-    std::string  name;         // Human readable name.
-    std::string  description;  // Human readable description.
-    std::string  icon_texture; // Icon texture.
-    sf::Vector2i icon_size;    // Icon size in pixels.
-    std::string  type;         // Item type.
-    int          amount;       // Amount of the item.
+    std::string    filename;     // Path to the definition file of the item.
+    std::string    name;         // Human readable name.
+    std::string    description;  // Human readable description.
+    std::string    icon_texture; // Icon texture.
+    core::Vector2i icon_size;    // Icon size in pixels.
+    std::string    type;         // Item type.
+    int            amount;       // Amount of the item.
 }; 
     
 class Resource;
@@ -51,4 +53,4 @@ class StorageItem {
 };
 }
 
-extern std::vector <iso::StorageItem> items;
+extern std::vector <iso::StorageItem> resources;

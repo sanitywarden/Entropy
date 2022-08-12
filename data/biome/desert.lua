@@ -2,11 +2,7 @@ Biome = {
     name = "Desert",
     id = "desert",
     description = "Description",
-    colour_wmap = {
-        r = 169,
-        g = 172,
-        b = 6
-    },
+    colour_wmap = Colour(169, 172, 6),
     temperature = "HOT",
     moisture = "DRY",
     can_be_forest = false,

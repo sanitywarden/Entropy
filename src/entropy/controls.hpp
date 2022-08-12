@@ -8,8 +8,6 @@
 #include <map>
 #include <vector>
 
-extern std::vector <std::string> event_queue;
-
 namespace iso {    
     class Controls {
         friend class Entropy;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.hpp"
 #include "gameObject.hpp"
 #include "resource.hpp"
 #include "item.hpp"
@@ -21,18 +22,18 @@ struct BuildingHarvest {
 };
 
 struct BuildingData {
-    std::string        filename;     // Path to the definition file of the building.
-    std::string        name;         // Human readable name.
-    std::string        description;  // Human readable description.
-    sf::Vector2i       size;         // Building size in tiles.
-    std::string        texture;      // Building texture.
-    sf::Vector2i       texture_size; // Texture size in pixels.
-    std::string        icon_texture; // Icon texture.
-    sf::Vector2i       icon_size;    // Icon size in pixels.
-    bool               removable;    // Is the building destroyable.
-    iso::ResourceList  cost;         // Resource cost of this building.
-    iso::ResourceList  refund;       // Resource refund granted upon removal.
-    sf::Vector2i       scan_area;    // In what area does this building look for resources.
+    std::string          filename;     // Path to the definition file of the building.
+    std::string          name;         // Human readable name.
+    std::string          description;  // Human readable description.
+    core::Vector2i       size;         // Building size in tiles.
+    std::string          texture;      // Building texture.
+    core::Vector2i       texture_size; // Texture size in pixels.
+    std::string          icon_texture; // Icon texture.
+    core::Vector2i       icon_size;    // Icon size in pixels.
+    bool                 removable;    // Is the building destroyable.
+    iso::ResourceList    cost;         // Resource cost of this building.
+    iso::ResourceList    refund;       // Resource refund granted upon removal.
+    core::Vector2i       scan_area;    // In what area does this building look for resources.
     std::vector <BuildingHarvest>    harvests; // What does this building harvest.
     std::vector <BuildingProduction> produces; // What does this building produce.
 };
@@ -84,4 +85,4 @@ class Building : public GameObject {
 const Building BUILDING_EMPTY;
 }
 
-extern std::vector <iso::Building> buildings;
+extern std::vector <iso::Building> resources;

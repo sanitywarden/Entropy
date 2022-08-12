@@ -1,20 +1,11 @@
 Building = {
     name = "Water Collector",
     description = "Water Collector produces drinkable water",
-    size = {
-        x = 1,
-        y = 1
-    },
+    size = Vector2i(1, 1),
     texture = "building_water_collector",
-    texture_size = {
-        x = 64,
-        y = 64
-    },
+    texture_size = Vector2i(64, 64),
     icon_texture = "icon_building_water_collector",
-    icon_size = {
-        x = 48,
-        y = 48
-    },
+    icon_size = Vector2i(48, 48),
     removable = true,
     cost = {
         Wood = 10,
@@ -29,5 +20,5 @@ Building = {
         name = "Water",
         amount = 1,
         requires = {}
-    }
+    },
 }
