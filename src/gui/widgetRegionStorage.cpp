@@ -26,15 +26,15 @@ WidgetRegionStorage::~WidgetRegionStorage() {
 }
 
 void WidgetRegionStorage::createUI() {
-    auto window_size = this->manager->window.windowSize();
+    auto window_size = this->manager->window.getWindowSize();
     auto ratio = sf::Vector2i(
         window_size.x / 300,
         window_size.y / 100
     );
 
     sf::Vector2i t_widget_size(ratio);
-    int window_width  = this->manager->window.windowWidth();
-    int window_height = this->manager->window.windowHeight();
+    int window_width  = this->manager->window.getWindowWidth();
+    int window_height = this->manager->window.getWindowHeight();
 
     auto widget_body = WidgetComponent(new Widget(this->manager, t_widget_size));
         sf::Vector2f widget_size = widget_body.get()->getWidgetSize();

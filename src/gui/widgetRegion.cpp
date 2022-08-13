@@ -46,7 +46,7 @@ void WidgetRegion::draw(sf::RenderTarget& target, sf::RenderStates states) const
 }
 
 void WidgetRegion::createUI() {
-    auto window_size = this->manager->window.windowSize();
+    auto window_size = this->manager->window.getWindowSize();
 
     sf::Vector2i t_widget_size(
         window_size.x / 400,
@@ -124,10 +124,8 @@ void WidgetRegion::functionality() {
             return;
         }
 
-        if(!this->manager->gamestate.checkGamestateExists("regionmap")) {
-            static Regionmap regionmap_gamestate(this->manager);
-            this->manager->gamestate.addGamestate("regionmap", regionmap_gamestate);
-        }
+        if(!this->manager->gamestate.checkGamestateExists("regionmap"))
+            this->manager->gamestate.addGamestate("regionmap", std::shared_ptr <Gamestate> (new Regionmap(this->manager)));
 
         // Get a pointer to the gamestate.
         // You do not need to check if it's a nullptr, because it can not be, but do it just to be sure. 
@@ -135,7 +133,7 @@ void WidgetRegion::functionality() {
         Regionmap* regionmap = static_cast<Regionmap*>(this->manager->gamestate.getGamestateByName("regionmap"));
         if(!regionmap) {
             std::cout << "[Button Visit Region]: Gamestate regionmap is a nullptr.\n";
-            this->manager->exitApplication(1);
+            exitApplication(1);
         }
     
         // You have to generate the region first, because setCurrentRegion() depends on it being generated.

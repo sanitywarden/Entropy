@@ -53,6 +53,7 @@ void DebugPerformance::updateUI() {
     data += "Draw calls: "      + std::to_string(this->manager->getDrawCalls()) + "\n";
     data += "View interface: "  + std::to_string((int)view_interface.getSize().x) + " " + std::to_string((int)view_interface.getSize().y) + "\n";
     data += "View game: "       + std::to_string((int)view_world.getSize().x)     + " " + std::to_string((int)view_world.getSize().y) + "\n";
+    data += "Current zoom: "    + std::to_string(gamestate->current_zoom) + "\n";
 
     if(gamestate_id == "Worldmap") {
         auto* worldmap = static_cast<Worldmap*>(gamestate);

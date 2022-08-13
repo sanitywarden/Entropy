@@ -26,7 +26,7 @@ WidgetMenuBuilding::~WidgetMenuBuilding() {
 }
 
 void WidgetMenuBuilding::createUI() {
-    auto window_size = this->manager->window.windowSize();
+    auto window_size = this->manager->window.getWindowSize();
     auto ratio = sf::Vector2i(
         window_size.x / 300,
         window_size.y / 100
