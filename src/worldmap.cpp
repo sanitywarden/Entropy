@@ -244,17 +244,8 @@ void Worldmap::handleInput() {
             auto cwr = this->getInterfaceComponent("component_widget_region");
             auto wr = cwr->getComponent("widget_region");
 
-            std::cout << "Window: " << this->manager->window.windowSize().x << " " << this->manager->window.windowSize().y << "\n";
-            std::cout << "Position: " << wr->getWidgetPosition().x << " " << wr->getWidgetPosition().y << "\n";
-            std::cout << "Size: " << wr->getWidgetSize().x << " " << wr->getWidgetSize().y << "\n";
-
             this->resizeUI();
             this->resizeViews();
-
-            std::cout << "Window: " << this->manager->window.windowSize().x << " " << this->manager->window.windowSize().y << "\n";
-            std::cout << "Position: " << wr->getWidgetPosition().x << " " << wr->getWidgetPosition().y << "\n";
-            std::cout << "Size: " << wr->getWidgetSize().x << " " << wr->getWidgetSize().y << "\n";
-
         }
 
         if(event_name == "BUTTON_PRESSED") {

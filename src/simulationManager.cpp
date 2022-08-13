@@ -7,10 +7,12 @@
 #include "tooltip.hpp"
 #include "colours.hpp"
 #include "luadriver.hpp"
+#include "luascript.hpp"
 #include "noiseSettings.hpp"
 
 #include <queue>
 #include <iostream>
+#include <filesystem>
 
 using namespace iso;
 
@@ -18,6 +20,10 @@ SimulationManager::SimulationManager()
     : Entropy(lua_driver.getApplicationSettings())
 {
     this->initialise();
+    this->initialiseEvents();
+    
+    this->loadScripts();
+
     this->texturizer = Texturizer(&this->resource);
 
     this->window.setTitle("Entropy by Vivit");
@@ -31,22 +37,134 @@ SimulationManager::SimulationManager()
     this->gamestate.setGamestate("worldmap");
 
     this->simulation_speed = game_settings.simulationSpeed();
-
-    // Global updates.
-
-    this->global_updates.insert({ "update_units",            std::pair(0, 1) }); // Move units.
-    this->global_updates.insert({ "gui_tooltip_timer",       std::pair(0, 2) }); // Measure the time to display a tooltip.
-    
-    // Simulation updates.
-
-    this->simulation_updates.insert({ "update_buildings",        std::pair(0, seconds_per_hour) }); // Update buildings in every region.
-    this->simulation_updates.insert({ "update_population_needs", std::pair(0, seconds_per_day)  }); // Distribute resources to pops.
-    this->simulation_updates.insert({ "event_timer",             std::pair(0, seconds_per_week) }); // Every week there should be a chance of a random event occuring.
-    // this->simulation_updates.insert({ "update_quests",           std::pair(0, seconds_per_hour) }); // Update quests.
 }
 
 SimulationManager::~SimulationManager() 
 {}
+
+void SimulationManager::initialise() {
+    this->draw_calls          = 0;
+    this->people_dehydrated   = 0;
+    this->people_malnourished = 0;
+    this->resource.loadTexture("./res/random_colour.png", "random_colour");
+
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_top_left",                sf::IntRect(0, 0, 64, 64    ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_top_right",               sf::IntRect(128, 0, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom_left",             sf::IntRect(0, 128, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom_right",            sf::IntRect(128, 128, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_middle",                  sf::IntRect(64, 64, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_top",                     sf::IntRect(64, 0, 64, 64   ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_left",                    sf::IntRect(0, 64, 64, 64   ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_right",                   sf::IntRect(128, 64, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom",                  sf::IntRect(64, 128, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_left",   sf::IntRect(0, 192, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_right",  sf::IntRect(128, 192, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_middle", sf::IntRect(64, 192, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_top",      sf::IntRect(192, 0, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_bottom",   sf::IntRect(192, 128, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_middle",   sf::IntRect(192, 64, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_single",                  sf::IntRect(192, 192, 64, 64));
+
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_top_left",                sf::IntRect(0, 0, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_top_right",               sf::IntRect(16, 0, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_bottom_left",             sf::IntRect(0, 16, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_bottom_right",            sf::IntRect(16, 16, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_top",                     sf::IntRect(8, 0, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_left",                    sf::IntRect(0, 8, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_right",                   sf::IntRect(16, 8, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_bottom",                  sf::IntRect(8, 16, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_middle",                  sf::IntRect(8, 8, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_horizontal_left",   sf::IntRect(0, 24, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_horizontal_right",  sf::IntRect(16, 24, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_horizontal_middle", sf::IntRect(8, 24, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_vertical_top",      sf::IntRect(24, 0, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_vertical_bottom",   sf::IntRect(24, 16, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_vertical_middle",   sf::IntRect(24, 8, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_single",                  sf::IntRect(24, 24, 8, 8    ));
+
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top_left",                sf::IntRect(0, 0, 64, 64    ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top_right",               sf::IntRect(128, 0, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom_left",             sf::IntRect(0, 128, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom_right",            sf::IntRect(128, 128, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_middle",                  sf::IntRect(64, 64, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top",                     sf::IntRect(64, 0, 64, 64   ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_left",                    sf::IntRect(0, 64, 64, 64   ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_right",                   sf::IntRect(128, 64, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom",                  sf::IntRect(64, 128, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_left",   sf::IntRect(0, 192, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_right",  sf::IntRect(128, 192, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_middle", sf::IntRect(64, 192, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_top",      sf::IntRect(192, 0, 64, 64  ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_bottom",   sf::IntRect(192, 128, 64, 64));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_middle",   sf::IntRect(192, 64, 64, 64 ));
+    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_single",                  sf::IntRect(192, 192, 64, 64));
+
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top_left",                sf::IntRect(0, 0, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top_right",               sf::IntRect(16, 0, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom_left",             sf::IntRect(0, 16, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom_right",            sf::IntRect(16, 16, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top",                     sf::IntRect(8, 0, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_left",                    sf::IntRect(0, 8, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_right",                   sf::IntRect(16, 8, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom",                  sf::IntRect(8, 16, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_middle",                  sf::IntRect(8, 8, 8, 8      ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_left",   sf::IntRect(0, 24, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_right",  sf::IntRect(16, 24, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_middle", sf::IntRect(8, 24, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_top",      sf::IntRect(24, 0, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_bottom",   sf::IntRect(24, 16, 8, 8    ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_middle",   sf::IntRect(24, 8, 8, 8     ));
+    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_single",                  sf::IntRect(24, 24, 8, 8    ));
+
+    this->resource.loadFont("./res/font/proggy.ttf",   "proggy");
+    this->resource.loadFont("./res/font/garamond.ttf", "garamond");
+
+    this->font_size = (this->window.windowWidth() + this->window.windowHeight()) / 160;
+}
+
+void SimulationManager::initialiseEvents() {
+    EventData data_update_units;
+    data_update_units.name            = "UPDATE_UNIT";
+    data_update_units.required_time   = 1;
+    data_update_units.time            = 0;
+    data_update_units.speed_dependant = false;
+    ScheduledEvent update_units(data_update_units);
+    this->events.push_back(update_units);
+
+    EventData data_update_buildings;
+    data_update_buildings.name            = "UPDATE_BUILDING";
+    data_update_buildings.required_time   = seconds_per_hour;
+    data_update_buildings.time            = 0;
+    data_update_buildings.speed_dependant = true;
+    ScheduledEvent update_buildings(data_update_buildings);
+    this->events.push_back(update_buildings);
+
+    EventData data_update_population;
+    data_update_population.name            = "UPDATE_POPULATION";
+    data_update_population.required_time   = seconds_per_day;
+    data_update_population.time            = 0;
+    data_update_population.speed_dependant = true;
+    ScheduledEvent update_population(data_update_population);
+    this->events.push_back(update_population);
+}
+
+void SimulationManager::loadScripts() const {
+    // Guard.
+    // If scripts are reloaded at runtime, resize the vector.
+    scripts.resize(0);
+
+    std::string scripts_directory = "./src/scripts/";
+    for(const auto& file : std::filesystem::directory_iterator(scripts_directory)) {
+        const auto& file_path = file.path().string();
+        const auto& file_path_extension = file.path().extension().string();
+
+        if(file_path_extension == ".lua") {
+            luaL_loadfile(lua_driver.L, file_path.c_str());
+            lua::LuaScript script(file_path);
+            scripts.push_back(script);
+        }
+    }
+}
 
 void SimulationManager::loop() {
     this->m_measurement_clock = sf::Clock();
@@ -68,7 +186,7 @@ void SimulationManager::loop() {
             /* Delta time is saved as milliseconds, convert that to seconds.
              * 1 ms -> 0.001s. */
             const float delta_time_s = delta_time / 1000;
-            this->internalLoop(delta_time_s); 
+            this->internalLoop(delta_time_s);             
         }
 
         else {
@@ -82,13 +200,13 @@ void SimulationManager::loop() {
             if(this->time < INT_MAX && gamestate->state_id != "Menu")
                 this->time++;
 
-            this->updateSchedulerGlobal();
+            for(auto& event : this->events) {
+                if(event.getCurrentTime() != event.getRequiredTime() && !event.isSpeedDependant())
+                    event.progressEvent();
+            }
 
             updates = 0;
         }
-
-        // Simulation updates.
-        // Here execute updates depending on the simulation speed. 
 
         if(this->simulation_time_since_start.asMilliseconds() < simulation_speed.asMilliseconds()) {
             this->simulation_time_since_start = this->simulation_clock.getElapsedTime();
@@ -107,8 +225,10 @@ void SimulationManager::loop() {
                 gamestate->updateScheduler();
             }
 
-            // Update global scheduler.
-            this->updateShedulerSimulation();
+            for(auto& event : this->events) {
+                if(event.getCurrentTime() != event.getRequiredTime() && event.isSpeedDependant())
+                    event.progressEvent();
+            }
         }
     }
 }
@@ -141,131 +261,8 @@ void SimulationManager::prepare() {
     this->generateCountries();
 }
 
-void SimulationManager::updateShedulerSimulation() {
-    // Update buildings across all regions.
-    
-    auto& update_buildings = this->simulation_updates.at("update_buildings");
-    if(update_buildings.first != update_buildings.second)
-        update_buildings.first++;
-    
-    if(update_buildings.first == update_buildings.second) {
-        this->updateBuildings();
-        update_buildings.first = 0;
-    }
-
-    // Update pops in regions.
-    auto& update_pop_needs = this->simulation_updates.at("update_population_needs");
-    if(update_pop_needs.first != update_pop_needs.second)
-        update_pop_needs.first++;
-
-    if(update_pop_needs.first == update_pop_needs.second) {
-        this->updatePopulation();
-        update_pop_needs.first = 0;
-    }    
-
-    auto& random_event_timer = this->simulation_updates.at("event_timer");
-    if(random_event_timer.first != random_event_timer.second)
-        random_event_timer.first++;
-
-    if(random_event_timer.first == random_event_timer.second) {
-        this->updateRandomEvent();
-        random_event_timer.first = 0;
-    }
-
-    // Update quests.
-    // auto& update_quests = this->simulation_updates.at("update_quests");
-    // if(update_quests.first != update_quests.second)
-    //     update_quests.first++;
-
-    // if(update_quests.first == update_quests.second) {
-    //     this->updateQuest();
-    //     update_quests.first = 0;
-    // }
-}
-
-void SimulationManager::updateSchedulerGlobal() {
-    // Update units on the worldmap.
-
-    auto& update_units = this->global_updates.at("update_units");
-    if(update_units.first != update_units.second)
-        update_units.first++;
-
-    if(update_units.first == update_units.second) {
-        this->updateUnits();
-        update_units.first = 0;
-    }
-
-    // Update tooltip timer.
-
-    auto& gui_tooltip_timer = this->global_updates.at("gui_tooltip_timer");
-    auto const* gamestate = this->gamestate.getGamestate();
-    auto* interface_page = gamestate->getInterfaceComponent("component_tooltip");
-    
-    if(interface_page) {
-        auto* tooltip = static_cast<gui::Tooltip*>(interface_page);
-        if(!tooltip->intersectsSupportedUI()) {
-            tooltip->show = false;
-            gui_tooltip_timer.first = 0;
-        }
-
-        if(gui_tooltip_timer.first != gui_tooltip_timer.second && tooltip->intersectsSupportedUI())
-            gui_tooltip_timer.first++;
-
-        if(gui_tooltip_timer.first == gui_tooltip_timer.second && tooltip->intersectsSupportedUI()) {
-            tooltip->show = true;
-            gui_tooltip_timer.first = 0;
-        }
-    }
-}
-
-void SimulationManager::updateBuildings() {
-    for(int world_index = 0; world_index < this->world.world_map.size(); world_index++) {
-        auto& region = this->world.world_map[world_index];
-
-        /*
-        if(region.buildings.size()) {
-            for(auto& pair : region.buildings) {
-                int   building_index = pair.first;        // Index of the tile on which a building stands.
-                auto* building       = pair.second.get(); // Building itself.
-
-                building->update(&region, building_index);
-            }
-        }
-        */
-    }
-}
-
-void SimulationManager::updateUnits() {
-    // for(auto& player : this->players) {
-    //     for(auto& unit : player.units) {
-    //         if(unit.get()->hasPath()) {
-    //             auto current   = unit.get()->current_index;
-    //             auto next_move = unit.get()->getNextMove();
-                
-    //             const auto& region = this->world.world_map[next_move];
-    //             unit.get()->object_position = region.getPosition();
-
-    //             // TODO: This line will be a problem, because 2 units can not stand on the same tile,
-    //             // but currently there is nothing that makes it impossible for two units to cross each other's paths. 
-    //             this->world.world_map[next_move].unit = unit.get();
-    //             this->world.world_map[current].unit   = nullptr;
-    
-    //             unit.get()->current_index = next_move;
-
-    //             for(int y = -1; y <= 1; y++) {
-    //                 for(int x = -1; x <= 1; x++) {
-    //                     const int index = next_move + game_settings.calculateWorldIndex(x, y);
-
-    //                     if(!player.discoveredRegion(index)) 
-    //                         player.discovered_regions.push_back(index);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-}
-
-void SimulationManager::updatePopulation() {
+/*
+// void SimulationManager::updatePopulation() {
     // for(auto& region : this->world.world_map) {
     //     if(region.getPopulation() && region.visited && game_settings.populationNeedsEnabled()) {
     //         // Calculate people with their needs not fullfilled currently.
@@ -355,22 +352,8 @@ void SimulationManager::updatePopulation() {
     //             std::cout << "=======[DEBUG]=======\n";
     //     }
     // }
-}
-
-void SimulationManager::updateRandomEvent() {
-    
-}
-
-// void SimulationManager::updateQuest() {
-    // for(const auto& player : this->players) {
-    //     for(const auto& event : player.current_quests) {
-    //         if(event.get()->isFinishConditionSatisfied()) {
-    //             player.finishQuest(event);
-    //             player.removeQuest(event);
-    //         }
-    //     }
-    // }
 // }
+*/
 
 struct aNode {
     int x;
@@ -633,85 +616,6 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
     return reconstruct_path(node_start, node_end, came_from);
 }
 
-void SimulationManager::initialise() {
-    this->draw_calls          = 0;
-    this->people_dehydrated   = 0;
-    this->people_malnourished = 0;
-    this->resource.loadTexture("./res/random_colour.png", "random_colour");
-
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_top_left",                sf::IntRect(0, 0, 64, 64    ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_top_right",               sf::IntRect(128, 0, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom_left",             sf::IntRect(0, 128, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom_right",            sf::IntRect(128, 128, 64, 64));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_middle",                  sf::IntRect(64, 64, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_top",                     sf::IntRect(64, 0, 64, 64   ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_left",                    sf::IntRect(0, 64, 64, 64   ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_right",                   sf::IntRect(128, 64, 64, 64 ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_bottom",                  sf::IntRect(64, 128, 64, 64 ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_left",   sf::IntRect(0, 192, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_right",  sf::IntRect(128, 192, 64, 64));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_horizontal_middle", sf::IntRect(64, 192, 64, 64 ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_top",      sf::IntRect(192, 0, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_bottom",   sf::IntRect(192, 128, 64, 64));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_small_vertical_middle",   sf::IntRect(192, 64, 64, 64 ));
-    this->resource.loadTexture("./res/ui/template/template.png", "widget_base_single",                  sf::IntRect(192, 192, 64, 64));
-
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_top_left",                sf::IntRect(0, 0, 8, 8      ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_top_right",               sf::IntRect(16, 0, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_bottom_left",             sf::IntRect(0, 16, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_bottom_right",            sf::IntRect(16, 16, 8, 8    ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_top",                     sf::IntRect(8, 0, 8, 8      ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_left",                    sf::IntRect(0, 8, 8, 8      ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_right",                   sf::IntRect(16, 8, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_bottom",                  sf::IntRect(8, 16, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_middle",                  sf::IntRect(8, 8, 8, 8      ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_horizontal_left",   sf::IntRect(0, 24, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_horizontal_right",  sf::IntRect(16, 24, 8, 8    ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_horizontal_middle", sf::IntRect(8, 24, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_vertical_top",      sf::IntRect(24, 0, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_vertical_bottom",   sf::IntRect(24, 16, 8, 8    ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_small_vertical_middle",   sf::IntRect(24, 8, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button.png",  "button_base_single",                  sf::IntRect(24, 24, 8, 8    ));
-
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top_left",                sf::IntRect(0, 0, 64, 64    ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top_right",               sf::IntRect(128, 0, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom_left",             sf::IntRect(0, 128, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom_right",            sf::IntRect(128, 128, 64, 64));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_middle",                  sf::IntRect(64, 64, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_top",                     sf::IntRect(64, 0, 64, 64   ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_left",                    sf::IntRect(0, 64, 64, 64   ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_right",                   sf::IntRect(128, 64, 64, 64 ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_bottom",                  sf::IntRect(64, 128, 64, 64 ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_left",   sf::IntRect(0, 192, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_right",  sf::IntRect(128, 192, 64, 64));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_horizontal_middle", sf::IntRect(64, 192, 64, 64 ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_top",      sf::IntRect(192, 0, 64, 64  ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_bottom",   sf::IntRect(192, 128, 64, 64));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_small_vertical_middle",   sf::IntRect(192, 64, 64, 64 ));
-    this->resource.loadTexture("./res/ui/template/template_black.png", "widget_black_base_single",                  sf::IntRect(192, 192, 64, 64));
-
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top_left",                sf::IntRect(0, 0, 8, 8      ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top_right",               sf::IntRect(16, 0, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom_left",             sf::IntRect(0, 16, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom_right",            sf::IntRect(16, 16, 8, 8    ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_top",                     sf::IntRect(8, 0, 8, 8      ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_left",                    sf::IntRect(0, 8, 8, 8      ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_right",                   sf::IntRect(16, 8, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_bottom",                  sf::IntRect(8, 16, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_middle",                  sf::IntRect(8, 8, 8, 8      ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_left",   sf::IntRect(0, 24, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_right",  sf::IntRect(16, 24, 8, 8    ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_horizontal_middle", sf::IntRect(8, 24, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_top",      sf::IntRect(24, 0, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_bottom",   sf::IntRect(24, 16, 8, 8    ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_small_vertical_middle",   sf::IntRect(24, 8, 8, 8     ));
-    this->resource.loadTexture("./res/ui/template/button_black.png",  "button_black_base_single",                  sf::IntRect(24, 24, 8, 8    ));
-
-    this->resource.loadFont("./res/font/proggy.ttf",   "proggy");
-    this->resource.loadFont("./res/font/garamond.ttf", "garamond");
-
-    this->font_size = (this->window.windowWidth() + this->window.windowHeight()) / 160;
-}
 
 int SimulationManager::getDrawCalls() const {
     return this->draw_calls;
@@ -780,17 +684,6 @@ bool SimulationManager::isHumanPlayer(int player_id) const {
     return this->getHumanPlayer()->getID() == player_id;
 }
 
-// Unit* SimulationManager::getUnit(int unit_id) {
-//     for(Player& player : this->players) {
-//         for(auto& unit_sp : player.units) {
-//             auto* unit = unit_sp.get();
-//             if(unit->getID() == unit_id)
-//                 return unit;
-//         }
-//     }
-//     return nullptr;
-// }
-
 void SimulationManager::generateCountries() {
     // Find spots suitable for settling. 
 
@@ -846,6 +739,7 @@ void SimulationManager::generateCountries() {
     }
 }
 
+/*
 // std::shared_ptr <Unit> SimulationManager::createUnit(UnitType unit_type, int region_index, Player* owner) const {
 //     return nullptr;
 
@@ -897,6 +791,7 @@ void SimulationManager::generateCountries() {
 //     if(worldmap)
 //         worldmap->selected_unit_id = -1; 
 // }
+*/
 
 bool SimulationManager::regionCanBeColonised(int region_index) const {
     if(!game_settings.inWorldBounds(region_index))
@@ -1101,9 +996,29 @@ void SimulationManager::emitEvents() {
             }
         }
     }
+
+    for(auto& scheduled_update : this->events) {
+        const auto& update_name   = scheduled_update.getEventName();
+        auto current_time         = scheduled_update.getCurrentTime();
+        auto required_time        = scheduled_update.getRequiredTime();
+        if(current_time == required_time) {
+            event_queue.push_back(update_name);
+            scheduled_update.resetTime();
+        }
+    }
+
+    this->updateScripts();
 }
 
 void SimulationManager::popEvents() {
     if(event_queue.size())
         event_queue.erase(event_queue.begin());
+}
+
+void SimulationManager::updateScripts() const {
+    for(const auto& script : scripts) {
+        for(const auto& event : event_queue) {
+            script.onEvent(lua_driver.L, event);
+        }
+    }
 }

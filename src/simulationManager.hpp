@@ -4,6 +4,7 @@
 #include "player.hpp"
 #include "worldGenerator.hpp"
 #include "texturizer.hpp"
+#include "schedule.hpp"
 
 #include <SFML/System.hpp>
 #include <vector>
@@ -25,17 +26,19 @@ constexpr int water_consumed_per_pop = 2;
 class SimulationManager : public Entropy {
     private:
         void initialise();
+        void initialiseEvents();
         void internalLoop(float delta_time);
 
-        void generateCountries();
+        // void loadSettings()  const;
+        // void loadBuildings() const;
+        // void loadBiomes()    const;
+        // void loadItems()     const;
+        // void loadResources() const;
+        void loadScripts()   const;
 
-        void updateSchedulerGlobal();
-        void updateShedulerSimulation();
-        void updateBuildings();
-        void updateUnits();
-        void updatePopulation();
-        void updateRandomEvent();
-        // void updateQuest();
+        void updateScripts() const;
+
+        void generateCountries();
     private:
         int draw_calls;
         int people_dehydrated;   // Number of people with water needs not satisfied.
@@ -44,15 +47,12 @@ class SimulationManager : public Entropy {
         float simulation_speed;                // Simulation speed. Events, updates and other gameplay-related stuff depend on this. 1 is default value, and equals to updating every 1 second.             
         sf::Clock simulation_clock;            // For timing simulation updates internally. Use this instead of Entropy's clock (it's intended for measuring FPS).
         sf::Time  simulation_time_since_start; // Time since clock start.      
-
-        Scheduler global_updates;
-        Scheduler simulation_updates;
-
     public:
         Texturizer texturizer;
 
         WorldGenerator       world;
         std::vector <Player> players;
+        Schedule             events;
         int                  time;            // Time passed since game started in real time seconds.
         int                  simulation_time; // Time passed inside the simulation. Depends on the frequency of updates.
         

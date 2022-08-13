@@ -37,7 +37,7 @@ class Driver {
         
         void registerLua() const;
 
-    private:
+    public:
         lua_State* L;
         iso::Settings app_settings;
 
