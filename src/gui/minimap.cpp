@@ -66,7 +66,7 @@ void WidgetMinimap::updateUI() {
 
                 // A tile.
                 else
-                    this->minimap_image.setPixel(x, y, current_region->biome.getBiomeRegionmapColour());
+                    this->minimap_image.setPixel(x, y, current_region->biome.getBiomeWorldmapColour());
             }
         }
         

@@ -47,4 +47,4 @@ class Biome {
 };
 }
 
-extern std::vector <iso::Biome> resources;
+extern std::vector <iso::Biome> biomes;

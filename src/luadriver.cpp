@@ -4,10 +4,10 @@
 #include "generationSettings.hpp"
 #include "biome.hpp"
 #include "entropy/resourceManager.hpp"
+#include "types.hpp"
 
 #include "tileType.hpp"
 
-#include <LuaBridge/LuaBridge.h>
 #include <SFML/System/Clock.hpp>
 #include <filesystem>
 #include <iostream>
@@ -19,8 +19,9 @@ namespace driver {
         sf::Clock clock;
 
         this->L = luaL_newstate();
+        luaL_openlibs(this->L);
 
-        this->registerFunctions();
+        this->registerLua();
 
         // Read data from directories.
         namespace fs = std::filesystem;
@@ -31,12 +32,14 @@ namespace driver {
             std::cout << "[Lua Driver]: Reading application config.\n";
             luaL_dofile(this->L, config_path.c_str());
 
+            auto appconfig = luabridge::getGlobal(this->L, "Appconfig");
+
             iso::Settings settings;
-            settings.window_size            = this->getNestedFieldValueVector2i("Appconfig", "window_size", "x", "y");
-            settings.window_fullscreen      = this->getFieldValueBoolean("Appconfig", "fullscreen");
-            settings.window_vsync           = this->getFieldValueBoolean("Appconfig", "vsync");
-            settings.window_refresh_rate    = this->getFieldValueInteger("Appconfig", "refresh_rate");
-            settings.application_debug_mode = this->getFieldValueBoolean("Appconfig", "debug_mode");
+            settings.window_size            = appconfig["window_size"];
+            settings.window_fullscreen      = appconfig["fullscreen"];
+            settings.window_vsync           = appconfig["vsync"];
+            settings.window_refresh_rate    = appconfig["refresh_rate"];
+            settings.application_debug_mode = appconfig["debug_mode"];
 
             this->app_settings = settings;
         }
@@ -47,45 +50,52 @@ namespace driver {
             std::cout << "[Lua Driver]: Reading world generation config.\n";
             luaL_dofile(this->L, generationdata_path.c_str());
 
+            auto worldconfig = luabridge::getGlobal(this->L, "GameSettings");
+
             iso::GameSettings settings;
-            settings.persistence                 = this->getFieldValueInteger("GameSettings", "persistence");
-            settings.world_persistence           = this->getFieldValueInteger("GameSettings", "world_persistence");
-            settings.simulation_update_frequency = this->getFieldValueFloat("GameSettings", "simulation_update_frequency");
-            settings.world_width                 = this->getNestedFieldValueInteger("GameSettings", "World", "size");
-            settings.terrain_from                = this->getNestedFieldValueFloat("GameSettings", "World", "terrain_from");
-            settings.forest_from                 = this->getNestedFieldValueFloat("GameSettings", "World", "forest_from");
-            settings.fog_of_war_enabled          = this->getNestedFieldValueBoolean("GameSettings", "World", "fog_of_war_enabled");
-            settings.region_width                = this->getNestedFieldValueInteger("GameSettings", "Region", "size");
-            settings.initial_population          = this->getNestedFieldValueInteger("GameSettings", "Region", "initial_population");
-            settings.population_needs_enabled    = this->getNestedFieldValueBoolean("GameSettings", "Region", "population_needs_enabled");
-            settings.building_cost_enabled       = this->getNestedFieldValueBoolean("GameSettings", "Region", "building_cost_enabled");
-            settings.astar_pathfinding_enabled   = this->getNestedFieldValueBoolean("GameSettings", "Region", "astar_pathfinding_enabled");
-            settings.temperature_multiplier      = this->getNestedFieldValueFloat("GameSettings", "World", "multiplier_temperature");
-            settings.moisture_multiplier         = this->getNestedFieldValueFloat("GameSettings", "World", "multiplier_moisture");
+            settings.region_persistence          = worldconfig["region_persistence"];
+            settings.world_persistence           = worldconfig["world_persistence"];
+            settings.simulation_update_frequency = worldconfig["simulation_update_frequency"];
+            settings.world_width                 = worldconfig["World"]["size"];
+            settings.terrain_from                = worldconfig["World"]["terrain_from"];
+            settings.forest_from                 = worldconfig["World"]["forest_from"];
+            settings.fog_of_war_enabled          = worldconfig["World"]["fog_of_war_enabled"];
+            settings.temperature_multiplier      = worldconfig["World"]["multiplier_temperature"];
+            settings.moisture_multiplier         = worldconfig["World"]["multiplier_moisture"];
+            settings.region_width                = worldconfig["Region"]["size"];
+            settings.initial_population          = worldconfig["Region"]["initial_population"];
+            settings.population_needs_enabled    = worldconfig["Region"]["population_needs_enabled"];
+            settings.building_cost_enabled       = worldconfig["Region"]["building_cost_enabled"];
+            settings.astar_pathfinding_enabled   = worldconfig["Region"]["astar_pathfinding_enabled"];
 
             game_settings = settings;
         }
 
         // Read item data.
         {
-            std::string resourcedata_path = "./data/resource/";
+            std::string resourcedata_path = "./data/item/";
             std::cout << "[Lua Driver]: Loading items.\n";
             for(const auto& file : fs::directory_iterator(resourcedata_path)) {
                 const auto& file_path = file.path().string();
                 const auto& file_path_extension = file.path().extension().string();
 
                 if(file_path_extension == ".lua") {
-                    std::cout << "[Lua Driver]: Registering resource '" << file_path << "'.\n";
+                    std::cout << "[Lua Driver]: Registering item '" << file_path << "'.\n";
                     luaL_dofile(this->L, file_path.c_str());
 
+                    auto itemdata = luabridge::getGlobal(this->L, "Item");
+
                     iso::ItemData data;
-                    data.filename = file_path;
-                    data.name         = this->getFieldValueString("Resource", "name");
-                    data.description  = this->getFieldValueString("Resource", "description");
-                    data.icon_texture = this->getFieldValueString("Resource", "icon_texture");
-                    data.icon_size    = this->getNestedFieldValueVector2i("Resource", "icon_size", "x", "y");
-                    data.type         = this->getFieldValueString("Resource", "type");
+                    data.filename     = file_path;
+                    data.name         = this->readString(itemdata["name"]);
+                    data.description  = this->readString(itemdata["description"]);
+                    data.icon_texture = this->readString(itemdata["icon_texture"]);
+                    data.icon_size    = this->readVector2i(itemdata["icon_size"]);
+                    data.type         = this->readString(itemdata["type"]);
                     data.amount       = 0;
+                
+                    iso::StorageItem item(data);
+                    items.push_back(item);
                 }
             }   
         }
@@ -102,21 +112,23 @@ namespace driver {
                     std::cout << "[Lua Driver]: Registering resource '" << file_path << "'.\n";
                     luaL_dofile(this->L, file_path.c_str());
 
+                    auto resourcedata = luabridge::getGlobal(this->L, "Resource");
+
                     iso::ResourceData data;
-                    data.filename      = file_path;
-                    data.name          = this->getFieldValueString("Resource", "name");
-                    data.description   = this->getFieldValueString("Resource", "description");
-                    data.texture       = this->getFieldValueString("Resource", "texture");
-                    data.texture_size  = this->getNestedFieldValueVector2i("Resource", "texture_size", "x", "y");
-                    data.icon_texture  = this->getFieldValueString("Resource", "icon_texture");
-                    data.icon_size     = this->getNestedFieldValueVector2i("Resource", "icon_size", "x", "y");
-                    data.type          = this->getFieldValueString("Resource", "type");
-                    data.min_occurence = this->getFieldValueInteger("Resource", "minimum_occurence");
-                    data.max_occurence = this->getFieldValueInteger("Resource", "maximum_occurence");
-                    data.chance        = this->getFieldValueFloat("Resource", "generation_chance");
-                    data.patch_size    = this->getFieldValueInteger("Resource", "patch_size");
-                    data.tile_requirements   = this->getTileRequirements(data.filename);
-                    data.region_requirements = this->getRegionRequirements(data.filename); 
+                    data.filename            = file_path;
+                    data.name                = this->readString(resourcedata["name"]);
+                    data.description         = this->readString(resourcedata["description"]);
+                    data.texture             = this->readString(resourcedata["texture"]);
+                    data.texture_size        = this->readVector2i(resourcedata["texture_size"]);
+                    data.icon_texture        = this->readString(resourcedata["icon_texture"]);
+                    data.icon_size           = this->readVector2i(resourcedata["icon_size"]);
+                    data.type                = this->readString(resourcedata["type"]);
+                    data.min_occurence       = this->readInteger(resourcedata["minimum_occurence"]);
+                    data.max_occurence       = this->readInteger(resourcedata["maximum_occurence"]);
+                    data.chance              = this->readNumber(resourcedata["generation_chance"]);
+                    data.patch_size          = this->readInteger(resourcedata["patch_size"]);
+                    data.tile_requirements   = this->readVectorString(resourcedata["tile"]);
+                    data.region_requirements = this->readVectorString(resourcedata["region"]); 
 
                     iso::Resource resource(data);
                     resources.push_back(resource);   
@@ -136,17 +148,19 @@ namespace driver {
                     std::cout << "[Lua Driver]: Registering building '" << file_path << "'.\n";
                     luaL_dofile(this->L, file_path.c_str()); 
 
+                    auto buildingdata = luabridge::getGlobal(this->L, "Building");
+
                     iso::BuildingData data;
                     data.filename     = file_path;                
-                    data.name         = this->getFieldValueString("Building", "name");
-                    data.description  = this->getFieldValueString("Building", "description");
-                    data.size         = this->getNestedFieldValueVector2i("Building", "size", "x", "y");
-                    data.texture      = this->getFieldValueString("Building", "texture");
-                    data.texture_size = this->getNestedFieldValueVector2i("Building", "texture_size", "x", "y");
-                    data.icon_texture = this->getFieldValueString("Building", "icon_texture");
-                    data.icon_size    = this->getNestedFieldValueVector2i("Building", "icon_size", "x", "y");
-                    data.removable    = this->getFieldValueBoolean("Building", "removable");
-                    data.scan_area    = this->getNestedFieldValueVector2i("Building", "scan_area", "x", "y"); 
+                    data.name         = this->readString(buildingdata["name"]);
+                    data.description  = this->readString(buildingdata["description"]);
+                    data.size         = this->readVector2i(buildingdata["size"]);
+                    data.texture      = this->readString(buildingdata["texture"]);
+                    data.texture_size = this->readVector2i(buildingdata["texture_size"]);
+                    data.icon_texture = this->readString(buildingdata["icon_texture"]);
+                    data.icon_size    = this->readVector2i(buildingdata["icon_size"]);
+                    data.removable    = this->readBoolean(buildingdata["removable"]);
+                    data.scan_area    = this->readVector2i(buildingdata["scan_area"]);
                     data.harvests     = this->getHarvestedResourceList(data.filename);
                     data.produces     = this->getProducedResourceList(data.filename);
 
@@ -168,21 +182,20 @@ namespace driver {
                     std::cout << "[Lua Driver]: Registering biome '" << file_path << "'.\n";
                     luaL_dofile(this->L, file_path.c_str()); 
 
+                    auto biomedata = luabridge::getGlobal(this->L, "Biome");
+
                     iso::BiomeData data;
                     data.filename                = file_path;
-                    data.name                    = this->getFieldValueString("Biome", "name");
-                    data.id                      = this->getFieldValueString("Biome", "id");
-                    data.description             = this->getFieldValueString("Biome", "description");
-                    data.colour_wmap             = this->getNestedFieldValueColor("Biome", "colour_wmap");
-                    data.colour_rmap             = this->getNestedFieldValueColor("Biome", "colour_rmap");
-                    data.temperature             = this->getFieldValueString("Biome", "temperature"); 
-                    data.moisture                = this->getFieldValueString("Biome", "moisture"); 
-                    data.latitude                = this->getFieldValueString("Biome", "latitude"); 
-                    data.elevation               = this->getFieldValueString("Biome", "elevation");
-                    data.forest_texture_worldmap = this->getFieldValueString("Biome", "forest_texture_worldmap");
-                    data.tiles                   = this->readBiomeTiles(data.filename);
-                    data.trees                   = this->readBiomeTrees(data.filename);
-                    data.can_be_forest           = this->getFieldValueBoolean("Biome", "can_be_forest");
+                    data.name                    = this->readString(biomedata["name"]);
+                    data.id                      = this->readString(biomedata["id"]);
+                    data.description             = this->readString(biomedata["description"]);
+                    data.colour_wmap             = this->readColour(biomedata["colour_wmap"]);
+                    data.temperature             = this->readString(biomedata["temperature"]);
+                    data.moisture                = this->readString(biomedata["moisture"]);
+                    data.can_be_forest           = this->readBoolean(biomedata["can_be_forest"]);
+                    data.forest_texture_worldmap = this->readString(biomedata["forest_texture_worldmap"]);
+                    data.tiles                   = this->readVectorString(biomedata["tiles"]);
+                    data.trees                   = this->readVectorString(biomedata["trees"]);
 
                     iso::Biome biome(data);
                     biomes.push_back(biome);
@@ -199,308 +212,6 @@ namespace driver {
     }
 
     // Lua wrapper functions.
-
-    std::string Driver::getFieldValueString(const std::string& field, const std::string& key) const {
-        int result_global = lua_getglobal(this->L, field.c_str());
-        if(result_global == LUA_TNIL)
-            return "";
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field << " is not a table.\n";
-            return "";
-        }
-
-        lua_pushstring(this->L, key.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return "";
-
-        if(!lua_isstring(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: Value at " << key << " can not be stringified.\n";
-            return ""; 
-        }
-
-        std::string value = lua_tostring(this->L, -1);
-        lua_pop(this->L, 2);
-
-        return value;
-    }
-
-    int Driver::getFieldValueInteger(const std::string& field, const std::string& key) const {
-        int result_global = lua_getglobal(this->L, field.c_str());
-        if(result_global == LUA_TNIL)
-            return 0;
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout  << "[Lua Driver Error]: " << field << " is not a table.\n";
-            return 0;
-        }
-
-        lua_pushstring(this->L, key.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return 0;
-
-        if(!lua_isinteger(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: Value at " << key << " is not a integer.\n";
-            return 0; 
-        }
-
-        int value = lua_tointeger(this->L, -1);
-        lua_pop(this->L, 2);
-
-        return value;
-    } 
-
-    float Driver::getFieldValueFloat(const std::string& field, const std::string& key) const {
-        int result_global = lua_getglobal(this->L, field.c_str());
-        if(result_global == LUA_TNIL)
-            return 0.0f;
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field << " is not a table.\n";
-            return 0.0f;
-        }
-
-        lua_pushstring(this->L, key.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return 0.0f;
-
-        if(!lua_isnumber(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: Value at " << key << " is not a number.\n";
-            return 0.0f; 
-        }
-
-        float value = (float)lua_tonumber(this->L, -1);
-        lua_pop(this->L, 2);
-
-        return value;
-    } 
-
-    bool Driver::getFieldValueBoolean(const std::string& field, const std::string& key) const {
-        int result_global = lua_getglobal(this->L, field.c_str());
-        if(result_global == LUA_TNIL)
-            return false;
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field << " is not a table.\n";
-            return false;
-        }
-
-        lua_pushstring(this->L, key.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return false;
-
-        if(!lua_isboolean(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: Value at " << key << " is not a boolean.\n";
-            return false; 
-        }
-
-        bool value = lua_toboolean(this->L, -1);
-        lua_pop(this->L, 2);
-
-        return value;
-    }
-
-    sf::Vector2i Driver::getFieldValueVector2i(const std::string& field, const std::string& key1, const std::string& key2) const {
-        sf::Vector2i result;
-        result.x = this->getFieldValueInteger(field, key1);
-        result.y = this->getFieldValueInteger(field, key2);
-        return result;
-    }
-
-    std::string Driver::getNestedFieldValueString(const std::string& field1, const std::string& field2, const std::string& key) const {
-        int result_global = lua_getglobal(this->L, field1.c_str());
-        if(result_global == LUA_TNIL)
-            return "";
-    
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field1 << " is not a table.\n";
-            return "";
-        }
-
-        lua_pushstring(this->L, field2.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return "";
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field2 << " is not a table.\n";
-            return "";
-        }
-        
-        lua_pushstring(this->L, key.c_str());
-        lua_gettable(this->L, -2);
-        std::string result = lua_tostring(this->L, -1);
-        lua_pop(this->L, 1);
-        
-        lua_pop(this->L, 2);
-        return result;
-    }
-
-    int Driver::getNestedFieldValueInteger(const std::string& field1, const std::string& field2, const std::string& key) const {
-        int result_global = lua_getglobal(this->L, field1.c_str());
-        if(result_global == LUA_TNIL)
-            return 0;
-    
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field1 << " is not a table.\n";
-            return 0;
-        }
-
-        lua_pushstring(this->L, field2.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return 0;
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field2 << " is not a table.\n";
-            return 0;
-        }
-        
-        lua_pushstring(this->L, key.c_str());
-        lua_gettable(this->L, -2);
-        int result = lua_tointeger(this->L, -1);
-        lua_pop(this->L, 1);
-        
-        lua_pop(this->L, 2);
-        return result;
-    }
-
-    float Driver::getNestedFieldValueFloat(const std::string& field1, const std::string& field2, const std::string& key) const {
-        int result_global = lua_getglobal(this->L, field1.c_str());
-        if(result_global == LUA_TNIL)
-            return 0.0f;
-    
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field1 << " is not a table.\n";
-            return 0.0f;
-        }
-
-        lua_pushstring(this->L, field2.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return 0.0f;
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field2 << " is not a table.\n";
-            return 0.0f;
-        }
-        
-        lua_pushstring(this->L, key.c_str());
-        lua_gettable(this->L, -2);
-        float result = (float)lua_tonumber(this->L, -1);
-        lua_pop(this->L, 1);
-        
-        lua_pop(this->L, 2);
-        return result;
-    }
-
-    bool Driver::getNestedFieldValueBoolean(const std::string& field1, const std::string& field2, const std::string& key) const {
-        int result_global = lua_getglobal(this->L, field1.c_str());
-        if(result_global == LUA_TNIL)
-            return false;
-    
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field1 << " is not a table.\n";
-            return false;
-        }
-
-        lua_pushstring(this->L, field2.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return false;
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field2 << " is not a table.\n";
-            return false;
-        }
-        
-        lua_pushstring(this->L, key.c_str());
-        lua_gettable(this->L, -2);
-        bool result = lua_toboolean(this->L, -1);
-        lua_pop(this->L, 1);
-        
-        lua_pop(this->L, 2);
-        return result;
-    }
-
-    sf::Vector2i Driver::getNestedFieldValueVector2i(const std::string& field1, const std::string& field2, const std::string& key1, const std::string& key2) const {
-        int result_global = lua_getglobal(this->L, field1.c_str());        
-        if(result_global == LUA_TNIL)
-            return sf::Vector2i(0, 0);
-        
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field1 << " is not a table.\n";
-            return sf::Vector2i(0, 0);
-        }
-
-        lua_pushstring(this->L, field2.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return sf::Vector2i(0, 0);
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field2 << " is not a table.\n";
-            return sf::Vector2i(0, 0);
-        }
-
-        sf::Vector2i result;
-
-        lua_pushstring(this->L, key1.c_str());
-        lua_gettable(this->L, -2);
-        result.x = lua_tointeger(this->L, -1);
-        lua_pop(this->L, 1);
-
-        lua_pushstring(this->L, key2.c_str());
-        lua_gettable(this->L, -2);
-        result.y = lua_tointeger(this->L, -1);
-        lua_pop(this->L, 1);
-
-        lua_pop(this->L, 2);
-        return result;
-    }
-
-    sf::Color Driver::getNestedFieldValueColor(const std::string& field1, const std::string& field2) const {
-        int result_global = lua_getglobal(this->L, field1.c_str());
-        if(result_global == LUA_TNIL)
-            return sf::Color(0, 0, 0);
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field1 << " is not a table.\n";
-            return sf::Color(0, 0, 0);
-        }
-
-        lua_pushstring(this->L, field2.c_str());
-        int result_table = lua_gettable(this->L, -2);
-        if(result_table == LUA_TNIL)
-            return sf::Color(0, 0, 0);
-
-        if(!lua_istable(this->L, -1)) {
-            std::cout << "[Lua Driver Error]: " << field2 << " is not a table.\n";
-            return sf::Color(0, 0, 0);
-        }
-
-        sf::Color colour;
-        lua_pushstring(this->L, "r");
-        lua_gettable(this->L, -2);
-        colour.r = lua_tointeger(this->L, -1);
-        lua_pop(this->L, 1);
-
-        lua_pushstring(this->L, "g");
-        lua_gettable(this->L, -2);
-        colour.g = lua_tointeger(this->L, -1);
-        lua_pop(this->L, 1);
-
-        lua_pushstring(this->L, "b");
-        lua_gettable(this->L, -2);
-        colour.b = lua_tointeger(this->L, -1);
-        lua_pop(this->L, 1);
-
-        return colour;
-    }
 
     std::vector <iso::BuildingHarvest> Driver::getHarvestedResourceList(const std::string& filename) const {
         luaL_dofile(this->L, filename.c_str());
@@ -867,8 +578,85 @@ namespace driver {
         return list;
     }
 
-    void Driver::registerFunctions() const {
-        
+    void Driver::registerLua() const {
+        luabridge::getGlobalNamespace(this->L)
+            .beginClass <core::Colour> ("Colour")
+                .addConstructor <void (*) (uint8_t, uint8_t, uint8_t)> ()
+                .addProperty("r", core::Colour::getR, core::Colour::setR)
+                .addProperty("g", core::Colour::getG, core::Colour::setG)
+                .addProperty("b", core::Colour::getB, core::Colour::setB)
+            .endClass()
+            .beginClass <core::Vector2f> ("Vector2f")
+                .addConstructor <void (*) (float, float)> ()
+                .addProperty("x", core::Vector2f::getX, core::Vector2f::setX)
+                .addProperty("y", core::Vector2f::getY, core::Vector2f::setY)
+            .endClass()
+            .beginClass <core::Vector2i> ("Vector2i")
+                .addConstructor <void (*) (int, int)> ()
+                .addProperty("x", core::Vector2i::getX, core::Vector2i::setX)
+                .addProperty("y", core::Vector2i::getY, core::Vector2i::setY)
+            .endClass()
+            .beginClass <core::Vector3f> ("Vector3f")
+                .addConstructor <void (*) (float, float, float)> ()
+                .addProperty("x", core::Vector3f::getX, core::Vector3f::setX)
+                .addProperty("y", core::Vector3f::getY, core::Vector3f::setY)
+                .addProperty("z", core::Vector3f::getZ, core::Vector3f::setZ)
+            .endClass()
+            .beginClass <core::Vector3i> ("Vector3i")
+                .addConstructor <void (*) (int, int, int)> ()
+                .addProperty("x", core::Vector3i::getX, core::Vector3i::setX)
+                .addProperty("y", core::Vector3i::getY, core::Vector3i::setY)
+                .addProperty("z", core::Vector3i::getZ, core::Vector3i::setZ)
+            .endClass();
+    }
+
+    std::vector <std::string> Driver::readVectorString(luabridge::LuaRef reference) const {
+        std::vector <std::string> list;
+        if(reference.isNil())
+            return list;
+
+        int length = reference.length();
+        for(int i = 1; i <= length; i++) {
+            list.push_back(reference[i]);
+        }
+
+        return list;
+    }
+
+    bool Driver::readBoolean(luabridge::LuaRef reference) const {
+        if(reference.isNil())
+            return false;
+        return (bool)reference;
+    } 
+
+    std::string Driver::readString(luabridge::LuaRef reference) const {
+        if(reference.isNil())
+            return std::string();
+        return (std::string)reference;
+    }
+
+    int Driver::readInteger(luabridge::LuaRef reference) const {
+        if(reference.isNil())
+            return 0;
+        return (int)reference;
+    }
+
+    float Driver::readNumber(luabridge::LuaRef reference) const {
+        if(reference.isNil())
+            return 0.0f;
+        return (float)reference;
+    }
+
+    core::Vector2i Driver::readVector2i(luabridge::LuaRef reference) const {
+        if(reference.isNil())
+            return core::Vector2i();
+        return (core::Vector2i)reference;
+    }
+
+    core::Colour Driver::readColour(luabridge::LuaRef reference) const {
+        if(reference.isNil())
+            return core::Colour();
+        return (core::Colour)reference;
     }
 }
 }

@@ -53,4 +53,4 @@ class StorageItem {
 };
 }
 
-extern std::vector <iso::StorageItem> resources;
+extern std::vector <iso::StorageItem> items;

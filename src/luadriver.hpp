@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Lua/lua.hpp>
+#include <LuaBridge/LuaBridge.h>
 #include <SFML/System/Vector2.hpp>
 
 #include <string>
@@ -15,19 +16,6 @@ class Driver {
     private:
         // Lua wrappers.
 
-        std::string getFieldValueString(const std::string& field, const std::string& key) const;
-        int getFieldValueInteger(const std::string& field, const std::string& key) const;
-        float getFieldValueFloat(const std::string& field, const std::string& key) const;
-        bool getFieldValueBoolean(const std::string& field, const std::string& key) const;
-        sf::Vector2i getFieldValueVector2i(const std::string& field, const std::string& key1, const std::string& key2) const;
-
-        std::string getNestedFieldValueString(const std::string& field1, const std::string& field2, const std::string& key) const;
-        int getNestedFieldValueInteger(const std::string& field1, const std::string& field2, const std::string& key) const;
-        float getNestedFieldValueFloat(const std::string& field1, const std::string& field2, const std::string& key) const;
-        bool getNestedFieldValueBoolean(const std::string& field1, const std::string& field2, const std::string& key) const;
-        sf::Vector2i getNestedFieldValueVector2i(const std::string& field1, const std::string& field2, const std::string& key1, const std::string& key2) const;
-        sf::Color getNestedFieldValueColor(const std::string& field1, const std::string& field2) const;
-
         std::vector <iso::BuildingHarvest>    getHarvestedResourceList(const std::string& filename) const;
         std::vector <iso::BuildingProduction> getProducedResourceList(const std::string& filename) const;
         
@@ -37,9 +25,17 @@ class Driver {
         std::vector <std::string> readBiomeTiles(const std::string& filename) const;
         std::vector <std::string> readBiomeTrees(const std::string& filename) const;
 
-        // Expose C++ functions to Lua.          
+        std::vector <std::string> readVectorString(luabridge::LuaRef reference) const; 
+        bool           readBoolean(luabridge::LuaRef reference)  const;
+        std::string    readString(luabridge::LuaRef reference)   const;
+        int            readInteger(luabridge::LuaRef reference)  const;
+        float          readNumber(luabridge::LuaRef reference)   const;
+        core::Vector2i readVector2i(luabridge::LuaRef reference) const;
+        core::Colour   readColour(luabridge::LuaRef reference)   const;
+
+        // Expose C++ to Lua.          
         
-        void registerFunctions() const;
+        void registerLua() const;
 
     private:
         lua_State* L;

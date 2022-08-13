@@ -16,7 +16,7 @@ Entropy::Entropy() {
         this->window.createFullscreenWindow();
     
     else 
-        this->window.createWindow(sf::Vector2f(this->settings.window_size));
+        this->window.createWindow(this->settings.window_size.asSFMLVector2f());
 
     this->window.setTitle("Entropy Application");
 
@@ -38,7 +38,7 @@ Entropy::Entropy(const Settings& settings) {
         this->window.createFullscreenWindow();
     
     else 
-        this->window.createWindow(sf::Vector2f(this->settings.window_size));
+        this->window.createWindow(this->settings.window_size.asSFMLVector2f());
 
     this->window.setTitle("Entropy Application");
 

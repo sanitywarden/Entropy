@@ -85,4 +85,4 @@ class Building : public GameObject {
 const Building BUILDING_EMPTY;
 }
 
-extern std::vector <iso::Building> resources;
+extern std::vector <iso::Building> buildings;

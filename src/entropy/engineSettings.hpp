@@ -5,6 +5,8 @@
 #include <fstream>
 #include <SFML/Graphics.hpp>
 
+#include "types.hpp"
+
 namespace iso {
     // This is a class that represents the user-customisable application settings.
     // It does not have any public or private functions.
@@ -14,11 +16,11 @@ namespace iso {
             Settings();
             ~Settings();
 
-            sf::Vector2i window_size;
-            bool         window_fullscreen;
-            bool         window_vsync;
-            unsigned int window_refresh_rate;
-            bool         application_debug_mode;
+            core::Vector2i window_size;
+            bool           window_fullscreen;
+            bool           window_vsync;
+            unsigned int   window_refresh_rate;
+            bool           application_debug_mode;
     };
 }
 

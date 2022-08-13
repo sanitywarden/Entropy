@@ -105,6 +105,8 @@ class SimulationManager : public Entropy {
 };
 }
 
+extern std::vector <std::string> event_queue;
+
 /*
 void luaLoadTexture(std::string filename, std::string id, int posx, int posy, int sizex, int sizey);
 void ResourceManager::luaLoadTexture(std::string filename, std::string id, int posx, int posy, int sizex, int sizey) {

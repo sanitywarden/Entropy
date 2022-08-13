@@ -7,7 +7,7 @@ GameSettings::GameSettings()
 {}
 
 GameSettings::GameSettings(const GameSettings& settings) {
-    this->persistence = settings.persistence;
+    this->region_persistence = settings.region_persistence;
     this->simulation_update_frequency = settings.simulation_update_frequency;
     this->world_width = settings.world_width;
     this->terrain_from = settings.terrain_from;
@@ -102,7 +102,7 @@ float GameSettings::simulationSpeed() const {
 }
 
 int GameSettings::getRegionPersistence() const {
-    return this->persistence;
+    return this->region_persistence;
 }
 
 bool GameSettings::inSameRow(int index1, int index2) const {

@@ -837,9 +837,7 @@ bool WorldGenerator::is_biome(int region_index, Biome biome) const {
     return (
         region_biome.getBiomeName()        == biome.getBiomeName()        &&
         region_biome.getBiomeTemperature() == biome.getBiomeTemperature() &&
-        region_biome.getBiomeMoisture()    == biome.getBiomeMoisture()    &&
-        region_biome.getBiomeLatitude()    == biome.getBiomeLatitude()    &&
-        region_biome.getBiomeElevation()   == biome.getBiomeElevation()
+        region_biome.getBiomeMoisture()    == biome.getBiomeMoisture()
     );
 }
 

@@ -10,7 +10,7 @@ class GameSettings {
         GameSettings(const GameSettings& settings);
         ~GameSettings();
 
-        int persistence;
+        int region_persistence;
         int world_persistence;
 
         float simulation_update_frequency;
