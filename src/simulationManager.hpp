@@ -25,6 +25,7 @@ constexpr int water_consumed_per_pop = 2;
 
 class SimulationManager : public Entropy {
     private:
+        void setup() override;
         void initialise();
         void initialiseEvents();
         void internalLoop(float delta_time);

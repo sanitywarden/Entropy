@@ -1,35 +1,25 @@
-#ifndef _ENTROPY_GAMESTATE_MANAGER_HPP_
-#define _ENTROPY_GAMESTATE_MANAGER_HPP_
+#pragma once
 
 #include <map>
 #include <string>
 #include <memory>
 
-#include "engineSettings.hpp"
-
 namespace iso {
-    class Gamestate;
-    
-    // Gamestate Manager is a class that is used for storing and using user-created gamestates.
-    class gamestateManager {
-        public:
-            Settings m_settings;
+class Gamestate;
+class GamestateManager {
+    private:
+        std::map <std::string, std::shared_ptr<Gamestate>> gamestates;
+        std::shared_ptr<Gamestate> current_gamestate;
 
-            std::map <std::string, Gamestate*> m_gamestates;
-            Gamestate* m_current_gamestate;
+    public:
+        GamestateManager();
+        ~GamestateManager();
 
-        public:
-            gamestateManager();
-            gamestateManager(const Settings& settings);
-            ~gamestateManager();
-
-            void addGamestate(std::string id, Gamestate& gamestate);
-            void removeGamestate(std::string id);
-            bool checkGamestateExists(std::string id);
-            void setGamestate(std::string id);
-            Gamestate* getGamestate();
-            Gamestate* getGamestateByName(std::string id);
-    };
+        void addGamestate(const std::string& id, std::shared_ptr <Gamestate> gamestate);
+        void removeGamestate(const std::string& id);
+        bool checkGamestateExists(const std::string& id);
+        void setGamestate(const std::string& id);
+        Gamestate* getGamestate();
+        Gamestate* getGamestateByName(const std::string& id);
+};
 }
-
-#endif

@@ -3,103 +3,110 @@
 
 using namespace iso;
 
-windowManager::windowManager() {
+WindowManager::WindowManager() 
+    : window(nullptr)
+{}
 
-}
+WindowManager::~WindowManager() 
+{}
 
-windowManager::windowManager(const Settings& settings) {
-    this->m_settings = settings;
-}
-
-windowManager::~windowManager() {
-
-}
-
-void windowManager::createFullscreenWindow() {
-    if(this->m_settings.application_debug_mode)
-        std::cout << "[Entropy Engine][Window Manager]: Window created in fullscreen mode.\n";
-
+void WindowManager::createFullscreenWindow() {
     auto desktop_size = sf::VideoMode(
         sf::VideoMode::getDesktopMode().width,
         sf::VideoMode::getDesktopMode().height
     );
     
-    this->m_window = std::make_shared <sf::RenderWindow> (sf::VideoMode(desktop_size), "", sf::Style::Fullscreen);
+    this->window = std::make_shared <sf::RenderWindow> (sf::VideoMode(desktop_size), "", sf::Style::Fullscreen);
 }
 
-void windowManager::createWindow(sf::Vector2f window_size) {
-    if(this->m_settings.application_debug_mode)
-        std::cout << "[Entropy Engine][Window Manager]: Window created in custom size mode.\n";
+void WindowManager::createWindow(const ApplicationSettings& settings, const std::string& title) {
+    if(this->window != nullptr)
+        return;
 
-    this->m_window = std::make_shared <sf::RenderWindow> (sf::VideoMode(window_size.x, window_size.y), "");
+    if(settings.window_fullscreen)
+        this->createFullscreenWindow();
+
+    else
+        this->window = std::make_shared <sf::RenderWindow> (sf::VideoMode(settings.window_size.x, settings.window_size.y), "");
+
+    this->setMaxFramerate(settings.window_refresh_rate);
+    this->setVsync(settings.window_vsync);
+    this->setTitle(title);
 }
 
-sf::RenderWindow* windowManager::getWindow() {
-    return this->m_window.get();
+sf::RenderWindow* WindowManager::getWindow() {
+    return this->window.get();
 }
 
-sf::Vector2f windowManager::windowSize() {
+sf::Vector2f WindowManager::getWindowSize() const {
     return sf::Vector2f(
-        this->getWindow()->getSize().x,
-        this->getWindow()->getSize().y
+        this->window.get()->getSize().x,
+        this->window.get()->getSize().y
     );
 }
 
-unsigned int windowManager::windowWidth() {
-    return this->getWindow()->getSize().x;
+unsigned int WindowManager::getWindowWidth() const {
+    return this->window.get()->getSize().x;
 }
 
-unsigned int windowManager::windowHeight() {
-    return this->getWindow()->getSize().y;
+unsigned int WindowManager::getWindowHeight() const {
+    return this->window.get()->getSize().y;
 }
 
-bool windowManager::open() {
-    return this->getWindow()->isOpen();
+bool WindowManager::isOpen() const {
+    return this->window.get()->isOpen();
 }
 
-void windowManager::setTitle(std::string title) {
-    this->getWindow()->setTitle(title);
+bool WindowManager::isFocused() const {
+    return this->window.get()->hasFocus();
 }
 
-void windowManager::clear(const sf::Color& clear_colour) {
-    this->getWindow()->clear(clear_colour);
+void WindowManager::setTitle(const std::string& title) {
+    this->window->setTitle(title);
 }
 
-void windowManager::display() {
-    this->getWindow()->display();
+void WindowManager::clear(const sf::Color& clear_colour) {
+    this->window->clear(clear_colour);
 }
 
-void windowManager::draw(const sf::Drawable& drawable, sf::RenderStates states) {
-    this->getWindow()->draw(drawable, states);
+void WindowManager::display() {
+    this->window.get()->display();
 }
 
-void windowManager::close() {
-   this->getWindow()->close();
+void WindowManager::draw(const sf::Drawable& drawable, sf::RenderStates states) {
+    this->window.get()->draw(drawable, states);
 }
 
-void windowManager::setVsync(bool on) {
-    this->getWindow()->setVerticalSyncEnabled(on);
+void WindowManager::close() {
+   this->window.get()->close();
 }
 
-void windowManager::setKeyHold(bool on) {
-    this->getWindow()->setKeyRepeatEnabled(on);
+void WindowManager::setVsync(bool on) {
+    this->window.get()->setVerticalSyncEnabled(on);
 }
 
-void windowManager::setMaxFramerate(unsigned int framerate) {
-    this->getWindow()->setFramerateLimit(framerate);
+void WindowManager::setKeyHold(bool on) {
+    this->window.get()->setKeyRepeatEnabled(on);
 }
 
-bool windowManager::focused() {
-    return this->getWindow()->hasFocus();
+void WindowManager::setMaxFramerate(unsigned int framerate) {
+    this->window.get()->setFramerateLimit(framerate);
 }
 
-void windowManager::takeScreenshot() {
+void WindowManager::takeScreenshot() const {
     auto screenshot_time = std::to_string(time(0));
     
     sf::Texture texture;
-    auto size = this->windowSize();
-    texture.create(size.x, size.y);
-    texture.update(*this->getWindow());
+    texture.create(this->getWindowSize().x, this->getWindowSize().y);
+    texture.update(*this->window.get());
     auto screenshot = texture.copyToImage();
     screenshot.saveToFile("./screenshot/screenshot_" + screenshot_time + ".png");  
+}
+
+void WindowManager::setView(const sf::View& view) {
+    this->window.get()->setView(view);
+}
+
+const sf::View& WindowManager::getView() const {
+    return this->window.get()->getView();
 }

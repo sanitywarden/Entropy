@@ -1,45 +1,44 @@
-#ifndef _ENTROPY_WINDOW_MANAGER_HPP_
-#define _ENTROPY_WINDOW_MANAGER_HPP_
+#pragma once
 
 #include <SFML/Graphics.hpp>
-#include <string>
 #include <memory>
+#include <string>
 
-#include "engineSettings.hpp"
+#include "applicationSettings.hpp"
 
 namespace iso {
-    // Window Manager is a class responsible for creating and managing a SFML window.
-    class windowManager {
-        private:
-            Settings m_settings;
+class WindowManager {
+    private:
+        std::shared_ptr <sf::RenderWindow> window;
+    
+    private:
+        void createFullscreenWindow();
+    
+    public:
+        WindowManager();
+        ~WindowManager();
+        
+        void createWindow(const ApplicationSettings& settings, const std::string& title);
 
-            std::shared_ptr <sf::RenderWindow> m_window;
-        public:
-            windowManager();
-            windowManager(const Settings& settings);
-            ~windowManager();
-            
-            void createFullscreenWindow();
-            void createWindow(sf::Vector2f window_size);
+        sf::RenderWindow* getWindow();
+        sf::Vector2f getWindowSize()   const;
+        unsigned int getWindowWidth()  const;
+        unsigned int getWindowHeight() const;
+        
+        bool isOpen() const;
+        bool isFocused() const;
 
-            sf::RenderWindow* getWindow();
-            sf::Vector2f      windowSize();
-            unsigned int      windowWidth();
-            unsigned int      windowHeight();
-            bool open();
-            bool focused();
+        void setTitle(const std::string& title);
+        void setVsync(bool on = false);
+        void setKeyHold(bool on = false);
+        void setMaxFramerate(unsigned int framerate);
+        void takeScreenshot() const;
+        void setView(const sf::View& view);
+        const sf::View& getView() const;
 
-            void setTitle(std::string title);
-            void setVsync(bool on = false);
-            void setKeyHold(bool on = false);
-            void setMaxFramerate(unsigned int framerate);
-            void takeScreenshot();
-
-            void clear(const sf::Color& clear_colour);
-            void display();
-            void draw(const sf::Drawable& drawable, sf::RenderStates states = sf::RenderStates());
-            void close();
-    };
+        void clear(const sf::Color& clear_colour);
+        void display();
+        void draw(const sf::Drawable& drawable, sf::RenderStates states = sf::RenderStates());
+        void close();
+};
 }
-
-#endif

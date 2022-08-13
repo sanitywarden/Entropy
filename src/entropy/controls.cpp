@@ -14,11 +14,11 @@ Controls::Controls() {
 Controls::~Controls() 
 {}
 
-void Controls::addKeyMapping(std::string id, sf::Keyboard::Key key) {
+void Controls::addKeyMapping(const std::string& id, sf::Keyboard::Key key) {
     this->key_map.insert({ id, key });
 }
 
-bool Controls::addKeyMappingCheck(std::string id, sf::Keyboard::Key key) {
+bool Controls::addKeyMappingCheck(const std::string& id, sf::Keyboard::Key key) {
     if(this->checkKeyMappingExists(id))
         return true;
 
@@ -26,15 +26,15 @@ bool Controls::addKeyMappingCheck(std::string id, sf::Keyboard::Key key) {
     return false;
 }
 
-void Controls::removeKeyMapping(std::string id) {
+void Controls::removeKeyMapping(const std::string& id) {
     this->key_map.erase(id);
 }
 
-bool Controls::checkKeyMappingExists(std::string id) {
+bool Controls::checkKeyMappingExists(const std::string& id) {
     return this->key_map.count(id);
 }
 
-bool Controls::isKeyPressed(std::string id) {
+bool Controls::isKeyPressed(const std::string& id) {
     if(this->checkKeyMappingExists(id))
         return this->key_state[id];
     return false;

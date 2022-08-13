@@ -4,11 +4,11 @@
 #include "regionmap.hpp"
 #include "generationSettings.hpp"
 #include "nameGenerator.hpp"
-#include "tooltip.hpp"
 #include "colours.hpp"
-#include "luadriver.hpp"
 #include "luascript.hpp"
 #include "noiseSettings.hpp"
+#include "luadriver.hpp"
+
 
 #include <queue>
 #include <iostream>
@@ -16,24 +16,17 @@
 
 using namespace iso;
 
-SimulationManager::SimulationManager() 
-    : Entropy(lua_driver.getApplicationSettings())
-{
+SimulationManager::SimulationManager() {
+    this->setup();
     this->initialise();
     this->initialiseEvents();
-    
     this->loadScripts();
 
     this->texturizer = Texturizer(&this->resource);
 
-    this->window.setTitle("Entropy by Vivit");
-    this->window.setKeyHold(false);
-
-    static Worldmap worldmap(this);
-    this->gamestate.addGamestate("worldmap", worldmap);
-    
+    this->gamestate.addGamestate("worldmap", std::shared_ptr <Gamestate> (new Worldmap(this)));
     this->prepare();
-
+    
     this->gamestate.setGamestate("worldmap");
 
     this->simulation_speed = game_settings.simulationSpeed();
@@ -41,6 +34,23 @@ SimulationManager::SimulationManager()
 
 SimulationManager::~SimulationManager() 
 {}
+
+void SimulationManager::setup() {
+    std::string config_path = "./data/appconfig.lua";
+    std::cout << "[Simulation Manager]: Reading application config.\n";
+    luaL_dofile(lua_driver.L, config_path.c_str());
+
+    auto appconfig = luabridge::getGlobal(lua_driver.L, "Appconfig");
+
+    ApplicationSettings settings;
+    settings.window_size            = appconfig["window_size"];
+    settings.window_fullscreen      = appconfig["fullscreen"];
+    settings.window_vsync           = appconfig["vsync"];
+    settings.window_refresh_rate    = appconfig["refresh_rate"];
+    
+    this->window.createWindow(settings, "Entropy by Vivit");
+    this->window.setKeyHold(false);
+}
 
 void SimulationManager::initialise() {
     this->draw_calls          = 0;
@@ -119,7 +129,7 @@ void SimulationManager::initialise() {
     this->resource.loadFont("./res/font/proggy.ttf",   "proggy");
     this->resource.loadFont("./res/font/garamond.ttf", "garamond");
 
-    this->font_size = (this->window.windowWidth() + this->window.windowHeight()) / 160;
+    this->font_size = (this->window.getWindowWidth() + this->window.getWindowHeight()) / 160;
 }
 
 void SimulationManager::initialiseEvents() {
@@ -167,7 +177,7 @@ void SimulationManager::loadScripts() const {
 }
 
 void SimulationManager::loop() {
-    this->m_measurement_clock = sf::Clock();
+    this->measurement_clock = sf::Clock();
     this->simulation_clock    = sf::Clock();
 
     const sf::Time one_second       = sf::seconds(1.0f);
@@ -176,25 +186,25 @@ void SimulationManager::loop() {
     // Frames per second.
     int updates = 0;
 
-    while(this->window.open()) {
-        if(this->m_time_since_start.asMilliseconds() < one_second.asMilliseconds()) {
+    while(this->window.isOpen()) {
+        if(this->time_since_start.asMilliseconds() < one_second.asMilliseconds()) {
             // Measure the difference in time between the last frame and this frame.
-            const float delta_time   = this->m_measurement_clock.getElapsedTime().asMilliseconds() - this->m_time_since_start.asMilliseconds();            
-            this->m_time_since_start = this->m_measurement_clock.getElapsedTime();
+            float delta_time = this->measurement_clock.getElapsedTime().asMilliseconds() - this->time_since_start.asMilliseconds();            
+            this->time_since_start = this->measurement_clock.getElapsedTime();
             updates++;
 
             /* Delta time is saved as milliseconds, convert that to seconds.
-             * 1 ms -> 0.001s. */
-            const float delta_time_s = delta_time / 1000;
+             * 1ms -> 0.001s. */
+            float delta_time_s = delta_time / 1000;
             this->internalLoop(delta_time_s);             
         }
 
         else {
-            this->m_frames_per_second = updates;
-            this->m_time_per_frame    = (float)this->m_time_since_start.asMilliseconds() / (float)this->m_frames_per_second;
+            this->frames_per_second = updates;
+            this->time_per_frame = (float)this->time_since_start.asMilliseconds() / (float)this->frames_per_second;
 
-            this->m_measurement_clock.restart();
-            this->m_time_since_start = sf::Time::Zero;
+            this->measurement_clock.restart();
+            this->time_since_start = sf::Time::Zero;
             
             auto* gamestate = this->gamestate.getGamestate();
             if(this->time < INT_MAX && gamestate->state_id != "Menu")
@@ -236,9 +246,14 @@ void SimulationManager::loop() {
 void SimulationManager::internalLoop(float delta_time) {
     Gamestate* gamestate = this->gamestate.getGamestate();
     if(gamestate == nullptr) {
-        std::cout << "[Simulation Manager]: Gamestate is a nullptr.\n";
-        this->exitApplication(1);
+        std::cout << "[Simulation Manager]: Current gamestate is a nullptr.\n";
+        exitApplication(1);
     } 
+
+    if(gamestate->engine == nullptr) {
+        std::cout << "[Simulation Manager]: Engine is a nullptr.\n";
+        exitApplication(1);
+    }
 
     this->emitEvents();
 
@@ -892,7 +907,7 @@ void SimulationManager::emitEvents() {
     while(this->window.getWindow()->pollEvent(gamestate->event)) {
         switch(gamestate->event.type) {
             case sf::Event::Closed: {
-                this->exitApplication(0);
+                exitApplication(0);
                 break;
             }
 
@@ -900,8 +915,8 @@ void SimulationManager::emitEvents() {
                 event_queue.push_back("WINDOW_RESIZE");
                 gamestate->controls.resized = sf::Vector2f(gamestate->event.size.width, gamestate->event.size.height);
                 
-                auto new_window_size = this->window.windowSize();
-                this->font_size = (this->window.windowWidth() + this->window.windowHeight()) / 160;
+                auto new_window_size = this->window.getWindowSize();
+                this->font_size = (this->window.getWindowWidth() + this->window.getWindowHeight()) / 160;
             
                 break;
             }

@@ -1,57 +1,48 @@
 #include "gamestateManager.hpp"
 #include "gamestate.hpp"
 
-#include <iostream>
-
 using namespace iso;
 
-gamestateManager::gamestateManager() {
-    this->m_current_gamestate = nullptr;
-}
-
-gamestateManager::gamestateManager(const Settings& settings) {
-    this->m_current_gamestate = nullptr;
+GamestateManager::GamestateManager()
+    : current_gamestate(nullptr)
+{}
     
-    this->m_settings = settings;
+GamestateManager::~GamestateManager() 
+{}
+
+void GamestateManager::addGamestate(const std::string& id, std::shared_ptr <Gamestate> gamestate) {
+    this->gamestates[id] = gamestate;
 }
 
-gamestateManager::~gamestateManager() {
-    
+void GamestateManager::removeGamestate(const std::string& id) {
+    this->gamestates.erase(id);
 }
 
-void gamestateManager::addGamestate(std::string id, Gamestate& gamestate) {
-    this->m_gamestates[id] = &gamestate;
+bool GamestateManager::checkGamestateExists(const std::string& id) {
+    return this->gamestates.count(id);
 }
 
-void gamestateManager::removeGamestate(std::string id) {
-    this->m_gamestates.erase(id);
-}
+void GamestateManager::setGamestate(const std::string& id) {
+    if(this->current_gamestate != nullptr)
+        current_gamestate.get()->gamestateClose();
 
-bool gamestateManager::checkGamestateExists(std::string id) {
-    return this->m_gamestates.count(id);
-}
+    this->current_gamestate = this->checkGamestateExists(id)
+        ? this->gamestates[id]
+        : nullptr;
 
-void gamestateManager::setGamestate(std::string id) {
-    auto* current_gamestate = this->m_current_gamestate;
-    auto* new_gamestate     = this->m_gamestates[id];
-
-    if(current_gamestate != nullptr)
-        current_gamestate->gamestateClose();
-
-    this->m_current_gamestate = new_gamestate;
-    if(new_gamestate != nullptr)
-        new_gamestate->gamestateLoad();
+    if(this->current_gamestate != nullptr)
+        this->current_gamestate.get()->gamestateLoad();
 }
 
 /* Returns current gamestate. */
-Gamestate* gamestateManager::getGamestate() {
-    return this->m_current_gamestate;
+Gamestate* GamestateManager::getGamestate() {
+    return this->current_gamestate.get();
 }
 
 /*  Get a gamestate by name.
  *  If the requested gamestate does not exist, returns nullptr. */
-Gamestate* gamestateManager::getGamestateByName(std::string id) {
+Gamestate* GamestateManager::getGamestateByName(const std::string& id) {
     return this->checkGamestateExists(id)
-        ? this->m_gamestates[id] 
+        ? this->gamestates[id].get() 
         : nullptr; 
 }
