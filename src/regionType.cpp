@@ -71,18 +71,22 @@ void RegionType::set_ocean() {
 
 void RegionType::set_coast() {
     this->set_type("COAST", true);
+    this->set_terrain();
 }
 
 void RegionType::set_river() {
     this->set_type("RIVER", true);
+    this->set_terrain();
 }
 
 void RegionType::set_forest() {
     this->set_type("FOREST", true);
+    this->set_terrain();
 }
 
 void RegionType::set_lake() {
     this->set_type("LAKE", true);
+    this->set_terrain();
 }
 
 void RegionType::unset_coast() {

@@ -19,6 +19,7 @@ WorldGenerator::WorldGenerator(ResourceManager* resource, Texturizer* texturizer
     std::srand(std::time(0));
 
     this->noise = wgn::NoiseAlgorithms();
+    this->texturizer->createColouredWorldmapTexture("panel_full", "panel_ocean", COLOUR_BLUE_OCEAN, COLOUR_BLUE_OCEAN);
 }
 
 WorldGenerator::~WorldGenerator() 
@@ -207,7 +208,6 @@ void WorldGenerator::generateWorld() {
                     if(terrain_tiles == 1) {
                         region.regiontype.unset_coast();
                         region.regiontype.set_ocean();
-                        region.object_colour = COLOUR_BLACK;
                     }
                 }
             }
@@ -220,7 +220,10 @@ void WorldGenerator::generateWorld() {
             const int index = game_settings.calculateWorldIndex(x, y);
             auto& region    = this->world_map[index];
 
-            region.object_texture_name = this->getWorldmapTile(index);
+            if(region.regiontype.is_terrain())
+                region.object_texture_name = this->getWorldmapTile(index);
+            else
+                region.object_texture_name = "panel_ocean";
         }
     }
 
@@ -711,12 +714,12 @@ void WorldGenerator::worldmapGenerateForests() {
 
         Region& region = this->world_map[index];
 
-        const bool is_ocean   = this->is_ocean(index);
+        const bool is_ocean   = region.regiontype.is_ocean();
         const bool is_river   = region.regiontype.is_river();
         const bool is_coast   = region.regiontype.is_coast();
 
         // If noise is high enough and tile is valid, place a forest. 
-        if(noise > game_settings.getWorldForestMin() && !is_ocean && !is_coast && !is_river && region.biome.canBeForest()) {
+        if(!is_ocean && !is_coast && !is_river && region.biome.canBeForest() && noise > game_settings.getWorldForestMin()) {
             region.regiontype.set_forest();            
             const std::string texture_name = region.biome.getWorldmapForestTexture();
             this->forests[index] = GameObject(region.getPosition(), sf::Vector3f(), region.getSize(), texture_name);
@@ -846,7 +849,7 @@ bool WorldGenerator::is_ocean(int region_index) const {
 }
 
 bool WorldGenerator::is_terrain(int region_index) const {
-    return this->world_map.at(region_index).height > game_settings.getWorldTerrainMin();
+    return !this->is_ocean(region_index);
 }
 
 bool WorldGenerator::is_coast(int region_index) const {
