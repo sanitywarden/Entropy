@@ -9,8 +9,6 @@
 
 #include "gui/performance.hpp"
 #include "gui/widgetRegion.hpp"
-#include "gui/widgetNameCity.hpp"
-#include "gui/tooltip.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <vector>

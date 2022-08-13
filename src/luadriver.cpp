@@ -3,10 +3,7 @@
 #include "globalutilities.hpp"
 #include "generationSettings.hpp"
 #include "biome.hpp"
-#include "entropy/resourceManager.hpp"
 #include "types.hpp"
-
-#include "tileType.hpp"
 
 #include <SFML/System/Clock.hpp>
 #include <filesystem>
@@ -25,24 +22,6 @@ namespace driver {
 
         // Read data from directories.
         namespace fs = std::filesystem;
-
-        // Read application config.
-        {
-            std::string config_path = "./data/appconfig.lua";
-            std::cout << "[Lua Driver]: Reading application config.\n";
-            luaL_dofile(this->L, config_path.c_str());
-
-            auto appconfig = luabridge::getGlobal(this->L, "Appconfig");
-
-            iso::Settings settings;
-            settings.window_size            = appconfig["window_size"];
-            settings.window_fullscreen      = appconfig["fullscreen"];
-            settings.window_vsync           = appconfig["vsync"];
-            settings.window_refresh_rate    = appconfig["refresh_rate"];
-            settings.application_debug_mode = appconfig["debug_mode"];
-
-            this->app_settings = settings;
-        }
 
         // Read world generation data.
         {
@@ -486,10 +465,6 @@ namespace driver {
         }
 
         std::cout << "==========================\n";
-    }
-
-    iso::Settings Driver::getApplicationSettings() const {
-        return this->app_settings;
     }
 
     std::vector <std::string> Driver::readBiomeTiles(const std::string& filename) const {

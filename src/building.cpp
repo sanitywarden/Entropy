@@ -24,7 +24,7 @@ Building::Building(const BuildingData& data)
     this->data = data;
 }
 
-Building::~Building() 
+Building::~Building()
 {}
 
 void Building::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -133,10 +133,6 @@ bool Building::isTileHarvestable(GameObject* object, int index) const {
     }
     
     return false;
-}
-
-void Building::update(GameObject* object, int index) const {
-    
 }
 
 void Building::setBuildingName(const std::string& name) {

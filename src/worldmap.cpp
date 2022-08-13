@@ -35,23 +35,11 @@ void Worldmap::initialise() {
 
     this->resizeViews();
 
-    this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
+    this->view_interface.setCenter(this->manager->window.getWindowWidth() / 2, this->manager->window.getWindowHeight() / 2);
     this->view_game.setCenter(sf::Vector2f(
         game_settings.panelSize() * game_settings.getWorldWidth(),
         game_settings.panelSize() * game_settings.getWorldWidth()
     ));
-
-    // this->controls.addKeyMappingCheck("key_f3",                sf::Keyboard::Key::F3);
-    // this->controls.addKeyMappingCheck("tilde",                 sf::Keyboard::Key::Tilde);
-    // this->controls.addKeyMappingCheck("key_escape",            sf::Keyboard::Key::Escape);
-    // this->controls.addKeyMappingCheck("key_regenerate_world",  sf::Keyboard::Key::R);
-    // this->controls.addKeyMappingCheck("arrow_left",            sf::Keyboard::Key::Left);
-    // this->controls.addKeyMappingCheck("arrow_right",           sf::Keyboard::Key::Right);
-    // this->controls.addKeyMappingCheck("arrow_down",            sf::Keyboard::Key::Down);
-    // this->controls.addKeyMappingCheck("arrow_up",              sf::Keyboard::Key::Up);
-    // this->controls.addKeyMappingCheck("backspace",             sf::Keyboard::Key::BackSpace);
-    // this->controls.addKeyMappingCheck("spacebar",              sf::Keyboard::Key::Space);
-    // this->controls.addKeyMappingCheck("key_screenshot",        sf::Keyboard::Key::F12);
 }
 
 void Worldmap::loadResources() {
@@ -258,7 +246,7 @@ void Worldmap::handleInput() {
             }
 
             if(this->controls.isKeyPressed("ESCAPE")) {
-                this->manager->exitApplication(0);
+                exitApplication(0);
             }
 
             if(this->controls.isKeyPressed("R")) {
@@ -547,13 +535,9 @@ void Worldmap::highlightPanel() {
 void Worldmap::createUI() {
     auto widget_region      = gui::InterfaceComponent(new gui::WidgetRegion(this->manager));
     auto widget_performance = gui::InterfaceComponent(new gui::DebugPerformance(this->manager));
-    auto widget_settle_city = gui::InterfaceComponent(new gui::WidgetSettleCity(this->manager));
-    auto widget_tooltip     = gui::InterfaceComponent(new gui::Tooltip(this->manager));
     
     this->addInterfaceComponent(widget_region);
     this->addInterfaceComponent(widget_performance);
-    this->addInterfaceComponent(widget_settle_city);
-    this->addInterfaceComponent(widget_tooltip);
 }
 
 void Worldmap::gamestateLoad() {

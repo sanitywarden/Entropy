@@ -26,6 +26,6 @@ lua::driver::Driver lua_driver;
 int main() {
     static iso::SimulationManager game_manager;
     game_manager.loop();
-    game_manager.exitApplication(0);
+    iso::exitApplication(0);
 }
 

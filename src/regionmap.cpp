@@ -24,47 +24,30 @@ void Regionmap::initialise() {
     this->current_index = -1;
 
     this->default_zoom  = 0;
-    this->current_index = this->default_zoom;
+    this->current_zoom  = this->default_zoom;
     this->max_zoom_in   = 0; 
     this->max_zoom_out  = 3;
     
-    this->view_interface.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
-    this->view_game.setCenter(this->manager->window.windowWidth() / 2, this->manager->window.windowHeight() / 2);
-
-    this->controls.addKeyMappingCheck("key_f3",      sf::Keyboard::Key::F3);
-    this->controls.addKeyMappingCheck("key_escape",  sf::Keyboard::Key::Escape);
-    this->controls.addKeyMappingCheck("arrow_left",  sf::Keyboard::Key::Left);
-    this->controls.addKeyMappingCheck("arrow_right", sf::Keyboard::Key::Right);
-    this->controls.addKeyMappingCheck("arrow_down",  sf::Keyboard::Key::Down);
-    this->controls.addKeyMappingCheck("arrow_up",    sf::Keyboard::Key::Up);
-
-    this->controls.addKeyMappingCheck("key_screenshot",          sf::Keyboard::Key::F12);
-    this->controls.addKeyMappingCheck("key_remove_building",     sf::Keyboard::Key::D);
-    this->controls.addKeyMappingCheck("key_removeresource_tree", sf::Keyboard::Key::R);
-    this->controls.addKeyMappingCheck("key_toggle_buildmenu",    sf::Keyboard::Key::B);
-    this->controls.addKeyMappingCheck("key_toggle_storage",      sf::Keyboard::Key::I);
-    this->controls.addKeyMappingCheck("key_toggle_minimap",      sf::Keyboard::Key::M);
-    this->controls.addKeyMappingCheck("key_centre_view",         sf::Keyboard::Key::Space);
-
-    this->scheduler.insert({ "update_path"    , std::pair(0, 10) });
-    this->scheduler.insert({ "update_movement", std::pair(0, 1)  });
+    this->view_interface.setCenter(this->manager->window.getWindowWidth() / 2, this->manager->window.getWindowHeight() / 2);
+    this->view_game.setCenter(this->manager->window.getWindowWidth() / 2, this->manager->window.getWindowHeight() / 2);
 }
 
 void Regionmap::loadResources() {
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_atlas");
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_warm",         sf::IntRect(0, 0, 64, 32    ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_cold",         sf::IntRect(64, 0, 64, 32   ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_subtropical",  sf::IntRect(128, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tropical",     sf::IntRect(192, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tundra",       sf::IntRect(256, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_ocean",              sf::IntRect(320, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river",              sf::IntRect(384, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river_pass",         sf::IntRect(448, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black",              sf::IntRect(0, 288, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black_empty",        sf::IntRect(0, 256, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_template_direction", sf::IntRect(64, 288, 64, 32 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_dirt",        sf::IntRect(0, 32, 64, 32   ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_stone",       sf::IntRect(64, 32, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_warm",           sf::IntRect(0, 0, 64, 32    ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_cold",           sf::IntRect(64, 0, 64, 32   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_subtropical",    sf::IntRect(128, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_mediterranean",  sf::IntRect(64, 96, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tropical",       sf::IntRect(192, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tundra",         sf::IntRect(256, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_ocean",                sf::IntRect(320, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river",                sf::IntRect(384, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river_pass",           sf::IntRect(448, 0, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black",                sf::IntRect(0, 288, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black_empty",          sf::IntRect(0, 256, 64, 32  ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_template_direction",   sf::IntRect(64, 288, 64, 32 ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_dirt",          sf::IntRect(0, 32, 64, 32   ));
+    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_stone",         sf::IntRect(64, 32, 64, 32  ));
     
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_stone" ,   sf::IntRect(0, 64, 64, 32   ));
     this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_flint" ,   sf::IntRect(64, 64, 64, 32  ));
@@ -190,13 +173,13 @@ void Regionmap::update(float delta_time) {
 void Regionmap::render(float delta_time) {
     this->manager->window.clear(COLOUR_BLACK);    
 
-    this->manager->window.getWindow()->setView(this->view_game);
+    this->manager->window.setView(this->view_game);
 
     this->renderRegion();
     this->renderSelectedBuilding();
     this->higlightTile();
 
-    this->manager->window.getWindow()->setView(this->view_interface);
+    this->manager->window.setView(this->view_interface);
 
     this->renderUI();
 
@@ -206,10 +189,6 @@ void Regionmap::render(float delta_time) {
 void Regionmap::handleInput() {
     if(event_queue.size()) {
         const auto& event_name = event_queue.at(0);
-
-        if(event_name == "WINDOW_RESIZE") {
-            
-        }
 
         if(event_name == "BUTTON_PRESSED") {
             if(this->controls.isKeyPressed("F3")) {
@@ -222,10 +201,6 @@ void Regionmap::handleInput() {
 
             if(this->controls.isKeyPressed("ESCAPE")) {
                 this->manager->gamestate.setGamestate("worldmap");
-            }
-
-            if(this->controls.isKeyPressed("M")) {
-                this->toggleComponentVisibility("component_minimap");
             }
 
             if(this->controls.isKeyPressed("I")) {
@@ -700,15 +675,11 @@ void Regionmap::updatePaths(int index) {
 void Regionmap::createUI() {
     auto widget_menu_building = gui::InterfaceComponent(new gui::WidgetMenuBuilding(this->manager));
     auto widget_performance   = gui::InterfaceComponent(new gui::DebugPerformance(this->manager));
-    auto widget_minimap       = gui::InterfaceComponent(new gui::WidgetMinimap(this->manager));
     auto widget_storage       = gui::InterfaceComponent(new gui::WidgetRegionStorage(this->manager));
-    auto widget_tooltip       = gui::InterfaceComponent(new gui::Tooltip(this->manager));
     
     this->addInterfaceComponent(widget_menu_building);
     this->addInterfaceComponent(widget_performance);
-    this->addInterfaceComponent(widget_minimap);
     this->addInterfaceComponent(widget_storage);
-    this->addInterfaceComponent(widget_tooltip);
 }
 
 void Regionmap::updateScheduler() {    
@@ -800,10 +771,10 @@ void Regionmap::gamestateLoad() {
 
     regionmap_mesh_tile.create(verticies_tilemap);
 
-    this->manager->window.getWindow()->setView(this->view_interface);
+    this->manager->window.setView(this->view_interface);
     this->resizeViews();
     this->resizeUI();
-    this->manager->window.getWindow()->setView(this->view_game);
+    this->manager->window.setView(this->view_game);
 
     // Tile index on which you centre the camera.
     auto tile_index = game_settings.calculateRegionIndex(game_settings.getRegionWidth() / 2, game_settings.getRegionWidth() / 2);
@@ -814,6 +785,8 @@ void Regionmap::gamestateLoad() {
         this->region->map[tile_index].getPosition().x + game_settings.tileSize().x / 2,
         this->region->map[tile_index].getPosition().y
     );
+
+    this->view_game.setCenter(first_tile_position);
 
     // if(this->region->isOwned() && this->region->getPopulation() == 0) {
     //     this->region->population.resize(game_settings.getRegionInitialPopulation());
@@ -838,12 +811,7 @@ void Regionmap::gamestateLoad() {
     //         buffer.push_back(free_spot);
     //     }
     // }
-
-    this->view_game.setCenter(first_tile_position);
     
-    auto minimap = static_cast<gui::WidgetMinimap*>(this->getInterfaceComponent("component_minimap"));
-        minimap->should_redraw = true;
-
     this->region->visited = true;
 
     for(auto& pair : this->interface) {

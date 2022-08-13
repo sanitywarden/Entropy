@@ -1,14 +1,12 @@
 #pragma once
 
+#include "building.hpp"
+
 #include <Lua/lua.hpp>
 #include <LuaBridge/LuaBridge.h>
-#include <SFML/System/Vector2.hpp>
 
 #include <string>
 #include <vector>
-
-#include "building.hpp"
-#include "entropy/engineSettings.hpp"
 
 namespace lua {
 namespace driver {
@@ -39,16 +37,12 @@ class Driver {
 
     public:
         lua_State* L;
-        iso::Settings app_settings;
-
     public:
         Driver();
         ~Driver();
 
         void stackSize() const;
         void stackDump() const;
-
-        iso::Settings getApplicationSettings() const;
 };
 }
 }

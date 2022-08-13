@@ -77,9 +77,6 @@ class Building : public GameObject {
 
         // Does this tile contain a resource harvested by this building.
         bool isTileHarvestable(GameObject* region, int index) const;
-        
-        void update(GameObject* region, int building_index)   const;
-
 };
 
 const Building BUILDING_EMPTY;

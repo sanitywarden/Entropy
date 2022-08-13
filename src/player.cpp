@@ -1,5 +1,6 @@
 #include "player.hpp"
 #include "generationSettings.hpp"
+#include "luadriver.hpp"
 
 #include <iostream>
 
@@ -13,9 +14,8 @@ Player::Player() {
     this->spawn_spot_index = -1;
 }
 
-Player::~Player() {
-
-}   
+Player::~Player() 
+{}   
 
 void Player::addOwnedRegion(int region_index) {
     this->owned_regions.push_back(region_index);
