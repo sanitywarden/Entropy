@@ -1,207 +1,240 @@
 #include "types.hpp"
 
+using namespace core;
+
 // Vector2f
 
-core::Vector2f::Vector2f() 
+Vector2f::Vector2f() 
     : x(0), y(0)
 {}
 
-core::Vector2f::Vector2f(float x, float y)
+Vector2f::Vector2f(float x, float y)
     : x(x), y(y)
 {}
 
-core::Vector2f::~Vector2f()
+Vector2f::~Vector2f()
 {}
 
-void core::Vector2f::setX(float x) {
+void Vector2f::setX(float x) {
     this->x = x;
 }
 
-float core::Vector2f::getX() const {
+float Vector2f::getX() const {
     return this->x; 
 }
 
-void core::Vector2f::setY(float y) {
+void Vector2f::setY(float y) {
     this->y = y;
 }
 
-float core::Vector2f::getY() const {
+float Vector2f::getY() const {
     return this->y; 
 }
 
-sf::Vector2i core::Vector2f::asSFMLVector2i() const {
+sf::Vector2i Vector2f::asSFMLVector2i() const {
     return sf::Vector2i(this->x, this->y);
 }
 
-sf::Vector2f core::Vector2f::asSFMLVector2f() const {
+sf::Vector2f Vector2f::asSFMLVector2f() const {
     return sf::Vector2f(this->x, this->y);
 }
 
+// Vector2f Vector2f::operator+  (const Vector2f& vec) {
+    
+// }
+
+// Vector2f& Vector2f::operator+= (const Vector2f& vec) {
+
+// }
+
+// Vector2f Vector2f::operator-  (const Vector2f& vec) {
+
+// }
+
+// Vector2f& Vector2f::operator-= (const Vector2f& vec) {
+
+// }
+
+// Vector2f Vector2f::operator*  (int multiplier) {
+
+// }
+
+// Vector2f& Vector2f::operator*= (int multiplier) {
+
+// }  
+
+// Vector2f Vector2f::operator/  (int divisor) {
+
+// }
+
+// Vector2f& Vector2f::operator/= (int divisor) {
+
+// }
 
 // Vector2i
 
-core::Vector2i::Vector2i()
+Vector2i::Vector2i()
     : x(0), y(0)
 {}
 
-core::Vector2i::Vector2i(int x, int y)
+Vector2i::Vector2i(int x, int y)
     : x(x), y(y)
 {}
 
-core::Vector2i::~Vector2i()
+Vector2i::~Vector2i()
 {}
 
-void core::Vector2i::setX(int x) {
+void Vector2i::setX(int x) {
     this->x = x;
 }
 
-int core::Vector2i::getX() const {
+int Vector2i::getX() const {
     return this->x; 
 }
 
-void core::Vector2i::setY(int y) {
+void Vector2i::setY(int y) {
     this->y = y;
 }
 
-int core::Vector2i::getY() const {
+int Vector2i::getY() const {
     return this->y; 
 }
 
-sf::Vector2i core::Vector2i::asSFMLVector2i() const {
+sf::Vector2i Vector2i::asSFMLVector2i() const {
     return sf::Vector2i(this->x, this->y);
 }
 
-sf::Vector2f core::Vector2i::asSFMLVector2f() const {
+sf::Vector2f Vector2i::asSFMLVector2f() const {
     return sf::Vector2f(this->x, this->y);
 }
 
 // Vector3f
 
-core::Vector3f::Vector3f()
+Vector3f::Vector3f()
     : x(0), y(0), z(0)
 {}
 
-core::Vector3f::Vector3f(float x, float y, float z)
+Vector3f::Vector3f(float x, float y, float z)
     : x(x), y(y), z(z)
 {}
 
-core::Vector3f::~Vector3f()
+Vector3f::~Vector3f()
 {}
 
-void core::Vector3f::setX(float x) {
+void Vector3f::setX(float x) {
     this->x = x;
 }
 
-float core::Vector3f::getX() const {
+float Vector3f::getX() const {
     return this->x; 
 }
 
-void core::Vector3f::setY(float y) {
+void Vector3f::setY(float y) {
     this->y = y;
 }
 
-float core::Vector3f::getY() const {
+float Vector3f::getY() const {
     return this->y; 
 }
 
-void core::Vector3f::setZ(float z) {
+void Vector3f::setZ(float z) {
     this->z = z;
 }
 
-float core::Vector3f::getZ() const {
+float Vector3f::getZ() const {
     return this->z;
 }
 
-sf::Vector3i core::Vector3f::asSFMLVector3i() const {
+sf::Vector3i Vector3f::asSFMLVector3i() const {
     return sf::Vector3i(this->x, this->y, this->z);
 }
 
-sf::Vector3f core::Vector3f::asSFMLVector3f() const {
+sf::Vector3f Vector3f::asSFMLVector3f() const {
     return sf::Vector3f(this->x, this->y, this->z);
 }
 
 // Vector3i
 
-core::Vector3i::Vector3i()
+Vector3i::Vector3i()
     : x(0), y(y), z(0)
 {}
 
-core::Vector3i::Vector3i(int x, int y, int z)
+Vector3i::Vector3i(int x, int y, int z)
     : x(x), y(y), z(z)
 {}
 
-core::Vector3i::~Vector3i()
+Vector3i::~Vector3i()
 {}
 
-void core::Vector3i::setX(int x) {
+void Vector3i::setX(int x) {
     this->x = x;
 }
 
-int core::Vector3i::getX() const {
+int Vector3i::getX() const {
     return this->x; 
 }
 
-void core::Vector3i::setY(int y) {
+void Vector3i::setY(int y) {
     this->y = y;
 }
 
-int core::Vector3i::getY() const {
+int Vector3i::getY() const {
     return this->y; 
 }
 
-void core::Vector3i::setZ(int z) {
+void Vector3i::setZ(int z) {
     this->z = z;
 }
 
-int core::Vector3i::getZ() const {
+int Vector3i::getZ() const {
     return this->z;
 }
 
-sf::Vector3i core::Vector3i::asSFMLVector3i() const {
+sf::Vector3i Vector3i::asSFMLVector3i() const {
     return sf::Vector3i(this->x, this->y, this->z);
 }
 
-sf::Vector3f core::Vector3i::asSFMLVector3f() const {
+sf::Vector3f Vector3i::asSFMLVector3f() const {
     return sf::Vector3f(this->x, this->y, this->z);
 }
 
 // Colour
 
-core::Colour::Colour()
+Colour::Colour()
     : r(0), g(0), b(0)
 {}
 
-core::Colour::Colour(uint8_t r, uint8_t g, uint8_t b)
+Colour::Colour(uint8_t r, uint8_t g, uint8_t b)
     : r(r), g(g), b(b)
 {}
 
-core::Colour::~Colour()
+Colour::~Colour()
 {}
 
-void core::Colour::setR(uint8_t r) {
+void Colour::setR(uint8_t r) {
     this->r = r;
 }
 
-uint8_t core::Colour::getR() const {
+uint8_t Colour::getR() const {
     return this->r; 
 }
 
-void core::Colour::setG(uint8_t g) {
+void Colour::setG(uint8_t g) {
     this->g = g;
 }
 
-uint8_t core::Colour::getG() const {
+uint8_t Colour::getG() const {
     return this->g; 
 }
 
-void core::Colour::setB(uint8_t b) {
+void Colour::setB(uint8_t b) {
     this->b = b;
 }
 
-uint8_t core::Colour::getB() const {
+uint8_t Colour::getB() const {
     return this->b;
 }
 
-sf::Color core::Colour::asSFMLColour() const {
+sf::Color Colour::asSFMLColour() const {
     return sf::Color(this->r, this->g, this->b);
 }

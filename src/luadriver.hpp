@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace lua {
 namespace driver {
@@ -35,16 +36,24 @@ class Driver {
         
         void registerLua() const;
 
+    protected:
+        Driver();
+
+        static std::shared_ptr <Driver> instance;
+
     public:
         lua_State* L;
-    public:
-        Driver();
+
         ~Driver();
 
+        Driver(Driver& driver) = delete;
+        void operator= (const Driver& driver) = delete;
+
+        static Driver* getInstance();
+
+        void loadGameData();
         void stackSize() const;
         void stackDump() const;
 };
 }
 }
-
-extern lua::driver::Driver lua_driver;

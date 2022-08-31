@@ -24,6 +24,15 @@ class Vector2f {
 
         sf::Vector2i asSFMLVector2i() const;
         sf::Vector2f asSFMLVector2f() const;
+
+        Vector2f  operator+  (const Vector2f& vec);
+        Vector2f& operator+= (const Vector2f& vec);
+        Vector2f  operator-  (const Vector2f& vec);
+        Vector2f& operator-= (const Vector2f& vec);
+        Vector2f  operator*  (int multiplier);
+        Vector2f& operator*= (int multiplier);  
+        Vector2f  operator/  (int divisor);
+        Vector2f& operator/= (int divisor);
 };
 
 class Vector2i {

@@ -9,7 +9,6 @@
 #include "noiseSettings.hpp"
 #include "luadriver.hpp"
 
-
 #include <queue>
 #include <iostream>
 #include <filesystem>
@@ -21,6 +20,9 @@ SimulationManager::SimulationManager() {
     this->initialise();
     this->initialiseEvents();
     this->loadScripts();
+
+    auto driver = lua::driver::Driver::getInstance();
+    driver->loadGameData();
 
     this->texturizer = Texturizer(&this->resource);
 
@@ -38,9 +40,10 @@ SimulationManager::~SimulationManager()
 void SimulationManager::setup() {
     std::string config_path = "./data/appconfig.lua";
     std::cout << "[Simulation Manager]: Reading application config.\n";
-    luaL_dofile(lua_driver.L, config_path.c_str());
 
-    auto appconfig = luabridge::getGlobal(lua_driver.L, "Appconfig");
+    auto luastate = lua::driver::Driver::getInstance()->L;
+    luaL_dofile(luastate, config_path.c_str());
+    auto appconfig = luabridge::getGlobal(luastate, "Appconfig");
 
     ApplicationSettings settings;
     settings.window_size            = appconfig["window_size"];
@@ -163,13 +166,15 @@ void SimulationManager::loadScripts() const {
     // If scripts are reloaded at runtime, resize the vector.
     scripts.resize(0);
 
+    auto luastate = lua::driver::Driver::getInstance()->L;
+
     std::string scripts_directory = "./src/scripts/";
     for(const auto& file : std::filesystem::directory_iterator(scripts_directory)) {
         const auto& file_path = file.path().string();
         const auto& file_path_extension = file.path().extension().string();
 
         if(file_path_extension == ".lua") {
-            luaL_loadfile(lua_driver.L, file_path.c_str());
+            luaL_loadfile(luastate, file_path.c_str());
             lua::LuaScript script(file_path);
             scripts.push_back(script);
         }
@@ -1031,9 +1036,11 @@ void SimulationManager::popEvents() {
 }
 
 void SimulationManager::updateScripts() const {
+    auto luastate = lua::driver::Driver::getInstance()->L;
+
     for(const auto& script : scripts) {
         for(const auto& event : event_queue) {
-            script.onEvent(lua_driver.L, event);
+            script.onEvent(luastate, event);
         }
     }
 }

@@ -2,11 +2,10 @@
 .vscode
 
 /res
+/data
 /page
 /screenshot
 /bin
-/include/LuaBridge
-/data/examples
 /src/scripts
 NOTES.txt
 TODO.txt

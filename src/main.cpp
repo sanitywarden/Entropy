@@ -18,11 +18,6 @@ std::vector <lua::LuaScript>   scripts;
 std::vector <std::string>      event_queue;
 iso::GameSettings              game_settings;
 
-// Leave the lua driver to be initialised last, 
-// as it requires all other extern variables to be declared.
-
-lua::driver::Driver lua_driver;
-
 int main() {
     static iso::SimulationManager game_manager;
     game_manager.loop();

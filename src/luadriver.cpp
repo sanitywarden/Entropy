@@ -12,14 +12,28 @@
 
 namespace lua {
 namespace driver {
-    Driver::Driver() {
-        sf::Clock clock;
+    std::shared_ptr <Driver> Driver::instance = nullptr;
 
+    Driver::Driver() {
         this->L = luaL_newstate();
         luaL_openlibs(this->L);
 
         this->registerLua();
+    }
 
+    Driver::~Driver() {
+        lua_close(this->L);
+    }
+
+    Driver* Driver::getInstance() {
+        if(instance.get() == nullptr)
+            instance = std::shared_ptr <Driver> (new Driver());
+        return instance.get();
+    } 
+
+    void Driver::loadGameData() {
+        sf::Clock clock;
+        
         // Read data from directories.
         namespace fs = std::filesystem;
 
@@ -184,10 +198,6 @@ namespace driver {
     
         const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
         std::cout << "[Lua Driver]: Loaded data in " << time_rounded << "s.\n";
-    }
-
-    Driver::~Driver() {
-        lua_close(this->L);
     }
 
     // Lua wrapper functions.
