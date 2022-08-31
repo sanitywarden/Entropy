@@ -135,12 +135,13 @@ void WidgetRegion::functionality() {
             std::cout << "[Button Visit Region]: Gamestate regionmap is a nullptr.\n";
             exitApplication(1);
         }
-    
+
         // You have to generate the region first, because setCurrentRegion() depends on it being generated.
         if(!region.visited)
             this->manager->world.generateRegion(worldmap->selected_index);
 
         regionmap->region_index = worldmap->selected_index;
+
         this->manager->gamestate.setGamestate("regionmap");
         return;
     }

@@ -11,6 +11,9 @@
 #include <cmath>
 
 namespace lua {
+// Resources requested to be loaded by Lua scripts.
+std::vector <core::TextureData> load_queue;
+
 namespace driver {
     std::shared_ptr <Driver> Driver::instance = nullptr;
 
@@ -198,6 +201,26 @@ namespace driver {
     
         const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
         std::cout << "[Lua Driver]: Loaded data in " << time_rounded << "s.\n";
+    }
+
+    void Driver::loadResources(iso::SimulationManager* manager, const std::string& filename) {
+        std::cout << "====================\n";
+        std::cout << "[] Loading resources from file '" << filename << "'\n";
+        load_queue.resize(0);
+
+        sf::Clock clock;
+        luaL_dofile(this->L, filename.c_str());
+    
+        for(auto data : load_queue) {
+            if(manager->resource.checkTextureExists(data.id))
+                continue;
+            
+            manager->resource.loadTexture(data.filename, data.id, sf::IntRect(data.position.asSFMLVector2i(), data.size.asSFMLVector2i()));
+        }
+
+        const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
+        std::cout << "[] Loaded resources in " << time_rounded << "s.\n";
+        std::cout << "====================\n";
     }
 
     // Lua wrapper functions.
@@ -457,21 +480,23 @@ namespace driver {
 
             switch(lua_type(this->L, i)) {
                 case LUA_TNUMBER: 
-                    std::cout << lua_tonumber(this->L, i) << "\n";
+                    std::cout << lua_tonumber(this->L, i);
                     break;
                 case LUA_TSTRING:
-                    std::cout << lua_tostring(this->L, i) << "\n";
+                    std::cout << lua_tostring(this->L, i);
                     break;
                 case LUA_TBOOLEAN:
-                    std::cout << lua_toboolean(this->L, i) << "\n";
+                    std::cout << lua_toboolean(this->L, i);
                     break;
                 case LUA_TNIL:
-                    std::cout << "Nil\n";
+                    std::cout << "Nil";
                     break;
                 case LUA_TTABLE:
-                    std::cout << "Table\n";
+                    std::cout << "Table";
                     break;
             }
+
+            std::cout << "\n";
         }
 
         std::cout << "==========================\n";
@@ -566,10 +591,11 @@ namespace driver {
     void Driver::registerLua() const {
         luabridge::getGlobalNamespace(this->L)
             .beginClass <core::Colour> ("Colour")
-                .addConstructor <void (*) (uint8_t, uint8_t, uint8_t)> ()
+                .addConstructor <void (*) (uint8_t, uint8_t, uint8_t, uint8_t)> ()
                 .addProperty("r", core::Colour::getR, core::Colour::setR)
                 .addProperty("g", core::Colour::getG, core::Colour::setG)
                 .addProperty("b", core::Colour::getB, core::Colour::setB)
+                .addProperty("a", core::Colour::getA, core::Colour::setA)
             .endClass()
             .beginClass <core::Vector2f> ("Vector2f")
                 .addConstructor <void (*) (float, float)> ()
@@ -592,7 +618,10 @@ namespace driver {
                 .addProperty("x", core::Vector3i::getX, core::Vector3i::setX)
                 .addProperty("y", core::Vector3i::getY, core::Vector3i::setY)
                 .addProperty("z", core::Vector3i::getZ, core::Vector3i::setZ)
-            .endClass();
+            .endClass()
+            .beginClass <core::TextureData> ("TextureData")
+            .endClass()
+            .addFunction("loadTexture", &lua::loadTexture);
     }
 
     std::vector <std::string> Driver::readVectorString(luabridge::LuaRef reference) const {
@@ -644,4 +673,14 @@ namespace driver {
         return (core::Colour)reference;
     }
 }
+
+void loadTexture(const std::string& filename, const std::string& id, core::Vector2i position, core::Vector2i size) {
+    core::TextureData data;
+    data.filename = filename;
+    data.id       = id;
+    data.position = position;
+    data.size     = size;
+    load_queue.push_back(data);
 }
+}
+    

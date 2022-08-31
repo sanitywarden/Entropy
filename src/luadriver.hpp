@@ -1,6 +1,7 @@
 #pragma once
 
 #include "building.hpp"
+#include "simulationManager.hpp"
 
 #include <Lua/lua.hpp>
 #include <LuaBridge/LuaBridge.h>
@@ -10,6 +11,8 @@
 #include <memory>
 
 namespace lua {
+void loadTexture(const std::string& filename, const std::string& id, core::Vector2i position = core::Vector2i(), core::Vector2i size = core::Vector2i());
+
 namespace driver {
 class Driver {
     private:
@@ -52,6 +55,8 @@ class Driver {
         static Driver* getInstance();
 
         void loadGameData();
+        void loadResources(iso::SimulationManager* manager, const std::string& filename);
+
         void stackSize() const;
         void stackDump() const;
 };

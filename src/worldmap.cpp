@@ -1,5 +1,6 @@
 #include "worldmap.hpp"
 #include "generationSettings.hpp"
+#include "luadriver.hpp"
 
 using namespace iso;
 
@@ -12,9 +13,8 @@ Worldmap::Worldmap(SimulationManager* manager) : Gamestate(manager, "Worldmap") 
     this->createUI();
 }        
 
-Worldmap::~Worldmap() {
-
-}
+Worldmap::~Worldmap() 
+{}
 
 void Worldmap::initialise() {
     this->mouse_drag     = false;
@@ -43,103 +43,9 @@ void Worldmap::initialise() {
 }
 
 void Worldmap::loadResources() {
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_atlas");
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_full"             , sf::IntRect(0, 1152, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_island_0"         , sf::IntRect(0, 1024, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_island_1"         , sf::IntRect(128, 1024, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_island_2"         , sf::IntRect(256, 1024, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_up_0"       , sf::IntRect(0, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_up_1"       , sf::IntRect(128, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_up_2"       , sf::IntRect(256, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_down_0"     , sf::IntRect(0, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_down_1"     , sf::IntRect(128, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_down_2"     , sf::IntRect(256, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_left_0"     , sf::IntRect(0, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_left_1"     , sf::IntRect(128, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_left_2"     , sf::IntRect(256, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_right_0"    , sf::IntRect(0, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_right_1"    , sf::IntRect(128, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_right_2"    , sf::IntRect(256, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_tl_0", sf::IntRect(0, 512, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_tl_1", sf::IntRect(128, 512, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_tl_2", sf::IntRect(256, 512, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_bl_0", sf::IntRect(0, 640, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_bl_1", sf::IntRect(128, 640, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_bl_2", sf::IntRect(256, 640, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_tr_0", sf::IntRect(0, 768, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_tr_1", sf::IntRect(128, 768, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_tr_2", sf::IntRect(256, 768, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_br_0", sf::IntRect(0, 896, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_br_1", sf::IntRect(128, 896, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_corner_br_2", sf::IntRect(256, 896, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_tl_0"  , sf::IntRect(384, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_tl_1"  , sf::IntRect(512, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_tl_2"  , sf::IntRect(640, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_bl_0"  , sf::IntRect(384, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_bl_1"  , sf::IntRect(512, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_bl_2"  , sf::IntRect(640, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_tr_0"  , sf::IntRect(384, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_tr_1"  , sf::IntRect(512, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_tr_2"  , sf::IntRect(640, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_br_0"  , sf::IntRect(384, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_br_1"  , sf::IntRect(512, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas.png", "panel_coast_turn_br_2"  , sf::IntRect(640, 384, 128, 128));
-
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_horizontal_0"        , sf::IntRect(0, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_horizontal_1"        , sf::IntRect(128, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_horizontal_2"        , sf::IntRect(256, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_vertical_0"          , sf::IntRect(0, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_vertical_1"          , sf::IntRect(128, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_vertical_2"          , sf::IntRect(256, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_left_0"      , sf::IntRect(0, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_left_1"      , sf::IntRect(128, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_left_2"      , sf::IntRect(256, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_right_0"     , sf::IntRect(0, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_right_1"     , sf::IntRect(128, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_right_2"     , sf::IntRect(256, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_up_0"        , sf::IntRect(0, 512, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_up_1"        , sf::IntRect(128, 512, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_up_2"        , sf::IntRect(256, 512, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_down_0"      , sf::IntRect(0, 640, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_down_1"      , sf::IntRect(128, 640, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_estuary_down_2"      , sf::IntRect(256, 640, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_br_0"           , sf::IntRect(0, 768, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_br_1"           , sf::IntRect(128, 768, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_br_2"           , sf::IntRect(256, 768, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_bl_0"           , sf::IntRect(0, 896, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_bl_1"           , sf::IntRect(128, 896, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_bl_2"           , sf::IntRect(256, 896, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_tl_0"           , sf::IntRect(0, 1024, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_tl_1"           , sf::IntRect(128, 1024, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_tl_2"           , sf::IntRect(256, 1024, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_tr_0"           , sf::IntRect(0, 1152, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_tr_1"           , sf::IntRect(128, 1152, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_turn_tr_2"           , sf::IntRect(256, 1152, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_left_0" , sf::IntRect(384, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_left_1" , sf::IntRect(512, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_left_2" , sf::IntRect(640, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_up_0"   , sf::IntRect(384, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_up_1"   , sf::IntRect(512, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_up_2"   , sf::IntRect(640, 128, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_right_0", sf::IntRect(384, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_right_1", sf::IntRect(512, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_right_2", sf::IntRect(640, 256, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_down_0" , sf::IntRect(384, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_down_1" , sf::IntRect(512, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_river_origin_down_2" , sf::IntRect(640, 384, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_lake_0"              , sf::IntRect(384, 512, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_lake_1"              , sf::IntRect(512, 512, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_river.png", "panel_lake_2"              , sf::IntRect(640, 512, 128, 128));
-
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_continental_1"  , sf::IntRect(0, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_temperate_1"    , sf::IntRect(128, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_mediterranean_1", sf::IntRect(256, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/worldmap/panel_atlas_foliage.png", "panel_tree_tropical_1"     , sf::IntRect(384, 0, 128, 128));
-
-    this->manager->resource.loadTexture("./res/worldmap/unit_atlas.png", "unit_worldmap_settler", sf::IntRect(0, 0, 128, 128 ));
-    this->manager->resource.loadTexture("./res/worldmap/unit_atlas.png", "unit_worldmap_warrior", sf::IntRect(0, 128, 128, 128));
-
-    this->manager->resource.loadTexture("./res/default.png", "default");
+    // Load resources.
+    auto driver = lua::driver::Driver::getInstance();
+    driver->loadResources(this->manager, "./src/scripts/resource/load_worldmap.lua");
 }
 
 void Worldmap::moveCamera() {
