@@ -213,15 +213,18 @@ void Player::placeBuilding(Region& region, Building building, sf::Vector2i grid)
     }
 
     region.buildings[index] = building;
+
+    // You can not pass the pointer to 'building' because it is a temporary.
+    building.onConstruct(&region.buildings[index], &region, index);
 }
 
 void Player::destroyBuilding(Region& region, sf::Vector2i grid) const {
     auto index = game_settings.calculateRegionIndex(grid);
 
-    if(!region.buildingExistsAt(index))
+    if(!region.buildingExistsAtIndex(index))
         return;
 
-    auto building = region.getBuildingAt(index);
+    auto building = region.getBuildingAtIndex(index);
 
     for(int y = 0; building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {

@@ -64,10 +64,12 @@ class Region : public GameObject {
         bool treeExistsAt(int index) const;
         bool treeExistsAt(sf::Vector2i grid) const;
 
-        bool buildingExistsAt(int index) const;
-        bool buildingExistsAt(sf::Vector2i grid) const;
-        const Building& getBuildingAt(int index) const;
-        const Building& getBuildingAt(sf::Vector2i grid) const;
+        bool buildingExistsAtIndex(int index) const;
+        bool buildingExistsAtGrid(sf::Vector2i grid) const;
+        const Building& getBuildingAtIndex(int index) const;
+        const Building& getBuildingAtGrid(sf::Vector2i grid) const;
+
+        Tile& getTileAtIndex(int index);
 
     public:
         RegionType regiontype;

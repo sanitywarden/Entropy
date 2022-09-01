@@ -1,6 +1,7 @@
 #include "regionmap.hpp"
 #include "generationSettings.hpp"
 #include "globalutilities.hpp"
+#include "luadriver.hpp"
 
 using namespace iso;
 
@@ -33,119 +34,12 @@ void Regionmap::initialise() {
 }
 
 void Regionmap::loadResources() {
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_atlas");
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_warm",           sf::IntRect(0, 0, 64, 32    ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_cold",           sf::IntRect(64, 0, 64, 32   ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_subtropical",    sf::IntRect(128, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_mediterranean",  sf::IntRect(64, 96, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tropical",       sf::IntRect(192, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_grass_tundra",         sf::IntRect(256, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_ocean",                sf::IntRect(320, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river",                sf::IntRect(384, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_river_pass",           sf::IntRect(448, 0, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black",                sf::IntRect(0, 288, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_black_empty",          sf::IntRect(0, 256, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_template_direction",   sf::IntRect(64, 288, 64, 32 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_dirt",          sf::IntRect(0, 32, 64, 32   ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_height_stone",         sf::IntRect(64, 32, 64, 32  ));
-    
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_stone" ,   sf::IntRect(0, 64, 64, 32   ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_flint" ,   sf::IntRect(64, 64, 64, 32  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_clay"  ,   sf::IntRect(128, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_copper",   sf::IntRect(192, 64, 64, 32 ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas.png", "tile_resource_tin"   ,   sf::IntRect(256, 64, 64, 32 ));
-
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_foliage_atlas");
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_beech"   , sf::IntRect(0, 0, 64, 96    ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_oak"     , sf::IntRect(64, 0, 64, 96   ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_maple"   , sf::IntRect(128, 0, 64, 96  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_1", sf::IntRect(0, 96, 64, 96   ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_spruce_2", sf::IntRect(64, 96, 64, 96  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_cypress" , sf::IntRect(0, 192, 64, 96  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_acacia"  , sf::IntRect(64, 192, 128, 96));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_palm"    , sf::IntRect(0, 288, 64, 96  ));
-    this->manager->resource.loadTexture("./res/regionmap/tile_atlas_foliage.png", "tile_tree_pine"    , sf::IntRect(704, 0, 64, 192 ));
-
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_atlas");
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_house"          , sf::IntRect(0, 0, 128, 128  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_hunter"         , sf::IntRect(128, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_woodcutter"     , sf::IntRect(256, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_quarry"         , sf::IntRect(384, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_flint_collector", sf::IntRect(512, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_gatherer"       , sf::IntRect(640, 0, 128, 128));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_water_collector", sf::IntRect(768, 0, 64, 64));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_well"           , sf::IntRect(832, 0, 64, 64));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/buildings_primitive.png", "building_toolmaker"      , sf::IntRect(896, 0, 128, 128));
-
-    this->manager->resource.loadTexture("./res/regionmap/buildings/animalspot_deer.png", "animalspot_deer", sf::IntRect(0, 0, 128, 128));
-
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_horizontal",     sf::IntRect(0, 0, 64, 64    ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_vertical",       sf::IntRect(0, 64, 64, 64   ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_cross",          sf::IntRect(64, 0, 64, 64   ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_point",          sf::IntRect(64, 64, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_turn_up",        sf::IntRect(128, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_turn_down",      sf::IntRect(128, 64, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_turn_right",     sf::IntRect(192, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_turn_left",      sf::IntRect(192, 64, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_without_down",   sf::IntRect(256, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_without_top",    sf::IntRect(256, 64, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_without_left",   sf::IntRect(320, 0, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_dirt_without_right",  sf::IntRect(320, 64, 64, 64 ));
-
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_horizontal",    sf::IntRect(0, 128, 64, 64   ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_vertical",      sf::IntRect(0, 192, 64, 64   ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_cross",         sf::IntRect(64, 128, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_point",         sf::IntRect(64, 192, 64, 64  ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_turn_up",       sf::IntRect(128, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_turn_down",     sf::IntRect(128, 192, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_turn_right",    sf::IntRect(192, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_turn_left",     sf::IntRect(192, 192, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_down",  sf::IntRect(256, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_top",   sf::IntRect(256, 192, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_left",  sf::IntRect(320, 128, 64, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/buildings/path.png", "path_stone_without_right", sf::IntRect(320, 192, 64, 64 ));
-
-    this->manager->resource.loadTexture("./res/ui/template/icon_template.png"                 , "icon_default",                           sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_dirt.png"               , "icon_template_path_dirt" ,               sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_path_stone.png"              , "icon_template_path_stone",               sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_farmhouse.png"      , "icon_template_building_gatherer",        sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_woodcutter.png"     , "icon_template_building_woodcutter",      sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_quarry.png"         , "icon_template_building_quarry",          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_house.png"          , "icon_template_building_house",           sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_flint.png"          , "icon_template_building_flint_collector", sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_hunter.png"         , "icon_template_building_hunter",          sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_toolmaker.png"      , "icon_template_building_toolmaker",       sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_well.png"           , "icon_template_building_well",            sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/buildings/icon_building_water_collector.png", "icon_template_building_water_collector", sf::IntRect(0, 0, 48, 48));
-
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_flint.png"  , "icon_template_item_flint"  , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_stone.png"  , "icon_template_item_stone"  , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_wood.png"   , "icon_template_item_wood"   , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_leather.png", "icon_template_item_leather", sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_meat.png"   , "icon_template_item_meat"   , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_grain.png"  , "icon_template_item_grain"  , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_water.png"  , "icon_template_item_water"  , sf::IntRect(0, 0, 48, 48));
-    this->manager->resource.loadTexture("./res/ui/items/icon_item_tools.png"  , "icon_template_item_tools"  , sf::IntRect(0, 0, 48, 48));
-
-    this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_1x1", sf::IntRect(0,   0, 64,  32 ));
-    this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_2x2", sf::IntRect(64,  0, 128, 64 ));
-    this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_3x3", sf::IntRect(192, 0, 192, 96));
-    this->manager->resource.loadTexture("./res/regionmap/building_size_highlight_template.png", "tile_black_4x4", sf::IntRect(384, 0, 256, 128));
-
-    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_tl", sf::IntRect(0  , 0, 64, 96));
-    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_tr", sf::IntRect(64 , 0, 64, 96));
-    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_br", sf::IntRect(128, 0, 64, 96));
-    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_classic_arrow_bl", sf::IntRect(192, 0, 64, 96));
-
-    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_transport_arrow_tl", sf::IntRect(0  , 96, 64, 96));
-    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_transport_arrow_tr", sf::IntRect(64 , 96, 64, 96));
-    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_transport_arrow_br", sf::IntRect(128, 96, 64, 96));
-    this->manager->resource.loadTexture("./res/regionmap/units/unit_classic.png", "unit_transport_arrow_bl", sf::IntRect(192, 96, 64, 96));
-
-    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_green", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    this->manager->texturizer.createColouredWorldmapTexture("tile_black_1x1", "tile_transparent_red"  , COLOUR_RED_TRANSPARENT_HALF  , COLOUR_TRANSPARENT);
+    // Load resources.
+    auto driver = lua::driver::Driver::getInstance();
+    driver->loadResources(this->manager, "./src/scripts/resource/load_regionmap.lua");
+        
+    this->manager->texturizer.createColouredWorldmapTexture("template_highlight_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    this->manager->texturizer.createColouredWorldmapTexture("template_highlight_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
 
     // Automatically generate icon names.
     for(const auto& texture_pair : this->manager->resource.getTextureCollection()) {
@@ -408,9 +302,9 @@ void Regionmap::renderRegion() {
             if(this->region->trees.count(i))
                 draw_order.push_back(this->region->trees[i]);
             
-            if(this->region->buildingExistsAt(i)) {
+            if(this->region->buildingExistsAtIndex(i)) {
                 if(this->region->buildings[i] != BUILDING_EMPTY)
-                    draw_order.push_back(this->region->getBuildingAt(i));
+                    draw_order.push_back(this->region->getBuildingAtIndex(i));
             }
         }
 

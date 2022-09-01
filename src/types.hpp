@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include <string>
+
 #include <SFML/System/Vector2.hpp>
 #include <SFML/System/Vector3.hpp>
 #include <SFML/Graphics/Color.hpp>
@@ -108,10 +110,12 @@ class Colour {
         uint8_t r;
         uint8_t g;
         uint8_t b;
+        uint8_t a;
 
     public: 
         Colour();
         Colour(uint8_t r, uint8_t g, uint8_t b);
+        Colour(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
         ~Colour();
 
         void setR(uint8_t r);
@@ -123,6 +127,17 @@ class Colour {
         void setB(uint8_t b);
         uint8_t getB() const;
 
+        void setA(uint8_t a);
+        uint8_t getA() const;
+
         sf::Color asSFMLColour() const;
+};
+
+class TextureData {
+    public:
+        std::string filename;
+        std::string id;
+        core::Vector2i position;
+        core::Vector2i size;
 };
 }

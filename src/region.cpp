@@ -160,7 +160,7 @@ bool Region::isBuildingPositionValid(const Building& building, sf::Vector2i grid
             if(this->treeExistsAt(grid_copy))
                 return false;
 
-            if(this->buildingExistsAt(grid_copy))
+            if(this->buildingExistsAtGrid(grid_copy))
                 return false;
         }
     }
@@ -182,7 +182,7 @@ bool Region::isSpotOccupied(int index) const {
     if(this->treeExistsAt(index))
         return true;
     
-    if(this->buildingExistsAt(index))
+    if(this->buildingExistsAtIndex(index))
         return true;
     return false;
 }
@@ -350,20 +350,32 @@ const Resource& Region::getResourceAt(sf::Vector2i grid) const {
     return this->getResourceAt(index);
 }
 
-bool Region::buildingExistsAt(int index) const {
+bool Region::buildingExistsAtIndex(int index) const {
     return this->buildings.count(index);
 }
 
-bool Region::buildingExistsAt(sf::Vector2i grid) const {
+bool Region::buildingExistsAtGrid(sf::Vector2i grid) const {
     auto index = game_settings.calculateRegionIndex(grid);
-    return this->buildingExistsAt(index);
+    return this->buildingExistsAtIndex(index);
 }
 
-const Building& Region::getBuildingAt(int index) const {
+const Building& Region::getBuildingAtIndex(int index) const {
     return this->buildings.at(index);
 }
 
-const Building& Region::getBuildingAt(sf::Vector2i grid) const {
+const Building& Region::getBuildingAtGrid(sf::Vector2i grid) const {
     auto index = game_settings.calculateRegionIndex(grid);
-    return this->getBuildingAt(index);
+    return this->getBuildingAtIndex(index);
+}
+
+Tile& Region::getTileAtIndex(int index) {
+    try {
+        return this->map.at(index);
+    }
+    catch(const std::out_of_range& error) {
+        std::cout << "[Region]: getTileAt(" << index << "): Requested a tile out of region bounds.\n";
+        throw error;
+    }
+
+    std::cout << "[Region]: getTileAt(" << index << "): Code reach end of function without return value.\n";
 }

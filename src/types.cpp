@@ -201,11 +201,15 @@ sf::Vector3f Vector3i::asSFMLVector3f() const {
 // Colour
 
 Colour::Colour()
-    : r(0), g(0), b(0)
+    : r(0), g(0), b(0), a(255)
 {}
 
 Colour::Colour(uint8_t r, uint8_t g, uint8_t b)
-    : r(r), g(g), b(b)
+    : r(r), g(g), b(b), a(255)
+{}
+
+Colour::Colour(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+    : r(r), g(g), b(b), a(a)
 {}
 
 Colour::~Colour()
@@ -235,6 +239,14 @@ uint8_t Colour::getB() const {
     return this->b;
 }
 
+void Colour::setA(uint8_t a) {
+    this->a = a;
+}
+
+uint8_t Colour::getA() const {
+    return this->a;
+}
+
 sf::Color Colour::asSFMLColour() const {
-    return sf::Color(this->r, this->g, this->b);
+    return sf::Color(this->r, this->g, this->b, this->a);
 }
