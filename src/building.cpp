@@ -1,6 +1,7 @@
 #include "building.hpp"
 #include "region.hpp"
 #include "globalutilities.hpp"
+#include "luadriver.hpp"
 
 #include <iostream>
 
@@ -60,6 +61,10 @@ const std::string& Building::getBuildingDescription() const {
 
 const sf::Vector2i Building::getBuildingArea() const {
     return this->data.size.asSFMLVector2i();
+}
+
+const std::string& Building::getBuildingTextureName() const {
+    return this->data.texture;
 }
 
 const sf::Vector2i Building::getBuildingScanArea() const {
@@ -137,4 +142,30 @@ bool Building::isTileHarvestable(GameObject* object, int index) const {
 
 void Building::setBuildingName(const std::string& name) {
     this->data.name = name;
+}
+
+void Building::setBuildingTexture(const std::string& texture) {
+    // This is intentional.
+    // You must not change data.texture because it is set only once upon loading and never after.
+    // There might be objects with varying textures (such as paths) which require the rendered texture to be changed, and that is why you change the underlying texture. 
+
+    this->object_texture_name = texture;
+}
+
+// Theoretically the first argument is 'this'
+// but if omitted and replaced with 'this' in code,
+// modifications made to the object(s) by the executed script apply only in the script and not to the object in C++.
+void Building::onConstruct(Building* building, GameObject* object, int index) const {
+    auto driver = lua::driver::Driver::getInstance();
+    luaL_dofile(driver->L, this->getDefinitionFilename().c_str());
+
+    auto buildingdata = luabridge::getGlobal(driver->L, "BuildingData");
+    auto on_construct = buildingdata["on_construct"];
+
+    if(!on_construct.isNil()) {
+        auto* region = (Region*)object;
+        
+        // Passing: pointer, pointer, number.
+        on_construct(building, region, index);
+    }
 }

@@ -26,7 +26,7 @@ struct BuildingData {
     std::string          name;         // Human readable name.
     std::string          description;  // Human readable description.
     core::Vector2i       size;         // Building size in tiles.
-    std::string          texture;      // Building texture.
+    std::string          texture;      // Default building texture. The texture rendered is GameObject::object_texture_name.
     core::Vector2i       texture_size; // Texture size in pixels.
     std::string          icon_texture; // Icon texture.
     core::Vector2i       icon_size;    // Icon size in pixels.
@@ -58,19 +58,22 @@ class Building : public GameObject {
         const std::string&  getBuildingName()        const;
         const std::string&  getBuildingDescription() const;
         const sf::Vector2i  getBuildingArea()        const;
+        const std::string&  getBuildingTextureName() const;
         const sf::Vector2i  getBuildingScanArea()    const;
         const ResourceList& getBuildingCost()        const;
         const ResourceList& getBuildingRefund()      const;
         const std::string&  getBuildingIcon()        const;
-        const sf::Vector2i  getBuildingIconSize()    const;
-        
-        void setBuildingName(const std::string& name);
-        
+        const sf::Vector2i  getBuildingIconSize()    const;        
         const std::vector <BuildingHarvest>&    getBuildingHarvests()   const;
         const std::vector <BuildingProduction>& getBuildingProduction() const;
         bool isProductionBuilding() const;
         bool isHarvestBuilding()    const;
         bool isRemovable()          const;
+
+        void setBuildingName(const std::string&);
+        void setBuildingTexture(const std::string&);
+
+        void onConstruct(Building* building, GameObject* object, int index) const;
 
         bool operator == (const Building& building) const;
         bool operator != (const Building& building) const;
