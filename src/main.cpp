@@ -1,25 +1,25 @@
-#include "simulationManager.hpp"
-#include "generationSettings.hpp"
-
 #include "building.hpp"
 #include "resource.hpp"
 #include "item.hpp"
 #include "biome.hpp"
-#include "luascript.hpp" 
-#include "luadriver.hpp"
+#include "worldData.hpp"
+#include "luascript.hpp"
+#include "simulationManager.hpp"
 
 // Define the 'extern' variables here.
 
-std::vector <iso::Building>    buildings;
-std::vector <iso::Resource>    resources;
-std::vector <iso::StorageItem> items;
-std::vector <iso::Biome>       biomes;
-std::vector <lua::LuaScript>   scripts;
+std::vector <iso::Building>    BUILDING_TABLE;
+std::vector <iso::Resource>    RESOURCE_TABLE;
+std::vector <iso::StorageItem> ITEM_TABLE;
+std::vector <iso::Biome>       BIOME_TABLE;
+std::vector <lua::LuaScript>   SCRIPT_TABLE;
+iso::WorldData                 world_data;
 std::vector <std::string>      event_queue;
-iso::GameSettings              game_settings;
+iso::SimulationManager         game_manager;
+
+#include "interfacePage.hpp"
 
 int main() {
-    static iso::SimulationManager game_manager;
     game_manager.loop();
     iso::exitApplication(0);
 }

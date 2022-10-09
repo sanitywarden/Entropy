@@ -1,174 +1,37 @@
 #include "player.hpp"
-#include "generationSettings.hpp"
-#include "luadriver.hpp"
+#include "worldData.hpp"
+#include "globalutilities.hpp"
+#include "simulationManager.hpp"
 
 #include <iostream>
 
 using namespace iso;
 
-Player::Player() {
-    this->is_human     = false;
-    this->country_name = "*";
-    this->capital_region = -1;
-    this->player_id      = -1;
-    this->spawn_spot_index = -1;
-}
+Player::Player(PlayerData pdata, CountryData cdata)
+    : player_data(pdata), country_data(cdata)
+{}
 
 Player::~Player() 
 {}   
 
-void Player::addOwnedRegion(int region_index) {
-    this->owned_regions.push_back(region_index);
-}
-
-void Player::removeOwnedRegion(int region_index) { 
-    for(auto iterator = this->owned_regions.begin(); iterator != this->owned_regions.end(); ++iterator) {
-        if(*iterator == region_index) {
-            this->owned_regions.erase(iterator);
-            break;
-        }
-    }
-}
-
-const std::vector <int>& Player::readOwnedRegions() {
-    return this->owned_regions;
-}
-
-void Player::setHuman(bool is_human) {
-    this->is_human = is_human;
-}
-
-bool Player::isHuman() const {
-    return this->is_human;
-}
-
-int Player::getCapital() const {
-    return this->capital_region;
-}
-
-bool Player::hasCapital() const {
-    return this->capital_region != -1;
-}
-
-void Player::setCapital(int region_index) {
-    this->capital_region = region_index;
-}
-
-const sf::Color Player::getTeamColourFull() const {
-    return this->team_colour;
-}
-
-const sf::Color Player::getTeamColourTransparent() const {
-    return sf::Color(this->team_colour.r, this->team_colour.g, this->team_colour.b, 191);
-}
-
-void Player::setTeamColour(const sf::Color& team_colour) {
-    this->team_colour = team_colour;
-}
-
-void Player::setCountryName(const std::string& name) {
-    this->country_name = name;
-}
-
-const std::string& Player::getCountryName() {
-    return this->country_name;
-}
-
-// void Player::addUnit(std::shared_ptr <Unit> unit) {
-//     this->units.push_back(unit);
-// }
-
-// Unit* Player::getUnit(int unit_id) {
-//     for(auto& unit : this->units) {
-//         if(unit.get()->getID() == unit_id)
-//             return unit.get();
-//     }
-
-//     return nullptr;
-// }
-
-// Unit* Player::getUnit(std::string unit_name) {
-//     for(auto& unit : this->units) {
-//         if(unit.get()->getUnitName() == unit_name)
-//             return unit.get();
-//     }
-
-//     return nullptr;
-// }
-
-// void Player::removeUnit(int unit_id) {
-//     for(auto it = this->units.begin(); it != units.end(); ++it) {
-//         auto unit = (*it).get();
-//         if(unit->getID() == unit_id) {
-//             this->units.erase(it);
-//             return;
-//         }
-//     }
-// }
-
-// bool Player::hasUnit(int unit_id) const {
-//     for(auto& unit : this->units)
-//         if(unit.get()->getID() == unit_id)
-//             return true;
-//     return false;
-// }
-
-int Player::empireSize() const {
-    return this->owned_regions.size();
-}
-
-int Player::getID() const {
-    return this->player_id;
-}
-
-bool Player::discoveredRegion(int index) const {
-    return std::find(this->discovered_regions.begin(), this->discovered_regions.end(), index) != this->discovered_regions.end();    
-}
-
-bool Player::ownsRegion(int index) const {
-    return std::find(this->owned_regions.begin(), this->owned_regions.end(), index) != this->owned_regions.end();
-}
-
-// void Player::addQuest(std::shared_ptr<Quest> quest) {
-//     this->current_quests.push_back(quest);
-// }
-
-// void Player::removeQuest(std::shared_ptr<Quest> quest) {
-//     for(auto it = this->current_quests.begin(); it != this->current_quests.end(); ++it) {
-//         if((*it).get()->quest_code_id == quest.get()->quest_code_id) {
-//             this->current_quests.erase(it);
-//             return;
-//         }
-//     }
-// }
-
-// void Player::finishQuest(std::shared_ptr<Quest> quest) {
-//     quest.get()->onQuestFinish();
-// } 
-
-// bool Player::hasQuest(std::shared_ptr<Quest> quest) const {
-//      for(auto it = this->current_quests.begin(); it != this->current_quests.end(); ++it) {
-//         if((*it).get()->quest_code_id == quest.get()->quest_code_id) {
-//             return true;
-//         }
-//     }
-
-//     return false;
-// }
-
 bool Player::canAffordBuilding(const Region& region, const Building& building) const {
-    if(!game_settings.buildingCostEnabled())
+    if(!world_data.building_cost_enabled)
         return true;
     
-    // TODO: Write implementation.
-    return false;
+    int can_afford = 0;
+    for(auto& cost : building.getBuildingCost()) {
+        if(region.itemExists(cost) && region.itemQuantity(cost) >= cost.getAmount())
+            can_afford++;
+    }
+
+    return can_afford == building.getBuildingCost().size();
 }
 
-bool Player::placeBuildingCheck(Region& region, Building building, sf::Vector2i grid) const {
+bool Player::placeBuildingCheck(Region& region, Building building, core::Vector2i grid) const {
     if(region.isBuildingPositionValid(building, grid) && this->canAffordBuilding(region, building)) {
         this->placeBuilding(region, building, grid);
 
-        if(game_settings.buildingCostEnabled())
+        if(world_data.building_cost_enabled)
             region.removeBuildingCost(building);
         
         return true;
@@ -177,15 +40,15 @@ bool Player::placeBuildingCheck(Region& region, Building building, sf::Vector2i 
     return false;
 }
 
-void Player::placeBuilding(Region& region, Building building, sf::Vector2i grid) const {
-    auto index = game_settings.calculateRegionIndex(grid);
-    const auto& tile = region.map.at(index);  
+void Player::placeBuilding(Region& region, Building building, core::Vector2i grid) const {
+    auto index = calculateRegionIndex(grid);
+    const auto& tile = region.getTileAtIndex(index);  
     building.object_position = tile.getPosition();
 
     const int a1_w = 0; 
-    const int a1_h = game_settings.tileSize().y; 
-    const int r_w  = game_settings.tileSize().x / 2;
-    const int r_h  = game_settings.tileSize().y;    
+    const int a1_h = tileSize().y; 
+    const int r_w  = tileSize().x / 2;
+    const int r_h  = tileSize().y;    
     
     // n takes into account only one dimension,
     // because non-square buildings are not currently supported.
@@ -193,9 +56,9 @@ void Player::placeBuilding(Region& region, Building building, sf::Vector2i grid)
     
     // Here you adjust the origin of buildings with sizes of n > 0.
     // Texture size scale are arithmetic series.
-    auto offset = sf::Vector3f(0, 0, 0);  
+    auto offset = core::Vector3f(0, 0, 0);  
     if(n > 0) {
-        offset = sf::Vector3f(
+        offset = core::Vector3f(
             -(a1_w + (n - 1) * r_w),
             -(a1_h + (n - 1) * r_h),
             0
@@ -206,30 +69,122 @@ void Player::placeBuilding(Region& region, Building building, sf::Vector2i grid)
 
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
-            auto loop_index = index + game_settings.calculateRegionIndex(x, y);
+            auto loop_index = index + calculateRegionIndex(x, y);
             region.buildings[loop_index] = BUILDING_EMPTY;
             region.buildings[loop_index].setBuildingName(building.getBuildingName());
         }
     }
 
     region.buildings[index] = building;
-
-    // You can not pass the pointer to 'building' because it is a temporary.
-    building.onConstruct(&region.buildings[index], &region, index);
 }
 
-void Player::destroyBuilding(Region& region, sf::Vector2i grid) const {
-    auto index = game_settings.calculateRegionIndex(grid);
+void Player::destroyBuilding(Region& region, core::Vector2i grid) const {
+    auto index = calculateRegionIndex(grid);
 
     if(!region.buildingExistsAtIndex(index))
         return;
 
     auto building = region.getBuildingAtIndex(index);
-
     for(int y = 0; building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
-            auto loop_index = index + game_settings.calculateRegionIndex(x, y);
+            auto loop_index = index + calculateRegionIndex(x, y);
             region.buildings.erase(loop_index);
         }
     }
 }
+
+void Player::addOwnedRegion(int index) {
+    if(!inWorldBounds(index)) {
+        printError("Player::addOwnedRegion()", "Region index out of bounds");
+        return;
+    }
+    this->country_data.owned_regions.push_back(index);
+}
+
+void Player::removeOwnedRegion(int index) { 
+    for(auto iterator = this->country_data.owned_regions.begin(); iterator != this->country_data.owned_regions.end(); ++iterator) {
+        if(*iterator == index) {
+            this->country_data.owned_regions.erase(iterator);
+            break;
+        }
+    }
+}
+
+bool Player::ownsRegion(int index) const {
+    return std::find(this->country_data.owned_regions.begin(), this->country_data.owned_regions.end(), index) != this->country_data.owned_regions.end();
+}
+
+Region& Player::getOwnedRegion(int index) {
+    if(!this->ownsRegion(index))    
+        printError("Player::getOwnedRegion()", "Requested region not owned by the player");
+    
+    if(!inWorldBounds(index))
+        printError("Player::getOwnedRegion()", "Region index out of bounds");
+    return game_manager.world_map.at(index);
+}
+
+void Player::addKnownRegion(int index) {
+    this->country_data.known_regions.push_back(index);
+}
+
+bool Player::discoveredRegion(int index) const {
+    return std::find(this->country_data.known_regions.begin(), this->country_data.known_regions.end(), index) != this->country_data.known_regions.end();    
+}
+
+int Player::countrySize() const {
+    return this->country_data.owned_regions.size();
+}
+
+int Player::getCapital() const {
+    if(!this->hasCapital()) {
+        printError("Player::getCapital()", "Capital index is -1");
+        return -1;
+    }
+    return this->country_data.capital;
+}
+
+bool Player::hasCapital() const {
+    return this->country_data.capital != -1;
+}
+
+void Player::setCapital(int index) {
+    if(!inWorldBounds(index)) {
+        printError("Player::setCapital()", "Region index out of bounds");
+        return;
+    }
+    this->country_data.capital = index;
+}
+
+bool Player::isHuman() const {
+    return this->player_data.is_human;
+}
+
+void Player::setHuman(bool is_human) {
+    this->player_data.is_human = is_human;
+}
+
+core::Colour Player::getCountryColourFull() const {
+    return this->country_data.map_colour;
+}
+
+core::Colour Player::getCountryColourTransparent() const {
+    auto colour = this->getCountryColourFull();
+    return core::Colour(colour.r, colour.g, colour.b, 127);
+}
+
+void Player::setCountryColour(core::Colour colour) {
+    this->country_data.map_colour = colour;
+}
+
+void Player::setCountryName(const std::string& name) {
+    this->country_data.country_name = name;
+}
+
+const std::string& Player::getCountryName() {
+    return this->country_data.country_name;
+}
+
+int Player::getID() const {
+    return this->player_data.id;
+}
+

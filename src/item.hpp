@@ -41,16 +41,16 @@ class StorageItem {
         bool operator <= (const StorageItem& item) const;
         StorageItem& operator = (const Resource& resource);
 
-        const std::string& getDefinitionFilename() const;
-        const std::string& getItemName()           const;
-        const std::string& getItemDescription()    const;
-        const std::string& getIconTexture()        const;
-        const sf::Vector2i getIconTextureSize()    const;
-        const std::string& getItemType()           const;
-        int                getAmount()             const;
+        const std::string&   getDefinitionFilename() const;
+        const std::string&   getItemName()           const;
+        const std::string&   getItemDescription()    const;
+        const std::string&   getIconTexture()        const;
+        const core::Vector2i getIconTextureSize()    const;
+        const std::string&   getItemType()           const;
+        int                  getAmount()             const;
 
         void setAmount(int amount);
 };
 }
 
-extern std::vector <iso::StorageItem> items;
+extern std::vector <iso::StorageItem> ITEM_TABLE;

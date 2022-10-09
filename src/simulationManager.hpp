@@ -1,124 +1,109 @@
 #pragma once
 
-#include "entropy/entropy.hpp"
-#include "player.hpp"
+#include "windowManager.hpp"
+#include "resourceManager.hpp"
+#include "gamestateManager.hpp"
 #include "worldGenerator.hpp"
-#include "texturizer.hpp"
+#include "types.hpp"
+
+#include "player.hpp"
+
+#include "building.hpp"
+#include "resource.hpp"
+#include "item.hpp"
+#include "biome.hpp"
+#include "luascript.hpp"
 #include "schedule.hpp"
 
 #include <SFML/System.hpp>
+#include <Lua/lua.hpp>
+#include <LuaBridge/LuaBridge.h>
 #include <vector>
 #include <string>
 
-namespace iso { 
-typedef std::map <std::string, std::pair <int, int>> Scheduler;
-typedef std::pair <int, int> ScheduledUpdate;
-
-constexpr int seconds_per_hour  = 12;
-constexpr int seconds_per_day   = seconds_per_hour  * 12;
-constexpr int seconds_per_week  = seconds_per_day   * 7;
-constexpr int seconds_per_month = seconds_per_day   * 30;
-constexpr int seconds_per_year  = seconds_per_month * 12; 
-
-constexpr int food_consumed_per_pop  = 1;
-constexpr int water_consumed_per_pop = 2; 
-
-class SimulationManager : public Entropy {
+namespace iso {
+class SimulationManager {
     private:
-        void setup() override;
-        void initialise();
-        void initialiseEvents();
-        void internalLoop(float delta_time);
+        void registerLua();
+        void loadApplicationConfig();
+        void loadGameData();
+        void emitEvents();
 
-        // void loadSettings()  const;
-        // void loadBuildings() const;
-        // void loadBiomes()    const;
-        // void loadItems()     const;
-        // void loadResources() const;
-        void loadScripts()   const;
-
-        void updateScripts() const;
-
-        void generateCountries();
     private:
-        int draw_calls;
-        int people_dehydrated;   // Number of people with water needs not satisfied.
-        int people_malnourished; // Number of people with food needs not satisfied.
+        lua_State* L;
 
-        float simulation_speed;                // Simulation speed. Events, updates and other gameplay-related stuff depend on this. 1 is default value, and equals to updating every 1 second.             
-        sf::Clock simulation_clock;            // For timing simulation updates internally. Use this instead of Entropy's clock (it's intended for measuring FPS).
-        sf::Time  simulation_time_since_start; // Time since clock start.      
     public:
-        Texturizer texturizer;
+        WindowManager    window;
+        ResourceManager  resource;   
+        GamestateManager gamestate;
+        WorldGenerator   world_generator;
+        Schedule         schedule; // Interval based events.
 
-        WorldGenerator       world;
+        std::vector <Region> world_map;
+        std::map    <int, GameObject> forests;
+        std::map    <int, GameObject> rivers;
+        std::map    <int, GameObject> lakes;
+
         std::vector <Player> players;
-        Schedule             events;
-        int                  time;            // Time passed since game started in real time seconds.
-        int                  simulation_time; // Time passed inside the simulation. Depends on the frequency of updates.
-        
-        // TODO: move somewhere else.
+
+        int time_s;             // Real time since start of the game.
+        int simulation_time_s;  // Simulation time since start of the game.
+        sf::Time time_since_start;
+        sf::Time simulation_time_since_start;
+        sf::Clock clock;
+        sf::Clock simulation_clock;
+        int fps;
+        float time_per_frame;
         int font_size;
+
     public:
         SimulationManager();
         ~SimulationManager();
 
-        void updateDrawCalls(int calls);
-        int  getDrawCalls() const;
-        bool inScreenSpace(const GameObject& object) const;
+        std::vector <int> wAstar(int start, int end) const; // Worldmap.
+        std::vector <int> rAstar(int start, int end) const; // Regionmap.
 
-        std::string getDateFormatted() const;
-        
-        bool isHumanPlayer(int player_id) const;
+        void loop();
+        lua_State* lua() const;
+
         Player* getHumanPlayer();
         Player* getPlayer(int player_id);
-
-        void emitEvents();
-        void popEvents();
-
-        // Search for the requested unit in all players' armies.
-        // If not found return nullptr.
-        // Unit* getUnit(int unit_id);
-        
-        // Creates a unit of certain type.
-        // The unit will be created if the specified region is able to support more units.
-        // The created unit has all required properties of the class.
-        // std::shared_ptr <Unit> createUnit(UnitType unit_type, int region_index, Player* owner) const;
-        
-        // Deletes all existing data about the unit.
-        // Removes the unit pointer in the region (as the unit no longer stands there).
-        // Removes the unit from the player's army (from the vector of units in iso::Player class).
-        // Sets the selected_unit_id in iso::Worldmap to -1.
-        // void deleteUnit(int unit_id); 
-
-        bool regionCanBeColonised(int region_index) const;
-
-        // A* algorithm to find the shortest path in the Worldmap stage.
-        std::vector <int> astar(int start, int end) const;
-
-        // A* algorithm to find the shortest path in the Regionmap stage.
-        std::vector <int> r_astar(int start, int end) const;
-
-        void prepare();
-        void loop() override;
-
-        void generateWorld();
+        bool isHumanPlayer(int player_id) const;
+        bool checkPlayerExists(int player_id) const;
+        void addPlayer(Player player);
 };
+
+void exitApplication(int code);
+
+void L_loadTexture(const std::string& filename, const std::string& id, core::Vector2i position, core::Vector2i size);
+void L_loadFont(const std::string& filename, const std::string& id);
+void L_loadEvent(const std::string& id, float required_time, bool speed_dependant);
+void L_createIcon(const std::string& id);
+
+void L_setGamestate(const std::string& id);
+void L_showInterface(const std::string& id);
+void L_hideInterface(const std::string& id);
+bool L_isInterfaceVisible(const std::string& id);
+
+bool L_isKeyPressed(const std::string& key_id);
+
 }
 
+namespace lua {
+void runLuaFile(const std::string& filename);
+
+std::string                readString(luabridge::LuaRef, bool throw_if_null = false);
+int                        readInteger(luabridge::LuaRef, bool throw_if_null = false);
+float                      readNumber(luabridge::LuaRef, bool throw_if_null = false);
+bool                       readBoolean(luabridge::LuaRef, bool throw_if_null = false);
+core::Colour               readColour(luabridge::LuaRef, bool throw_if_null = false);
+core::Vector2i             readVector2i(luabridge::LuaRef, bool throw_if_null = false);
+core::Vector2f             readScreenRatio(luabridge::LuaRef, bool throw_if_null = false);
+std::vector <std::string>  readVectorString(luabridge::LuaRef, bool throw_if_null = false);
+std::vector <core::Colour> readVectorColour(luabridge::LuaRef, bool throw_if_null = false);
+std::vector <iso::BuildingHarvest> getBuildingHarvest(luabridge::LuaRef);
+std::vector <iso::BuildingProduction> getBuildingProduction(luabridge::LuaRef);
+}
+
+extern iso::SimulationManager game_manager;
 extern std::vector <std::string> event_queue;
-
-/*
-void luaLoadTexture(std::string filename, std::string id, int posx, int posy, int sizex, int sizey);
-void ResourceManager::luaLoadTexture(std::string filename, std::string id, int posx, int posy, int sizex, int sizey) {
-    sf::Texture texture;
-    auto area = sf::IntRect(posx, posy, sizex, sizey);
-    if(!texture.loadFromFile(filename, area)) {
-        std::cout << "[Entropy Engine][Resource Manager]: Could not load texture: " << filename << " with id: " << id << ".\n";
-        return;
-    }
-
-    this->m_dimensions[id] = area;
-    this->m_textures[id]   = texture;
-}
-*/

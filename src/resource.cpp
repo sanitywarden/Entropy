@@ -35,16 +35,16 @@ const std::string& Resource::getResourceTexture() const {
     return this->data.texture;
 }
 
-const sf::Vector2i Resource::getResourceTextureSize() const {
-    return this->data.texture_size.asSFMLVector2i();
+const core::Vector2i Resource::getResourceTextureSize() const {
+    return this->data.texture_size;
 }
 
 const std::string& Resource::getIconTexture() const {
     return this->data.icon_texture;
 }
 
-const sf::Vector2i Resource::getIconTextureSize() const {
-    return this->data.icon_size.asSFMLVector2i();
+const core::Vector2i Resource::getIconTextureSize() const {
+    return this->data.icon_size;
 }
 
 const std::string& Resource::getResourceType() const {

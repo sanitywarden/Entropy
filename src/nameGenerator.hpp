@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 
@@ -29,5 +31,5 @@ namespace iso {
         CITY,
     };
 
-    std::string generate(GenerationType type, int iterations);
+    std::string generateName(GenerationType type, int iterations);
 }

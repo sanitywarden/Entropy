@@ -27,13 +27,14 @@ class Vector2f {
         sf::Vector2i asSFMLVector2i() const;
         sf::Vector2f asSFMLVector2f() const;
 
-        Vector2f  operator+  (const Vector2f& vec);
+        Vector2f& operator=  (const Vector2f& vec);
+        Vector2f  operator+  (const Vector2f& vec) const;
         Vector2f& operator+= (const Vector2f& vec);
-        Vector2f  operator-  (const Vector2f& vec);
+        Vector2f  operator-  (const Vector2f& vec) const;
         Vector2f& operator-= (const Vector2f& vec);
-        Vector2f  operator*  (int multiplier);
+        Vector2f  operator*  (int multiplier) const;
         Vector2f& operator*= (int multiplier);  
-        Vector2f  operator/  (int divisor);
+        Vector2f  operator/  (int divisor) const;
         Vector2f& operator/= (int divisor);
 };
 
@@ -55,6 +56,16 @@ class Vector2i {
 
         sf::Vector2i asSFMLVector2i() const;
         sf::Vector2f asSFMLVector2f() const;
+
+        Vector2i& operator=  (const Vector2i& vec);
+        Vector2i  operator+  (const Vector2i& vec) const;
+        Vector2i& operator+= (const Vector2i& vec);
+        Vector2i  operator-  (const Vector2i& vec) const;
+        Vector2i& operator-= (const Vector2i& vec);
+        Vector2i  operator*  (int multiplier) const;
+        Vector2i& operator*= (int multiplier);  
+        Vector2i  operator/  (int divisor) const;
+        Vector2i& operator/= (int divisor);
 };
 
 class Vector3f {
@@ -79,6 +90,16 @@ class Vector3f {
 
         sf::Vector3i asSFMLVector3i() const;
         sf::Vector3f asSFMLVector3f() const;
+
+        Vector3f& operator=  (const Vector3f& vec);
+        Vector3f  operator+  (const Vector3f& vec) const;
+        Vector3f& operator+= (const Vector3f& vec);
+        Vector3f  operator-  (const Vector3f& vec) const;
+        Vector3f& operator-= (const Vector3f& vec);
+        Vector3f  operator*  (int multiplier) const;
+        Vector3f& operator*= (int multiplier);  
+        Vector3f  operator/  (int divisor) const;
+        Vector3f& operator/= (int divisor);
 };
 
 class Vector3i {
@@ -103,6 +124,16 @@ class Vector3i {
 
         sf::Vector3i asSFMLVector3i() const;
         sf::Vector3f asSFMLVector3f() const;
+
+        Vector3i& operator=  (const Vector3i& vec);
+        Vector3i  operator+  (const Vector3i& vec) const;
+        Vector3i& operator+= (const Vector3i& vec);
+        Vector3i  operator-  (const Vector3i& vec) const;
+        Vector3i& operator-= (const Vector3i& vec);
+        Vector3i  operator*  (int multiplier) const;
+        Vector3i& operator*= (int multiplier);  
+        Vector3i  operator/  (int divisor) const;
+        Vector3i& operator/= (int divisor);
 };
 
 class Colour {
@@ -131,13 +162,31 @@ class Colour {
         uint8_t getA() const;
 
         sf::Color asSFMLColour() const;
+
+        Colour& operator=  (const Colour& colour);
+        bool    operator== (const Colour& colour) const;         
+        bool    operator== (const sf::Color& colour) const;
 };
 
-class TextureData {
+class Ratio {
+    private:
+        std::string expression_x;
+        std::string expression_y;
+        float x;
+        float y;
+    private:
+        float extractRatio(const std::string& coordinate, bool is_x_coordinate);
     public:
-        std::string filename;
-        std::string id;
-        core::Vector2i position;
-        core::Vector2i size;
+        Ratio();
+        Ratio(const std::string& x, const std::string& y);
+        ~Ratio();
+
+        void setX(const std::string& x);
+        const std::string& getX() const;
+
+        void setY(const std::string& y);
+        const std::string& getY() const;
+
+        core::Vector2f asNumber() const;
 };
 }

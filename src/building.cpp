@@ -1,14 +1,13 @@
 #include "building.hpp"
 #include "region.hpp"
 #include "globalutilities.hpp"
-#include "luadriver.hpp"
 
 #include <iostream>
 
 using namespace iso;
 
 Building::Building() 
-    : GameObject(sf::Vector3f(), sf::Vector3f(), sf::Vector2f(), "default", "Building")
+    : GameObject(core::Vector3f(0, 0, 0), core::Vector3f(0, 0, 0), core::Vector2i(0, 0), "default", "Building")
 {
     this->data.name = "Empty";
 }
@@ -20,7 +19,7 @@ Building::Building(const Building& building)
 }
 
 Building::Building(const BuildingData& data)
-    : GameObject(sf::Vector3f(), sf::Vector3f(), data.texture_size.asSFMLVector2f(), data.texture)
+    : GameObject(core::Vector3f(0, 0, 0), core::Vector3f(0, 0, 0), data.texture_size, data.texture)
 {
     this->data = data;
 }
@@ -31,8 +30,8 @@ Building::~Building()
 void Building::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     sf::VertexArray game_object(sf::Quads, 4);
 
-    auto position2d = this->getPosition2D();
-    auto size       = this->getSize();
+    auto position2d = this->getPosition2D().asSFMLVector2f();
+    auto size       = this->getSize().asSFMLVector2f();
 
     game_object[0].position = position2d;    
     game_object[1].position = position2d + sf::Vector2f(size.x, 0);
@@ -59,16 +58,16 @@ const std::string& Building::getBuildingDescription() const {
     return this->data.description;
 }
 
-const sf::Vector2i Building::getBuildingArea() const {
-    return this->data.size.asSFMLVector2i();
+const core::Vector2i Building::getBuildingArea() const {
+    return this->data.size;
 }
 
-const std::string& Building::getBuildingTextureName() const {
+const std::string& Building::getBuildingTexture() const {
     return this->data.texture;
 }
 
-const sf::Vector2i Building::getBuildingScanArea() const {
-    return this->data.scan_area.asSFMLVector2i();
+const core::Vector2i Building::getBuildingScanArea() const {
+    return this->data.scan_area;
 }
 
 const ResourceList& Building::getBuildingCost() const {
@@ -83,8 +82,8 @@ const std::string& Building::getBuildingIcon() const {
     return this->data.icon_texture;
 }
 
-const sf::Vector2i Building::getBuildingIconSize() const {
-    return this->data.icon_size.asSFMLVector2i();
+const core::Vector2i Building::getBuildingIconSize() const {
+    return this->data.icon_size;
 }
 
 bool Building::isRemovable() const {
@@ -144,28 +143,59 @@ void Building::setBuildingName(const std::string& name) {
     this->data.name = name;
 }
 
-void Building::setBuildingTexture(const std::string& texture) {
-    // This is intentional.
-    // You must not change data.texture because it is set only once upon loading and never after.
-    // There might be objects with varying textures (such as paths) which require the rendered texture to be changed, and that is why you change the underlying texture. 
-
-    this->object_texture_name = texture;
+void Building::setBuildingDescription(const std::string& description) {
+    this->data.description = description;
 }
 
-// Theoretically the first argument is 'this'
-// but if omitted and replaced with 'this' in code,
-// modifications made to the object(s) by the executed script apply only in the script and not to the object in C++.
-void Building::onConstruct(Building* building, GameObject* object, int index) const {
-    auto driver = lua::driver::Driver::getInstance();
-    luaL_dofile(driver->L, this->getDefinitionFilename().c_str());
+void Building::setBuildingArea(core::Vector2i area) {
+    this->data.size = area;
+}
 
-    auto buildingdata = luabridge::getGlobal(driver->L, "BuildingData");
-    auto on_construct = buildingdata["on_construct"];
+void Building::setBuildingTexture(const std::string& texture_name) {
+    this->object_texture_name = texture_name;
+}
 
-    if(!on_construct.isNil()) {
-        auto* region = (Region*)object;
-        
-        // Passing: pointer, pointer, number.
-        on_construct(building, region, index);
+void Building::setBuildingScanArea(core::Vector2i scan_area) {
+    this->data.scan_area = scan_area;
+}
+
+void Building::setBuildingCost(ResourceList list) {
+    this->data.cost = list;
+    
+    ResourceList refund;
+    for(auto resource : list) {
+        ItemData item;
+        item.filename     = resource.getDefinitionFilename();
+        item.name         = resource.getItemName();
+        item.description  = resource.getItemDescription();
+        item.icon_texture = resource.getIconTexture();
+        item.icon_size    = resource.getIconTextureSize();
+        item.type         = resource.getItemType();
+        item.amount       = 0.6f * resource.getAmount();
+
+        StorageItem refund_resource(item);
+        refund.push_back(refund_resource);
     }
+
+    this->data.refund = refund;
+}
+
+void Building::setBuildingIcon(const std::string& icon) {
+    this->data.icon_texture = icon;
+}
+
+void Building::setBuildingIconSize(core::Vector2i size) {
+    this->data.icon_size = size;
+}
+
+void Building::setBuildingHarvests(std::vector <BuildingHarvest> harvest) {
+    this->data.harvests = harvest;
+}
+
+void Building::setBuildingProduction(std::vector <BuildingProduction> production) {
+    this->data.produces = production;
+}
+
+void Building::setRemovable(bool removable) {
+    this->data.removable = removable;
 }

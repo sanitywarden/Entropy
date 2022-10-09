@@ -1,5 +1,5 @@
 #include "tile.hpp"
-#include "generationSettings.hpp"
+#include "worldData.hpp"
 
 using namespace iso;
 
@@ -13,29 +13,29 @@ Tile::~Tile() {
 }
 
 void Tile::setElevation(int elevation) {
-    this->object_position.z = -elevation * game_settings.tileSize().y / 2;
+    this->object_position.z = -elevation * tileSize().y / 2;
 }
 
 int Tile::getElevation() const {
-    return -this->object_position.z / (game_settings.tileSize().y / 2);
+    return -this->object_position.z / (tileSize().y / 2);
 }
 
-bool Tile::is_terrain() const {
+bool Tile::isTerrain() const {
     return this->tiletype.is_terrain();
 }
 
-bool Tile::is_river() const {
+bool Tile::isRiver() const {
     return this->tiletype.is_river();
 }
 
-bool Tile::is_ocean() const {
+bool Tile::isOcean() const {
     return this->tiletype.is_ocean();
 } 
 
-bool Tile::is_water() const {
-    return this->is_river() || this->is_ocean();
+bool Tile::isWater() const {
+    return this->isRiver() || this->isOcean();
 }
 
-bool Tile::is_coast() const {
+bool Tile::isCoast() const {
     return this->tiletype.is_coast();
 }

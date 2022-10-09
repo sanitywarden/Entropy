@@ -1,22 +1,25 @@
 #include "regionmap.hpp"
-#include "generationSettings.hpp"
+#include "worldData.hpp"
 #include "globalutilities.hpp"
-#include "luadriver.hpp"
+#include "simulationManager.hpp"
+#include "colours.hpp"
+#include "worldmap.hpp"
+
+#include <filesystem>
 
 using namespace iso;
 
-Regionmap::Regionmap(SimulationManager* manager) : Gamestate(manager, "Regionmap") {
-    this->manager = manager;
+Regionmap::Regionmap() : Gamestate("Regionmap") {
     this->region  = nullptr;
 
     this->initialise();
     this->loadResources();
     this->createUI();
+    std::cout << "[] Loaded " << this->interface.size() << " interface page(s) for Regionmap.\n";
 }
 
-Regionmap::~Regionmap() {
-
-}
+Regionmap::~Regionmap() 
+{}
 
 void Regionmap::initialise() {
     this->mouse_moved = false;
@@ -29,20 +32,16 @@ void Regionmap::initialise() {
     this->max_zoom_in   = 0; 
     this->max_zoom_out  = 3;
     
-    this->view_interface.setCenter(this->manager->window.getWindowWidth() / 2, this->manager->window.getWindowHeight() / 2);
-    this->view_game.setCenter(this->manager->window.getWindowWidth() / 2, this->manager->window.getWindowHeight() / 2);
+    this->view_interface.setCenter(game_manager.window.getWindowWidth() / 2, game_manager.window.getWindowHeight() / 2);
+    this->view_game.setCenter(game_manager.window.getWindowWidth() / 2, game_manager.window.getWindowHeight() / 2);
 }
 
 void Regionmap::loadResources() {
-    // Load resources.
-    auto driver = lua::driver::Driver::getInstance();
-    driver->loadResources(this->manager, "./src/scripts/resource/load_regionmap.lua");
-        
-    this->manager->texturizer.createColouredWorldmapTexture("template_highlight_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    this->manager->texturizer.createColouredWorldmapTexture("template_highlight_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    game_manager.resource.paintTexture("template_highlight_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    game_manager.resource.paintTexture("template_highlight_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
 
     // Automatically generate icon names.
-    for(const auto& texture_pair : this->manager->resource.getTextureCollection()) {
+    for(const auto& texture_pair : game_manager.resource.getTextureCollection()) {
         const auto& texture_name = texture_pair.first;
         const auto& texture      = texture_pair.second;
 
@@ -51,7 +50,7 @@ void Regionmap::loadResources() {
             auto save_as = "icon_" + readAfter(texture_name, "icon_template_");
             auto base    = "icon_default";
             auto blend   = texture_name;
-            this->manager->texturizer.blendTextures(save_as, base, blend);
+            game_manager.resource.blendTextures(save_as, base, blend);
         }
     }
 }
@@ -65,19 +64,19 @@ void Regionmap::update(float delta_time) {
 }
 
 void Regionmap::render(float delta_time) {
-    this->manager->window.clear(COLOUR_BLACK);    
+    game_manager.window.clear(COLOUR_BLACK);    
 
-    this->manager->window.setView(this->view_game);
+    game_manager.window.setView(this->view_game);
 
     this->renderRegion();
     this->renderSelectedBuilding();
     this->higlightTile();
 
-    this->manager->window.setView(this->view_interface);
+    game_manager.window.setView(this->view_interface);
 
     this->renderUI();
 
-    this->manager->window.display();
+    game_manager.window.display();
 }
 
 void Regionmap::handleInput() {
@@ -90,11 +89,11 @@ void Regionmap::handleInput() {
             }
 
             if(this->controls.isKeyPressed("F12")) {
-                this->manager->window.takeScreenshot();
+                game_manager.window.takeScreenshot();
             }
 
             if(this->controls.isKeyPressed("ESCAPE")) {
-                this->manager->gamestate.setGamestate("worldmap");
+                game_manager.gamestate.setGamestate("Worldmap");
             }
 
             if(this->controls.isKeyPressed("I")) {
@@ -106,14 +105,14 @@ void Regionmap::handleInput() {
                 this->toggleComponentVisibility("component_widget_menu_building");
                 this->setVisibilityFalse("component_widget_region_storage");
 
-                auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-                building_menu->resetBuilding();
+                // auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
+                // building_menu->resetBuilding();
             }
 
             const auto& tile_top    = this->region->map[0];
-            const auto& tile_left   = this->region->map[game_settings.calculateRegionIndex(0, game_settings.getRegionWidth() - 1)];
-            const auto& tile_right  = this->region->map[game_settings.calculateRegionIndex(game_settings.getRegionWidth() - 1, 0)];
-            const auto& tile_bottom = this->region->map[game_settings.calculateRegionIndex(game_settings.getRegionWidth() - 1, game_settings.getRegionWidth() - 1)];
+            const auto& tile_left   = this->region->map[calculateRegionIndex(0, world_data.r_width - 1)];
+            const auto& tile_right  = this->region->map[calculateRegionIndex(world_data.r_width - 1, 0)];
+            const auto& tile_bottom = this->region->map[calculateRegionIndex(world_data.r_width - 1, world_data.r_width - 1)];
 
             const auto bound_top    = tile_top.getPosition2D().y;
             const auto bound_left   = tile_left.getPosition2D().x;
@@ -121,20 +120,20 @@ void Regionmap::handleInput() {
             const auto bound_bottom = tile_bottom.getPosition2D().y;
 
             if(this->controls.isKeyPressed("ARROW_LEFT"))
-                if(this->view_game.getCenter().x - game_settings.tileSize().x >= bound_left)
-                    this->view_game.move(-game_settings.tileSize().x, 0);
+                if(this->view_game.getCenter().x - tileSize().x >= bound_left)
+                    this->view_game.move(-tileSize().x, 0);
 
             if(this->controls.isKeyPressed("ARROW_RIGHT"))
-                if(this->view_game.getCenter().x + game_settings.tileSize().x <= bound_right)
-                    this->view_game.move(game_settings.tileSize().x, 0);
+                if(this->view_game.getCenter().x + tileSize().x <= bound_right)
+                    this->view_game.move(tileSize().x, 0);
 
             if(this->controls.isKeyPressed("ARROW_DOWN"))
-                if(this->view_game.getCenter().y + game_settings.tileSize().y <= bound_bottom)
-                    this->view_game.move(0, game_settings.tileSize().y);
+                if(this->view_game.getCenter().y + tileSize().y <= bound_bottom)
+                    this->view_game.move(0, tileSize().y);
 
             if(this->controls.isKeyPressed("ARROW_UP"))
-                if(this->view_game.getCenter().y - (game_settings.tileSize().y) >= bound_top)
-                    this->view_game.move(0, -game_settings.tileSize().y);
+                if(this->view_game.getCenter().y - (tileSize().y) >= bound_top)
+                    this->view_game.move(0, -tileSize().y);
         }
 
         if(event_name == "LMB_PRESSED") {
@@ -168,8 +167,8 @@ void Regionmap::handleInput() {
 
 void Regionmap::moveCamera() {
     auto distance = sf::Vector2f(
-        (this->controls.button_position_pressed.x - this->controls.button_position_released.x) / game_settings.tileSize().x,       
-        (this->controls.button_position_pressed.y - this->controls.button_position_released.y) / game_settings.tileSize().y
+        (this->controls.button_position_pressed.x - this->controls.button_position_released.x) / tileSize().x,       
+        (this->controls.button_position_pressed.y - this->controls.button_position_released.y) / tileSize().y
     );
 
     // Multipliers for faster camera movement. 
@@ -177,14 +176,14 @@ void Regionmap::moveCamera() {
     float y_multiplier = 6.0f;    
 
     auto top_tile    = this->region->map[0];
-    auto left_tile   = this->region->map[game_settings.getRegionSize() - game_settings.getRegionWidth()];
-    auto right_tile  = this->region->map[game_settings.getRegionWidth() - 1];
-    auto bottom_tile = this->region->map[game_settings.getRegionSize() - 1];
+    auto left_tile   = this->region->map[getRegionSize() - world_data.r_width];
+    auto right_tile  = this->region->map[world_data.r_width - 1];
+    auto bottom_tile = this->region->map[getRegionSize() - 1];
 
     const int left_bound   = left_tile.getPosition().x;
-    const int right_bound  = right_tile.getPosition().x + game_settings.tileSize().x;
+    const int right_bound  = right_tile.getPosition().x + tileSize().x;
     const int top_bound    = top_tile.getPosition().y;
-    const int bottom_bound = bottom_tile.getPosition().y + game_settings.tileSize().y;
+    const int bottom_bound = bottom_tile.getPosition().y + tileSize().y;
 
     if(this->view_game.getCenter().x + distance.x * x_multiplier > left_bound - this->view_game.getSize().x / 4 && this->view_game.getCenter().x + distance.x * x_multiplier < right_bound + this->view_game.getSize().x / 4)
         this->view_game.move(distance.x * x_multiplier, 0);
@@ -228,9 +227,7 @@ void Regionmap::renderRegion() {
     const sf::Vector2f camera_size   = this->view_game.getSize();
     const sf::Vector2f camera_centre = this->view_game.getCenter();
     const sf::Rect     camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
-    const sf::Vector2f tile_size = game_settings.tileSize();
-
-    int gpu_draw_calls = 0;
+    const sf::Vector2f tile_size = tileSize().asSFMLVector2f();
 
     if(this->recalculate_mesh) {
         int verticies_index  = 0;
@@ -245,11 +242,11 @@ void Regionmap::renderRegion() {
         if(!regionmap_mesh_tile.getVertexCount())
             regionmap_mesh_tile.create(verticies_tilemap);
 
-        for(int index = 0; index < game_settings.getRegionSize(); index++) {
+        for(int index = 0; index < getRegionSize(); index++) {
             sf::Vertex* quad = &verticies_tiles[verticies_index * 4];
             
             auto& tile          = this->region->map.at(index);
-            auto tile_position  = tile.getPosition2D();
+            auto tile_position  = tile.getPosition2D().asSFMLVector2f();
             const auto& texture = tile.getTextureName();
 
             quad[0].position = tile_position + sf::Vector2f(0, 0);
@@ -257,7 +254,7 @@ void Regionmap::renderRegion() {
             quad[2].position = tile_position + sf::Vector2f(tile_size.x, tile_size.y);
             quad[3].position = tile_position + sf::Vector2f(0, tile_size.y);
 
-            const auto tile_coords = this->manager->resource.getTexturePosition(texture); 
+            const auto tile_coords = game_manager.resource.getTexturePosition(texture).asSFMLVector2f(); 
 
             quad[0].texCoords = tile_coords + sf::Vector2f(0, 0);
             quad[1].texCoords = tile_coords + sf::Vector2f(tile_size.x, 0);
@@ -271,7 +268,7 @@ void Regionmap::renderRegion() {
                 sf::Vertex* side_quad = &verticies_tiles[verticies_index * 4];
 
                 const auto& side         = this->region->sides[index][side_index];
-                const auto side_position = side.getPosition2D();
+                const auto side_position = side.getPosition2D().asSFMLVector2f();
 
                 side_quad[0].position = side_position + sf::Vector2f(0, 0);
                 side_quad[1].position = side_position + sf::Vector2f(tile_size.x, 0);
@@ -279,7 +276,7 @@ void Regionmap::renderRegion() {
                 side_quad[3].position = side_position + sf::Vector2f(0, tile_size.y);
 
                 const auto& side_texture = side.getTextureName();
-                const auto side_coords   = this->manager->resource.getTexturePosition(side_texture);
+                const auto side_coords   = game_manager.resource.getTexturePosition(side_texture).asSFMLVector2f();
 
                 side_quad[0].texCoords = side_coords + sf::Vector2f(0, 0);
                 side_quad[1].texCoords = side_coords + sf::Vector2f(tile_size.x, 0);
@@ -298,7 +295,7 @@ void Regionmap::renderRegion() {
     if(this->recalculate_tree_mesh) {
         draw_order = std::vector<GameObject>();
 
-        for(int i = 0; i < game_settings.getRegionSize(); i++) {
+        for(int i = 0; i < getRegionSize(); i++) {
             if(this->region->trees.count(i))
                 draw_order.push_back(this->region->trees[i]);
             
@@ -327,20 +324,19 @@ void Regionmap::renderRegion() {
     }
 
     sf::RenderStates states_tiles;
-    states_tiles.texture = &this->manager->resource.getTexture("tile_atlas"); 
-    this->manager->window.draw(regionmap_mesh_tile, states_tiles);
-    gpu_draw_calls++;
+    states_tiles.texture = &game_manager.resource.getTexture("tile_atlas"); 
+    game_manager.window.draw(regionmap_mesh_tile, states_tiles);
 
     for(const auto& object : draw_order) {
         sf::RenderStates states;
-        states.texture = &this->manager->resource.getTexture(object.getTextureName());
+        states.texture = &game_manager.resource.getTexture(object.getTextureName());
 
-        if(!this->manager->inScreenSpace(object))
+        if(!game_manager.window.inScreenSpace(object))
             continue;
 
         sf::VertexArray game_object(sf::Quads, 4);
-        auto position2d = object.getPosition2D();
-        auto size       = object.getSize();
+        auto position2d = object.getPosition2D().asSFMLVector2f();
+        auto size       = object.getSize().asSFMLVector2f();
 
         game_object[0].position = position2d;    
         game_object[1].position = position2d + sf::Vector2f(size.x, 0);
@@ -352,70 +348,41 @@ void Regionmap::renderRegion() {
         game_object[2].texCoords = sf::Vector2f(size.x, size.y);
         game_object[3].texCoords = sf::Vector2f(0, size.y);
         
-        this->manager->window.draw(game_object, states);
-        gpu_draw_calls++;
+        game_manager.window.draw(game_object, states);
     }
-
-    this->manager->updateDrawCalls(gpu_draw_calls);
 }
 
 void Regionmap::higlightTile() {
-    auto tile_size   = game_settings.tileSize();
-    auto tile_offset = game_settings.tileOffset();
-    auto region_size = game_settings.getRegionSize();
+    auto tile_size   = tileSize().asSFMLVector2f();
+    auto tile_offset = tileOffset().asSFMLVector2f();
+    auto region_size = getRegionSize();
 
-    sf::Vector2i mouse_position(
+    auto mouse_position = core::Vector2f(
         this->mouse_position_window.x,
         this->mouse_position_window.y
     );
 
-    sf::Vector2i cell(
-        mouse_position.x / tile_size.x,
-        mouse_position.y / tile_size.y
-    );
-
-    // Offset withing the tile.
-    // Used to find pixel colour on the cheat-texture.
-    sf::Vector2i offset(
-        (int)mouse_position.x % (int)tile_size.x,
-        (int)mouse_position.y % (int)tile_size.y
-    );
-
-    sf::Vector2i selected(
-        (cell.y - tile_offset.y) + (cell.x - tile_offset.x),
-        (cell.y - tile_offset.y) - (cell.x - tile_offset.x)
-    );
-
-    auto colour_name = getTilePixelColour(this->manager->resource.getTexture("tile_template_direction") ,offset);
-    if(colour_name == "Red")
-        selected += sf::Vector2i(-1, 0);
-
-    if(colour_name == "Green")
-        selected += sf::Vector2i(1, 0);
-
-    if(colour_name == "Blue")
-        selected += sf::Vector2i(0, -1);
-    
-    if(colour_name == "Yellow")
-        selected += sf::Vector2i(1, 0);
-
-    if(!game_settings.inRegionBounds(selected))
+    auto selected = tileGridPosition(mouse_position);
+    if(!inRegionBounds(selected)) {
+        this->current_index = -1;
         return;
+    }
 
-    int index = game_settings.calculateRegionIndex(selected.x, selected.y);
+    int index = calculateRegionIndex(selected.x, selected.y);
     this->current_index = index;
+    
     if(this->mouse_drag)
         return;
 
     if(!this->controls.mouseRightPressed())
         return;
 
-    auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-    if(building_menu->getBuilding() != BUILDING_EMPTY)
-        return;
+    // auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
+    // if(building_menu->getBuilding() != BUILDING_EMPTY)
+    //     return;
 
     const auto& tile   = this->region->map[index];
-    auto tile_position = tile.getPosition2D();
+    auto tile_position = tile.getPosition2D().asSFMLVector2f();
 
     sf::VertexArray highlight(sf::Quads, 4);
 
@@ -430,8 +397,8 @@ void Regionmap::higlightTile() {
     highlight[3].texCoords = sf::Vector2f(0, tile_size.y);
 
     sf::RenderStates states;
-    states.texture = &this->manager->resource.getTexture("tile_highlight_1x1");
-    this->manager->window.draw(highlight, states);
+    states.texture = &game_manager.resource.getTexture("tile_highlight_1x1");
+    game_manager.window.draw(highlight, states);
 
     const auto& current_tile = this->region->map[this->current_index];
     
@@ -442,43 +409,43 @@ void Regionmap::higlightTile() {
         tile_data += this->region->getResourceAt(this->current_index).getResourceName() + "\n";
 
     auto cursor_offset = sf::Vector2f(
-        game_settings.tileSize().x / 2,
-        game_settings.tileSize().y / 2
+        tileSize().x / 2,
+        tileSize().y / 2
     );
 
-    gui::Label tile_information(this->manager, tile_data);
-    tile_information.setWidgetPosition(this->mouse_position_interface + cursor_offset);
+    // gui::Label tile_information(tile_data);
+    // tile_information.setWidgetPosition(this->mouse_position_interface + cursor_offset);
 
-    auto current_view = this->manager->window.getWindow()->getView();
+    // auto current_view = game_manager.window.getWindow()->getView();
      
-    this->manager->window.getWindow()->setView(this->view_interface);
-    this->manager->window.draw(tile_information);
-    this->manager->window.getWindow()->setView(current_view);
+    // game_manager.window.getWindow()->setView(this->view_interface);
+    // game_manager.window.draw(tile_information);
+    // game_manager.window.getWindow()->setView(current_view);
 }
 
 Region* Regionmap::getCurrentRegion() {
     return this->region;
 }
 
-int Regionmap::getRegionIndex() {
+int Regionmap::getRegionIndex() const {
     return this->region_index;
 }
 
-int Regionmap::getCurrentIndex() {
+int Regionmap::getCurrentIndex() const {
     return this->current_index;
 }
 
 void Regionmap::updateTile() {
-    auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-    if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
-        auto building = building_menu->getBuilding();
-        auto grid_position = tileGridPosition(this->current_index);
-        auto* human = this->manager->getHumanPlayer();
+    // auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
+    // if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
+    //     auto building = building_menu->getBuilding();
+    //     auto grid_position = tileGridPosition(this->current_index);
+    //     auto* human = game_manager.getHumanPlayer();
         
-        human->placeBuildingCheck(*this->region, building, grid_position);
-        this->updatePaths(this->current_index);
-        this->recalculate_tree_mesh = true;
-    }
+    //     human->placeBuildingCheck(*this->region, building, grid_position);
+    //     this->updatePaths(this->current_index);
+    //     this->recalculate_tree_mesh = true;
+    // }
 }
 
 void Regionmap::updatePaths(int index) {
@@ -543,8 +510,8 @@ void Regionmap::updatePaths(int index) {
         if(*building_at_index == BUILDING_PATH_DIRT || *building_at_index == BUILDING_PATH_STONE) {
             bool LEFT  = this->region->isPath(index - 1);
             bool RIGHT = this->region->isPath(index + 1);
-            bool TOP   = this->region->isPath(index - game_settings.getRegionWidth());
-            bool DOWN  = this->region->isPath(index + game_settings.getRegionWidth());
+            bool TOP   = this->region->isPath(index - world_data.getRegionWidth());
+            bool DOWN  = this->region->isPath(index + world_data.getRegionWidth());
             
             directions(LEFT, RIGHT, TOP, DOWN, index);
         }
@@ -557,8 +524,8 @@ void Regionmap::updatePaths(int index) {
         if(this->region->isPath(i)) {
             bool LEFT  = this->region->isPath(i - 1);
             bool RIGHT = this->region->isPath(i + 1);
-            bool TOP   = this->region->isPath(i - game_settings.getRegionWidth());
-            bool DOWN  = this->region->isPath(i + game_settings.getRegionWidth());
+            bool TOP   = this->region->isPath(i - world_data.getRegionWidth());
+            bool DOWN  = this->region->isPath(i + world_data.getRegionWidth());
             
             directions(LEFT, RIGHT, TOP, DOWN, i);
         }
@@ -567,17 +534,20 @@ void Regionmap::updatePaths(int index) {
 }
 
 void Regionmap::createUI() {
-    auto widget_menu_building = gui::InterfaceComponent(new gui::WidgetMenuBuilding(this->manager));
-    auto widget_performance   = gui::InterfaceComponent(new gui::DebugPerformance(this->manager));
-    auto widget_storage       = gui::InterfaceComponent(new gui::WidgetRegionStorage(this->manager));
-    
-    this->addInterfaceComponent(widget_menu_building);
-    this->addInterfaceComponent(widget_performance);
-    this->addInterfaceComponent(widget_storage);
+    namespace fs = std::filesystem;
+    for(const auto& file : fs::directory_iterator("./data/interface/regionmap/")) {
+        const auto& filename = readBefore(file.path().string(), ".lua");
+        const auto& extension = file.path().extension();
+
+        if(extension == ".luagui") {
+            auto interface_page = gui::InterfaceComponent(new gui::InterfacePage(filename + ".luagui", filename + ".luafun"));   
+            this->addInterfaceComponent(interface_page);
+        }
+    }
 }
 
 void Regionmap::updateScheduler() {    
-    // if(game_settings.astarEnabled()) {
+    // if(world_data.astarEnabled()) {
     //     auto& update_population_path = this->scheduler.at("update_path");
     //     if(update_population_path.first != update_population_path.second)
     //         update_population_path.first++;
@@ -585,17 +555,17 @@ void Regionmap::updateScheduler() {
     //     if(update_population_path.first == update_population_path.second) {
     //         for(auto& unit : this->region->population) {
     //             if(!unit.hasPath()) {
-    //                 auto random_index = rand() % game_settings.getRegionSize();
+    //                 auto random_index = rand() % world_data.getRegionSize();
     //                 auto found = false;
     //                 while(!found) {
-    //                     random_index = rand() % game_settings.getRegionSize();
+    //                     random_index = rand() % world_data.getRegionSize();
     //                     if(this->region->map[random_index].tiletype.is_terrain() && !this->region->isTree(random_index) && !this->region->getBuildingAt(region_index)) {
     //                         found = true;
     //                         break;
     //                     }
     //                 } 
 
-    //                 auto path = this->manager->r_astar(unit.current_index, random_index);
+    //                 auto path = game_manager.r_astar(unit.current_index, random_index);
     //                 unit.setNewPath(path);
                     
     //                 this->recalculate_mesh = true;
@@ -618,7 +588,7 @@ void Regionmap::updateScheduler() {
     //                 const auto& tile  = this->region->map[next];
     //                 auto new_position = tile.getPosition();
 
-    //                 unit.object_position = new_position + sf::Vector3f(0, -(unit.object_size.y - game_settings.tileSize().y), 0);
+    //                 unit.object_position = new_position + sf::Vector3f(0, -(unit.object_size.y - world_data.tileSize().y), 0);
     //                 unit.current_index   = next;
 
     //                 // Assign texture.
@@ -635,10 +605,10 @@ void Regionmap::updateScheduler() {
     //                 else if(index_difference == -1)
     //                     unit.object_texture_name = texture_base + "_tl";
 
-    //                 else if(index_difference == game_settings.getRegionWidth())
+    //                 else if(index_difference == world_data.getRegionWidth())
     //                     unit.object_texture_name = texture_base + "_bl";
 
-    //                 else if(index_difference == -game_settings.getRegionWidth())
+    //                 else if(index_difference == -world_data.getRegionWidth())
     //                     unit.object_texture_name = texture_base + "_tr";
     //             }
     //         }
@@ -650,13 +620,25 @@ void Regionmap::updateScheduler() {
 }
 
 void Regionmap::gamestateLoad() {
+    auto worldmap = (Worldmap*)game_manager.gamestate.getGamestateByName("Worldmap");
+    auto current_index = worldmap->selected_index;
+    this->region_index = current_index;
+
     // Region's index was set upon entering the region.
     // It's set in widgetRegion.cpp
-    this->region = &this->manager->world.world_map[this->region_index];
+    this->region = &game_manager.world_map[current_index];
+
+    if(!this->region->visited)
+        game_manager.world_generator.generateRegion(this->region_index);
 
     this->recalculate_mesh      = true;
     this->recalculate_tree_mesh = true;
 
+    game_manager.window.setView(this->view_interface);
+    this->resizeViews();
+    this->resizeUI();
+    game_manager.window.setView(this->view_game);
+    
     int side_vector_size = 0;
     for(int i = 0; i < this->region->sides.size(); i++)
         side_vector_size += this->region->sides[i].size();
@@ -665,47 +647,17 @@ void Regionmap::gamestateLoad() {
 
     regionmap_mesh_tile.create(verticies_tilemap);
 
-    this->manager->window.setView(this->view_interface);
-    this->resizeViews();
-    this->resizeUI();
-    this->manager->window.setView(this->view_game);
-
     // Tile index on which you centre the camera.
-    auto tile_index = game_settings.calculateRegionIndex(game_settings.getRegionWidth() / 2, game_settings.getRegionWidth() / 2);
+    auto tile_index = calculateRegionIndex(world_data.r_width / 2, world_data.r_width / 2);
 
     // Here you can setup what to do when entering a region.
     // For example, centre the camera.
     sf::Vector2f first_tile_position = sf::Vector2f(
-        this->region->map[tile_index].getPosition().x + game_settings.tileSize().x / 2,
+        this->region->map[tile_index].getPosition().x + tileSize().x / 2,
         this->region->map[tile_index].getPosition().y
     );
 
     this->view_game.setCenter(first_tile_position);
-
-    // if(this->region->isOwned() && this->region->getPopulation() == 0) {
-    //     this->region->population.resize(game_settings.getRegionInitialPopulation());
-
-    //     std::vector <int> buffer;
-    //     std::vector <std::string> directions = { "_tl", "_tr", "_bl", "_br" };
-    //     for(int i = 0; i < game_settings.getRegionInitialPopulation(); i++) {
-    //         auto& pop = this->region->population[i];
-    //         auto  free_spot = this->region->findNotOccupiedTile(buffer);
-    //         pop.current_index = free_spot;
-
-    //         const auto& tile = this->region->map[free_spot];
-    //         const auto tile_position = tile.getPosition();
-    //         std::string base_texture = tile.tiletype.is_river() 
-    //             ? "unit_transport_arrow"
-    //             : "unit_classic_arrow";
-
-    //         pop.object_size         = sf::Vector2f(64, 96);
-    //         pop.object_position     = tile_position + sf::Vector3f(0, -(pop.object_size.y - game_settings.tileSize().y), 0);
-    //         pop.object_texture_name = base_texture + directions[rand() % directions.size()];
-
-    //         buffer.push_back(free_spot);
-    //     }
-    // }
-    
     this->region->visited = true;
 
     for(auto& pair : this->interface) {
@@ -726,18 +678,19 @@ void Regionmap::recalculateMesh() {
 }
 
 void Regionmap::renderSelectedBuilding() {
+    /*
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
     auto  building      = building_menu->getBuilding();
     if(building != BUILDING_EMPTY && building_menu->isVisible()) {
-        auto tile = this->region->map[this->current_index];
+        auto tile = this->region->getTileAtIndex(this->current_index);
 
         auto building_size = building.getBuildingArea(); 
         auto grid_position = tileGridPosition(this->current_index);
         
         for(int y = grid_position.y; y < grid_position.y + building_size.y; y++) {
             for(int x = grid_position.x; x < grid_position.x + building_size.x; x++) {
-                auto grid = sf::Vector2i(x, y);
-                if(!game_settings.inRegionBounds(grid)) 
+                auto grid = core::Vector2i(x, y);
+                if(!inRegionBounds(grid)) 
                     return;
             }
         }
@@ -745,9 +698,9 @@ void Regionmap::renderSelectedBuilding() {
         building.object_position = tile.getPosition();
         
         const int a1_w = 0; 
-        const int a1_h = game_settings.tileSize().y; 
-        const int r_w  = game_settings.tileSize().x / 2;
-        const int r_h  = game_settings.tileSize().y;    
+        const int a1_h = tileSize().y; 
+        const int r_w  = tileSize().x / 2;
+        const int r_h  = tileSize().y;    
         
         // This takes only one dimension into account because this engine currently
         // does not support non-square buildings.
@@ -768,14 +721,14 @@ void Regionmap::renderSelectedBuilding() {
         // Border.
         
         auto building_area = building.getBuildingArea().x;
-        auto tile_size     = game_settings.tileSize(); 
+        auto tile_size     = tileSize(); 
         int  highlight_size_x = building_area * tile_size.x;
         int  highlight_size_y = building_area * tile_size.y;
 
-        auto top    = building.getPosition2D() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x / 2, 0);
-        auto right  = building.getPosition2D() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x, highlight_size_y / 2);
-        auto left   = building.getPosition2D() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(0, highlight_size_y / 2);
-        auto bottom = building.getPosition2D() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x / 2, highlight_size_y);  
+        auto top    = building.getPosition2D().asSFMLVector2f() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x / 2, 0);
+        auto right  = building.getPosition2D().asSFMLVector2f() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x, highlight_size_y / 2);
+        auto left   = building.getPosition2D().asSFMLVector2f() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(0, highlight_size_y / 2);
+        auto bottom = building.getPosition2D().asSFMLVector2f() + sf::Vector2f(-(building_area - 1) * tile_size.x / 2, 0) + sf::Vector2f(highlight_size_x / 2, highlight_size_y);  
 
         sf::VertexArray building_surround_highlight(sf::Lines, 8);
 
@@ -788,25 +741,25 @@ void Regionmap::renderSelectedBuilding() {
         building_surround_highlight[6].position = left;
         building_surround_highlight[7].position = top;
 
-        building_surround_highlight[0].color = COLOUR_BLUE_RIVER;
-        building_surround_highlight[1].color = COLOUR_BLUE_RIVER;
-        building_surround_highlight[2].color = COLOUR_BLUE_RIVER;
-        building_surround_highlight[3].color = COLOUR_BLUE_RIVER;
-        building_surround_highlight[4].color = COLOUR_BLUE_RIVER;
-        building_surround_highlight[5].color = COLOUR_BLUE_RIVER;
-        building_surround_highlight[6].color = COLOUR_BLUE_RIVER;
-        building_surround_highlight[7].color = COLOUR_BLUE_RIVER;
+        building_surround_highlight[0].color = COLOUR_BLUE_RIVER.asSFMLColour();
+        building_surround_highlight[1].color = COLOUR_BLUE_RIVER.asSFMLColour();
+        building_surround_highlight[2].color = COLOUR_BLUE_RIVER.asSFMLColour();
+        building_surround_highlight[3].color = COLOUR_BLUE_RIVER.asSFMLColour();
+        building_surround_highlight[4].color = COLOUR_BLUE_RIVER.asSFMLColour();
+        building_surround_highlight[5].color = COLOUR_BLUE_RIVER.asSFMLColour();
+        building_surround_highlight[6].color = COLOUR_BLUE_RIVER.asSFMLColour();
+        building_surround_highlight[7].color = COLOUR_BLUE_RIVER.asSFMLColour();
 
-        this->manager->window.draw(building_surround_highlight);
+        game_manager.window.draw(building_surround_highlight);
 
         // Highlight.
 
         sf::VertexArray building_highlight(sf::Quads, 4);
 
-        building_highlight[0].position = building.getPosition2D() + offset;
-        building_highlight[1].position = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, 0);
-        building_highlight[2].position = building.getPosition2D() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); 
-        building_highlight[3].position = building.getPosition2D() + offset + sf::Vector2f(0, building.getSize().y);
+        building_highlight[0].position = building.getPosition2D().asSFMLVector2f() + offset;
+        building_highlight[1].position = building.getPosition2D().asSFMLVector2f() + offset + sf::Vector2f(building.getSize().x, 0);
+        building_highlight[2].position = building.getPosition2D().asSFMLVector2f() + offset + sf::Vector2f(building.getSize().x, building.getSize().y); 
+        building_highlight[3].position = building.getPosition2D().asSFMLVector2f() + offset + sf::Vector2f(0, building.getSize().y);
 
         building_highlight[0].texCoords = sf::Vector2f(0, 0);
         building_highlight[1].texCoords = sf::Vector2f(building.getSize().x, 0); 
@@ -815,17 +768,17 @@ void Regionmap::renderSelectedBuilding() {
 
         auto invalid_position = !this->region->isBuildingPositionValid(building, grid_position); 
         if(invalid_position) {
-            building_highlight[0].color = COLOUR_RED;
-            building_highlight[1].color = COLOUR_RED;
-            building_highlight[2].color = COLOUR_RED;
-            building_highlight[3].color = COLOUR_RED;
+            building_highlight[0].color = COLOUR_RED.asSFMLColour();
+            building_highlight[1].color = COLOUR_RED.asSFMLColour();
+            building_highlight[2].color = COLOUR_RED.asSFMLColour();
+            building_highlight[3].color = COLOUR_RED.asSFMLColour();
         }
 
         const auto texture = building.getTextureName();
         
         sf::RenderStates states;
-        states.texture = &this->manager->resource.getTexture(texture);
-        this->manager->window.draw(building_highlight, states);
+        states.texture = &game_manager.resource.getTexture(texture);
+        game_manager.window.draw(building_highlight, states);
 
         const int area_x = building.getBuildingScanArea().x;
         const int area_y = building.getBuildingScanArea().y;
@@ -836,14 +789,13 @@ void Regionmap::renderSelectedBuilding() {
             sf::Vertex vertex[vertex_count];
             for(int y = -area_y; y <= area_y + building_area - 1; y++) {
                 for(int x = -area_x; x <= area_x + building_area - 1; x++) {
-                    const int index = this->current_index + game_settings.calculateRegionIndex(x, y);
-
-                    if(!game_settings.inRegionBounds(index))
+                    const int index = this->current_index + calculateRegionIndex(x, y);
+                    if(!inRegionBounds(index))
                         continue;
 
                     auto& tile = this->region->map[index];
-                    auto tile_position = tile.getPosition2D();
-                    auto tile_size     = tile.getSize();
+                    auto tile_position = tile.getPosition2D().asSFMLVector2f();
+                    auto tile_size     = tile.getSize().asSFMLVector2f();
 
                     sf::Vertex* quad = &vertex[vertex_index * 4];
 
@@ -857,12 +809,12 @@ void Regionmap::renderSelectedBuilding() {
                     quad[2].texCoords = sf::Vector2f(tile_size.x, tile_size.y);
                     quad[3].texCoords = sf::Vector2f(0, tile_size.y);
 
-                    auto colour = COLOUR_WHITE_TRANSPARENT90PERCENT;
+                    auto colour = COLOUR_WHITE_TRANSPARENT90PERCENT.asSFMLColour();
                     if(building.isTileHarvestable(this->region, index))
-                        colour = COLOUR_GREEN_TRANSPARENT90PERCENT;
+                        colour = COLOUR_GREEN_TRANSPARENT90PERCENT.asSFMLColour();
 
                     else if(region->isSpotOccupied(index))
-                        colour = COLOUR_RED_TRANSPARENT90PERCENT;
+                        colour = COLOUR_RED_TRANSPARENT90PERCENT.asSFMLColour();
 
                     quad[0].color = colour;
                     quad[1].color = colour;
@@ -874,8 +826,9 @@ void Regionmap::renderSelectedBuilding() {
             }
 
             sf::RenderStates states;
-            states.texture = &this->manager->resource.getTexture("tile_transparent_white");
-            this->manager->window.getWindow()->draw(vertex, vertex_count, sf::Quads, states);
+            states.texture = &game_manager.resource.getTexture("tile_transparent_white");
+            game_manager.window.getWindow()->draw(vertex, vertex_count, sf::Quads, states);
         }
     }
+    */
 }

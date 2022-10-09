@@ -35,7 +35,7 @@ class Biome {
         const std::string& getBiomeName()             const;
         const std::string& getBiomeId()               const;
         const std::string& getBiomeDescription()      const;
-        const sf::Color    getBiomeWorldmapColour()   const;
+        const core::Colour getBiomeWorldmapColour()   const;
         const std::string& getBiomeTemperature()      const;
         const std::string& getBiomeMoisture()         const;
         const std::string& getWorldmapForestTexture() const;
@@ -44,7 +44,19 @@ class Biome {
         const std::string& getRandomTile() const;
         const std::string& getRandomTree() const;
         bool               canBeForest()   const;
+
+        void setBiomeName(const std::string& name);
+        void setBiomeId(const std::string& id);
+        void setBiomeDescription(const std::string& description);
+        void setBiomeWorldmapColour(core::Colour colour);
+        void setBiomeTemperature(const std::string& temperature);
+        void setBiomeMoisture(const std::string& moisture);
+        void setWorldmapForestTexture(const std::string& texture_name);
+        void setBiomeTileList(std::vector <std::string> list);
+        void setBiomeTreeList(std::vector <std::string> list);
+
+        bool operator== (const Biome& biome) const;
 };
 }
 
-extern std::vector <iso::Biome> biomes;
+extern std::vector <iso::Biome> BIOME_TABLE;

@@ -2,63 +2,58 @@
 
 #include "building.hpp"
 #include "region.hpp"
+#include "types.hpp"
 
 namespace iso {
-    class Player {
-        friend class SimulationManager;
+struct PlayerData {
+    int id;            // Numerial id of a country and a player.
+    bool is_human;
+    std::string username;
+};
 
-        public:
-            int spawn_spot_index;
+struct CountryData {
+    int id;             // Numerical id of a country and a player.
+    int capital;        // Region index of the capital city. If does not have capital, it is set to -1.
+    int initial_spawn;  // Region index the player will spawn in first time he loads the game.
+    std::vector <int> owned_regions; // Indexes of the country owned regions.
+    std::vector <int> known_regions; // Indexes of the country discovered regions.
 
-            // std::vector <std::shared_ptr <Unit>> units;
-            std::vector <int>         owned_regions;      // Indexes of the player owned regions. 
-            std::vector <int>         discovered_regions;
-            int                       capital_region;     // Index of the capital city.
-            bool                      is_human;
-            sf::Color                 team_colour;
-            std::string               country_name;
-            int                       player_id;          // Used to differenciate between players.
-            // std::vector <RandomEvent> possible_events;    // Events that can occur to this player.
-            // std::vector <std::shared_ptr<Quest>> current_quests;
+    std::string  country_name;
+    core::Colour map_colour;
+};
 
-        public:
-            Player();
-            ~Player();
+class Player {
+    friend class SimulationManager;
 
-            bool canAffordBuilding(const Region& region, const Building& building) const;
-            bool placeBuildingCheck(Region& region, Building building, sf::Vector2i grid) const;
-            void placeBuilding(Region& region, Building building, sf::Vector2i grid) const;
-            void destroyBuilding(Region& region, sf::Vector2i grid) const;
+    protected:
+        PlayerData  player_data;
+        CountryData country_data;
 
-            // void                      addPossibleEvent(RandomEvent event);
-            // bool                      isEventAdded(RandomEvent event) const;
-            // void                      removeEvent(RandomEvent event);
-            
-            // void                      addQuest(std::shared_ptr<Quest> quest);
-            // void                      removeQuest(std::shared_ptr<Quest> quest);
-            // void                      finishQuest(std::shared_ptr<Quest> quest);
-            // bool                      hasQuest(std::shared_ptr<Quest> quest) const;
-            void                      addOwnedRegion(int region_index);
-            void                      removeOwnedRegion(int region_index);
-            const std::vector <int>&  readOwnedRegions();
-            int                       empireSize() const; // Number of regions that the player controls.
-            int                       getCapital() const;
-            bool                      hasCapital() const;
-            void                      setCapital(int region_index);
-            void                      setHuman(bool is_human);
-            bool                      isHuman() const;
-            const sf::Color           getTeamColourFull() const;
-            const sf::Color           getTeamColourTransparent() const;
-            void                      setTeamColour(const sf::Color& team_colour);
-            void                      setCountryName(const std::string& name);
-            const std::string&        getCountryName();
-            // void                      addUnit(std::shared_ptr <Unit> unit);
-            // Unit*                     getUnit(int unit_id);
-            // Unit*                     getUnit(std::string unit_name);
-            // bool                      hasUnit(int unit_id) const;
-            // void                      removeUnit(int unit_id);
-            int                       getID() const;
-            bool                      discoveredRegion(int index) const;
-            bool                      ownsRegion(int index) const;
-    };
+    public:
+        Player(PlayerData pdata, CountryData cdata);
+        ~Player();
+
+        bool canAffordBuilding(const Region& region, const Building& building) const;
+        bool placeBuildingCheck(Region& region, Building building, core::Vector2i grid) const;
+        void placeBuilding(Region& region, Building building, core::Vector2i grid) const;
+        void destroyBuilding(Region& region, core::Vector2i grid) const;
+        void addOwnedRegion(int index);
+        void removeOwnedRegion(int index);
+        bool ownsRegion(int index) const;
+        Region& getOwnedRegion(int index);
+        void addKnownRegion(int index);
+        bool discoveredRegion(int index) const;
+        int  countrySize() const;
+        int  getCapital() const;
+        bool hasCapital() const;
+        void setCapital(int index);
+        bool isHuman() const;
+        void setHuman(bool is_human);
+        core::Colour getCountryColourFull() const;
+        core::Colour getCountryColourTransparent() const;
+        void setCountryColour(core::Colour team_colour);
+        void setCountryName(const std::string& name);
+        const std::string& getCountryName();
+        int getID() const;
+};
 }

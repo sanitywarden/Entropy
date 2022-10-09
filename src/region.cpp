@@ -1,6 +1,6 @@
 #include "region.hpp"
 #include "globalutilities.hpp"
-#include "generationSettings.hpp"
+#include "worldData.hpp"
 
 #include <iostream>
 #include <string>
@@ -8,7 +8,7 @@
 using namespace iso;
 
 Region::Region() 
-    : GameObject(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0), sf::Vector2f(0, 0), "*", "Region") 
+    : GameObject(core::Vector3f(0, 0, 0), core::Vector3f(0, 0, 0), core::Vector2i(0, 0), "*", "Region") 
 {
     this->_marked    = false;
     this->_direction = RiverDirection::RIVER_NONE;
@@ -98,7 +98,7 @@ bool Region::isPassableRegionmap(int index) const {
     return false;
 } 
 
-bool Region::isPassableRegionmap(sf::Vector2i grid) const {
+bool Region::isPassableRegionmap(core::Vector2i grid) const {
     return false;
 }
 
@@ -133,22 +133,22 @@ bool Region::isPassableRegionmap(sf::Vector2i grid) const {
     // this->resources -= building.getBuildingCost();
 // }
 
-bool Region::isBuildingPositionValid(const Building& building, sf::Vector2i grid) const {
-    auto index = game_settings.calculateRegionIndex(grid);
+bool Region::isBuildingPositionValid(const Building& building, core::Vector2i grid) const {
+    auto index = calculateRegionIndex(grid);
     auto building_size = building.getBuildingArea();
 
-    if(!game_settings.inRegionBounds(grid))
+    if(!inRegionBounds(grid))
         return false;
     
-    if(!game_settings.inRegionBounds(grid + sf::Vector2i(building_size.x - 1, building_size.y - 1)))
+    if(!inRegionBounds(grid + core::Vector2i(building_size.x - 1, building_size.y - 1)))
         return false;
 
     for(int y = 0; y < building_size.y; y++) {
         for(int x = 0; x < building_size.x; x++) {
-            auto grid_copy = grid + sf::Vector2i(x, y);
-            auto loop_index = game_settings.calculateRegionIndex(grid_copy);
+            auto grid_copy = grid + core::Vector2i(x, y);
+            auto loop_index = calculateRegionIndex(grid_copy);
 
-            if(!game_settings.inRegionBounds(loop_index))
+            if(!inRegionBounds(loop_index))
                 return false;
 
             if(this->map.at(loop_index).getElevation() != this->map.at(index).getElevation())
@@ -173,7 +173,7 @@ void Region::removeBuildingCost(const Building& building) {
 }
 
 bool Region::isSpotOccupied(int index) const {
-    if(!game_settings.inRegionBounds(index))
+    if(!inRegionBounds(index))
         return false;
 
     if(!this->map.at(index).tiletype.is_terrain())
@@ -187,20 +187,20 @@ bool Region::isSpotOccupied(int index) const {
     return false;
 }
 
-bool Region::isSpotOccupied(sf::Vector2i grid_position) const {
-    auto index = game_settings.calculateRegionIndex(grid_position.x, grid_position.y);
+bool Region::isSpotOccupied(core::Vector2i grid_position) const {
+    auto index = calculateRegionIndex(grid_position);
     return this->isSpotOccupied(index);
 }
 
-// void Region::placeBuilding(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
+// void Region::placeBuilding(Building building, sf::Vector2f texture_size, core::Vector2i grid_position) {
 
 // }
 
-// bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, sf::Vector2i grid_position) {
+// bool Region::placeBuildingCheck(Building building, sf::Vector2f texture_size, core::Vector2i grid_position) {
 //     if(this->isPositionValid(building, grid_position) && this->isBuildingAffordable(building)) {
 //         this->placeBuilding(building, texture_size, grid_position);
         
-//         if(game_settings.buildingCostEnabled())
+//         if(world_data.buildingCostEnabled())
 //             this->removeBuildingCost(building);
         
 //         return true;
@@ -216,7 +216,7 @@ bool Region::isSpotOccupied(sf::Vector2i grid_position) const {
 //         if(!building->isRemovable())
 //             return;
         
-//         if(game_settings.buildingCostEnabled()) {
+//         if(world_data.buildingCostEnabled()) {
 //             auto refund = building->getBuildingRefund();
 //             for(auto resource : refund) {
 //                 this->addItem(resource);
@@ -225,7 +225,7 @@ bool Region::isSpotOccupied(sf::Vector2i grid_position) const {
         
 //         for(int y = 0; y < building->getBuildingArea().y; y++) {
 //             for(int x = 0; x < building->getBuildingArea().x; x++) {
-//                 const int i = index + game_settings.calculateRegionIndex(x, y);
+//                 const int i = index + world_data.calculateRegionIndex(x, y);
 //                 this->buildings.erase(i);
 //             }
 //         }
@@ -240,7 +240,7 @@ bool Region::isSpotOccupied(sf::Vector2i grid_position) const {
 
 //     for(int y = -search_area.y; y <= search_area.y; y++) {
 //         for(int x = -search_area.x; x <= search_area.x; x++) {
-//             const int index = building_index + game_settings.calculateRegionIndex(x, y);
+//             const int index = building_index + world_data.calculateRegionIndex(x, y);
 
 //             // Building or a nullptr.
 //             auto tile_building = this->getBuildingAt(index);
@@ -264,7 +264,7 @@ bool Region::isSpotOccupied(sf::Vector2i grid_position) const {
 
 //     for(int y = -building_size.y; y <= building_size.y; y++) {
 //         for(int x = -building_size.x; x <= building_size.x; x++) {
-//             const int index = building_index + game_settings.calculateRegionIndex(x, y);
+//             const int index = building_index + world_data.calculateRegionIndex(x, y);
             
 //             if(building_index == index)
 //                 return true;
@@ -277,26 +277,26 @@ bool Region::isSpotOccupied(sf::Vector2i grid_position) const {
 // Returns the index of a closest free (not occupied) tile relative to the centre of the map.
 // If no free spot is found, returns -1.
 // int Region::findNotOccupiedTile(std::vector <int> buffer) const {
-//     sf::Vector2i middle = game_settings.getWorldWidth() % 2 == 0
-//         ? sf::Vector2i(game_settings.getRegionWidth() / 2, game_settings.getRegionWidth() / 2)
-//         : sf::Vector2i(game_settings.getRegionWidth() / 2 + 1, game_settings.getRegionWidth() / 2 + 1);
+//     core::Vector2i middle = world_data.getWorldWidth() % 2 == 0
+//         ? core::Vector2i(world_data.getRegionWidth() / 2, world_data.getRegionWidth() / 2)
+//         : core::Vector2i(world_data.getRegionWidth() / 2 + 1, world_data.getRegionWidth() / 2 + 1);
     
-//     const int middle_index = game_settings.calculateRegionIndex(middle.x, middle.y); 
+//     const int middle_index = world_data.calculateRegionIndex(middle.x, middle.y); 
 
 //     int size = 1;
 //     while(true) {
 //         for(int y = -size; y <= size; y++) {
 //             for(int x = -size; x <= size; x++) {
-//                 sf::Vector2i normalised_grid;
+//                 core::Vector2i normalised_grid;
 //                 normalised_grid.x = (x <= 0)
-//                     ? x + game_settings.getRegionWidth() / 2
-//                     : x + game_settings.getRegionWidth() / 2 - 1;
+//                     ? x + world_data.getRegionWidth() / 2
+//                     : x + world_data.getRegionWidth() / 2 - 1;
 
 //                 normalised_grid.y = (y <= 0)
-//                     ? y + game_settings.getRegionWidth() / 2
-//                     : y + game_settings.getRegionWidth() / 2 - 1;
+//                     ? y + world_data.getRegionWidth() / 2
+//                     : y + world_data.getRegionWidth() / 2 - 1;
 
-//                 const int index     = middle_index + game_settings.calculateRegionIndex(x, y);
+//                 const int index     = middle_index + world_data.calculateRegionIndex(x, y);
 //                 const bool occupied = this->isSpotOccupied(index);
                 
 //                 if((occupied || std::find(buffer.begin(), buffer.end(), index) != buffer.end()) && y == size - 1 && x == size - 1) {
@@ -327,8 +327,8 @@ bool Region::treeExistsAt(int index) const {
     return this->trees.count(index);
 }
 
-bool Region::treeExistsAt(sf::Vector2i grid) const {
-    auto index = game_settings.calculateRegionIndex(grid);
+bool Region::treeExistsAt(core::Vector2i grid) const {
+    auto index = calculateRegionIndex(grid);
     return this->treeExistsAt(index);
 }
 
@@ -336,8 +336,8 @@ bool Region::resourceExistsAt(int index) const {
     return this->resources.count(index);
 }
 
-bool Region::resourceExistsAt(sf::Vector2i grid) const {
-    auto index = game_settings.calculateRegionIndex(grid);
+bool Region::resourceExistsAt(core::Vector2i grid) const {
+    auto index = calculateRegionIndex(grid);
     return this->resourceExistsAt(index);
 }
 
@@ -345,8 +345,8 @@ const Resource& Region::getResourceAt(int index) const {
     return this->resources.at(index);
 }
 
-const Resource& Region::getResourceAt(sf::Vector2i grid) const {
-    auto index = game_settings.calculateRegionIndex(grid);
+const Resource& Region::getResourceAt(core::Vector2i grid) const {
+    auto index = calculateRegionIndex(grid);
     return this->getResourceAt(index);
 }
 
@@ -354,8 +354,8 @@ bool Region::buildingExistsAtIndex(int index) const {
     return this->buildings.count(index);
 }
 
-bool Region::buildingExistsAtGrid(sf::Vector2i grid) const {
-    auto index = game_settings.calculateRegionIndex(grid);
+bool Region::buildingExistsAtGrid(core::Vector2i grid) const {
+    auto index = calculateRegionIndex(grid);
     return this->buildingExistsAtIndex(index);
 }
 
@@ -363,19 +363,17 @@ const Building& Region::getBuildingAtIndex(int index) const {
     return this->buildings.at(index);
 }
 
-const Building& Region::getBuildingAtGrid(sf::Vector2i grid) const {
-    auto index = game_settings.calculateRegionIndex(grid);
+const Building& Region::getBuildingAtGrid(core::Vector2i grid) const {
+    auto index = calculateRegionIndex(grid);
     return this->getBuildingAtIndex(index);
 }
 
 Tile& Region::getTileAtIndex(int index) {
-    try {
-        return this->map.at(index);
-    }
-    catch(const std::out_of_range& error) {
-        std::cout << "[Region]: getTileAt(" << index << "): Requested a tile out of region bounds.\n";
-        throw error;
-    }
+    if(!inRegionBounds(index))
+        printError("Region::getTileAtIndex()", "Requested tile is out of bounds");
+    return this->map.at(index);
+}
 
-    std::cout << "[Region]: getTileAt(" << index << "): Code reach end of function without return value.\n";
+bool Region::isBiome(const Biome& biome) const {
+    return this->biome == biome;
 }

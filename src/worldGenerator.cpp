@@ -1,56 +1,61 @@
 #include "worldGenerator.hpp"
 #include "globalutilities.hpp"
-#include "generationSettings.hpp"
+#include "worldData.hpp"
+#include "simulationManager.hpp"
+#include "colours.hpp"
+#include "nameGenerator.hpp"
 
-using namespace iso;
-
-WorldGenerator::WorldGenerator() 
-{}
-
-WorldGenerator::WorldGenerator(ResourceManager* resource, Texturizer* texturizer) {
-    this->resource   = resource;
-    this->texturizer = texturizer;
-
-    auto world_size = game_settings.getWorldSize();
+namespace iso {
+WorldGenerator::WorldGenerator() {
+    auto world_size = getWorldSize();
 
     this->m_gradient.resize(world_size);
-    this->world_map.resize(world_size);
+    game_manager.world_map.resize(world_size);
 
     std::srand(std::time(0));
-
     this->noise = wgn::NoiseAlgorithms();
-    this->texturizer->createColouredWorldmapTexture("panel_full", "panel_ocean", COLOUR_BLUE_OCEAN, COLOUR_BLUE_OCEAN);
 }
 
 WorldGenerator::~WorldGenerator() 
 {}
 
+void WorldGenerator::generate() {
+    game_manager.world_generator = WorldGenerator();
+    game_manager.world_map     = std::vector <Region> (getWorldSize());
+    game_manager.forests = std::map <int, GameObject> ();
+    game_manager.rivers  = std::map <int, GameObject> ();
+    game_manager.lakes   = std::map <int, GameObject> ();
+    // game_manager.player_manager = PlayerManager();
+
+    this->generateWorld();
+}
+
 void WorldGenerator::generateWorld() {
     std::cout << "====================\n";
-    std::cout << "[World Generation]: Generating world.\n";
+    std::cout << "[] Generating world.\n";
 
     this->m_region = Region();
     sf::Clock clock;
-    std::vector <float> worldmap_noise(game_settings.getWorldSize());
+    std::vector <float> worldmap_noise(getWorldSize());
 
     // Generate initial noise map.
     {
-        for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-            for(int x = 0; x < game_settings.getWorldWidth(); x++) {
-                const int index = game_settings.calculateWorldIndex(x, y);
+        for(int y = 0; y < world_data.w_width; y++) {
+            for(int x = 0; x < world_data.w_width; x++) {
+                const int index = calculateWorldIndex(x, y);
 
                 if(
-                    x < game_settings.getWorldMargin() || 
-                    x > (game_settings.getWorldWidth() - game_settings.getWorldMargin()) || 
-                    y < game_settings.getWorldMargin() || 
-                    y > (game_settings.getWorldWidth() - game_settings.getWorldMargin())
+                    x < getWorldMargin() || 
+                    x > (world_data.w_width - getWorldMargin()) || 
+                    y < getWorldMargin() || 
+                    y > (world_data.w_width - getWorldMargin())
                 ) {
                     worldmap_noise[index] = 0.0f;
                     continue;
                 }
             
-                auto arg_x = (float)x / game_settings.world_persistence;
-                auto arg_y = (float)y / game_settings.world_persistence;
+                auto arg_x = (float)x / world_data.w_persistence;
+                auto arg_y = (float)y / world_data.w_persistence;
         
                 auto value = (this->noise.noise(arg_x, arg_y, 0.5f) + 1.0f) / 2.0f;
                 worldmap_noise[index] = value;
@@ -61,18 +66,18 @@ void WorldGenerator::generateWorld() {
     // Generate circular gradient.
     // When combining noise with this gradient the output will be island shaped terrain.
     {
-        NoiseSettings settings_gradient = NoiseSettings(game_settings.getWorldWidth(), 8, 2, 4, 1.0f);
+        NoiseSettings settings_gradient = NoiseSettings(world_data.w_width, 8, 2, 4, 1.0f);
 
         const sf::Vector2i centre = sf::Vector2i(
-            game_settings.getWorldWidth() / 2,
-            game_settings.getWorldWidth() / 2
+            world_data.w_width / 2,
+            world_data.w_width / 2
         );
 
-        for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-            for(int x = 0; x < game_settings.getWorldWidth(); x++) {
-                const int index = game_settings.calculateWorldIndex(x, y);
+        for(int y = 0; y < world_data.w_width; y++) {
+            for(int x = 0; x < world_data.w_width; x++) {
+                const int index = calculateWorldIndex(x, y);
 
-                if(x < game_settings.getWorldMargin() || x > (game_settings.getWorldWidth() - game_settings.getWorldMargin()) || y < game_settings.getWorldMargin() || y > (game_settings.getWorldWidth() - game_settings.getWorldMargin())) {
+                if(x < getWorldMargin() || x > (world_data.w_width - getWorldMargin()) || y < getWorldMargin() || y > (world_data.w_width - getWorldMargin())) {
                     this->m_gradient[index] = 0.0f;
                     continue;
                 }
@@ -81,7 +86,7 @@ void WorldGenerator::generateWorld() {
                 const float distance_y = (centre.y - y) * (centre.y - y);
 
                 // Both width and height of the map have a impact on distance.
-                float distance = (sqrt(distance_x + distance_y) / game_settings.getWorldWidth());
+                float distance = (sqrt(distance_x + distance_y) / world_data.w_width);
 
                 if(distance > 1.0f) distance = 1.0f;
 
@@ -92,9 +97,9 @@ void WorldGenerator::generateWorld() {
     }
 
     // Generate initial worldmap divided into water tiles and terrain tiles.
-    for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-        for(int x = 0; x < game_settings.getWorldWidth(); x++) {                
-            const int index      = game_settings.calculateWorldIndex(x, y);
+    for(int y = 0; y < world_data.w_width; y++) {
+        for(int x = 0; x < world_data.w_width; x++) {                
+            const int index      = calculateWorldIndex(x, y);
             const float noise    = worldmap_noise[index]; 
             const float gradient = this->m_gradient[index];
             float value          = noise - gradient;
@@ -102,69 +107,69 @@ void WorldGenerator::generateWorld() {
             if(value < 0.0f) value = 0.0f;
             if(value > 1.0f) value = 1.0f;
 
-            if(value > game_settings.getWorldTerrainMin())
+            if(value > world_data.w_terrain_from)
                 this->m_region.regiontype.set_terrain();
         
             else
                 this->m_region.regiontype.set_ocean();
 
             this->m_region.height            = std::ceil(value * 100) / 100;
-            this->m_region.object_position.x = game_settings.panelSize() * x; 
-            this->m_region.object_position.y = game_settings.panelSize() * y;
+            this->m_region.object_position.x = panelSize() * x; 
+            this->m_region.object_position.y = panelSize() * y;
             this->m_region.object_position.z = 0;
-            this->m_region.object_size       = sf::Vector2f(game_settings.panelSize(), game_settings.panelSize());
+            this->m_region.object_size       = core::Vector2i(panelSize(), panelSize());
 
-            this->world_map[index] = this->m_region;
+            game_manager.world_map[index] = this->m_region;
         }
     }
 
     // Find and mark coast tiles.
     // This loop marks tiles from 8 cardinal directions.
-    for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-        for(int x = 0; x < game_settings.getWorldWidth(); x++) {
-            const int index = game_settings.calculateWorldIndex(x, y);
+    for(int y = 0; y < world_data.w_width; y++) {
+        for(int x = 0; x < world_data.w_width; x++) {
+            const int index = calculateWorldIndex(x, y);
             
-            if(this->world_map[index].regiontype.is_terrain()) {
-                const int index_up    = index - game_settings.getWorldWidth();             
-                const int index_down  = index + game_settings.getWorldWidth();
+            if(game_manager.world_map[index].regiontype.is_terrain()) {
+                const int index_up    = index - world_data.w_width;             
+                const int index_down  = index + world_data.w_width;
                 const int index_left  = index - 1;
                 const int index_right = index + 1;
-                const int index_tl    = index - 1 - game_settings.getWorldWidth();
-                const int index_tr    = index + 1 - game_settings.getWorldWidth();
-                const int index_bl    = index - 1 + game_settings.getWorldWidth();
-                const int index_br    = index + 1 + game_settings.getWorldWidth();
+                const int index_tl    = index - 1 - world_data.w_width;
+                const int index_tr    = index + 1 - world_data.w_width;
+                const int index_bl    = index - 1 + world_data.w_width;
+                const int index_br    = index + 1 + world_data.w_width;
 
                 if(index_up > 0)
-                    if(!this->world_map[index_up].regiontype.is_terrain()) 
-                        this->world_map[index].regiontype.set_coast();
+                    if(!game_manager.world_map[index_up].regiontype.is_terrain()) 
+                        game_manager.world_map[index].regiontype.set_coast();
 
                 if(index_left > 0)
-                    if(!this->world_map[index_left].regiontype.is_terrain()) 
-                        this->world_map[index].regiontype.set_coast();
+                    if(!game_manager.world_map[index_left].regiontype.is_terrain()) 
+                        game_manager.world_map[index].regiontype.set_coast();
 
-                if(index_down < game_settings.getWorldSize())
-                    if(!this->world_map[index_down].regiontype.is_terrain()) 
-                        this->world_map[index].regiontype.set_coast();
+                if(index_down < getWorldSize())
+                    if(!game_manager.world_map[index_down].regiontype.is_terrain()) 
+                        game_manager.world_map[index].regiontype.set_coast();
 
-                if(index_right < game_settings.getWorldSize())
-                    if(!this->world_map[index_right].regiontype.is_terrain()) 
-                        this->world_map[index].regiontype.set_coast();
+                if(index_right < getWorldSize())
+                    if(!game_manager.world_map[index_right].regiontype.is_terrain()) 
+                        game_manager.world_map[index].regiontype.set_coast();
 
                 if(index_tl > 0)
-                    if(!this->world_map[index_tl].regiontype.is_terrain()) 
-                        this->world_map[index].regiontype.set_coast();
+                    if(!game_manager.world_map[index_tl].regiontype.is_terrain()) 
+                        game_manager.world_map[index].regiontype.set_coast();
 
                 if(index_tr > 0)
-                    if(!this->world_map[index_tr].regiontype.is_terrain()) 
-                        this->world_map[index].regiontype.set_coast();
+                    if(!game_manager.world_map[index_tr].regiontype.is_terrain()) 
+                        game_manager.world_map[index].regiontype.set_coast();
 
-                if(index_bl < game_settings.getWorldSize())
-                    if(!this->world_map[index_bl].regiontype.is_terrain()) 
-                        this->world_map[index].regiontype.set_coast();
+                if(index_bl < getWorldSize())
+                    if(!game_manager.world_map[index_bl].regiontype.is_terrain()) 
+                        game_manager.world_map[index].regiontype.set_coast();
 
-                if(index_br < game_settings.getWorldSize())
-                    if(!this->world_map[index_br].regiontype.is_terrain()) 
-                        this->world_map[index].regiontype.set_coast();
+                if(index_br < getWorldSize())
+                    if(!game_manager.world_map[index_br].regiontype.is_terrain()) 
+                        game_manager.world_map[index].regiontype.set_coast();
             }
         }
     }
@@ -181,28 +186,28 @@ void WorldGenerator::generateWorld() {
     // Make sure that there are no single full panel tiles.
     // This loop does not delete island tiles.
     for(int t = 0; t < 5; t++) {
-        for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-            for(int x = 0; x < game_settings.getWorldWidth(); x++) {
-                const int index = game_settings.calculateWorldIndex(x, y);
-                auto& region = this->world_map[index];
+        for(int y = 0; y < world_data.w_width; y++) {
+            for(int x = 0; x < world_data.w_width; x++) {
+                const int index = calculateWorldIndex(x, y);
+                auto& region = game_manager.world_map[index];
 
                 if(region.regiontype.is_terrain()) {
                     int terrain_tiles = 0;
     
                     if(index - 1 > 0)
-                        if(this->world_map[index - 1].regiontype.is_terrain())
+                        if(game_manager.world_map[index - 1].regiontype.is_terrain())
                             terrain_tiles++;
     
-                    if(index + 1 < game_settings.getWorldSize())
-                        if(this->world_map[index + 1].regiontype.is_terrain())
+                    if(index + 1 < getWorldSize())
+                        if(game_manager.world_map[index + 1].regiontype.is_terrain())
                             terrain_tiles++; 
     
-                    if(index - game_settings.getWorldWidth() > 0)
-                        if(this->world_map[index - game_settings.getWorldWidth()].regiontype.is_terrain())
+                    if(index - world_data.w_width > 0)
+                        if(game_manager.world_map[index - world_data.w_width].regiontype.is_terrain())
                             terrain_tiles++;
     
-                    if(index + game_settings.getWorldWidth() < game_settings.getWorldSize())
-                        if(this->world_map[index + game_settings.getWorldWidth()].regiontype.is_terrain())
+                    if(index + world_data.w_width < getWorldSize())
+                        if(game_manager.world_map[index + world_data.w_width].regiontype.is_terrain())
                             terrain_tiles++;
                         
                     if(terrain_tiles == 1) {
@@ -215,10 +220,10 @@ void WorldGenerator::generateWorld() {
     }
 
     // Assign pretty textures to coastal tiles.
-    for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-        for(int x = 0; x < game_settings.getWorldWidth(); x++) {
-            const int index = game_settings.calculateWorldIndex(x, y);
-            auto& region    = this->world_map[index];
+    for(int y = 0; y < world_data.w_width; y++) {
+        for(int x = 0; x < world_data.w_width; x++) {
+            const int index = calculateWorldIndex(x, y);
+            auto& region    = game_manager.world_map[index];
 
             if(region.regiontype.is_terrain())
                 region.object_texture_name = this->getWorldmapTile(index);
@@ -227,53 +232,55 @@ void WorldGenerator::generateWorld() {
         }
     }
 
-    std::cout << "[World Generation]: Generating world features.\n";
+    std::cout << "[] Generating world features.\n";
 
     // this->worldmapGenerateRivers();    
     this->worldmapGenerateForests();
 
     // Generate lakes.
     // Generation is random.
-    for(int t = 0; t < game_settings.getWorldWidth() / 10; t++) {
+    for(int t = 0; t < world_data.w_width / 10; t++) {
         int index           = 0;
-        auto& region        = this->world_map[index];
+        auto& region        = game_manager.world_map[index];
         bool conditions_met = false;
 
         while(!conditions_met) {
-            index  = rand() % game_settings.getWorldSize();
-            region = this->world_map[index];
+            index  = rand() % getWorldSize();
+            region = game_manager.world_map[index];
 
             if(!region.regiontype.is_ocean() && !region.regiontype.is_forest() && !region.regiontype.is_river() && !this->is_lake(index) && !region.regiontype.is_coast()) {
-                this->lakes[index] = GameObject(region.getPosition(), sf::Vector3f(), region.getSize(), this->getTileVariation("panel_lake"));
+                game_manager.lakes[index] = GameObject(region.getPosition(), core::Vector3f(), region.getSize(), this->getTileVariation("panel_lake"), "Lake");
                 region.regiontype.set_lake();
                 conditions_met = true;
             }
         }
     }
 
+    this->spawnPlayers();
+
     const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
-    std::cout << "[World Generation]: World generated in " << time_rounded << "s.\n";
+    std::cout << "[] World generated in " << time_rounded << "s.\n";
     std::cout << "====================\n";
 }
 
 void WorldGenerator::worldmapGenerateClimate() {
-    std::cout << "[World Generation]: Generating climate.\n";
+    std::cout << "[] Generating climate.\n";
 
     // Calculate LATITUDE.
     {
-        for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-            for(int x = 0; x < game_settings.getWorldWidth(); x++) {       
-                const int index = game_settings.calculateWorldIndex(x, y);
+        for(int y = 0; y < world_data.w_width; y++) {
+            for(int x = 0; x < world_data.w_width; x++) {       
+                const int index = calculateWorldIndex(x, y);
 
                 // Latitude for the upper half.
-                if(y < game_settings.getWorldWidth() / 2)
-                    this->world_map[index].latitude = float(y + 1) / float(game_settings.getWorldWidth() / 2);
+                if(y < world_data.w_width / 2)
+                    game_manager.world_map[index].latitude = float(y + 1) / float(world_data.w_width / 2);
 
                 // Latitude for the bottom half.
                 else {
-                    const int i = y - game_settings.getWorldWidth() / 2;
+                    const int i = y - world_data.w_width / 2;
                     const int reversed_height = y - 2 * i;
-                    this->world_map[index].latitude = float(reversed_height) / float(game_settings.getWorldWidth() / 2);
+                    game_manager.world_map[index].latitude = float(reversed_height) / float(world_data.w_width / 2);
                 }
             }
         }
@@ -287,22 +294,22 @@ void WorldGenerator::worldmapGenerateClimate() {
     {
         auto temperature_noise = wgn::NoiseAlgorithms(seed - 1);
 
-        for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-            for(int x = 0; x < game_settings.getWorldWidth(); x++) {
-                const int index = game_settings.calculateWorldIndex(x, y);
-                const auto& region = this->world_map.at(index);
+        for(int y = 0; y < world_data.w_width; y++) {
+            for(int x = 0; x < world_data.w_width; x++) {
+                const int index = calculateWorldIndex(x, y);
+                const auto& region = game_manager.world_map.at(index);
 
-                auto arg_x = x / game_settings.getWorldWidth() * 16;
-                auto arg_y = (y * region.latitude * region.height) / game_settings.getWorldWidth() * 16;
+                auto arg_x = x / world_data.w_width * 16;
+                auto arg_y = (y * region.latitude * region.height) / world_data.w_width * 16;
         
                 auto value = (temperature_noise.noise(arg_x, arg_y, 0.5f * region.height) + 1.0f) / 2.0f;
-                auto multiplier = game_settings.temperature_multiplier;
+                auto multiplier = world_data.w_temperature_multiplier;
 
                 value *= multiplier;
                 if(value > 1.0f)
                     value = 1.0f;
     
-                this->world_map[index].temperature = value;
+                game_manager.world_map[index].temperature = value;
             }
         }
     }
@@ -313,26 +320,26 @@ void WorldGenerator::worldmapGenerateClimate() {
     {
         auto moisture_noise = wgn::NoiseAlgorithms(seed - 1);
         
-        for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-            for(int x = 0; x < game_settings.getWorldWidth(); x++) {
-                const int index = game_settings.calculateWorldIndex(x, y);
-                auto& region = this->world_map.at(index);
+        for(int y = 0; y < world_data.w_width; y++) {
+            for(int x = 0; x < world_data.w_width; x++) {
+                const int index = calculateWorldIndex(x, y);
+                auto& region = game_manager.world_map.at(index);
 
                 if(!region.regiontype.is_terrain())
                     region.moisture = 1.0f;
 
                 else {
-                    auto arg_x = x / game_settings.getWorldWidth() * 16;
-                    auto arg_y = (y * region.latitude) / game_settings.getWorldWidth() * 16;
+                    auto arg_x = x / world_data.w_width * 16;
+                    auto arg_y = (y * region.latitude) / world_data.w_width * 16;
 
                     auto value = (moisture_noise.noise(arg_x, arg_y, 0.5f * region.height) + 1.0f) / 2.0f;
-                    auto multiplier = game_settings.moisture_multiplier;
+                    auto multiplier = world_data.w_moisture_multiplier;
 
                     value *= multiplier;
                     if(value > 1.0f)
                         value = 1.0f;
 
-                    this->world_map[index].moisture = value;
+                    game_manager.world_map[index].moisture = value;
                 }
             }
         }
@@ -342,7 +349,7 @@ void WorldGenerator::worldmapGenerateClimate() {
 }
 
 void WorldGenerator::worldmapAssignBiome() {
-    std::cout << "[World Generation]: Generating biomes.\n";
+    std::cout << "[] Generating biomes.\n";
 
     const auto getMoisture = [](float moisture) {
         if(moisture < 0.15f)
@@ -369,8 +376,8 @@ void WorldGenerator::worldmapAssignBiome() {
             return "HOT";
     };
 
-    for(int index = 0; index < game_settings.getWorldSize(); index++) {
-        Region& panel = this->world_map[index];
+    for(int index = 0; index < getWorldSize(); index++) {
+        Region& panel = game_manager.world_map[index];
 
         // There is no content for ocean tiles.
         if(panel.regiontype.is_ocean())
@@ -385,8 +392,7 @@ void WorldGenerator::worldmapAssignBiome() {
         temperature = getTemperature(panel.temperature);
 
         // Assign moisture.
-        moisture = getMoisture(panel.moisture);
-        
+        moisture = getMoisture(panel.moisture);        
 
         if(temperature == "COLD" && moisture == "MOIST")
             moisture = "NORMAL";
@@ -405,7 +411,7 @@ void WorldGenerator::worldmapAssignBiome() {
 
         std::vector <Biome> same_properties;
 
-        for(const auto& biome : biomes) {
+        for(const auto& biome : BIOME_TABLE) {
             if(
                 biome.getBiomeTemperature() == temperature && 
                 biome.getBiomeMoisture()    == moisture
@@ -421,7 +427,7 @@ void WorldGenerator::worldmapAssignBiome() {
             panel.biome = same_properties[rand() % same_properties.size()];
 
         else {
-            std::cout << "[World Generation][Error]: Could not assign biome to: #" << index << " with properties: " << temperature << " " << moisture << "\n";
+            std::cout << "[Error]: Could not assign biome to: #" << index << " with properties: " << temperature << " " << moisture << "\n";
         }
     }
 }
@@ -433,17 +439,17 @@ void WorldGenerator::worldmapGenerateRivers() {
     // It does not mean that there will be the specified amount.
 
     // Storage for indexes of already created rivers.
-    std::vector <int> river_origin_index(game_settings.getWorldRiverQuantity());
+    std::vector <int> river_origin_index(world_data.w_river_quantity);
     const int area_around_origin = 5;
 
-    for(unsigned int river_number = 0; river_number < game_settings.getWorldRiverQuantity(); river_number++) {
-        int possible_river_origin_index = rand() % game_settings.getWorldSize() - 1;
+    for(unsigned int river_number = 0; river_number < world_data.w_river_quantity; river_number++) {
+        int possible_river_origin_index = rand() % getWorldSize() - 1;
         bool place_found = false;
 
         while(!place_found) {
-            int index = rand() % game_settings.getWorldSize() - 1;
+            int index = rand() % getWorldSize() - 1;
             
-            if(this->world_map[index].regiontype.is_terrain() && !this->world_map[index].regiontype.is_coast() && !this->world_map[index].regiontype.is_forest()) {
+            if(game_manager.world_map[index].regiontype.is_terrain() && !game_manager.world_map[index].regiontype.is_coast() && !game_manager.world_map[index].regiontype.is_forest()) {
                 possible_river_origin_index = index;
                 place_found = true;
             }
@@ -460,9 +466,9 @@ void WorldGenerator::worldmapGenerateRivers() {
             
             for(int y = 0 - area_around_origin; y <= 0 + area_around_origin; y++) {
                 for(int x = 0 - area_around_origin; x <= 0 + area_around_origin; x++) {
-                    const int index = possible_river_origin_index + game_settings.calculateWorldIndex(x, y);
+                    const int index = possible_river_origin_index + calculateWorldIndex(x, y);
 
-                    if(index != river_origin_index[scanned_river] && !this->world_map[index].regiontype.is_river()) {
+                    if(index != river_origin_index[scanned_river] && !game_manager.world_map[index].regiontype.is_river()) {
                         panels_verified++;
                         continue;
                     }
@@ -481,7 +487,7 @@ void WorldGenerator::worldmapGenerateRivers() {
         int river_index = -1;
 
         // If all rivers are verified for a possible river origin, then the place is valid and will be new river origin.
-        if(rivers_verified == game_settings.getWorldRiverQuantity()) {
+        if(rivers_verified == world_data.w_river_quantity) {
             river_index = possible_river_origin_index;
             river_origin_index[river_number] = possible_river_origin_index;
         }
@@ -501,10 +507,10 @@ void WorldGenerator::worldmapGenerateRivers() {
 
         // Create a path to the sea by following the lowest terrain until coast if found.
         while(true) {                
-            this->world_map[river_index_current]._marked = true;
+            game_manager.world_map[river_index_current]._marked = true;
 
-            const int index_up    = river_index_current - game_settings.getWorldWidth();
-            const int index_down  = river_index_current + game_settings.getWorldWidth();
+            const int index_up    = river_index_current - world_data.w_width;
+            const int index_down  = river_index_current + world_data.w_width;
             const int index_left  = river_index_current - 1;
             const int index_right = river_index_current + 1;
 
@@ -518,7 +524,7 @@ void WorldGenerator::worldmapGenerateRivers() {
             int current_move_direction = values[0];
 
             for(int i = 0; i < 4; i++) {
-                if(!this->world_map[values[i]]._marked && this->world_map[current_move_direction].height > this->world_map[values[i]].height) {
+                if(!game_manager.world_map[values[i]]._marked && game_manager.world_map[current_move_direction].height > game_manager.world_map[values[i]].height) {
                     current_move_direction = values[i];
                 }
             }
@@ -531,17 +537,17 @@ void WorldGenerator::worldmapGenerateRivers() {
             if(river_index_current != river_index_start) {
                 if(current_move_direction == index_up) {
                     // UP AND RIGHT
-                    if(current_move_value + last_move_value == -game_settings.getWorldWidth() + 1) {
+                    if(current_move_value + last_move_value == -world_data.w_width + 1) {
                         direction = RiverDirection::RIVER_NORTH_TO_WEST;
                     }
 
                     // UP AND LEFT
-                    if(current_move_value + last_move_value == -game_settings.getWorldWidth() - 1) {
+                    if(current_move_value + last_move_value == -world_data.w_width - 1) {
                         direction = RiverDirection::RIVER_NORTH_TO_EAST;
                     }
 
                     // UP
-                    if(current_move_value == -game_settings.getWorldWidth() && last_move_value == -game_settings.getWorldWidth()) {
+                    if(current_move_value == -world_data.w_width && last_move_value == -world_data.w_width) {
                         direction = RiverDirection::RIVER_VERTICAL;
                     }
 
@@ -549,17 +555,17 @@ void WorldGenerator::worldmapGenerateRivers() {
 
                 else if(current_move_direction == index_down) {
                     // DOWN AND RIGHT
-                    if(current_move_value + last_move_value == game_settings.getWorldWidth() + 1) {
+                    if(current_move_value + last_move_value == world_data.w_width + 1) {
                         direction = RiverDirection::RIVER_SOUTH_TO_WEST;
                     }
 
                     // DOWN AND LEFT
-                    if(current_move_value + last_move_value == game_settings.getWorldWidth() - 1) {
+                    if(current_move_value + last_move_value == world_data.w_width - 1) {
                         direction = RiverDirection::RIVER_SOUTH_TO_EAST;
                     }
 
                     // DOWN
-                    if(current_move_value == game_settings.getWorldWidth() && last_move_value == game_settings.getWorldWidth()) {
+                    if(current_move_value == world_data.w_width && last_move_value == world_data.w_width) {
                         direction = RiverDirection::RIVER_VERTICAL;
                     }
                 }
@@ -571,12 +577,12 @@ void WorldGenerator::worldmapGenerateRivers() {
                     }
 
                     // LEFT AND UP
-                    if(current_move_value + last_move_value == -1 - game_settings.getWorldWidth()) {
+                    if(current_move_value + last_move_value == -1 - world_data.w_width) {
                         direction = RiverDirection::RIVER_SOUTH_TO_WEST;
                     }
 
                     // LEFT AND DOWN
-                    if(current_move_value + last_move_value == -1 + game_settings.getWorldWidth()) {
+                    if(current_move_value + last_move_value == -1 + world_data.w_width) {
                         direction = RiverDirection::RIVER_NORTH_TO_WEST;
                     }
 
@@ -589,12 +595,12 @@ void WorldGenerator::worldmapGenerateRivers() {
                     }
 
                     // RIGHT AND UP
-                    if(current_move_value + last_move_value == 1 - game_settings.getWorldWidth()) {
+                    if(current_move_value + last_move_value == 1 - world_data.w_width) {
                         direction = RiverDirection::RIVER_SOUTH_TO_EAST;
                     }
 
                     // RIGHT AND DOWN
-                    if(current_move_value + last_move_value == 1 + game_settings.getWorldWidth()) {
+                    if(current_move_value + last_move_value == 1 + world_data.w_width) {
                         direction = RiverDirection::RIVER_NORTH_TO_EAST;
                     }
                 }
@@ -603,13 +609,15 @@ void WorldGenerator::worldmapGenerateRivers() {
                     direction = RiverDirection::RIVER_NONE; 
             }
 
-            Region& panel     = this->world_map[river_index_current];
-            GameObject& river = this->rivers[river_index_current];
-            const auto panel_position     = panel.getPosition();
-            const auto panel_offset       = sf::Vector3f(); 
-            const sf::Vector2f panel_size = sf::Vector2f(game_settings.panelSize(), game_settings.panelSize()); 
+            Region& panel     = game_manager.world_map[river_index_current];
+            GameObject& river = game_manager.rivers[river_index_current];
+            const auto panel_position = panel.getPosition();
+            const auto panel_size     = core::Vector2i(panelSize(), panelSize()); 
 
-            this->texturizer->createColouredWorldmapTexture("panel_full", "panel_full_lightblue", COLOUR_CYAN, COLOUR_TRANSPARENT);
+            river.object_name = "River";
+            river.object_position = panel_position;
+            river.object_size     = panel_size;
+
             switch(direction) {
                 case RiverDirection::RIVER_NONE:
                     panel._direction = RiverDirection::RIVER_NONE;
@@ -621,70 +629,90 @@ void WorldGenerator::worldmapGenerateRivers() {
                 
                 case RiverDirection::RIVER_NORTH_TO_EAST:
                     panel._direction = RiverDirection::RIVER_NORTH_TO_EAST;
-                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_turn_bl")); 
+                    river.object_texture_name = this->getRiverTileVariation("panel_river_turn_bl");
                     break;
 
                 case RiverDirection::RIVER_NORTH_TO_WEST:
                     panel._direction = RiverDirection::RIVER_NORTH_TO_WEST;
-                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_turn_br")); 
+                    river.object_texture_name = this->getRiverTileVariation("panel_river_turn_br");
                     break;
 
                 case RiverDirection::RIVER_SOUTH_TO_EAST:
                     panel._direction = RiverDirection::RIVER_SOUTH_TO_EAST;
-                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_turn_tl")); 
+                    river.object_texture_name = this->getRiverTileVariation("panel_river_turn_tl");
                     break;
 
                 case RiverDirection::RIVER_SOUTH_TO_WEST:
                     panel._direction = RiverDirection::RIVER_SOUTH_TO_WEST;
-                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_turn_tr")); 
+                    river.object_texture_name = this->getRiverTileVariation("panel_river_turn_tr");
                     break;
 
                 case RiverDirection::RIVER_VERTICAL:
                     panel._direction = RiverDirection::RIVER_VERTICAL;
-                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_vertical")); 
+                    river.object_texture_name = this->getRiverTileVariation("panel_river_vertical");
                     break;
 
                 case RiverDirection::RIVER_HORIZONTAL:
                     panel._direction = RiverDirection::RIVER_HORIZONTAL;
-                    river = GameObject(panel_position, panel_offset, panel_size, this->getRiverTileVariation("panel_river_horizontal")); 
+                    river.object_texture_name = this->getRiverTileVariation("panel_river_horizontal");
                     break;
             }
 
-            Region& start_panel = this->world_map[river_index_start];
+            Region& start_panel = game_manager.world_map[river_index_start];
             if(last_direction == RiverDirection::RIVER_ORIGIN) {
-                if(river_index_current - 1 > 0)
-                    if(this->world_map[river_index_current - 1].regiontype.is_river())
-                        this->rivers[river_index_start] = GameObject(start_panel.getPosition(), panel_offset, start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_right"));
+                GameObject river_node(start_panel.getPosition(), core::Vector3f(), start_panel.getSize(), "*", "River");
 
-                else if(river_index_current - game_settings.getWorldWidth() > 0)
-                    if(this->world_map[river_index_current - game_settings.getWorldWidth()].regiontype.is_river())
-                        this->rivers[river_index_start] = GameObject(start_panel.getPosition(), panel_offset, start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_down"));
+                if(river_index_current - 1 > 0)
+                    if(game_manager.world_map[river_index_current - 1].regiontype.is_river()) {
+                        river_node.object_texture_name = this->getRiverTileVariation("panel_river_origin_right");
+                        game_manager.rivers[river_index_start] = river_node;
+                    }
+
+                else if(river_index_current - world_data.w_width > 0)
+                    if(game_manager.world_map[river_index_current - world_data.w_width].regiontype.is_river()) {
+                        river_node.object_texture_name = this->getRiverTileVariation("panel_river_origin_down");
+                        game_manager.rivers[river_index_start] = river_node;
+                    }
                 
-                else if(river_index_current + 1 < game_settings.getWorldSize())
-                    if(this->world_map[river_index_current + 1].regiontype.is_river())
-                        this->rivers[river_index_start] = GameObject(start_panel.getPosition(), panel_offset, start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_left"));
+                else if(river_index_current + 1 < getWorldSize())
+                    if(game_manager.world_map[river_index_current + 1].regiontype.is_river()) {
+                        river_node.object_texture_name = this->getRiverTileVariation("panel_river_origin_left");
+                        game_manager.rivers[river_index_start] = river_node; 
+                    }
                 
-                else if(river_index_current + game_settings.getWorldWidth() < game_settings.getWorldSize())
-                    if(this->world_map[river_index_current + game_settings.getWorldWidth()].regiontype.is_river())
-                        this->rivers[river_index_start] = GameObject(start_panel.getPosition(), panel_offset, start_panel.getSize(), this->getRiverTileVariation("panel_river_origin_up"));
+                else if(river_index_current + world_data.w_width < getWorldSize())
+                    if(game_manager.world_map[river_index_current + world_data.w_width].regiontype.is_river()) {
+                        river_node.object_texture_name = this->getRiverTileVariation("panel_river_origin_up");
+                        game_manager.rivers[river_index_start] = river_node;
+                    }
             }
 
             if(panel.regiontype.is_coast()) {
+                GameObject river_estuary(start_panel.getPosition(), core::Vector3f(), start_panel.getSize(), "*", "River");
+                
                 if(river_index_current - 1 > 0)
-                    if(this->world_map[river_index_current - 1].regiontype.is_river())
-                        this->rivers[river_index_current] = GameObject(panel.getPosition(), panel_offset, panel.getSize(), this->getRiverTileVariation("panel_river_estuary_right"));
+                    if(game_manager.world_map[river_index_current - 1].regiontype.is_river()) {
+                        river_estuary.object_texture_name = this->getRiverTileVariation("panel_river_estuary_right");
+                        game_manager.rivers[river_index_current] = river_estuary;
+                    }
 
-                if(river_index_current - game_settings.getWorldWidth() > 0)
-                    if(this->world_map[river_index_current - game_settings.getWorldWidth()].regiontype.is_river())
-                        this->rivers[river_index_current] = GameObject(panel.getPosition(), panel_offset, panel.getSize(), this->getRiverTileVariation("panel_river_estuary_down"));
+                if(river_index_current - world_data.w_width > 0)
+                    if(game_manager.world_map[river_index_current - world_data.w_width].regiontype.is_river()) {
+                        river_estuary.object_texture_name = this->getRiverTileVariation("panel_river_estuary_down");
+                        game_manager.rivers[river_index_current] = river_estuary;
+                    }
 
-                if(river_index_current + 1 < game_settings.getWorldSize())
-                    if(this->world_map[river_index_current + 1].regiontype.is_river())
-                        this->rivers[river_index_current] = GameObject(panel.getPosition(), panel_offset, panel.getSize(), this->getRiverTileVariation("panel_river_estuary_left"));
+                if(river_index_current + 1 < getWorldSize())
+                    if(game_manager.world_map[river_index_current + 1].regiontype.is_river()) {
+                        river_estuary.object_texture_name = this->getRiverTileVariation("panel_river_estuary_left");
+                        game_manager.rivers[river_index_current] = river_estuary;
+                    }
 
-                if(river_index_current + game_settings.getWorldWidth() < game_settings.getWorldSize())
-                    if(this->world_map[river_index_current + game_settings.getWorldWidth()].regiontype.is_river())
-                        this->rivers[river_index_current] = GameObject(panel.getPosition(), panel_offset, panel.getSize(), this->getRiverTileVariation("panel_river_estuary_up"));
+                if(river_index_current + world_data.w_width < getWorldSize())
+                    if(game_manager.world_map[river_index_current + world_data.w_width].regiontype.is_river()) {
+                        river_estuary.object_texture_name = this->getRiverTileVariation("panel_river_estuary_up");
+                        game_manager.rivers[river_index_current] = river_estuary;
+                    }
             } 
 
             panel.regiontype.set_river();
@@ -695,34 +723,83 @@ void WorldGenerator::worldmapGenerateRivers() {
             if(coast_found)
                 break;
 
-            if(this->world_map[river_index_current].regiontype.is_coast())
+            if(game_manager.world_map[river_index_current].regiontype.is_coast())
                 coast_found = true;
         }
     }
+}
+
+void WorldGenerator::spawnPlayers() {
+    std::cout << "  [] Spawning players.\n";
+
+    int number_of_players = world_data.w_width / 10;
+    std::vector <int> spawn_spots;
+
+    for(int i = 0; i < number_of_players; i++) {
+        auto found = false;
+        auto spot_index = -1;
+
+        while(!found) {
+            auto index = rand() % getWorldSize();
+            
+            const auto& region = game_manager.world_map.at(index);
+
+            if(region.regiontype.is_terrain() && std::find(spawn_spots.begin(), spawn_spots.end(), index) == spawn_spots.end()) {
+                spot_index = index;
+                found = true;
+                spawn_spots.push_back(index);
+            }
+        }
+
+        PlayerData pdata;
+        pdata.id = i;
+        pdata.is_human = i == 0;
+
+        CountryData cdata;
+        cdata.id = i;
+        cdata.initial_spawn = spot_index;
+        cdata.capital = -1;
+        cdata.map_colour = getRandomColour();
+        cdata.country_name = generateName(GenerationType::COUNTRY, 3);
+
+        auto player = Player(pdata, cdata);
+        auto& spawn_region = game_manager.world_map.at(spot_index);
+
+        if(world_data.fog_of_war_enabled) {
+            for(int y = -2; y <= 2; y++) {
+                for(int x = -2; x <= 2; x++) {
+                    auto index = spot_index + calculateWorldIndex(x, y);
+                    player.addKnownRegion(index);
+                }
+            }
+        }
+
+        game_manager.addPlayer(player);    
+    } 
 }
 
 void WorldGenerator::worldmapGenerateForests() {
     std::cout << "  [] Generating forests.\n";
 
     NoiseContainer noise_forest;
-    NoiseSettings settings = NoiseSettings(game_settings.getWorldWidth(), 8, 4, 4, 1.0f);
+    NoiseSettings settings = NoiseSettings(world_data.w_width, 8, 4, 4, 1.0f);
 
     this->generateNoise(settings, noise_forest);
 
     for(int index = 0; index < noise_forest.size(); index++) {
         const float noise  = noise_forest[index];
 
-        Region& region = this->world_map[index];
+        Region& region = game_manager.world_map[index];
 
         const bool is_ocean   = region.regiontype.is_ocean();
         const bool is_river   = region.regiontype.is_river();
         const bool is_coast   = region.regiontype.is_coast();
 
         // If noise is high enough and tile is valid, place a forest. 
-        if(!is_ocean && !is_coast && !is_river && region.biome.canBeForest() && noise > game_settings.getWorldForestMin()) {
+        if(!is_ocean && !is_coast && !is_river && region.biome.canBeForest() && noise > world_data.w_forest_from) {
             region.regiontype.set_forest();            
             const std::string texture_name = region.biome.getWorldmapForestTexture();
-            this->forests[index] = GameObject(region.getPosition(), sf::Vector3f(), region.getSize(), texture_name);
+            game_manager.forests[index] = GameObject(region.getPosition(), core::Vector3f(), region.getSize(), texture_name, "Forest");
         }
     }
 }
@@ -795,15 +872,15 @@ void WorldGenerator::generateNoise(NoiseSettings& settings, NoiseContainer& stor
 }
 
 void WorldGenerator::generateChunkNoise(NoiseContainer& storage, sf::Vector2i chunk_grid) {
-    storage.resize(game_settings.getRegionWidth() * game_settings.getRegionWidth());
+    storage.resize(world_data.r_width * world_data.r_width);
 
-    for(int y = 0; y < game_settings.getRegionWidth(); y++) {
-        for(int x = 0; x < game_settings.getRegionWidth(); x++) {
-            const int index = game_settings.calculateRegionIndex(x, y);
+    for(int y = 0; y < world_data.r_width; y++) {
+        for(int x = 0; x < world_data.r_width; x++) {
+            const int index = calculateRegionIndex(x, y);
             
             // For continuous terrain generation include chunk position to the coordinates.
-            double x1 = double(x + chunk_grid.x * game_settings.getRegionWidth()) / game_settings.getRegionPersistence(); 
-            double y1 = double(y + chunk_grid.y * game_settings.getRegionWidth()) / game_settings.getRegionPersistence(); 
+            double x1 = double(x + chunk_grid.x * world_data.r_width) / world_data.r_persistence; 
+            double y1 = double(y + chunk_grid.y * world_data.r_width) / world_data.r_persistence; 
             
             // VERY IMPORTANT!
             // This noise function produces values of 0 at integer coordinates.
@@ -819,24 +896,24 @@ void WorldGenerator::generateChunkNoise(NoiseContainer& storage, sf::Vector2i ch
 
 // This function accepts coordinates of the tile in a grid - not the tile position.
 // The first tile's coordinates in a grid are (0,0), but the position might be (128, 128) or some other point based on the offset. 
-sf::Vector3f WorldGenerator::tilePositionScreen(int x, int y) {
-    return sf::Vector3f(
-        (game_settings.tileOffset().x * game_settings.tileSize().x) + (x - y) * (game_settings.tileSize().x / 2),
-        (game_settings.tileOffset().y * game_settings.tileSize().y) + (x + y) * (game_settings.tileSize().y / 2),
+core::Vector3f WorldGenerator::tilePositionScreen(int x, int y) {
+    return core::Vector3f(
+        (tileOffset().x * tileSize().x) + (x - y) * (tileSize().x / 2),
+        (tileOffset().y * tileSize().y) + (x + y) * (tileSize().y / 2),
         0
     );
 }
 
-sf::Vector3f WorldGenerator::tilePositionScreen(sf::Vector2i grid_position) {
+core::Vector3f WorldGenerator::tilePositionScreen(core::Vector2i grid_position) {
     return this->tilePositionScreen(grid_position.x, grid_position.y);
 }
 
-sf::Vector3f WorldGenerator::tilePositionScreen(sf::Vector2f grid_position) {
-    return this->tilePositionScreen(sf::Vector2i(grid_position.x, grid_position.y));
+core::Vector3f WorldGenerator::tilePositionScreen(core::Vector2f grid_position) {
+    return this->tilePositionScreen(grid_position.x, grid_position.y);
 }
 
 bool WorldGenerator::is_biome(int region_index, Biome biome) const {
-    const auto& region_biome = this->world_map[region_index].biome;
+    const auto& region_biome = game_manager.world_map[region_index].biome;
     return (
         region_biome.getBiomeName()        == biome.getBiomeName()        &&
         region_biome.getBiomeTemperature() == biome.getBiomeTemperature() &&
@@ -845,7 +922,7 @@ bool WorldGenerator::is_biome(int region_index, Biome biome) const {
 }
 
 bool WorldGenerator::is_ocean(int region_index) const {
-    return this->world_map.at(region_index).height <= game_settings.getWorldTerrainMin();
+    return game_manager.world_map.at(region_index).height <= world_data.w_terrain_from;
 }
 
 bool WorldGenerator::is_terrain(int region_index) const {
@@ -853,24 +930,23 @@ bool WorldGenerator::is_terrain(int region_index) const {
 }
 
 bool WorldGenerator::is_coast(int region_index) const {
-    return this->world_map.at(region_index).regiontype.is_coast();
+    return game_manager.world_map.at(region_index).regiontype.is_coast();
 }
 
 bool WorldGenerator::is_lake(int region_index) const {
-    return this->lakes.count(region_index);
+    return game_manager.lakes.count(region_index);
 }
 
 bool WorldGenerator::is_river(int region_index) const {
-    return this->rivers.count(region_index);
+    return game_manager.rivers.count(region_index);
 }
 
 std::string WorldGenerator::getWorldmapTile(int index) const {
-    auto& region    = this->world_map[index];
+    auto& region    = game_manager.world_map[index];
     auto is_terrain = region.regiontype.is_terrain();
     auto is_ocean   = region.regiontype.is_ocean();
     auto is_coast   = region.regiontype.is_coast();
-
-    const Biome& biome = this->world_map[index].biome;
+    const Biome& biome = game_manager.world_map[index].biome;
 
     if(!is_coast && is_terrain) {
         auto base_name = "panel_full";
@@ -887,60 +963,60 @@ std::string WorldGenerator::getWorldmapTile(int index) const {
     bool BOTTOM      = false;
     bool BOTTOMRIGHT = false;
 
-    auto world_size = game_settings.getWorldSize();
+    auto world_size = getWorldSize();
 
     // LEFT
-    if(game_settings.inWorldBounds(index - 1)) {
-        if(this->world_map[index - 1].regiontype.is_terrain()) {
+    if(inWorldBounds(index - 1)) {
+        if(game_manager.world_map[index - 1].regiontype.is_terrain()) {
             LEFT = true;
         }
     }
 
     // RIGHT
-    if(game_settings.inWorldBounds(index + 1)) {
-        if(this->world_map[index + 1].regiontype.is_terrain()) {
+    if(inWorldBounds(index + 1)) {
+        if(game_manager.world_map[index + 1].regiontype.is_terrain()) {
             RIGHT = true;
         }
     }
 
     // TOP
-    if(game_settings.inWorldBounds(index - game_settings.getWorldWidth())) {
-        if(this->world_map[index - game_settings.getWorldWidth()].regiontype.is_terrain()) {
+    if(inWorldBounds(index - world_data.w_width)) {
+        if(game_manager.world_map[index - world_data.w_width].regiontype.is_terrain()) {
             TOP = true;
         }
     }
 
     // TOP LEFT
-    if(game_settings.inWorldBounds(index - 1 - game_settings.getWorldWidth())) {
-        if(this->world_map[index - 1 - game_settings.getWorldWidth()].regiontype.is_terrain()) {
+    if(inWorldBounds(index - 1 - world_data.w_width)) {
+        if(game_manager.world_map[index - 1 - world_data.w_width].regiontype.is_terrain()) {
             TOPLEFT = true;
         }
     }
     
     // TOP RIGHT
-    if(game_settings.inWorldBounds(index + 1 - game_settings.getWorldWidth())) {
-        if(this->world_map[index + 1 - game_settings.getWorldWidth()].regiontype.is_terrain()) {
+    if(inWorldBounds(index + 1 - world_data.w_width)) {
+        if(game_manager.world_map[index + 1 - world_data.w_width].regiontype.is_terrain()) {
             TOPRIGHT = true;
         }
     }
 
     // BOTTOM
-    if(game_settings.inWorldBounds(index + game_settings.getWorldWidth())) {
-        if(this->world_map[index + game_settings.getWorldWidth()].regiontype.is_terrain()) {
+    if(inWorldBounds(index + world_data.w_width)) {
+        if(game_manager.world_map[index + world_data.w_width].regiontype.is_terrain()) {
             BOTTOM = true;
         }
     }
     
     // BOTTOM LEFT
-    if(game_settings.inWorldBounds(index - 1 + game_settings.getWorldWidth())) {
-        if(this->world_map[index - 1 + game_settings.getWorldWidth()].regiontype.is_terrain()) {
+    if(inWorldBounds(index - 1 + world_data.w_width)) {
+        if(game_manager.world_map[index - 1 + world_data.w_width].regiontype.is_terrain()) {
             BOTTOMLEFT = true;
         }
     }
     
     // BOTTOM RIGHT
-    if(game_settings.inWorldBounds(index + 1 + game_settings.getWorldWidth())) {
-        if(this->world_map[index + 1 + game_settings.getWorldWidth()].regiontype.is_terrain()) {
+    if(inWorldBounds(index + 1 + world_data.w_width)) {
+        if(game_manager.world_map[index + 1 + world_data.w_width].regiontype.is_terrain()) {
             BOTTOMRIGHT = true;
         }
     }
@@ -1046,27 +1122,27 @@ std::string WorldGenerator::getTileVariation(const std::string& id) const {
 std::string WorldGenerator::createBiomeSpecificTexture(const std::string& id, Biome biome) const {
     const std::string texture_id = id + "_" + biome.getBiomeId();
 
-    if(this->resource->checkTextureExists(texture_id))
+    if(game_manager.resource.checkTextureExists(texture_id))
         return texture_id;
 
-    auto image   = this->resource->getTexture(id).copyToImage();
-    auto intrect = this->resource->getTextureIntRect(id);
+    auto image   = game_manager.resource.getTexture(id).copyToImage();
+    auto intrect = game_manager.resource.getTextureIntRect(id);
 
     for(int y = 0; y < image.getSize().y; y++) {
         for(int x = 0; x < image.getSize().x; x++) {
             // Fill in terrain pixel.
-            if(image.getPixel(x, y) == COLOUR_BLACK)
-                image.setPixel(x, y, biome.getBiomeWorldmapColour());
+            if(image.getPixel(x, y) == COLOUR_BLACK.asSFMLColour())
+                image.setPixel(x, y, biome.getBiomeWorldmapColour().asSFMLColour());
             
             // Fill in water pixel.
-            else if(image.getPixel(x, y) == COLOUR_WHITE)
-                image.setPixel(x, y, COLOUR_BLUE_OCEAN);
+            else if(image.getPixel(x, y) == COLOUR_WHITE.asSFMLColour())
+                image.setPixel(x, y, COLOUR_BLUE_OCEAN.asSFMLColour());
         }
     }
 
     sf::Texture texture;
     texture.loadFromImage(image);
-    this->resource->addTexture(texture_id, texture, intrect);
+    game_manager.resource.addTexture(texture_id, texture, intrect);
     return texture_id;
 }
 
@@ -1082,15 +1158,15 @@ std::string WorldGenerator::getRiverTileVariation(const std::string& id) const {
 void WorldGenerator::generateRegion(int region_index) {
     sf::Clock clock;
 
-    auto& region = this->world_map[region_index];
+    auto& region = game_manager.world_map[region_index];
     
     // Do not generate the region that was generated already.
     if(region.visited)
         return;
 
-    region.map.resize(game_settings.getRegionSize());
+    region.map.resize(getRegionSize());
 
-    this->m_tile.object_size = game_settings.tileSize();
+    this->m_tile.object_size = tileSize();
 
     /* Region generation steps:
      * 1. Read every pixel from the region texture. If the pixel is BLACK, place terrain. If the pixel is WHITE, place water.
@@ -1100,7 +1176,7 @@ void WorldGenerator::generateRegion(int region_index) {
 
     const std::string is_coast  = region.regiontype.is_coast()    ? "True" : "False";
     const std::string is_river  = region.regiontype.is_river()    ? "True" : "False";
-    const std::string is_lake   = this->lakes.count(region_index) ? "True" : "False";
+    const std::string is_lake   = game_manager.lakes.count(region_index) ? "True" : "False";
     const std::string is_forest = region.regiontype.is_forest()   ? "True" : "False";
 
     std::cout << "====================\n";
@@ -1113,27 +1189,27 @@ void WorldGenerator::generateRegion(int region_index) {
 
     const auto& region_texture_name = region.getTextureName();
     const auto& base_texture        = this->extractBaseTexture(region_texture_name, region.biome);     
-    const auto region_image         = this->resource->getTexture(base_texture).copyToImage();    
+    const auto region_image         = game_manager.resource.getTexture(base_texture).copyToImage();    
 
     NoiseContainer container;
-    auto chunk = sf::Vector2i(region.getPosition2D().x / game_settings.panelSize(), region.getPosition2D().y / game_settings.panelSize());
+    auto chunk = sf::Vector2i(region.getPosition2D().x / panelSize(), region.getPosition2D().y / panelSize());
     this->generateChunkNoise(container, chunk);
 
-    for(int y = 0; y < game_settings.getRegionWidth(); y++) {
-        for(int x = 0; x < game_settings.getRegionWidth(); x++) {
-            const int index   = game_settings.calculateRegionIndex(x, y);
+    for(int y = 0; y < world_data.r_width; y++) {
+        for(int x = 0; x < world_data.r_width; x++) {
+            const int index   = calculateRegionIndex(x, y);
             const auto colour = region_image.getPixel(x, y);
             
             this->m_tile.object_position = this->tilePositionScreen(x, y);
 
             // Read terrain data.
-            if(colour == COLOUR_WHITE) {
+            if(colour == COLOUR_WHITE.asSFMLColour()) {
                 this->m_tile.tiletype.set_ocean();
                 this->m_tile.setElevation(0);
                 this->m_tile.object_texture_name = "tile_ocean";
             }
 
-            else if(colour == COLOUR_BLACK) {
+            else if(colour == COLOUR_BLACK.asSFMLColour()) {
                 this->m_tile.tiletype.set_terrain();
 
                 const int elevation = ((container[index] + 1.0f) / 2.0f) * 5;
@@ -1150,19 +1226,19 @@ void WorldGenerator::generateRegion(int region_index) {
 
     const bool river_exists = this->is_river(region_index);
     if(river_exists) {
-        const auto& river = this->rivers[region_index];
-        const auto river_image = this->resource->getTexture(river.getTextureName()).copyToImage();
+        const auto& river = game_manager.rivers[region_index];
+        const auto river_image = game_manager.resource.getTexture(river.getTextureName()).copyToImage();
 
         // Because rivers and oceans may be in the same region there will not be a seemless transition, because both tile types have different textures.
         const std::string water_tile = this->extractBaseTexture(region.getTextureName(), region.biome) == "panel_full" ? "tile_river" : "tile_ocean";
     
-        for(int y = 0; y < game_settings.getRegionWidth(); y++) {
-            for(int x = 0; x < game_settings.getRegionWidth(); x++) {
-                const int index   = game_settings.calculateRegionIndex(x, y);
+        for(int y = 0; y < world_data.r_width; y++) {
+            for(int x = 0; x < world_data.r_width; x++) {
+                const int index   = calculateRegionIndex(x, y);
                 const auto colour = river_image.getPixel(x, y);
-                auto& tile        = region.map[index];
+                auto& tile        = region.getTileAtIndex(index);
 
-                if(colour == COLOUR_BLUE_RIVER) {
+                if(colour == COLOUR_BLUE_RIVER.asSFMLColour()) {
                     if(!tile.tiletype.is_ocean())
                         tile.tiletype.set_river();                    
 
@@ -1178,16 +1254,16 @@ void WorldGenerator::generateRegion(int region_index) {
 
     const bool lake_exists = this->is_lake(region_index);
     if(lake_exists) {
-        const auto& lake = this->lakes[region_index];
-        const auto lake_image = this->resource->getTexture(lake.getTextureName()).copyToImage();
+        const auto& lake = game_manager.lakes[region_index];
+        const auto lake_image = game_manager.resource.getTexture(lake.getTextureName()).copyToImage();
 
-        for(int y = 0; y < game_settings.getRegionWidth(); y++) {
-            for(int x = 0; x < game_settings.getRegionWidth(); x++) {
-                const int index   = game_settings.calculateRegionIndex(x, y);
+        for(int y = 0; y < world_data.r_width; y++) {
+            for(int x = 0; x < world_data.r_width; x++) {
+                const int index   = calculateRegionIndex(x, y);
                 const auto colour = lake_image.getPixel(x, y);
-                auto& tile        = region.map[index];
+                auto& tile        = region.getTileAtIndex(index);
 
-                if(colour == COLOUR_BLUE_RIVER) {
+                if(colour == COLOUR_BLUE_RIVER.asSFMLColour()) {
                     if(!tile.tiletype.is_ocean())
                         tile.tiletype.set_river();
                     tile.setElevation(0);
@@ -1201,36 +1277,36 @@ void WorldGenerator::generateRegion(int region_index) {
     // Coastal tiles neighbour at least one water tile in any major direction. 
 
     for(int index = 0; index < region.map.size(); index++) {
-        if(region.map[index].tiletype.is_water())
+        if(region.getTileAtIndex(index).tiletype.is_water())
             continue;
         
         int index_left = index - 1;
-        if(game_settings.inRegionBounds(index_left) && game_settings.inSameRow(index, index_left))
-            if(region.map[index_left].tiletype.is_water())
-                region.map[index].tiletype.set_coast();
+        if(inRegionBounds(index_left) && inSameRow(index, index_left))
+            if(region.getTileAtIndex(index_left).tiletype.is_water())
+                region.getTileAtIndex(index).tiletype.set_coast();
 
         int index_right = index + 1;
-        if(game_settings.inRegionBounds(index_right) && game_settings.inSameRow(index, index_right))
-            if(region.map[index_right].tiletype.is_water())
-                region.map[index].tiletype.set_coast();
+        if(inRegionBounds(index_right) && inSameRow(index, index_right))
+            if(region.getTileAtIndex(index_right).tiletype.is_water())
+                region.getTileAtIndex(index).tiletype.set_coast();
 
-        int index_top = index - game_settings.getRegionWidth();
-        if(game_settings.inRegionBounds(index_top) && game_settings.inSameColumn(index, index_top))
-            if(region.map[index_top].tiletype.is_water())
-                region.map[index].tiletype.set_coast();
+        int index_top = index - world_data.r_width;
+        if(inRegionBounds(index_top) && inSameColumn(index, index_top))
+            if(region.getTileAtIndex(index_top).tiletype.is_water())
+                region.getTileAtIndex(index).tiletype.set_coast();
 
-        int index_bottom = index + game_settings.getRegionWidth();
-        if(game_settings.inRegionBounds(index_bottom) && game_settings.inSameColumn(index, index_bottom))
-            if(region.map[index_bottom].tiletype.is_water())
-                region.map[index].tiletype.set_coast();
+        int index_bottom = index + world_data.r_width;
+        if(inRegionBounds(index_bottom) && inSameColumn(index, index_bottom))
+            if(region.getTileAtIndex(index_bottom).tiletype.is_water())
+                region.getTileAtIndex(index).tiletype.set_coast();
     }
 
     // Fill in blank spots created by tile elevation.
     {
-        for(int y = 0; y < game_settings.getRegionWidth(); y++) {
-            for(int x = 0; x < game_settings.getRegionWidth(); x++) {
-                const int index = game_settings.calculateRegionIndex(x, y);
-                const auto& current_tile = region.map[index]; 
+        for(int y = 0; y < world_data.r_width; y++) {
+            for(int x = 0; x < world_data.r_width; x++) {
+                const int index = calculateRegionIndex(x, y);
+                const auto& current_tile = region.getTileAtIndex(index); 
                 
                 // Elevation can not be lower than 0.
                 if(current_tile.getElevation() == 0)
@@ -1238,20 +1314,20 @@ void WorldGenerator::generateRegion(int region_index) {
                 
                 const int index_left   = index - 1;
                 const int index_right  = index + 1;
-                const int index_top    = index - game_settings.getRegionWidth();  
-                const int index_bottom = index + game_settings.getRegionWidth();  
+                const int index_top    = index - world_data.r_width;  
+                const int index_bottom = index + world_data.r_width;  
 
                 // Check only for the tile to the right tile and the bottom tile, since the left and top elevation would not be visible.
 
                 int biggest_difference = 0;
-                if(game_settings.inRegionBounds(index_right)) {
-                    const int height_difference = std::abs(current_tile.getElevation() - region.map[index_right].getElevation());
+                if(inRegionBounds(index_right)) {
+                    const int height_difference = std::abs(current_tile.getElevation() - region.getTileAtIndex(index_right).getElevation());
                     if(biggest_difference < height_difference)
                         biggest_difference = height_difference;
                 }
 
-                if(game_settings.inRegionBounds(index_bottom)) {
-                    const int height_difference = std::abs(current_tile.getElevation() - region.map[index_bottom].getElevation());
+                if(inRegionBounds(index_bottom)) {
+                    const int height_difference = std::abs(current_tile.getElevation() - region.getTileAtIndex(index_bottom).getElevation());
                     if(biggest_difference < height_difference)
                         biggest_difference = height_difference;
                 }
@@ -1259,8 +1335,8 @@ void WorldGenerator::generateRegion(int region_index) {
                 region.sides[index].resize(biggest_difference);
 
                 const auto side_offset = [](int index) {
-                    auto offset = sf::Vector3f();
-                    offset.z = (index + 1) * game_settings.tileSize().y / 2;
+                    auto offset = core::Vector3f();
+                    offset.z = (index + 1) * tileSize().y / 2;
                     return offset;
                 };
 
@@ -1274,8 +1350,8 @@ void WorldGenerator::generateRegion(int region_index) {
 
                 // Make sure that tiles on the sides of the region have filled in elevation.
                 // Tiles along Y axis.
-                if(y == game_settings.getRegionWidth() - 1) {
-                    const int height_difference = region.map[index].getElevation();
+                if(y == world_data.r_width - 1) {
+                    const int height_difference = region.getTileAtIndex(index).getElevation();
                     region.sides[index].resize(height_difference);
 
                     for(int i = 0; i < height_difference; i++) {
@@ -1285,8 +1361,8 @@ void WorldGenerator::generateRegion(int region_index) {
                 }
 
                 // Tiles along X axis.
-                if(x == game_settings.getRegionWidth() - 1) {
-                    const int height_difference = region.map[index].getElevation();
+                if(x == world_data.r_width - 1) {
+                    const int height_difference = region.getTileAtIndex(index).getElevation();
                     region.sides[index].resize(height_difference);
 
                     for(int i = 0; i < height_difference; i++) {
@@ -1305,41 +1381,43 @@ void WorldGenerator::generateRegion(int region_index) {
             NoiseSettings settings;
 
             region.regiontype.is_forest()
-                ? settings = NoiseSettings(game_settings.getRegionWidth(), 8, 16, 4, 1.00f)
-                : settings = NoiseSettings(game_settings.getRegionWidth(), 8, 16, 4, 0.70f);
+                ? settings = NoiseSettings(world_data.r_width, 8, 16, 4, 1.00f)
+                : settings = NoiseSettings(world_data.r_width, 8, 16, 4, 0.70f);
 
             this->generateNoise(settings, container);
             for(int i = 0; i < container.size(); i++) {
-                auto& tile = region.map[i];
+                auto& tile  = region.getTileAtIndex(i);
                 float noise = container[i];
 
-                if(noise > game_settings.getRegionTreeMin() && tile.tiletype.is_terrain()) {
+                if(noise > world_data.w_forest_from && tile.isTerrain()) {
                     const auto& tree_texture = region.biome.getRandomTree();
-                    const auto texture_size  = this->resource->getTextureSize(tree_texture);
+                    const auto texture_size  = core::Vector2i(
+                        game_manager.resource.getTextureSize(tree_texture).x,
+                        game_manager.resource.getTextureSize(tree_texture).y
+                    );
                     
                     // Offset is for trees that are bigger than tile size.
-                    auto tree_offset = sf::Vector3f(0, 0, 0);
-                    if(texture_size.y > game_settings.tileSize().y)
-                        tree_offset.y = -texture_size.y + game_settings.tileSize().y;
+                    auto tree_offset = core::Vector3f(0, 0, 0);
+                    if(texture_size.y > tileSize().y)
+                        tree_offset.y = -texture_size.y + tileSize().y;
 
-                    if(texture_size.x > game_settings.tileSize().x)
-                        tree_offset.x = -game_settings.tileSize().x / 2;
-                    
-                    const auto tree_size = texture_size;
-                    region.trees[i] = GameObject(tile.getPosition(), tree_offset, tree_size, tree_texture);
+                    if(texture_size.x > tileSize().x)
+                        tree_offset.x = -tileSize().x / 2;
+    
+                    region.trees[i] = GameObject(tile.getPosition(), tree_offset, texture_size, tree_texture, "Tree");
                 }
             }
         }
     }
 
     // Generate region resources.
-    std::cout << "[World Generation]: Generating resources.\n";
-    for(const auto& resource: resources) {
+    std::cout << "[]: Generating resources.\n";
+    for(const auto& resource: RESOURCE_TABLE) {
         this->generateResourcePatch(region, resource);
     }
 
     const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
-    std::cout << "[World Generation]: Region generated in " << time_rounded << "s.\n"; 
+    std::cout << "[]: Region generated in " << time_rounded << "s.\n"; 
     std::cout << "====================\n";
 }
 
@@ -1360,13 +1438,6 @@ void WorldGenerator::generateResourcePatch(Region& region, const Resource& resou
     auto patch_size = resource.getPatchSize();
 
     auto already_generated_patches = 0;
-
-    // TODO: Create a universal template tile for all climates, that will be coloured depending on the biome.
-    // Tiles should have variations.
-    // Actual tiles should be generated automatically.
-    // Tiles and the way they are created should be declared in a single file.
-    // Tiles should hold data about what biome they can be generated in.
-
     if(resource.isRegionValid(&region)) {
         for(int patch_no = 0; patch_no < resource.getMaximumOccurence(); patch_no++) {
             auto base_generation_chance = resource.getGenerationChance();
@@ -1387,12 +1458,12 @@ void WorldGenerator::generateResourcePatch(Region& region, const Resource& resou
             bool spot_is_valid = false;
 
             while(!spot_is_valid) {
-                patch_tile_index = rand() % game_settings.getRegionSize();
+                patch_tile_index = rand() % getRegionSize();
                 spot_is_valid = resource.isTileValid(&region, patch_tile_index);
             }
 
             already_generated_patches++;
-            const auto& tile_selected = region.map[patch_tile_index];
+            const auto& tile_selected = region.getTileAtIndex(patch_tile_index);
             const auto  tile_grid = tileGridPosition(patch_tile_index);
 
             if(resource.isSingleObject() && resource.isTileValid(&region, patch_tile_index)) {
@@ -1409,19 +1480,19 @@ void WorldGenerator::generateResourcePatch(Region& region, const Resource& resou
                 // Maybe depending on the perlin noise which generates the region.  
 
                 NoiseContainer container;
-                auto grid = sf::Vector2i(region.getPosition2D().x / game_settings.panelSize(), region.getPosition2D().y / game_settings.panelSize());
+                auto grid = sf::Vector2i(region.getPosition2D().x / panelSize(), region.getPosition2D().y / panelSize());
                 this->generateChunkNoise(container, grid);
 
                 int angle = 0;
                 int min_x = tile_grid.x - patch_size * patch_size < 0 ? 0 : tile_grid.x - patch_size * patch_size;
                 int min_y = tile_grid.y - patch_size * patch_size < 0 ? 0 : tile_grid.y - patch_size * patch_size;
-                int max_x = tile_grid.x + patch_size * patch_size >= game_settings.getRegionWidth() ? game_settings.getRegionWidth() : tile_grid.x + patch_size * patch_size;
-                int max_y = tile_grid.y + patch_size * patch_size >= game_settings.getRegionWidth() ? game_settings.getRegionWidth() : tile_grid.y + patch_size * patch_size;
+                int max_x = tile_grid.x + patch_size * patch_size >= world_data.r_width ? world_data.r_width : tile_grid.x + patch_size * patch_size;
+                int max_y = tile_grid.y + patch_size * patch_size >= world_data.r_width ? world_data.r_width : tile_grid.y + patch_size * patch_size;
                 
                 for(int y = min_y; y < max_y; y++) {
                     for(int x = min_x; x < max_x; x++) {        
-                        const int index = game_settings.calculateRegionIndex(x, y);
-                        auto& tile      = region.map[index];
+                        const int index = calculateRegionIndex(x, y);
+                        auto& tile      = region.getTileAtIndex(index);
                         
                         const auto tile_centre = tile_selected.getPosition2D();
                         const auto tile_point  = tile.getPosition2D();
@@ -1448,4 +1519,5 @@ void WorldGenerator::generateResourcePatch(Region& region, const Resource& resou
     }
 
     std::cout << "  [] Generated " << resource.getResourceName() << " (" << already_generated_patches << ")\n"; 
+}
 }

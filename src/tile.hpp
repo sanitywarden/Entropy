@@ -22,10 +22,10 @@ class Tile : public GameObject {
         void setElevation(int elevation);
         int getElevation() const;    
 
-        bool is_terrain() const;
-        bool is_river() const;
-        bool is_ocean() const;
-        bool is_water() const;
-        bool is_coast() const;
+        bool isTerrain() const;
+        bool isRiver()   const;
+        bool isOcean()   const;
+        bool isWater()   const;
+        bool isCoast()   const;
 };  
 }

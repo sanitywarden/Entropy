@@ -14,8 +14,8 @@ class LuaScript {
         LuaScript(const std::string& filename);
         ~LuaScript();
 
-        void onEvent(lua_State* L, const std::string& event) const;
+        void onEvent(const std::string& event) const;
 };
 }
 
-extern std::vector <lua::LuaScript> scripts;
+extern std::vector <lua::LuaScript> SCRIPT_TABLE;

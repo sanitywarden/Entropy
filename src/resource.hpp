@@ -15,11 +15,11 @@ struct ResourceData {
     core::Vector2i texture_size;  // Texture size in pixels.
     std::string    icon_texture;  // Icon texture.
     core::Vector2i icon_size;     // Icon size in pixels.
-    std::string     type;          // Resource type.
-    int             min_occurence; // How many patches of this resource should be generated.
-    int             max_occurence; // How many patches of this resource may be generated.
-    float           chance;        // Generation chance (0.0 : 1.0).
-    int             patch_size;    // Certain resources generate in patches.
+    std::string    type;          // Resource type.
+    int            min_occurence; // How many patches of this resource should be generated.
+    int            max_occurence; // How many patches of this resource may be generated.
+    float          chance;        // Generation chance (0.0 : 1.0).
+    int            patch_size;    // Certain resources generate in patches.
     std::vector <std::string> tile_requirements;   // Resource requires the tile to have these properties.
     std::vector <std::string> region_requirements; // Resource requires the region to have these properties.
 };
@@ -37,14 +37,14 @@ class Resource {
         Resource(const ResourceData& data);
         ~Resource();
         
-        const std::string& getDefinitionFilename()  const;
-        const std::string& getResourceName()        const;
-        const std::string& getResourceDescription() const;
-        const std::string& getResourceTexture()     const;
-        const sf::Vector2i getResourceTextureSize() const;
-        const std::string& getIconTexture()         const;
-        const sf::Vector2i getIconTextureSize()     const;
-        const std::string& getResourceType()        const;
+        const std::string&   getDefinitionFilename()  const;
+        const std::string&   getResourceName()        const;
+        const std::string&   getResourceDescription() const;
+        const std::string&   getResourceTexture()     const;
+        const core::Vector2i getResourceTextureSize() const;
+        const std::string&   getIconTexture()         const;
+        const core::Vector2i getIconTextureSize()     const;
+        const std::string&   getResourceType()        const;
         int   getMinimumOccurence() const;
         int   getMaximumOccurence() const;
         float getGenerationChance() const;
@@ -67,4 +67,4 @@ class Resource {
 };
 }
 
-extern std::vector <iso::Resource> resources;
+extern std::vector <iso::Resource> RESOURCE_TABLE;

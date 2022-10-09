@@ -78,8 +78,8 @@ const std::string& StorageItem::getIconTexture() const {
     return this->data.icon_texture;
 }
 
-const sf::Vector2i StorageItem::getIconTextureSize() const {
-    return this->data.icon_size.asSFMLVector2i();
+const core::Vector2i StorageItem::getIconTextureSize() const {
+    return this->data.icon_size;
 }
 
 const std::string& StorageItem::getItemType() const {

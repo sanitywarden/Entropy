@@ -39,7 +39,7 @@ class Region : public GameObject {
         
         RiverDirection riverDirection();
         
-        bool isBuildingPositionValid(const Building& building, sf::Vector2i grid) const;
+        bool isBuildingPositionValid(const Building& building, core::Vector2i grid) const;
         void removeBuildingCost(const Building& building);
 
         bool isOwned() const;
@@ -47,9 +47,9 @@ class Region : public GameObject {
 
         bool isPassableWorldmap() const;
         bool isSpotOccupied(int index) const;
-        bool isSpotOccupied(sf::Vector2i grid) const;
+        bool isSpotOccupied(core::Vector2i grid) const;
         bool isPassableRegionmap(int index) const;
-        bool isPassableRegionmap(sf::Vector2i) const;
+        bool isPassableRegionmap(core::Vector2i) const;
 
         void stockpileAdd(StorageItem item);
         void stockpileRemove(StorageItem item);
@@ -57,19 +57,21 @@ class Region : public GameObject {
         bool itemExists(const StorageItem& item) const; 
 
         bool resourceExistsAt(int index) const;
-        bool resourceExistsAt(sf::Vector2i grid) const;
+        bool resourceExistsAt(core::Vector2i grid) const;
         const Resource& getResourceAt(int index) const;
-        const Resource& getResourceAt(sf::Vector2i grid) const;
+        const Resource& getResourceAt(core::Vector2i grid) const;
 
         bool treeExistsAt(int index) const;
-        bool treeExistsAt(sf::Vector2i grid) const;
+        bool treeExistsAt(core::Vector2i grid) const;
 
         bool buildingExistsAtIndex(int index) const;
-        bool buildingExistsAtGrid(sf::Vector2i grid) const;
+        bool buildingExistsAtGrid(core::Vector2i grid) const;
         const Building& getBuildingAtIndex(int index) const;
-        const Building& getBuildingAtGrid(sf::Vector2i grid) const;
+        const Building& getBuildingAtGrid(core::Vector2i grid) const;
 
         Tile& getTileAtIndex(int index);
+
+        bool isBiome(const Biome& biome) const;
 
     public:
         RegionType regiontype;

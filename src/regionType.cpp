@@ -1,5 +1,5 @@
 #include "regionType.hpp"
-#include <iostream>
+#include "globalutilities.hpp"
 
 using namespace iso;
 
@@ -21,8 +21,8 @@ bool RegionType::is_type(std::string id) const {
     try {
         return this->type.at(id);
     }
-    catch(const std::exception& exception) {
-        std::cout << "[RegionType]: Can not access ID " << id << "\n";
+    catch(const std::out_of_range& exception) {
+        printError("RegionType::is_type()", "Tried to access value with not indexed key '" + id + "'\n");
         return false;
     }
 }
@@ -36,7 +36,7 @@ bool RegionType::is_terrain() const {
 }
 
 bool RegionType::is_ocean() const {
-    return !this->is_type("TERRAIN");
+    return this->is_type("OCEAN");
 }
 
 bool RegionType::is_coast() const {
@@ -56,7 +56,7 @@ bool RegionType::is_lake() const {
 }
 
 bool RegionType::is_water() const {
-    return this->is_river() || this->is_ocean() || this->is_river() && this->is_lake();
+    return this->is_river() || this->is_ocean() || this->is_lake();
 }
 
 void RegionType::set_terrain() {

@@ -54,35 +54,41 @@ class Building : public GameObject {
         Building(const BuildingData& data);
         ~Building();
         
-        const std::string&  getDefinitionFilename()  const;
-        const std::string&  getBuildingName()        const;
-        const std::string&  getBuildingDescription() const;
-        const sf::Vector2i  getBuildingArea()        const;
-        const std::string&  getBuildingTextureName() const;
-        const sf::Vector2i  getBuildingScanArea()    const;
-        const ResourceList& getBuildingCost()        const;
-        const ResourceList& getBuildingRefund()      const;
-        const std::string&  getBuildingIcon()        const;
-        const sf::Vector2i  getBuildingIconSize()    const;        
+        const std::string&    getDefinitionFilename()  const;
+        const std::string&    getBuildingName()        const;
+        const std::string&    getBuildingDescription() const;
+        const core::Vector2i  getBuildingArea()        const;
+        const std::string&    getBuildingTexture()     const;
+        const core::Vector2i  getBuildingScanArea()    const;
+        const ResourceList&   getBuildingCost()        const;
+        const ResourceList&   getBuildingRefund()      const;
+        const std::string&    getBuildingIcon()        const;
+        const core::Vector2i  getBuildingIconSize()    const;        
         const std::vector <BuildingHarvest>&    getBuildingHarvests()   const;
         const std::vector <BuildingProduction>& getBuildingProduction() const;
         bool isProductionBuilding() const;
         bool isHarvestBuilding()    const;
         bool isRemovable()          const;
+        bool isTileHarvestable(GameObject* region, int index) const;
 
-        void setBuildingName(const std::string&);
-        void setBuildingTexture(const std::string&);
-
-        void onConstruct(Building* building, GameObject* object, int index) const;
+        void setBuildingName(const std::string& name);
+        void setBuildingDescription(const std::string& description);
+        void setBuildingArea(core::Vector2i area);
+        void setBuildingTexture(const std::string& texture_name);
+        void setBuildingScanArea(core::Vector2i scan_area);
+        void setBuildingCost(ResourceList list);
+        void setBuildingIcon(const std::string& icon);
+        void setBuildingIconSize(core::Vector2i size);
+        void setBuildingHarvests(std::vector <BuildingHarvest> harvest);
+        void setBuildingProduction(std::vector <BuildingProduction> production);
+        void setRemovable(bool removable);
 
         bool operator == (const Building& building) const;
         bool operator != (const Building& building) const;
 
-        // Does this tile contain a resource harvested by this building.
-        bool isTileHarvestable(GameObject* region, int index) const;
 };
 
 const Building BUILDING_EMPTY;
 }
 
-extern std::vector <iso::Building> buildings;
+extern std::vector <iso::Building> BUILDING_TABLE;

@@ -1,6 +1,6 @@
 #include "nameGenerator.hpp"
 
-std::string iso::generate(iso::GenerationType type, int iterations) {
+std::string iso::generateName(iso::GenerationType type, int iterations) {
     std::string name;
     
     switch(type) {

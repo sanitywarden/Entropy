@@ -1,7 +1,5 @@
 #pragma once
 
-#include "entropy/entropy.hpp"
-#include "texturizer.hpp"
 #include "region.hpp"
 #include "biome.hpp"
 #include "noiseSettings.hpp"
@@ -21,20 +19,20 @@ namespace iso {
             Region m_region;
             Tile   m_tile;
 
-            ResourceManager*     resource;
-            Texturizer*          texturizer;
             wgn::NoiseAlgorithms noise;     
-            std::vector <float> m_gradient; 
+            std::vector <float>  m_gradient; 
         
         private:
             bool is_biome(int index, Biome biome) const;            
 
             // Initial worldmap generation.
-            
+
+            void generateWorld();
             void worldmapGenerateClimate();
             void worldmapAssignBiome();
             void worldmapGenerateForests();
             void worldmapGenerateRivers();
+            void spawnPlayers();
 
             // Worldmap API.
             
@@ -59,18 +57,17 @@ namespace iso {
 
         public:
             WorldGenerator();
-            WorldGenerator(ResourceManager* resource, Texturizer* texturizer);
             ~WorldGenerator();
 
-            void generateWorld();
+            void generate();            
             void generateRegion(int region_index);
     
             void generateNoise(NoiseSettings& settings, NoiseContainer& container);
             void generateChunkNoise(NoiseContainer& container, sf::Vector2i chunk_grid);
 
-            sf::Vector3f tilePositionScreen(int x, int y);
-            sf::Vector3f tilePositionScreen(sf::Vector2i grid_position);
-            sf::Vector3f tilePositionScreen(sf::Vector2f grid_position);
+            core::Vector3f tilePositionScreen(int x, int y);
+            core::Vector3f tilePositionScreen(core::Vector2i grid_position);
+            core::Vector3f tilePositionScreen(core::Vector2f grid_position);
             
             bool is_ocean        (int index) const;
             bool is_tropical     (int index) const;
@@ -79,15 +76,9 @@ namespace iso {
             bool is_continental  (int index) const;
             bool is_tundra       (int index) const;
             
-            bool is_terrain      (int index) const;
-            bool is_coast        (int index) const;
-            bool is_lake         (int index) const;
-            bool is_river        (int index) const;
-
-        public:
-            std::vector <Region>          world_map; 
-            std::map    <int, GameObject> forests;
-            std::map    <int, GameObject> rivers;
-            std::map    <int, GameObject> lakes;
+            bool is_terrain(int index) const;
+            bool is_coast  (int index) const;
+            bool is_lake   (int index) const;
+            bool is_river  (int index) const;
     };
 }

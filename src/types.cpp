@@ -1,7 +1,10 @@
 #include "types.hpp"
+#include "globalutilities.hpp"
+#include "simulationManager.hpp"
 
-using namespace core;
+#include <iostream>
 
+namespace core {
 // Vector2f
 
 Vector2f::Vector2f() 
@@ -39,39 +42,55 @@ sf::Vector2f Vector2f::asSFMLVector2f() const {
     return sf::Vector2f(this->x, this->y);
 }
 
-// Vector2f Vector2f::operator+  (const Vector2f& vec) {
-    
-// }
+Vector2f& Vector2f::operator= (const Vector2f& vec) {
+    this->x = vec.x;
+    this->y = vec.y;
+    return *this;
+}
 
-// Vector2f& Vector2f::operator+= (const Vector2f& vec) {
+Vector2f Vector2f::operator+  (const Vector2f& vec) const {
+    auto temp = Vector2f(this->x + vec.x, this->y + vec.y);
+    return temp;
+}
 
-// }
+Vector2f& Vector2f::operator+= (const Vector2f& vec) {
+    this->x += vec.x;
+    this->y += vec.y;
+    return *this;
+}
 
-// Vector2f Vector2f::operator-  (const Vector2f& vec) {
+Vector2f Vector2f::operator-  (const Vector2f& vec) const {
+    auto temp = Vector2f(this->x - vec.x, this->y - vec.y);
+    return temp;
+}
 
-// }
+Vector2f& Vector2f::operator-= (const Vector2f& vec) {
+    this->x -= vec.x;
+    this->y -= vec.y;
+    return *this;
+}
 
-// Vector2f& Vector2f::operator-= (const Vector2f& vec) {
+Vector2f Vector2f::operator*  (int multiplier) const {
+    auto temp = Vector2f(this->x * multiplier, this->y * multiplier);
+    return temp;
+}
 
-// }
+Vector2f& Vector2f::operator*= (int multiplier) {
+    this->x *= multiplier;
+    this->y *= multiplier;
+    return *this;
+}  
 
-// Vector2f Vector2f::operator*  (int multiplier) {
+Vector2f Vector2f::operator/  (int divisor) const {
+    auto temp = Vector2f(this->x / divisor, this->y / divisor);
+    return temp;
+}
 
-// }
-
-// Vector2f& Vector2f::operator*= (int multiplier) {
-
-// }  
-
-// Vector2f Vector2f::operator/  (int divisor) {
-
-// }
-
-// Vector2f& Vector2f::operator/= (int divisor) {
-
-// }
-
-// Vector2i
+Vector2f& Vector2f::operator/= (int divisor) {
+    this->x /= divisor;
+    this->y /= divisor;
+    return *this;
+}
 
 Vector2i::Vector2i()
     : x(0), y(0)
@@ -106,6 +125,56 @@ sf::Vector2i Vector2i::asSFMLVector2i() const {
 
 sf::Vector2f Vector2i::asSFMLVector2f() const {
     return sf::Vector2f(this->x, this->y);
+}
+
+Vector2i& Vector2i::operator= (const Vector2i& vec) {
+    this->x = vec.x;
+    this->y = vec.y;
+    return *this;
+}
+
+Vector2i Vector2i::operator+  (const Vector2i& vec) const {
+    auto temp = Vector2i(this->x + vec.x, this->y + vec.y);
+    return temp;
+}
+
+Vector2i& Vector2i::operator+= (const Vector2i& vec) {
+    this->x += vec.x;
+    this->y += vec.y;
+    return *this;
+}
+
+Vector2i Vector2i::operator-  (const Vector2i& vec) const {
+    auto temp = Vector2i(this->x - vec.x, this->y - vec.y);
+    return temp;
+}
+
+Vector2i& Vector2i::operator-= (const Vector2i& vec) {
+    this->x -= vec.x;
+    this->y -= vec.y;
+    return *this;
+}
+
+Vector2i Vector2i::operator*  (int multiplier) const {
+    auto temp = Vector2i(this->x * multiplier, this->y * multiplier);
+    return temp;
+}
+
+Vector2i& Vector2i::operator*= (int multiplier) {
+    this->x *= multiplier;
+    this->y *= multiplier;
+    return *this;
+}  
+
+Vector2i Vector2i::operator/  (int divisor) const {
+    auto temp = Vector2i(this->x / divisor, this->y / divisor);
+    return temp;
+}
+
+Vector2i& Vector2i::operator/= (int divisor) {
+    this->x /= divisor;
+    this->y /= divisor;
+    return *this;
 }
 
 // Vector3f
@@ -153,6 +222,61 @@ sf::Vector3f Vector3f::asSFMLVector3f() const {
     return sf::Vector3f(this->x, this->y, this->z);
 }
 
+Vector3f& Vector3f::operator= (const Vector3f& vec) {
+    this->x = vec.x;
+    this->y = vec.y;
+    this->z = vec.z;
+    return *this;
+}
+
+Vector3f Vector3f::operator+  (const Vector3f& vec) const {
+    auto temp = Vector3f(this->x + vec.x, this->y + vec.y, this->z + vec.z);
+    return temp;
+}
+
+Vector3f& Vector3f::operator+= (const Vector3f& vec) {
+    this->x += vec.x;
+    this->y += vec.y;
+    this->z += vec.z;
+    return *this;
+}
+
+Vector3f Vector3f::operator-  (const Vector3f& vec) const {
+    auto temp = Vector3f(this->x - vec.x, this->y - vec.y, this->z - vec.z);
+    return temp;
+}
+
+Vector3f& Vector3f::operator-= (const Vector3f& vec) {
+    this->x -= vec.x;
+    this->y -= vec.y;
+    this->z -= vec.z;
+    return *this;
+}
+
+Vector3f Vector3f::operator*  (int multiplier) const {
+    auto temp = Vector3f(this->x * multiplier, this->y * multiplier, this->z * multiplier);
+    return temp;
+}
+
+Vector3f& Vector3f::operator*= (int multiplier) {
+    this->x *= multiplier;
+    this->y *= multiplier;
+    this->z *= multiplier;
+    return *this;
+}  
+
+Vector3f Vector3f::operator/  (int divisor) const {
+    auto temp = Vector3f(this->x / divisor, this->y / divisor, this->y / divisor);
+    return temp;
+}
+
+Vector3f& Vector3f::operator/= (int divisor) {
+    this->x /= divisor;
+    this->y /= divisor;
+    this->z /= divisor;
+    return *this;
+}
+
 // Vector3i
 
 Vector3i::Vector3i()
@@ -196,6 +320,61 @@ sf::Vector3i Vector3i::asSFMLVector3i() const {
 
 sf::Vector3f Vector3i::asSFMLVector3f() const {
     return sf::Vector3f(this->x, this->y, this->z);
+}
+
+Vector3i& Vector3i::operator= (const Vector3i& vec) {
+    this->x = vec.x;
+    this->y = vec.y;
+    this->z = vec.z;
+    return *this;
+}
+
+Vector3i Vector3i::operator+  (const Vector3i& vec) const {
+    auto temp = Vector3i(this->x + vec.x, this->y + vec.y, this->z + vec.z);
+    return temp;
+}
+
+Vector3i& Vector3i::operator+= (const Vector3i& vec) {
+    this->x += vec.x;
+    this->y += vec.y;
+    this->z += vec.z;
+    return *this;
+}
+
+Vector3i Vector3i::operator-  (const Vector3i& vec) const {
+    auto temp = Vector3i(this->x - vec.x, this->y - vec.y, this->z - vec.z);
+    return temp;
+}
+
+Vector3i& Vector3i::operator-= (const Vector3i& vec) {
+    this->x -= vec.x;
+    this->y -= vec.y;
+    this->z -= vec.z;
+    return *this;
+}
+
+Vector3i Vector3i::operator*  (int multiplier) const {
+    auto temp = Vector3i(this->x * multiplier, this->y * multiplier, this->z * multiplier);
+    return temp;
+}
+
+Vector3i& Vector3i::operator*= (int multiplier) {
+    this->x *= multiplier;
+    this->y *= multiplier;
+    this->z *= multiplier;
+    return *this;
+}  
+
+Vector3i Vector3i::operator/  (int divisor) const {
+    auto temp = Vector3i(this->x / divisor, this->y / divisor, this->y / divisor);
+    return temp;
+}
+
+Vector3i& Vector3i::operator/= (int divisor) {
+    this->x /= divisor;
+    this->y /= divisor;
+    this->z /= divisor;
+    return *this;
 }
 
 // Colour
@@ -249,4 +428,73 @@ uint8_t Colour::getA() const {
 
 sf::Color Colour::asSFMLColour() const {
     return sf::Color(this->r, this->g, this->b, this->a);
+}
+
+Colour& Colour::operator= (const Colour& colour) {
+    this->r = colour.r;
+    this->g = colour.g;
+    this->b = colour.b;
+    return *this;
+}
+
+bool Colour::operator== (const Colour& colour) const {
+    return (
+        this->r == colour.r &&
+        this->g == colour.g &&
+        this->b == colour.b
+    );
+}
+
+bool Colour::operator== (const sf::Color& colour) const {
+    return (
+        this->r == colour.r &&
+        this->g == colour.g &&
+        this->b == colour.b
+    );
+}
+
+// Ratio
+
+Ratio::Ratio()
+    : expression_x("0%"), expression_y("y"), x(0), y(0)
+{}
+
+Ratio::Ratio(const std::string& x, const std::string& y)
+    : expression_x(x), expression_y(y)
+{
+    this->x = this->extractRatio(x, true);
+    this->y = this->extractRatio(y, false);
+}
+
+Ratio::~Ratio()
+{}
+
+void Ratio::setX(const std::string& x) {
+    this->expression_x = x;
+}
+
+const std::string& Ratio::getX() const {
+    return this->expression_x;
+}
+
+void Ratio::setY(const std::string& y) {
+    this->expression_y = y;
+}
+
+const std::string& Ratio::getY() const {
+    return this->expression_y;
+}
+
+core::Vector2f Ratio::asNumber() const {
+    return core::Vector2f(this->x, this->y);
+} 
+
+float Ratio::extractRatio(const std::string& coordinate, bool is_x_coordinate) {
+    if(!iso::containsWord(coordinate, "%"))
+        iso::printError("Ratio::extractRatio()", "Invalid ratio description");
+    
+    auto value = iso::readBefore(coordinate, "%"); 
+    float ratio = std::stof(value) / 100.0f;        
+    return ratio;    
+}
 }

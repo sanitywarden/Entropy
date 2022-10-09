@@ -1,156 +1,95 @@
 #include "simulationManager.hpp"
-#include "entropy/gamestate.hpp"
+#include "gamestate.hpp"
 #include "worldmap.hpp"
 #include "regionmap.hpp"
-#include "generationSettings.hpp"
-#include "nameGenerator.hpp"
+#include "worldData.hpp"
 #include "colours.hpp"
-#include "luascript.hpp"
-#include "noiseSettings.hpp"
-#include "luadriver.hpp"
+#include "globalutilities.hpp"
 
 #include <queue>
 #include <iostream>
 #include <filesystem>
 
-using namespace iso;
-
+namespace iso {
 SimulationManager::SimulationManager() {
-    this->setup();
-    this->initialise();
-    this->initialiseEvents();
-    this->loadScripts();
+    this->L = luaL_newstate();
+    luaL_openlibs(this->L);
 
-    auto driver = lua::driver::Driver::getInstance();
-    driver->loadGameData();
+    sf::Clock clock;
 
-    this->texturizer = Texturizer(&this->resource);
+    // BIND C++ TO LUA
+    registerLua();
 
-    this->gamestate.addGamestate("worldmap", std::shared_ptr <Gamestate> (new Worldmap(this)));
-    this->prepare();
-    
-    this->gamestate.setGamestate("worldmap");
+    // LOAD APPLICATION CONFIG
+    loadApplicationConfig();
 
-    this->simulation_speed = game_settings.simulationSpeed();
-}
-
-SimulationManager::~SimulationManager() 
-{}
-
-void SimulationManager::setup() {
-    std::string config_path = "./data/appconfig.lua";
-    std::cout << "[Simulation Manager]: Reading application config.\n";
-
-    auto luastate = lua::driver::Driver::getInstance()->L;
-    luaL_dofile(luastate, config_path.c_str());
-    auto appconfig = luabridge::getGlobal(luastate, "Appconfig");
-
-    ApplicationSettings settings;
-    settings.window_size            = appconfig["window_size"];
-    settings.window_fullscreen      = appconfig["fullscreen"];
-    settings.window_vsync           = appconfig["vsync"];
-    settings.window_refresh_rate    = appconfig["refresh_rate"];
-    
-    this->window.createWindow(settings, "Entropy by Vivit");
-    this->window.setKeyHold(false);
-}
-
-void SimulationManager::initialise() {
-    auto driver = lua::driver::Driver::getInstance();
-    driver->loadResources(this, "./src/scripts/resource/load_ui.lua");
-
-    this->draw_calls          = 0;
-    this->people_dehydrated   = 0;
-    this->people_malnourished = 0;
-    this->resource.loadTexture("./res/random_colour.png", "random_colour");
-
-    this->resource.loadFont("./res/font/proggy.ttf",   "proggy");
-    this->resource.loadFont("./res/font/garamond.ttf", "garamond");
+    // LOAD GAME DATA
+    std::cout << "[] Loading game data.\n";
+    loadGameData();
 
     this->font_size = (this->window.getWindowWidth() + this->window.getWindowHeight()) / 160;
+
+    auto time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
+    std::cout << "[] Initialised in " << time_rounded << "s.\n";
+
+    static auto worldmap = std::shared_ptr <Gamestate> (new Worldmap());
+    this->gamestate.addGamestate("Worldmap", worldmap);
+    this->world_generator.generate();
+
+    static auto regionmap = std::shared_ptr <Gamestate> (new Regionmap());
+    this->gamestate.addGamestate("Regionmap", regionmap);
+
+    this->gamestate.setGamestate("Worldmap");
 }
 
-void SimulationManager::initialiseEvents() {
-    EventData data_update_units;
-    data_update_units.name            = "UPDATE_UNIT";
-    data_update_units.required_time   = 1;
-    data_update_units.time            = 0;
-    data_update_units.speed_dependant = false;
-    ScheduledEvent update_units(data_update_units);
-    this->events.push_back(update_units);
-
-    EventData data_update_buildings;
-    data_update_buildings.name            = "UPDATE_BUILDING";
-    data_update_buildings.required_time   = seconds_per_hour;
-    data_update_buildings.time            = 0;
-    data_update_buildings.speed_dependant = true;
-    ScheduledEvent update_buildings(data_update_buildings);
-    this->events.push_back(update_buildings);
-
-    EventData data_update_population;
-    data_update_population.name            = "UPDATE_POPULATION";
-    data_update_population.required_time   = seconds_per_day;
-    data_update_population.time            = 0;
-    data_update_population.speed_dependant = true;
-    ScheduledEvent update_population(data_update_population);
-    this->events.push_back(update_population);
-}
-
-void SimulationManager::loadScripts() const {
-    // Guard.
-    // If scripts are reloaded at runtime, resize the vector.
-    scripts.resize(0);
-
-    auto luastate = lua::driver::Driver::getInstance()->L;
-
-    std::string scripts_directory = "./src/scripts/";
-    for(const auto& file : std::filesystem::directory_iterator(scripts_directory)) {
-        const auto& file_path = file.path().string();
-        const auto& file_path_extension = file.path().extension().string();
-
-        if(file_path_extension == ".lua") {
-            luaL_loadfile(luastate, file_path.c_str());
-            lua::LuaScript script(file_path);
-            scripts.push_back(script);
-        }
-    }
+SimulationManager::~SimulationManager() {
+    lua_close(this->L);
 }
 
 void SimulationManager::loop() {
-    this->measurement_clock = sf::Clock();
-    this->simulation_clock    = sf::Clock();
+    this->clock = sf::Clock();
+    this->simulation_clock = sf::Clock();
 
-    const sf::Time one_second       = sf::seconds(1.0f);
-    const sf::Time simulation_speed = sf::seconds(this->simulation_speed); 
+    auto second = sf::seconds(1.0f);
+    auto simulation_speed = sf::seconds(world_data.simulation_speed);
 
     // Frames per second.
     int updates = 0;
 
     while(this->window.isOpen()) {
-        if(this->time_since_start.asMilliseconds() < one_second.asMilliseconds()) {
+        if(this->time_since_start.asMilliseconds() < second.asMilliseconds()) {
             // Measure the difference in time between the last frame and this frame.
-            float delta_time = this->measurement_clock.getElapsedTime().asMilliseconds() - this->time_since_start.asMilliseconds();            
-            this->time_since_start = this->measurement_clock.getElapsedTime();
+            float delta_time = this->clock.getElapsedTime().asMilliseconds() - this->time_since_start.asMilliseconds();            
+            this->time_since_start = this->clock.getElapsedTime();
             updates++;
 
             /* Delta time is saved as milliseconds, convert that to seconds.
              * 1ms -> 0.001s. */
             float delta_time_s = delta_time / 1000;
-            this->internalLoop(delta_time_s);             
+            
+            auto* gamestate = this->gamestate.getGamestate();
+            if(!gamestate) {
+                printError("SimulationManager::loop()", "Current gamestate is a nullptr.\n");
+                return;
+            }
+
+            this->emitEvents();
+            
+            gamestate->update(delta_time_s);
+            gamestate->render(delta_time_s);
+        
+            event_queue.resize(0);
         }
 
         else {
-            this->frames_per_second = updates;
-            this->time_per_frame = (float)this->time_since_start.asMilliseconds() / (float)this->frames_per_second;
-
-            this->measurement_clock.restart();
+            this->fps = updates;
+            this->time_per_frame = (float)this->time_since_start.asMilliseconds() / (float)this->fps;
+            this->clock.restart();
             this->time_since_start = sf::Time::Zero;
-            
-            auto* gamestate = this->gamestate.getGamestate();
-            if(this->time < INT_MAX && gamestate->state_id != "Menu")
-                this->time++;
 
-            for(auto& event : this->events) {
+            this->time_s++;
+
+            for(auto& event : this->schedule) {
                 if(event.getCurrentTime() != event.getRequiredTime() && !event.isSpeedDependant())
                     event.progressEvent();
             }
@@ -158,24 +97,21 @@ void SimulationManager::loop() {
             updates = 0;
         }
 
-        if(this->simulation_time_since_start.asMilliseconds() < simulation_speed.asMilliseconds()) {
+        if(this->simulation_time_since_start.asMilliseconds() < simulation_speed.asMilliseconds())
             this->simulation_time_since_start = this->simulation_clock.getElapsedTime();
-        }
 
         else {
             this->simulation_clock.restart();
             this->simulation_time_since_start = sf::Time::Zero;
 
-            auto* gamestate = this->gamestate.getGamestate();
-            if(this->simulation_time < INT_MAX && gamestate->state_id != "Menu")
-                this->simulation_time++;
+            this->simulation_time_s++;
 
             // Update gamestate-specific scheduler.
-            if(gamestate) {
+            auto* gamestate = this->gamestate.getGamestate();
+            if(gamestate)
                 gamestate->updateScheduler();
-            }
 
-            for(auto& event : this->events) {
+            for(auto& event : this->schedule) {
                 if(event.getCurrentTime() != event.getRequiredTime() && event.isSpeedDependant())
                     event.progressEvent();
             }
@@ -183,132 +119,9 @@ void SimulationManager::loop() {
     }
 }
 
-void SimulationManager::internalLoop(float delta_time) {
-    Gamestate* gamestate = this->gamestate.getGamestate();
-    if(gamestate == nullptr) {
-        std::cout << "[Simulation Manager]: Current gamestate is a nullptr.\n";
-        exitApplication(1);
-    } 
-
-    if(gamestate->engine == nullptr) {
-        std::cout << "[Simulation Manager]: Engine is a nullptr.\n";
-        exitApplication(1);
-    }
-
-    this->emitEvents();
-
-    // Player updates.
-    gamestate->update(delta_time);
-    gamestate->render(delta_time);
-
-    this->popEvents();    
+lua_State* SimulationManager::lua() const {
+    return this->L;
 }
-
-void SimulationManager::prepare() {
-    this->initialise();
-    this->world = WorldGenerator(&this->resource, &this->texturizer);
-    this->world.world_map = std::vector <Region> (game_settings.getWorldSize());
-    this->world.forests   = std::map <int, GameObject> ();
-    this->world.rivers    = std::map <int, GameObject> ();
-    this->world.lakes     = std::map <int, GameObject> ();
-    this->players         = std::vector <Player> ();
-    this->world.generateWorld();
-    this->generateCountries();
-}
-
-/*
-// void SimulationManager::updatePopulation() {
-    // for(auto& region : this->world.world_map) {
-    //     if(region.getPopulation() && region.visited && game_settings.populationNeedsEnabled()) {
-    //         // Calculate people with their needs not fullfilled currently.
-
-    //         const auto water_quantity      = region.getDrinkableLiquidQuantity();
-    //         const auto pop_needs_met_water = water_quantity / water_consumed_per_pop;
-    //         const auto water_needed        = region.getPopulation() * water_consumed_per_pop;
-    //         const auto dehydrated_people   = region.getPopulation() - pop_needs_met_water <= 0
-    //             ? 0
-    //             : region.getPopulation() - pop_needs_met_water;
-            
-    //         const auto food_quantity       = region.getFoodQuantity();
-    //         const auto pop_needs_met_food  = food_quantity / food_consumed_per_pop;
-    //         const auto food_needed         = region.getPopulation() * food_consumed_per_pop;
-    //         const auto malnourished_people = region.getPopulation() - pop_needs_met_food <= 0
-    //             ? 0
-    //             : region.getPopulation() - pop_needs_met_food; 
-
-
-    //         // Calculate the number of dead people, including people with their needs not fullfilled from previous updates.
-    //         // Select the smaller number.
-    //         const auto dead_from_dehydration = this->people_dehydrated > dehydrated_people
-    //             ? dehydrated_people
-    //             : this->people_dehydrated;
-
-    //         // Select the smaller number.
-    //         const auto dead_from_malnutrition = this->people_malnourished > malnourished_people
-    //             ? malnourished_people
-    //             : this->people_malnourished;
-
-    //         const auto dead_average = (dead_from_dehydration + dead_from_malnutrition) / 2;
-    //         auto survive = region.getPopulation() - dead_average; 
-
-    //         if(this->debugModeEnabled()) {
-    //             std::cout << "=======[DEBUG]=======\n";
-    //             std::cout << "[] Water needs met: " << pop_needs_met_water << " / " << region.getPopulation() << " people.\n";
-    //             std::cout << "[] Food needs met:  " << pop_needs_met_food  << " / " << region.getPopulation() << " people.\n";
-    //             std::cout << "[] Dehydrated currently:   " << dehydrated_people   << " | Dehydrated last time:   " << this->people_dehydrated   << "\n";
-    //             std::cout << "[] Malnourished currently: " << malnourished_people << " | Malnourished last time: " << this->people_malnourished << "\n";
-    //             std::cout << "[] Dead:    " << dead_average << "\n";
-    //             std::cout << "[] Survive: " << survive      << "\n";
-    //         }
-
-    //         while(region.getPopulation() != survive) {
-    //             region.population.resize(region.population.size() - 1);
-    //         }
-
-    //         const auto new_dehydrated = dehydrated_people - dead_from_dehydration;
-    //             this->people_dehydrated = new_dehydrated;
-
-    //         const auto new_malnourished = malnourished_people - dead_from_malnutrition;
-    //             this->people_malnourished = new_malnourished;
-
-    //         for(const auto& item : ITEM_LOOKUP_TABLE) {
-    //             if(region.checkItemExists(item) && item.item_type == ItemType::TYPE_FOOD) {
-    //                 // Find the food's share of all food. 
-    //                 const auto percent_of_all_food = (float)region.getItemQuantity(item) / (float)food_quantity; 
-    //                 const auto percent_rounded = std::ceil(percent_of_all_food * 100) / 100;
-
-    //                 // Calculate the equivalent percentage of this food in the smaller quantity.
-    //                 const int quantity = percent_rounded * food_needed;                                                     
-    //                 const auto item_copy = StorageItem(item.item_name, -quantity, item.item_type);                                        
-                    
-    //                 if(this->debugModeEnabled())
-    //                     std::cout << "[] " << item.item_name << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
-                    
-    //                 region.addItem(item_copy);
-    //             }
-
-    //             if(region.checkItemExists(item) && item.item_type == ItemType::TYPE_DRINKABLE_LIQUID) {
-    //                 // Find the liquid's share of all liquids.
-    //                 const auto percent_of_all_liquids = (float)region.getItemQuantity(item) / (float)water_quantity;
-    //                 const auto percent_rounded = std::ceil(percent_of_all_liquids * 100) / 100;
-                    
-    //                 // Calculate the equivalent percentage of this liquid in the smaller quantity.
-    //                 const int quantity = percent_rounded * water_needed;
-    //                 const auto item_copy = StorageItem(item.item_name, -quantity, item.item_type);
-
-    //                 if(this->debugModeEnabled())
-    //                     std::cout << "[] " << item.item_name << " consumed:\t" << quantity << "\t(" << percent_rounded * 100 << "%)\n";
-
-    //                 region.addItem(item_copy);
-    //             }
-    //         }
-
-    //         if(this->debugModeEnabled())
-    //             std::cout << "=======[DEBUG]=======\n";
-    //     }
-    // }
-// }
-*/
 
 struct aNode {
     int x;
@@ -319,49 +132,47 @@ struct aNode {
     bool passable;
 };
 
-std::vector <int> SimulationManager::astar(int start, int end) const {
+std::vector <int> SimulationManager::wAstar(int start, int end) const {
     const auto H = [](const aNode& node, const aNode& end) -> int {      
         return std::abs(end.x - node.x) + std::abs(end.y - node.y);
     };
 
-    const auto neighbours = [this](sf::Vector2i grid_position) -> std::vector <int> {
-        auto grid_up    = grid_position + sf::Vector2i(0, 1);
-        auto grid_down  = grid_position + sf::Vector2i(0, -1);
-        auto grid_left  = grid_position + sf::Vector2i(-1, 0);
-        auto grid_right = grid_position + sf::Vector2i(1, 0);
+    const auto neighbours = [this](core::Vector2i grid_position) -> std::vector <int> {
+        auto grid_up    = grid_position + core::Vector2i(0, 1);
+        auto grid_down  = grid_position + core::Vector2i(0, -1);
+        auto grid_left  = grid_position + core::Vector2i(-1, 0);
+        auto grid_right = grid_position + core::Vector2i(1, 0);
 
-        auto index = game_settings.calculateWorldIndex(grid_position.x, grid_position.y);
+        auto index = calculateWorldIndex(grid_position);
 
         std::vector <int> neighbours;
-        if(game_settings.inWorldBounds(grid_left))
+        if(inWorldBounds(grid_left))
             neighbours.push_back(index - 1);
 
-        if(game_settings.inWorldBounds(grid_right))
+        if(inWorldBounds(grid_right))
             neighbours.push_back(index + 1);
 
-        if(game_settings.inWorldBounds(grid_up))
-            neighbours.push_back(index - game_settings.getWorldWidth());
+        if(inWorldBounds(grid_up))
+            neighbours.push_back(index - world_data.w_width);
 
-        if(game_settings.inWorldBounds(grid_down))
-            neighbours.push_back(index + game_settings.getWorldWidth());
+        if(inWorldBounds(grid_down))
+            neighbours.push_back(index + world_data.w_width);
 
         return neighbours;
     };
 
     const auto passable = [this](int index) -> bool {
-        const auto& region = this->world.world_map[index];
+        const auto& region = this->world_map[index];
         if(region.regiontype.is_ocean())
             return false;
         return true;
     };
 
-    std::vector <aNode> nodes(game_settings.getWorldSize());
-    
-    
+    std::vector <aNode> nodes(getWorldSize());
 
-    for(int y = 0; y < game_settings.getWorldWidth(); y++) {
-        for(int x = 0; x < game_settings.getWorldWidth(); x++) {
-            const int index = game_settings.calculateWorldIndex(x, y);
+    for(int y = 0; y < world_data.w_width; y++) {
+        for(int x = 0; x < world_data.w_width; x++) {
+            const int index = calculateWorldIndex(x, y);
             aNode& node = nodes[index];
 
             node.index = index;        
@@ -408,7 +219,7 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
         if(current_node.index == end)
             break;
 
-        for(int index : neighbours(sf::Vector2i(current_node.x, current_node.y))) {
+        for(int index : neighbours(core::Vector2i(current_node.x, current_node.y))) {
             const aNode& neighbour = nodes[index];
             const int new_cost   = cost_so_far[current_node.index] + 1;
 
@@ -428,10 +239,9 @@ std::vector <int> SimulationManager::astar(int start, int end) const {
     return reconstruct(start, end, came_from);
 }
 
-std::vector <int> SimulationManager::r_astar(int start, int end) const {
-    auto* gamestate = this->gamestate.getGamestateByName("regionmap");
-    auto* regionmap = static_cast<Regionmap*>(gamestate);
-    auto& region = this->world.world_map[regionmap->getRegionIndex()];
+std::vector <int> SimulationManager::rAstar(int start, int end) const {
+    auto* regionmap = (Regionmap*)this->gamestate.getGamestateByName("Regionmap");
+    const auto& region = this->world_map[regionmap->getRegionIndex()];
 
     const auto H = [](const aNode& node, const aNode& end) -> int {
         // Euclidean distance.
@@ -447,36 +257,35 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
         return H(start_node, current_node);
     };
 
-    const auto neighbours = [region, this](sf::Vector2i grid_position) -> std::vector <int> {
-        auto grid_up    = grid_position + sf::Vector2i(0, 1);
-        auto grid_down  = grid_position + sf::Vector2i(0, -1);
-        auto grid_left  = grid_position + sf::Vector2i(-1, 0);
-        auto grid_right = grid_position + sf::Vector2i(1, 0);
+    const auto neighbours = [region, this](core::Vector2i grid_position) -> std::vector <int> {
+        auto grid_up    = grid_position + core::Vector2i(0, 1);
+        auto grid_down  = grid_position + core::Vector2i(0, -1);
+        auto grid_left  = grid_position + core::Vector2i(-1, 0);
+        auto grid_right = grid_position + core::Vector2i(1, 0);
 
-        auto index = game_settings.calculateRegionIndex(grid_position.x, grid_position.y);
-
+        auto index = calculateRegionIndex(grid_position);
         std::vector <int> neighbours;
         
-        if(game_settings.inRegionBounds(grid_left))
-            if(region.isPassableRegionmap(game_settings.calculateRegionIndex(grid_left.x, grid_right.y)))
+        if(inRegionBounds(grid_left))
+            if(region.isPassableRegionmap(calculateRegionIndex(grid_left)))
                 neighbours.push_back(index - 1);
 
-        if(game_settings.inRegionBounds(grid_right))
-            if(region.isPassableRegionmap(game_settings.calculateRegionIndex(grid_right.x, grid_right.y)))
+        if(inRegionBounds(grid_right))
+            if(region.isPassableRegionmap(calculateRegionIndex(grid_right)))
                 neighbours.push_back(index + 1);
 
-        if(game_settings.inRegionBounds(grid_up))
-            if(region.isPassableRegionmap(game_settings.calculateRegionIndex(grid_up.x, grid_up.y)))
-                neighbours.push_back(index - game_settings.getRegionWidth());
+        if(inRegionBounds(grid_up))
+            if(region.isPassableRegionmap(calculateRegionIndex(grid_up)))
+                neighbours.push_back(index - world_data.r_width);
 
-        if(game_settings.inRegionBounds(grid_down))
-            if(region.isPassableRegionmap(game_settings.calculateRegionIndex(grid_down.x, grid_down.y)))
-                neighbours.push_back(index + game_settings.getRegionWidth());
+        if(inRegionBounds(grid_down))
+            if(region.isPassableRegionmap(calculateRegionIndex(grid_down)))
+                neighbours.push_back(index + world_data.r_width);
 
         return neighbours;
     };
     
-    std::vector <aNode> nodes(game_settings.getRegionSize());
+    std::vector <aNode> nodes(getRegionSize());
     auto& node_start = nodes[start];
     auto& node_end   = nodes[end];
 
@@ -486,14 +295,12 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
     node_end.index = end;
     node_end.passable = region.isPassableRegionmap(end);
 
-    if(!node_end.passable) {
-        std::cout << "[DEBUG][A*]: End node is unpassable.\n";
+    if(!node_end.passable)
         return std::vector<int> ();
-    }
 
-    for(int y = 0; y < game_settings.getRegionWidth(); y++) {
-        for(int x = 0; x < game_settings.getRegionWidth(); x++) {
-            const int index = game_settings.calculateRegionIndex(x, y);
+    for(int y = 0; y < world_data.r_width; y++) {
+        for(int x = 0; x < world_data.r_width; x++) {
+            const int index = calculateRegionIndex(x, y);
             aNode& node = nodes[index];
 
             node.index = index;        
@@ -517,7 +324,8 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
     cost_so_far[node_start.index] = 0;
 
     const auto get_node_movement_cost = [region](const aNode& current, const aNode& next) -> int {
-        if(region.map[current.index].tiletype.is_river())
+        const auto& tile = region.map[current.index];
+        if(tile.isRiver())
             return 3;
     
         if(region.treeExistsAt(current.index))
@@ -548,7 +356,7 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
 
         seen.push_back(current_node.index);
 
-        auto current_neighbours = neighbours(sf::Vector2i(current_node.x, current_node.y));
+        auto current_neighbours = neighbours(core::Vector2i(current_node.x, current_node.y));
         for(auto index : current_neighbours) {
             // If index was already seen, skip.
             if(std::find(seen.begin(), seen.end(), index) != seen.end())
@@ -571,299 +379,434 @@ std::vector <int> SimulationManager::r_astar(int start, int end) const {
     return reconstruct_path(node_start, node_end, came_from);
 }
 
-
-int SimulationManager::getDrawCalls() const {
-    return this->draw_calls;
-}
-
-void SimulationManager::updateDrawCalls(int calls) {
-    this->draw_calls = calls;
-}
-
-std::string SimulationManager::getDateFormatted() const {
-    // Copy value.
-    int time_passed = this->time;
-
-    /* Time scale:
-        12 irl seconds = 1 ig hour
-        12 ig hours    = 1 ig day
-        30 ig days     = 1 ig month
-        12 ig months   = 1 ig year
-    */
-
-    int seconds_left = 0;
-    int years = time_passed / seconds_per_year;
-    seconds_left = time_passed % seconds_per_year;
- 
-    int months = seconds_left / seconds_per_month;
-    seconds_left = seconds_left % seconds_per_month;
-  
-    int days = seconds_left / seconds_per_day;
-    seconds_left = seconds_left % seconds_per_day;
-
-    std::string date;
-    date += std::to_string(days)   + " "; 
-    date += std::to_string(months) + " "; 
-    date += std::to_string(years); 
-
-    // Example date (D/M/Y): "11 12 54".
-    return date;
-}
-
-bool SimulationManager::inScreenSpace(const GameObject& object) const {
-    auto* gamestate = this->gamestate.getGamestate();
-    auto  view = gamestate->view_game;
-    auto  view_centre = view.getCenter();
-    auto  view_size   = view.getSize();
-    sf::Rect view_box(view_centre - sf::Vector2f(view_size.x / 2, view_size.y / 2), view_size);
-    sf::Rect object_box(object.getPosition2D(), object.getSize());
-    
-    return view_box.intersects(object_box);
-}
-
 Player* SimulationManager::getHumanPlayer() {
-    for(auto& player : this->players)
-        if(player.isHuman())
-            return &player;
-    return nullptr;
+    if(!this->checkPlayerExists(0)) {
+        printError("PlayerManager::getHumanPlayer()", "There is no human player.");
+        return nullptr;
+    }
+
+    return &this->players.at(0);
 }
 
 Player* SimulationManager::getPlayer(int player_id) {
-    for(auto& player : this->players)
-        if(player.getID() == player_id)
-            return &player;
-    return nullptr;
+    if(!this->checkPlayerExists(player_id)) {
+        printError("PlayerManager::getPlayer()", "Player with id '" + std::to_string(player_id) + " does not exist.");
+        return nullptr;
+    }
+
+    return &this->players.at(player_id);
 }
 
 bool SimulationManager::isHumanPlayer(int player_id) const {
-    return this->getHumanPlayer()->getID() == player_id;
+    return player_id == 0;
 }
 
-void SimulationManager::generateCountries() {
-    // Find spots suitable for settling. 
+bool SimulationManager::checkPlayerExists(int player_id) const {
+    for(auto& player : this->players)
+        if(player.getID() == player_id)
+            return true;
+    return false;
+}
 
-    std::vector <int> occupied_regions;
+void SimulationManager::addPlayer(Player player) {
+    this->players.push_back(player);
+}
 
-    auto number_of_players = game_settings.getPlayerQuantity();
-    this->players.resize(number_of_players);
-    
-    for(int player_id = 0; player_id < number_of_players; player_id++) {
-        auto settle_spot_found = false;
-        auto settle_spot_index = -1;
+void L_loadTexture(const std::string& filename, const std::string& id, core::Vector2i position, core::Vector2i size) {
+    if(!game_manager.resource.checkTextureExists(id))
+        game_manager.resource.loadTexture(filename, id, sf::IntRect(position.asSFMLVector2i(), size.asSFMLVector2i()));
+}
 
-        while(!settle_spot_found) {
-            auto index = rand() % game_settings.getWorldSize();
-            const auto& region = this->world.world_map[index];
-            
-            if(region.regiontype.is_terrain() && std::find(occupied_regions.begin(), occupied_regions.end(), index) == occupied_regions.end()) {
-                settle_spot_found = true;    
-                settle_spot_index = index;
-                occupied_regions.push_back(index);
-            }
-        }
+void L_loadFont(const std::string& filename, const std::string& id) {
+    if(!game_manager.resource.checkFontExists(id))
+        game_manager.resource.loadFont(filename, id);
+}
 
-        auto& player = this->players[player_id];
-        auto& region = this->world.world_map[settle_spot_index];
+void L_loadEvent(const std::string& id, float required_time, bool speed_dependant) {  
+    EventData data;
+    data.name = id;
+    data.time = 0;
+    data.required_time = required_time;
+    data.speed_dependant = speed_dependant;
 
-        // Not transparent colour, generated randomly.
-        // The same colour will mark the player's regions on the worldmap, but it will have higher opacity.
+    ScheduledEvent event(data);
+    game_manager.schedule.push_back(event);
+}
 
-        auto generated_colour_full  = this->texturizer.getRandomColour();
-        auto generated_country_name = generate(GenerationType::COUNTRY, 3);
-        
-        player.setTeamColour(generated_colour_full);
-        player.setCountryName(generated_country_name);
+void L_createIcon(const std::string& id) {
+    if(!game_manager.resource.checkTextureExists(id)) {
+        printError("L_createIcon()", "Tried to create icon from not existing texure '" + id + "'");
+        return;
+    }
 
-        // auto unit = this->createUnit(UnitType::UNIT_SETTLER, settle_spot_index, &player); 
-        // if(unit)
-        //     player.addUnit(unit);
+    const auto& texture = game_manager.resource.getTexture(id);
+    auto save_as = "icon_" + readAfter(id, "icon_template_");
+    auto base    = "icon_default";
+    game_manager.resource.blendTextures(save_as, base, id); 
+}
 
-        for(int y = -2; y <= 2; y++) {
-            for(int x = -2; x <= 2; x++) {
-                const int index = settle_spot_index + game_settings.calculateWorldIndex(x, y);
-                player.discovered_regions.push_back(index);
-            }
-        }
+void L_setGamestate(const std::string& id) {
+    game_manager.gamestate.setGamestate(id);
+}
 
-        // region.unit = player.getUnit(unit.get()->getID());
-        
-        if(player_id == 0) {
-            player.is_human = true;
-            player.spawn_spot_index = settle_spot_index;
-        }
+void L_showInterface(const std::string& id) {
+    auto gamestate = game_manager.gamestate.getGamestate();
+    gamestate->setVisibilityTrue(id);
+}
+
+void L_hideInterface(const std::string& id) {
+    auto gamestate = game_manager.gamestate.getGamestate();
+    gamestate->setVisibilityFalse(id);
+}
+
+bool L_isInterfaceVisible(const std::string& id) {
+    auto gamestate = game_manager.gamestate.getGamestate();
+    return gamestate->isComponentVisible(id);
+}
+
+bool L_isKeyPressed(const std::string& key_id) {
+    const auto* const current_gamestate = game_manager.gamestate.getGamestate();
+    return current_gamestate->controls.isKeyPressed(key_id);
+}
+
+void exitApplication(int code) {
+    if(code)
+        printError("exitApplication()", "Quit with code " + std::to_string(code));
+    exit(code);
+}
+
+void SimulationManager::registerLua() {
+    std::cout << "[] Binding C++ to Lua.\n";
+
+    luabridge::getGlobalNamespace(game_manager.lua())
+        .beginClass <core::Colour> ("Colour")
+            .addConstructor <void (*) (uint8_t, uint8_t, uint8_t, uint8_t)> ()
+            .addProperty("r", core::Colour::getR, core::Colour::setR)
+            .addProperty("g", core::Colour::getG, core::Colour::setG)
+            .addProperty("b", core::Colour::getB, core::Colour::setB)
+            .addProperty("a", core::Colour::getA, core::Colour::setR)
+        .endClass()
+        .beginClass <core::Vector2f> ("Vector2f")
+            .addConstructor <void (*) (float, float)> ()
+            .addProperty("x", core::Vector2f::getX, core::Vector2f::setX) 
+            .addProperty("y", core::Vector2f::getY, core::Vector2f::setY) 
+        .endClass()
+        .beginClass <core::Vector2i> ("Vector2i")
+            .addConstructor <void (*) (float, float)> ()
+            .addProperty("x", core::Vector2i::getX, core::Vector2i::setX) 
+            .addProperty("y", core::Vector2i::getY, core::Vector2i::setY) 
+        .endClass()
+        .beginClass <core::Vector3f> ("Vector3f")
+            .addConstructor <void (*) (float, float, float)> ()
+            .addProperty("x", core::Vector3f::getX, core::Vector3f::setX) 
+            .addProperty("y", core::Vector3f::getY, core::Vector3f::setY) 
+            .addProperty("y", core::Vector3f::getZ, core::Vector3f::setZ) 
+        .endClass()
+        .beginClass <core::Vector3i> ("Vector3i")
+            .addConstructor <void (*) (float, float, float)> ()
+            .addProperty("x", core::Vector3i::getX, core::Vector3i::setX) 
+            .addProperty("y", core::Vector3i::getY, core::Vector3i::setY) 
+            .addProperty("y", core::Vector3i::getZ, core::Vector3i::setZ) 
+        .endClass()
+        .beginClass <core::Ratio> ("Ratio")
+            .addConstructor <void (*) (std::string, std::string)> ()
+        .endClass()
+        .beginClass <Building> ("Building")
+            .addConstructor <void (*) ()> ()
+            .addProperty("name"       , Building::getBuildingName       , Building::setBuildingName)
+            .addProperty("description", Building::getBuildingDescription, Building::setBuildingDescription)
+            .addProperty("area"       , Building::getBuildingArea       , Building::setBuildingArea)
+            .addProperty("texture"    , Building::getBuildingTexture    , Building::setBuildingTexture)
+            .addProperty("scan_area"  , Building::getBuildingScanArea   , Building::setBuildingScanArea)
+            .addProperty("bcost"      , Building::getBuildingCost       , Building::setBuildingCost)
+            .addProperty("icon"       , Building::getBuildingIcon       , Building::setBuildingIcon)
+            .addProperty("icon_size"  , Building::getBuildingIconSize   , Building::setBuildingIconSize)
+            .addProperty("harvest"    , Building::getBuildingHarvests   , Building::setBuildingHarvests)
+            .addProperty("production" , Building::getBuildingProduction , Building::setBuildingProduction)
+            .addProperty("removable"  , Building::isRemovable           , Building::setRemovable)
+        .endClass()
+        .beginClass <Biome> ("Biome")
+            .addConstructor <void (*) ()> ()
+            .addProperty("name"               , Biome::getBiomeName            , Biome::setBiomeName)
+            .addProperty("id"                 , Biome::getBiomeId              , Biome::setBiomeId)
+            .addProperty("description"        , Biome::getBiomeDescription     , Biome::setBiomeDescription)
+            .addProperty("wmap_colour"        , Biome::getBiomeWorldmapColour  , Biome::setBiomeWorldmapColour)
+            .addProperty("temperature"        , Biome::getBiomeTemperature     , Biome::setBiomeTemperature)
+            .addProperty("moisture"           , Biome::getBiomeMoisture        , Biome::setBiomeMoisture)
+            .addProperty("wmap_forest_texture", Biome::getWorldmapForestTexture, Biome::setWorldmapForestTexture)
+            .addProperty("tile_list"          , Biome::getBiomeTileList        , Biome::setBiomeTileList)
+            .addProperty("tree_list"          , Biome::getBiomeTreeList        , Biome::setBiomeTreeList)
+        .endClass()
+        .beginClass <Region> ("Region")
+            .addFunction("getTileAtIndex", &Region::getTileAtIndex)
+            .addFunction("isBiome"       , &Region::isBiome)
+        .endClass()
+        .beginClass <Tile> ("Tile")
+            .addFunction("isTerrain", &Tile::isTerrain)
+            .addFunction("isWater"  , &Tile::isWater)
+            .addFunction("isOcean"  , &Tile::isOcean)
+            .addFunction("isRiver"  , &Tile::isRiver)
+            .addFunction("isCoast"  , &Tile::isCoast)
+        .endClass()
+        .addFunction("loadTexture"           , &L_loadTexture)
+        .addFunction("loadFont"              , &L_loadFont)
+        .addFunction("loadScheduledEvent"    , &L_loadEvent)
+        .addFunction("createIcon"            , &L_createIcon)
+        .addFunction("setGamestate"          , &L_setGamestate)
+        .addFunction("isKeyPressed"          , &L_isKeyPressed)
+        .addFunction("showInterface"         , &L_showInterface)
+        .addFunction("hideInterface"         , &L_hideInterface)
+        .addFunction("isInterfaceVisible"    , &L_isInterfaceVisible)
+    ;
+}
+
+void SimulationManager::loadApplicationConfig() {
+    std::cout << "[] Reading application config.\n";
+    {
+        luaL_dofile(this->L, "./data/appconfig.lua");
+        auto appconfig = luabridge::getGlobal(this->L, "Appconfig");
+
+        ApplicationSettings settings;
+        settings.window_size            = appconfig["window_size"];
+        settings.window_fullscreen      = appconfig["fullscreen"];
+        settings.window_vsync           = appconfig["vsync"];
+        settings.window_refresh_rate    = appconfig["refresh_rate"];
+
+        this->window.createWindow(settings, "Entropy by Vivit");
+        this->window.setKeyHold(false);
+    }
+
+    std::cout << "[] Reading world generation data.\n";
+    {
+        std::string generationdata_path = "./data/world_generation.lua";
+        luaL_dofile(this->L, generationdata_path.c_str());
+
+        auto worldconfig = luabridge::getGlobal(this->L, "GameSettings");
+
+        iso::WorldData settings;
+        settings.r_persistence            = worldconfig["region_persistence"];
+        settings.w_persistence            = worldconfig["world_persistence"];
+        settings.simulation_speed         = worldconfig["simulation_update_frequency"];
+        settings.w_width                  = worldconfig["World"]["size"];
+        settings.w_terrain_from           = worldconfig["World"]["terrain_from"];
+        settings.w_forest_from            = worldconfig["World"]["forest_from"];
+        settings.fog_of_war_enabled       = worldconfig["World"]["fog_of_war_enabled"];
+        settings.w_temperature_multiplier = worldconfig["World"]["multiplier_temperature"];
+        settings.w_moisture_multiplier    = worldconfig["World"]["multiplier_moisture"];
+        settings.r_width                  = worldconfig["Region"]["size"];
+        settings.building_cost_enabled    = worldconfig["Region"]["building_cost_enabled"];
+
+        world_data = settings;
     }
 }
 
-/*
-// std::shared_ptr <Unit> SimulationManager::createUnit(UnitType unit_type, int region_index, Player* owner) const {
-//     return nullptr;
+void SimulationManager::loadGameData() {
+    lua::runLuaFile("./src/scripts/resource/load_ui.lua");
+    lua::runLuaFile("./src/scripts/resource/load_scheduled_events.lua");
+    lua::runLuaFile("./src/scripts/resource/load_worldmap.lua");
+    lua::runLuaFile("./src/scripts/resource/load_regionmap.lua");
 
-//     const auto& region = this->world.world_map[region_index];
-    
-//     // if(region.isUnitPresent()) {
-//     //     std::cout << "[DEBUG]: Could not spawn unit on region " << region_index << ": Unit is already present.\n";
-//     //     return nullptr;
-//     // }
+    namespace fs = std::filesystem;
 
-//     std::shared_ptr <Unit> unit;
+    // BIOMES 
+    {
+        std::string biomedata_path = "./data/biome/";
+        std::cout << "[] Loading biomes.\n";
+        for(const auto& file : fs::directory_iterator(biomedata_path)) {
+            const auto& file_path = file.path().string();                      
+            const auto& file_path_extension = file.path().extension().string();
 
-//     switch(unit_type) {
-//         default:
-//             return nullptr;
+            if(file_path_extension == ".lua") {
+                std::cout << "  [] Registering biome '" << file_path << "'.\n";
+                luaL_dofile(this->L, file_path.c_str()); 
 
-//         case UnitType::UNIT_SETTLER: {
-//             unit = std::shared_ptr <Unit> (new Unit("Settler"));
-//             unit.get()->current_index = region_index;
-//             unit.get()->object_texture_name = "unit_worldmap_settler";
+                auto biomedata = luabridge::getGlobal(this->L, "Biome");
+
+                iso::BiomeData data;
+                data.filename                = file_path;
+                data.name                    = lua::readString(biomedata["name"]);
+                data.id                      = lua::readString(biomedata["id"]);
+                data.description             = lua::readString(biomedata["description"]);
+                data.colour_wmap             = lua::readColour(biomedata["colour_wmap"]);
+                data.temperature             = lua::readString(biomedata["temperature"]);
+                data.moisture                = lua::readString(biomedata["moisture"]);
+                data.can_be_forest           = lua::readBoolean(biomedata["can_be_forest"]);
+                data.forest_texture_worldmap = lua::readString(biomedata["forest_texture_worldmap"]);
+                data.tiles                   = lua::readVectorString(biomedata["tiles"]);
+                data.trees                   = lua::readVectorString(biomedata["trees"]);
+
+                iso::Biome biome(data);
+                BIOME_TABLE.push_back(biome);
+            }
+        }
+    }
+
+    // ITEM DATA
+    {
+        std::string resourcedata_path = "./data/item/";
+        std::cout << "[] Loading items.\n";
+        for(const auto& file : fs::directory_iterator(resourcedata_path)) {
+            const auto& file_path = file.path().string();
+            const auto& file_path_extension = file.path().extension().string();
+
+            if(file_path_extension == ".lua") {
+                std::cout << "  []: Registering item '" << file_path << "'.\n";
+                luaL_dofile(this->L, file_path.c_str());
+
+                auto itemdata = luabridge::getGlobal(this->L, "Item");
+
+                iso::ItemData data;
+                data.filename     = file_path;
+                data.name         = lua::readString(itemdata["name"]);
+                data.description  = lua::readString(itemdata["description"]);
+                data.icon_texture = lua::readString(itemdata["icon_texture"]);
+                data.icon_size    = lua::readVector2i(itemdata["icon_size"]);
+                data.type         = lua::readString(itemdata["type"]);
+                data.amount       = 0;
             
-//             break;
-//         }
-//     }
+                iso::StorageItem item(data);
+                ITEM_TABLE.push_back(item);
+            }
+        }   
+    }
 
-//     unit.get()->object_position = region.getPosition();
-//     unit.get()->object_size     = region.getSize();
-//     unit.get()->owner_id        = owner->getID();
-//     unit.get()->type            = unit_type;
+    // RESOURCES
+    {
+        std::string resourcedata_path = "./data/resource/";
+        std::cout << "[] Loading resources.\n";
+        for(const auto& file : fs::directory_iterator(resourcedata_path)) {
+            const auto& file_path = file.path().string();
+            const auto& file_path_extension = file.path().extension().string();
 
-//     return unit;
-// }
+            if(file_path_extension == ".lua") {
+                std::cout << "  []: Registering resource '" << file_path << "'.\n";
+                luaL_dofile(this->L, file_path.c_str());
 
-// void SimulationManager::deleteUnit(int unit_id) {
-//     auto* unit = this->getUnit(unit_id);
-//     if(!unit)
-//         return;
+                auto resourcedata = luabridge::getGlobal(this->L, "Resource");
 
-//     if(game_settings.inWorldBounds(unit->current_index)) {
-//         auto& region = this->world.world_map[unit->current_index];
-//         region.unit = nullptr; 
-//     }
-    
-//     auto* owner = this->getPlayer(unit->owner_id);
-//     if(owner)
-//         owner->removeUnit(unit_id); 
+                iso::ResourceData data;
+                data.filename            = file_path;
+                data.name                = lua::readString(resourcedata["name"]);
+                data.description         = lua::readString(resourcedata["description"]);
+                data.texture             = lua::readString(resourcedata["texture"]);
+                data.texture_size        = lua::readVector2i(resourcedata["texture_size"]);
+                data.icon_texture        = lua::readString(resourcedata["icon_texture"]);
+                data.icon_size           = lua::readVector2i(resourcedata["icon_size"]);
+                data.type                = lua::readString(resourcedata["type"]);
+                data.min_occurence       = lua::readInteger(resourcedata["minimum_occurence"]);
+                data.max_occurence       = lua::readInteger(resourcedata["maximum_occurence"]);
+                data.chance              = lua::readNumber(resourcedata["generation_chance"]);
+                data.patch_size          = lua::readInteger(resourcedata["patch_size"]);
+                data.tile_requirements   = lua::readVectorString(resourcedata["tile"]);
+                data.region_requirements = lua::readVectorString(resourcedata["region"]); 
 
-//     auto* worldmap = static_cast<Worldmap*>(this->gamestate.getGamestateByName("worldmap"));
-//     if(worldmap)
-//         worldmap->selected_unit_id = -1; 
-// }
-*/
+                iso::Resource resource(data);
+                RESOURCE_TABLE.push_back(resource);   
+            }
+        }
+    }
 
-bool SimulationManager::regionCanBeColonised(int region_index) const {
-    if(!game_settings.inWorldBounds(region_index))
-        return false;
-    
-    const auto& region = this->world.world_map[region_index];
-    if(region.isOwned())
-        return false;
-    
-    if(region.regiontype.is_ocean())
-        return false;
-    return true;
-}
+    // BUILDINGS
+    {
+        std::string buildingdata_path = "./data/building/";
+        std::cout << "[] Loading buildings.\n";
+        for(const auto& file : fs::directory_iterator(buildingdata_path)) {
+            const auto& file_path = file.path().string();                      
+            const auto& file_path_extension = file.path().extension().string();
+
+            if(file_path_extension == ".lua") {
+                std::cout << "  [] Registering building '" << file_path << "'.\n";
+                luaL_dofile(this->L, file_path.c_str());
+
+                auto buildingdata = luabridge::getGlobal(this->L, "Building");
+
+                iso::BuildingData data;
+                data.filename     = file_path;                
+                data.name         = lua::readString(buildingdata["name"]);
+                data.description  = lua::readString(buildingdata["description"]);
+                data.size         = lua::readVector2i(buildingdata["size"]);
+                data.texture      = lua::readString(buildingdata["texture"]);
+                data.texture_size = lua::readVector2i(buildingdata["texture_size"]);
+                data.icon_texture = lua::readString(buildingdata["icon_texture"]);
+                data.icon_size    = lua::readVector2i(buildingdata["icon_size"]);
+                data.removable    = lua::readBoolean(buildingdata["removable"]);
+                data.scan_area    = lua::readVector2i(buildingdata["scan_area"]);
+                data.harvests     = lua::getBuildingHarvest(buildingdata["harvests"]);
+                data.produces     = lua::getBuildingProduction(buildingdata["produces"]);
+
+                iso::Building building(data);
+                BUILDING_TABLE.push_back(building);
+            }
+        }
+    }
+
+    // SCRIPTS
+    {
+        std::string scripts_path = "./src/scripts/";
+        std::cout << "[] Loading scripts.\n";
+        for(const auto& file : fs::directory_iterator(scripts_path)) {
+            const auto& file_path = file.path().string();
+
+            if(!containsWord(file_path, "game_"))
+                continue;
+
+            for(const auto& nested_file : fs::directory_iterator(file_path)) {
+                const auto& nested_file_extension = nested_file.path().extension();
+
+                if(nested_file_extension == ".lua") {
+                    lua::LuaScript script(nested_file.path().string());
+                    SCRIPT_TABLE.push_back(script);
+                }
+            }
+        }
+    }
+
+    std::cout << "[] Loaded " << BIOME_TABLE.size()    << " biomes.\n";
+    std::cout << "[] Loaded " << ITEM_TABLE.size()     << " items.\n";
+    std::cout << "[] Loaded " << RESOURCE_TABLE.size() << " resources.\n";
+    std::cout << "[] Loaded " << BUILDING_TABLE.size() << " buildings.\n";
+    std::cout << "[] Loaded " << SCRIPT_TABLE.size()   << " scripts.\n"; 
+}   
 
 void SimulationManager::emitEvents() {
+    // No need to check for nullptr.
+    // This function would not be called in case the gamestate was nullptr.
+
     auto* gamestate = this->gamestate.getGamestate();
-       
-    std::map <std::string, sf::Keyboard::Key> keys = {
-        { "A", sf::Keyboard::Key::A },
-        { "B", sf::Keyboard::Key::B },
-        { "C", sf::Keyboard::Key::C },
-        { "D", sf::Keyboard::Key::D },
-        { "E", sf::Keyboard::Key::E },
-        { "F", sf::Keyboard::Key::F },
-        { "G", sf::Keyboard::Key::G },
-        { "H", sf::Keyboard::Key::H },
-        { "I", sf::Keyboard::Key::I },
-        { "J", sf::Keyboard::Key::J },
-        { "K", sf::Keyboard::Key::K },
-        { "L", sf::Keyboard::Key::L },
-        { "M", sf::Keyboard::Key::M },
-        { "N", sf::Keyboard::Key::N },
-        { "O", sf::Keyboard::Key::O },
-        { "P", sf::Keyboard::Key::P },
-        { "R", sf::Keyboard::Key::R },
-        { "S", sf::Keyboard::Key::S },
-        { "T", sf::Keyboard::Key::T },
-        { "U", sf::Keyboard::Key::U },
-        { "W", sf::Keyboard::Key::W },
-        { "V", sf::Keyboard::Key::V },
-        { "Q", sf::Keyboard::Key::Q },
-        { "X", sf::Keyboard::Key::X },
-        { "Y", sf::Keyboard::Key::Y },
-        { "Z", sf::Keyboard::Key::Z },
+    
+    if(!gamestate->controls.key_map.size()) {
+        for(const auto& pair : gamestate_keys)
+            gamestate->controls.addKeyMapping(pair.first, pair.second);
+    }
 
-        { "0", sf::Keyboard::Key::Num0 },
-        { "1", sf::Keyboard::Key::Num1 },
-        { "2", sf::Keyboard::Key::Num2 },
-        { "3", sf::Keyboard::Key::Num3 },
-        { "4", sf::Keyboard::Key::Num4 },
-        { "5", sf::Keyboard::Key::Num5 },
-        { "6", sf::Keyboard::Key::Num6 },
-        { "7", sf::Keyboard::Key::Num7 },
-        { "8", sf::Keyboard::Key::Num8 },
-        { "9", sf::Keyboard::Key::Num9 },
+    for(auto& event : this->schedule) {
+        if(event.getCurrentTime() == event.getRequiredTime()) {
+            for(auto& script : SCRIPT_TABLE)
+                script.onEvent(event.getEventName());
 
-        { "F1", sf::Keyboard::Key::F1 },
-        { "F2", sf::Keyboard::Key::F2 },
-        { "F3", sf::Keyboard::Key::F3 },
-        { "F4", sf::Keyboard::Key::F4 },
-        { "F5", sf::Keyboard::Key::F5 },
-        { "F6", sf::Keyboard::Key::F6 },
-        { "F7", sf::Keyboard::Key::F7 },
-        { "F8", sf::Keyboard::Key::F8 },
-        { "F9", sf::Keyboard::Key::F9 },
-        { "F10", sf::Keyboard::Key::F10 },
-        { "F11", sf::Keyboard::Key::F11 },
-        { "F12", sf::Keyboard::Key::F12 },
-
-        { "ARROW_LEFT" , sf::Keyboard::Key::Left  },
-        { "ARROW_RIGHT", sf::Keyboard::Key::Right },
-        { "ARROW_UP"   , sf::Keyboard::Key::Up    },
-        { "ARROW_DOWN" , sf::Keyboard::Key::Down  },
-
-        { "SPACEBAR" , sf::Keyboard::Key::Space     },
-        { "TAB"      , sf::Keyboard::Key::Tab       },
-        { "ENTER"    , sf::Keyboard::Key::Enter     },
-        { "BACKSPACE", sf::Keyboard::Key::Backspace },
-        { "ESCAPE"   , sf::Keyboard::Key::Escape    },
-        { "MENU"     , sf::Keyboard::Key::Menu      },
-
-        // It does not matter that the mapped key is left.
-        // It's overriden by the KeyPressed and KeyReleased event to check for both the keys.
-        { "SHIFT" , sf::Keyboard::Key::LShift   },
-        { "CTRL"  , sf::Keyboard::Key::LControl },
-        { "ALT"   , sf::Keyboard::Key::LAlt     },
-        { "SYSTEM", sf::Keyboard::Key::LSystem  },
-    };
-
-    if(gamestate->controls.addKeyMappingCheck("A", keys["A"])) {
-        for(const auto& pair : keys) {
-            gamestate->controls.addKeyMappingCheck(pair.first, pair.second);
+            event.resetTime();
         }
     }
 
     gamestate->controls.mouse_dragged = gamestate->controls.mouse_moved && gamestate->controls.mouse_middle;
-
     while(this->window.getWindow()->pollEvent(gamestate->event)) {
         switch(gamestate->event.type) {
             case sf::Event::Closed: {
                 exitApplication(0);
                 break;
-            }
+            };
 
             case sf::Event::Resized: {
-                event_queue.push_back("WINDOW_RESIZE");
                 gamestate->controls.resized = sf::Vector2f(gamestate->event.size.width, gamestate->event.size.height);
                 
                 auto new_window_size = this->window.getWindowSize();
                 this->font_size = (this->window.getWindowWidth() + this->window.getWindowHeight()) / 160;
-            
+                event_queue.push_back("WINDOW_RESIZE");
+                
                 break;
             }
 
             case sf::Event::KeyPressed: {
-                event_queue.push_back("BUTTON_PRESSED");
-                
                 for(const auto& pair : gamestate->controls.key_map) {
                     const auto& name  = pair.first;
                     const auto  state = sf::Keyboard::isKeyPressed(gamestate->controls.key_map[name]);
@@ -872,13 +815,18 @@ void SimulationManager::emitEvents() {
                         gamestate->controls.key_state[name] = state;
                     }
                     else gamestate->controls.key_state.insert({ name, state });
-                }
-                
+
+                    if(state)
+                        gamestate->controls.last_key_name = name;
+                }                
+
+                gamestate->runGUIEventHandle("onKeyPress");
+                event_queue.push_back("BUTTON_PRESSED");
+
                 break;
             }
 
             case sf::Event::KeyReleased: {
-                event_queue.push_back("BUTTON_RELEASEED");
                 
                 for(const auto& pair : gamestate->controls.key_map) {
                     const auto& name  = pair.first;
@@ -889,6 +837,9 @@ void SimulationManager::emitEvents() {
                     }
                     else gamestate->controls.key_state.insert({ name, state });
                 }
+                
+                gamestate->runGUIEventHandle("onKeyRelease");
+                event_queue.push_back("BUTTON_RELEASED");
                 
                 break;
             }
@@ -901,19 +852,23 @@ void SimulationManager::emitEvents() {
                 if(gamestate->controls.mouse_middle)
                     gamestate->controls.button_position_pressed = gamestate->mouse_position_window;
 
-                if(gamestate->controls.mouse_left)
-                    for(const auto& pair : gamestate->interface)
-                        pair.second->functionality();
+                gamestate->runGUIEventHandle("onMouseButtonPress");
 
-                if(gamestate->controls.mouse_left)
+                if(gamestate->controls.mouse_left) {
+                    gamestate->runGUIEventHandle("onLeftMouseButtonPress");
                     event_queue.push_back("LMB_PRESSED");
+                }
                 
-                if(gamestate->controls.mouse_right)
+                if(gamestate->controls.mouse_right) {
+                    gamestate->runGUIEventHandle("onRightMouseButtonPress");
                     event_queue.push_back("RMB_PRESSED");
+                }
 
-                if(gamestate->controls.mouse_middle)
-                    event_queue.push_back("MMB_PRESSED");
-                
+                if(gamestate->controls.mouse_middle) {
+                    gamestate->runGUIEventHandle("onMiddleMouseButtonPress");
+                    event_queue.push_back("MMB_PRESSED");   
+                }
+
                 break;
             }
 
@@ -929,7 +884,9 @@ void SimulationManager::emitEvents() {
                 if(was_middle_pressed && !gamestate->controls.mouse_middle)
                     gamestate->controls.button_position_released = gamestate->mouse_position_window;
 
+                gamestate->runGUIEventHandle("onMouseButtonRelease");
                 event_queue.push_back("MOUSE_BUTTON_RELEASED");
+
                 break;
             }
 
@@ -944,38 +901,195 @@ void SimulationManager::emitEvents() {
             }
 
             case sf::Event::MouseWheelScrolled: {
-                event_queue.push_back("MOUSE_WHEEL_SCROLLED");
                 gamestate->controls.mouse_middle_down = gamestate->event.mouseWheelScroll.delta == -1;
                 gamestate->controls.mouse_middle_up   = gamestate->event.mouseWheelScroll.delta == 1;
+                
+                gamestate->runGUIEventHandle("onScroll");
+                event_queue.push_back("MOUSE_WHEEL_SCROLLED");
+
+                if(gamestate->controls.mouseMiddleUp())
+                    gamestate->runGUIEventHandle("onScrollUp");
+
+                if(gamestate->controls.mouseMiddleDown())
+                    gamestate->runGUIEventHandle("onScrollDown");
+
                 break;
             }
         }
     }
-
-    for(auto& scheduled_update : this->events) {
-        const auto& update_name   = scheduled_update.getEventName();
-        auto current_time         = scheduled_update.getCurrentTime();
-        auto required_time        = scheduled_update.getRequiredTime();
-        if(current_time == required_time) {
-            event_queue.push_back(update_name);
-            scheduled_update.resetTime();
-        }
-    }
-
-    this->updateScripts();
+}
 }
 
-void SimulationManager::popEvents() {
-    if(event_queue.size())
-        event_queue.erase(event_queue.begin());
+namespace lua {
+void runLuaFile(const std::string& filename) {
+    if(luaL_dofile(game_manager.lua(), filename.c_str())) {
+        std::string message = lua_tostring(game_manager.lua(), -1);
+        iso::printError("Lua", "A problem occured while executing file '" + filename + "': " + message);
+        return;
+    }
 }
 
-void SimulationManager::updateScripts() const {
-    auto luastate = lua::driver::Driver::getInstance()->L;
-
-    for(const auto& script : scripts) {
-        for(const auto& event : event_queue) {
-            script.onEvent(luastate, event);
-        }
+std::string readString(luabridge::LuaRef reference, bool throw_if_null) {
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readString()", "Reference is empty");
+        return std::string();
     }
+    return (std::string)reference;
+}
+
+int readInteger(luabridge::LuaRef reference, bool throw_if_null) {
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readInteger()", "Reference is empty");
+        return 0;
+    }
+    return (int)reference;
+}
+
+float readNumber(luabridge::LuaRef reference, bool throw_if_null) {
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readNumber()", "Reference is empty");
+        return 0.0f;
+    }
+        
+    return (float)reference;
+}
+
+bool readBoolean(luabridge::LuaRef reference, bool throw_if_null) {
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readBoolean()", "Reference is empty");
+        return false;
+    }
+    return (bool)reference;
+}
+
+core::Colour readColour(luabridge::LuaRef reference, bool throw_if_null) {
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readColour()", "Reference is empty");
+        return core::Colour();
+    }
+    return (core::Colour)reference;
+}
+
+core::Vector2i readVector2i(luabridge::LuaRef reference, bool throw_if_null) {
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readVector2i()", "Reference is empty");
+        return core::Vector2i(0, 0);
+    }
+    return (core::Vector2i)reference;
+}
+
+core::Vector2f readScreenRatio(luabridge::LuaRef reference, bool throw_if_null) {
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readScreenRatio()", "Reference is empty");
+        return core::Vector2f(0, 0);
+    }
+
+    auto ratio = (core::Ratio)reference;
+    auto ratio_number = ratio.asNumber();
+    return ratio_number;
+}
+
+std::vector <std::string> readVectorString(luabridge::LuaRef reference, bool throw_if_null) {
+    std::vector <std::string> list;
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readVectorString()", "Reference is empty");
+        return list;
+    }
+
+    int length = reference.length();
+    for(int i = 1; i <= length; i++) {
+        list.push_back(reference[i]);
+    }
+
+    return list;
+}
+
+std::vector <core::Colour> readVectorColour(luabridge::LuaRef reference, bool throw_if_null) {
+    std::vector <core::Colour> list;
+    if(reference.isNil()) {
+        if(throw_if_null)
+            iso::printError("readVectorColour()", "Reference is empty");
+        return list;
+    }
+    
+    int length = reference.length();
+    for(int i = 1; i <= length; i++) {
+        list.push_back(reference[i]);
+    }
+
+    return list;
+}
+
+std::vector <iso::BuildingHarvest> getBuildingHarvest(luabridge::LuaRef reference) {
+    std::vector <iso::BuildingHarvest> list;
+
+    if(reference.isNil())
+        return list;
+    
+    int length = reference.length();    
+    for(int i = 1; i <= length; i++) {
+        iso::BuildingHarvest harvest;
+
+        harvest.name = reference[i]["name"].tostring();
+        auto harvest_table = reference[i]["harvest"];
+        
+        for(int j = 1; j <= harvest_table.length(); j++) {
+            for(const auto& resource : RESOURCE_TABLE) {
+                auto quantity = harvest_table[resource.getResourceName()];
+
+                if(!quantity.isNil()) {
+                    iso::StorageItem item;
+                    item = resource;
+                    item.setAmount((int)quantity);
+                    harvest.harvest.push_back(item);
+                }
+            }
+        }
+
+        list.push_back(harvest);
+    }
+
+    return list;
+}
+
+std::vector <iso::BuildingProduction> getBuildingProduction(luabridge::LuaRef reference) {
+    std::vector <iso::BuildingProduction> list;
+
+    if(reference.isNil())
+        return list;
+    
+    int length = reference.length();
+    for(int i = 1; i <= length; i++) {
+        iso::BuildingProduction production;
+
+        production.name = reference[i]["name"].tostring();
+        production.amount = reference[i]["amount"];
+
+        auto requires_table = reference[i]["requires"];
+        for(int j = 1; j <= requires_table.length(); j++) {
+            for(const auto& resource : RESOURCE_TABLE) {
+                auto quantity = reference[i][resource.getResourceName()];
+
+                if(!quantity.isNil()) {
+                    iso::StorageItem item;
+                    item = resource;
+                    item.setAmount((int)quantity);
+                    production.requirements.push_back(item);
+                }
+            }
+        }
+
+        list.push_back(production);
+    }
+
+    return list;
+}
 }
