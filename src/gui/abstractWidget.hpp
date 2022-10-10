@@ -7,10 +7,34 @@
 #include <SFML/Graphics.hpp>
 #include <memory>
 #include <map>
+#include <vector>
+#include <string>
 
 namespace gui {    
 class AbstractWidget;
 typedef std::shared_ptr <AbstractWidget> AbstractComponent; 
+
+enum class TriggerType {
+    WIDGET_SELECTED,
+    WIDGET_ALL
+};
+
+static std::map <std::string, TriggerType> GUI_EVENT_LIST = {
+    { "onVisibilityToggle", TriggerType::WIDGET_ALL },
+    { "onShow",             TriggerType::WIDGET_ALL },
+    { "onHide",             TriggerType::WIDGET_ALL },
+
+    { "onMouseButtonPress",       TriggerType::WIDGET_SELECTED },
+    { "onMouseButtonRelease",     TriggerType::WIDGET_SELECTED },
+    { "onLeftMouseButtonPress",   TriggerType::WIDGET_SELECTED },
+    { "onRightMouseButtonPress",  TriggerType::WIDGET_SELECTED },
+    { "onMiddleMouseButtonPress", TriggerType::WIDGET_SELECTED },
+    { "onKeyPress",               TriggerType::WIDGET_SELECTED },
+    { "onKeyRelease",             TriggerType::WIDGET_SELECTED },
+    { "onScroll",                 TriggerType::WIDGET_SELECTED },
+    { "onScrollUp",               TriggerType::WIDGET_SELECTED },
+    { "onScrollDown",             TriggerType::WIDGET_SELECTED }
+};
 
 struct WidgetData {
     std::string widget_id;
