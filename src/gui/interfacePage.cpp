@@ -47,7 +47,7 @@ void InterfacePage::createUI() {
 
             auto parent_id    = lua::readString(table["parent_id"], true);
             auto id           = lua::readString(table["id"], true);
-            auto texture_base = lua::readString(table["texture"], true); 
+            auto texture_base = lua::readString(table["texture"]); 
             auto position_tl_ratio = lua::readScreenRatio(table["position"]["corner_tl"], true);
             auto position_br_ratio = lua::readScreenRatio(table["position"]["corner_br"], true);
 
@@ -81,11 +81,15 @@ void InterfacePage::createUI() {
                 };
 
                 case GUIObject::BUTTON: {
+                    int draw_priority = this->getComponent(parent_id) == nullptr
+                        ? 1
+                        : this->getComponent(parent_id).get()->getDrawPriority() + 1;
+
                     auto block_size = game_manager.resource.getTextureSize(texture_base + "_single").x;
 
                     WidgetData data;
                     data.parent        = this->getComponent(parent_id);
-                    data.draw_priority = data.parent.get()->getDrawPriority() + 1;
+                    data.draw_priority = draw_priority;
                     data.draw          = true; 
                     data.widget_id     = id;
 
@@ -110,6 +114,48 @@ void InterfacePage::createUI() {
                     button.get()->addLabel(label_data, text);
                     break;
                 }
+            
+                case GUIObject::LABEL: {
+                    int draw_priority = this->getComponent(parent_id) == nullptr
+                        ? 1
+                        : this->getComponent(parent_id).get()->getDrawPriority() + 1;
+                    
+                    WidgetData data;
+                    data.parent        = this->getComponent(parent_id);
+                    data.draw_priority = draw_priority;      
+                    data.draw          = true;
+                    data.widget_id     = id;
+
+                    auto position = calculateRelativeWidgetPosition(position_tl_ratio, data.parent);
+                    data.position = position;
+
+                    auto alignment = table["alignment"];
+
+                    auto font   = lua::readString(table["font"], true);
+                    auto colour = lua::readColour(table["colour"], true);
+                    auto alignment_x_text = lua::readString(alignment["x"], true);
+                    auto alignment_y_text = lua::readString(alignment["y"], true);
+
+                    if(!game_manager.resource.checkFontExists(font))
+                        iso::printError("InterfacePage::createUI()", "Invalid font name '" + font + "'");
+
+                    if(!ALIGNMENT_ID_TABLE.count(alignment_x_text))
+                        iso::printError("InterfacePage::createUI()", "Invalid alignment '" + alignment_x_text + "'");
+
+                    if(!ALIGNMENT_ID_TABLE.count(alignment_y_text))
+                        iso::printError("InterfacePage::createUI()", "Invalid alignment '" + alignment_y_text + "'");                    
+
+                    auto alignment_x = ALIGNMENT_ID_TABLE.at(alignment_x_text);
+                    auto alignment_y = ALIGNMENT_ID_TABLE.at(alignment_y_text);   
+    
+                    auto label = LabelComponent(new Label(data, "", alignment_x, alignment_y));
+                    
+                    label.get()->setColour(colour);
+                    label.get()->setFont(font);
+                    
+                    this->addComponent(label);
+                    break;
+                }
             }
         }   
     }
@@ -129,7 +175,8 @@ void InterfacePage::createUI() {
             auto id = lua::readString(table["id"], true);
             auto component = this->getComponent(id);
             
-            for(const auto& event_name : GUI_EVENT_LIST) {
+            for(const auto& pair : GUI_EVENT_LIST) {
+                auto event_name = pair.first;
                 auto event_reference = table[event_name];
 
                 if(!event_reference.isNil() && !component.get()->hasEventOverride(event_name))
@@ -189,30 +236,62 @@ void InterfacePage::draw(sf::RenderTarget& target, sf::RenderStates states) cons
 }
 
 void InterfacePage::handleGUIEvent(const std::string& event_name) const {
-    auto current_component = this->getCurrentComponent();
-    
-    if(current_component && current_component.get()->hasEventOverride(event_name)) {
-        lua::runLuaFile(this->functionality_filename);
+    if(!GUI_EVENT_LIST.count(event_name))
+        iso::printError("InterfacePage::handleGUIEvent()", "No event with ID '" + event_name + "'");
 
-        auto functionality = luabridge::getGlobal(game_manager.lua(), "Functionality");
-        auto components = functionality["components"];
-        auto length = components.length();
-        auto gamestate = game_manager.gamestate.getGamestate();
+    lua::runLuaFile(this->functionality_filename);                
+    auto functionality = luabridge::getGlobal(game_manager.lua(), "Functionality");
+    auto components = functionality["components"];
+    auto length = components.length();
 
-        for(int i = 1; i <= length; i++) {
-            auto table = components[i];
-            auto id = lua::readString(table["id"], true);
-            if(id == current_component.get()->getWidgetID()) {
-                auto event = table[event_name];
-                
-                if(event_name == "onKeyPress")
-                    event(gamestate->controls.last_key_name);
+    auto trigger_type = GUI_EVENT_LIST.at(event_name);
+    switch(trigger_type) {
+        default: {
+            iso::printError("InterfacePage::handleGUIEvent()", "Trigger type not implemented (TriggerType::" + std::to_string((int)trigger_type) + "'");
+            break;
+        }
 
-                else
+        case TriggerType::WIDGET_ALL: {
+            for(int i = 1; i <= length; i++) {
+                auto table = components[i];
+                auto id = lua::readString(table["id"], true);
+
+                auto component = this->getComponent(id);
+                if(component && component.get()->hasEventOverride(event_name)) {
+                    auto event = table[event_name];
                     event();
+                }
             }
+
+            break;
+        }
+
+        case TriggerType::WIDGET_SELECTED: {
+            auto current_component = this->getCurrentComponent();
+            if(current_component && current_component.get()->hasEventOverride(event_name)) {
+                auto gamestate = game_manager.gamestate.getGamestate();
+
+                for(int i = 1; i <= length; i++) {
+                    auto table = components[i];
+                    auto id = lua::readString(table["id"], true);
+                    if(id == current_component.get()->getWidgetID()) {
+                        auto event = table[event_name];
+                        
+                        if(event_name == "onKeyPress")
+                            event(gamestate->controls.last_key_name);
+
+                        else
+                            event();
+                        return;
+                    }
+                }
+            }
+
+            break;
         }
     }
+
+    
 }
 
 AbstractComponent InterfacePage::getCurrentComponent() const {

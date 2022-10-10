@@ -83,6 +83,16 @@ void Gamestate::toggleComponentVisibility(const std::string& interface_id) {
     if(this->checkComponentExist(interface_id)) {
         auto interface_page = this->interface.at(interface_id);
         interface_page.get()->toggleVisibile();  
+
+        interface_page.get()->handleGUIEvent("onVisibilityToggle");
+        
+        auto visibility = interface_page.get()->isVisible();
+        visibility == true
+            ? interface_page.get()->handleGUIEvent("onShow")
+            : interface_page.get()->handleGUIEvent("onHide");
+        
+        for(auto& component : interface_page.get()->interface)
+            component.get()->setVisible(visibility);
         return;
     }
 
@@ -93,6 +103,11 @@ void Gamestate::setVisibilityTrue(const std::string& interface_id) {
     if(this->checkComponentExist(interface_id)) {
         auto interface_page = this->interface.at(interface_id);
         interface_page.get()->setVisible(true);
+
+        interface_page.get()->handleGUIEvent("onShow");
+        
+        for(auto& component : interface_page.get()->interface)
+            component.get()->setVisible(true);
         return;
     }
 
@@ -103,6 +118,11 @@ void Gamestate::setVisibilityFalse(const std::string& interface_id) {
     if(this->checkComponentExist(interface_id)) {
         auto interface_page = this->interface.at(interface_id);
         interface_page.get()->setVisible(false);
+        
+        interface_page.get()->handleGUIEvent("onHide");
+
+        for(auto& component : interface_page.get()->interface)
+            component.get()->setVisible(false);
         return;
     }
 

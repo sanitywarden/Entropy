@@ -144,7 +144,7 @@ void Worldmap::handleInput() {
 
         if(event_name == "BUTTON_PRESSED") {
             if(this->controls.isKeyPressed("F3")) {
-                this->toggleComponentVisibility("component_debug_performance");
+                this->toggleComponentVisibility("component_debug_info");
             }
 
             if(this->controls.isKeyPressed("SPACEBAR")) {

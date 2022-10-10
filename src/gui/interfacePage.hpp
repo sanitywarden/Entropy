@@ -37,19 +37,6 @@ static std::map <std::string, GUIObject> WIDGET_ID_TABLE = {
     { "InputBox"  , GUIObject::INPUT_BOX   },
 };
 
-static std::vector <std::string> GUI_EVENT_LIST = {
-    "onMouseButtonPress",
-    "onMouseButtonRelease",
-    "onLeftMouseButtonPress",
-    "onRightMouseButtonPress",
-    "onMiddleMouseButtonPress",
-    "onKeyPress",
-    "onKeyRelease",
-    "onScroll",
-    "onScrollUp",
-    "onScrollDown"
-};
-
 class InterfacePage : public AbstractWidget {
     private:
         InterfacePage() = delete;
