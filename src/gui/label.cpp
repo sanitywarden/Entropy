@@ -5,13 +5,16 @@
 
 namespace gui {
 Label::Label(const WidgetData& data, std::string text, Alignment x, Alignment y)
-    : AbstractWidget(data), text(text), alignment_x(x), alignment_y(y)
+    : AbstractWidget(data), text(text), alignment_x(x), alignment_y(y), font_name("garamond")
 {}
 
 Label::~Label()
 {}
 
 void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if(this->text == "")
+        return;
+
     auto parent_position = core::Vector2i(0, 0);
     auto parent_size     = core::Vector2i(0, 0);
     
@@ -55,6 +58,7 @@ void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     text.setPosition(final_position.asSFMLVector2f());
     text.setOrigin(final_origin.asSFMLVector2f());
     text.setFillColor(this->colour.asSFMLColour());
+    text.setFont(game_manager.resource.getFont(this->font_name));
 
     target.draw(text, states);
 } 
@@ -65,5 +69,9 @@ void Label::setColour(core::Colour colour) {
 
 void Label::setString(const std::string& text) {
     this->text = text;
+}
+
+void Label::setFont(const std::string& font_name) {
+    this->font_name = font_name;
 }
 }

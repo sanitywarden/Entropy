@@ -11,6 +11,14 @@ enum class Alignment {
     ALIGNMENT_BOTTOM
 };
 
+static std::map <std::string, Alignment> ALIGNMENT_ID_TABLE = {
+    { "Centred", Alignment::ALIGNMENT_CENTRED },
+    { "Left"   , Alignment::ALIGNMENT_LEFT    },
+    { "Right"  , Alignment::ALIGNMENT_RIGHT   },
+    { "Top"    , Alignment::ALIGNMENT_TOP     },
+    { "Bottom" , Alignment::ALIGNMENT_BOTTOM  },
+};
+
 class Label : public AbstractWidget {
     private:
         void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -18,6 +26,7 @@ class Label : public AbstractWidget {
         Alignment alignment_x;
         Alignment alignment_y;
         std::string text;
+        std::string font_name;
         core::Colour colour;
     public:
         Label(const WidgetData& data, std::string text, Alignment x, Alignment y);
@@ -25,6 +34,7 @@ class Label : public AbstractWidget {
 
         void setColour(core::Colour colour);
         void setString(const std::string& text);
+        void setFont(const std::string& font);
 };
 
 typedef std::shared_ptr <Label>  LabelComponent;
