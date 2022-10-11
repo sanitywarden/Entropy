@@ -1,4 +1,5 @@
 #include "controls.hpp"
+#include <iostream>
 
 using namespace iso;
 
@@ -9,6 +10,7 @@ Controls::Controls() {
     this->mouse_middle_up   = false;  
     this->mouse_middle_down = false;
     this->mouse_moved       = false;
+    this->block_keyboard_input_ui = false;
 }
 
 Controls::~Controls() 
@@ -35,7 +37,7 @@ bool Controls::checkKeyMappingExists(const std::string& id) const {
 }
 
 bool Controls::isKeyPressed(const std::string& id) const {
-    if(this->checkKeyMappingExists(id))
+    if(this->key_state.count(id))
         return this->key_state.at(id);
     return false;
 }
@@ -58,4 +60,12 @@ bool Controls::mouseMiddleUp() {
 
 bool Controls::mouseMiddleDown() {
     return this->mouse_middle_down;
+}
+
+void Controls::blockKeyboardInput(bool block) {
+    this->block_keyboard_input_ui = block;
+}
+
+bool Controls::isInputBlocked() const {
+    return this->block_keyboard_input_ui;
 }

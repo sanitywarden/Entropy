@@ -465,7 +465,7 @@ bool L_isInterfaceVisible(const std::string& id) {
 }
 
 bool L_isKeyPressed(const std::string& key_id) {
-    const auto* const current_gamestate = game_manager.gamestate.getGamestate();
+    auto current_gamestate = game_manager.gamestate.getGamestate();
     return current_gamestate->controls.isKeyPressed(key_id);
 }
 
@@ -769,11 +769,8 @@ void SimulationManager::loadGameData() {
 }   
 
 void SimulationManager::emitEvents() {
-    // No need to check for nullptr.
-    // This function would not be called in case the gamestate was nullptr.
-
     auto* gamestate = this->gamestate.getGamestate();
-    
+
     if(!gamestate->controls.key_map.size()) {
         for(const auto& pair : gamestate_keys)
             gamestate->controls.addKeyMapping(pair.first, pair.second);
@@ -808,8 +805,20 @@ void SimulationManager::emitEvents() {
 
             case sf::Event::KeyPressed: {
                 for(const auto& pair : gamestate->controls.key_map) {
-                    const auto& name  = pair.first;
-                    const auto  state = sf::Keyboard::isKeyPressed(gamestate->controls.key_map[name]);
+                    const auto& name = pair.first;
+                    auto state = sf::Keyboard::isKeyPressed(gamestate->controls.key_map[name]);
+
+                    if(name == "SHIFT")
+                        state = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RShift); 
+
+                    else if(name == "CTRL")
+                        state = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl); 
+
+                    else if(name == "ALT")
+                        state = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LAlt) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RAlt); 
+
+                    else if(name == "SYSTEM")
+                        state = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LSystem) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RSystem); 
 
                     if(gamestate->controls.key_state.count(name)) {
                         gamestate->controls.key_state[name] = state;
@@ -820,14 +829,21 @@ void SimulationManager::emitEvents() {
                         gamestate->controls.last_key_name = name;
                 }                
 
+                game_manager.window.getWindow()->setView(gamestate->view_interface);
+                gamestate->updateUI();
+                game_manager.window.getWindow()->setView(gamestate->view_game);
+
+                // Blocks keyboard input for non-ui input.
+                gamestate->controls.blockKeyboardInput(gamestate->mouseIntersectsUI());
+
                 gamestate->runGUIEventHandle("onKeyPress");
                 event_queue.push_back("BUTTON_PRESSED");
 
+                gamestate->controls.last_key_name = "";
                 break;
             }
 
             case sf::Event::KeyReleased: {
-                
                 for(const auto& pair : gamestate->controls.key_map) {
                     const auto& name  = pair.first;
                     const auto  state = sf::Keyboard::isKeyPressed(gamestate->controls.key_map[name]);
@@ -838,6 +854,10 @@ void SimulationManager::emitEvents() {
                     else gamestate->controls.key_state.insert({ name, state });
                 }
                 
+                game_manager.window.getWindow()->setView(gamestate->view_interface);
+                gamestate->updateUI();
+                game_manager.window.getWindow()->setView(gamestate->view_game);
+
                 gamestate->runGUIEventHandle("onKeyRelease");
                 event_queue.push_back("BUTTON_RELEASED");
                 

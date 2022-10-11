@@ -98,7 +98,9 @@ class Controls {
         sf::Vector2f resized;
         
         // ID of the last key pressed.
-        std::string last_key_name; 
+        std::string last_key_name;
+ 
+        bool block_keyboard_input_ui;
 
     public:
         Controls();
@@ -109,6 +111,8 @@ class Controls {
         bool isKeyPressed(const std::string& id) const;        
         void removeKeyMapping(const std::string& id);
         bool checkKeyMappingExists(const std::string& id) const;
+        void blockKeyboardInput(bool block);
+        bool isInputBlocked() const;
 
         bool mouseLeftPressed();
         bool mouseRightPressed();
