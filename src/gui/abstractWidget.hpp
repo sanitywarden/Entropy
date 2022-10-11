@@ -20,6 +20,7 @@ enum class TriggerType {
 };
 
 static std::map <std::string, TriggerType> GUI_EVENT_LIST = {
+    { "update",             TriggerType::WIDGET_ALL },
     { "onVisibilityToggle", TriggerType::WIDGET_ALL },
     { "onShow",             TriggerType::WIDGET_ALL },
     { "onHide",             TriggerType::WIDGET_ALL },
