@@ -652,7 +652,7 @@ void Regionmap::gamestateClose() {
     regionmap_mesh_tile.create(0);
 
     for(auto& pair : this->interface)
-        pair.second.get()->setVisible(false);
+        this->setVisibilityFalse(pair.first);
 }
 
 void Regionmap::recalculateMesh() {

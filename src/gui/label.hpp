@@ -32,9 +32,14 @@ class Label : public AbstractWidget {
         Label(const WidgetData& data, std::string text, Alignment x, Alignment y);
         ~Label();
 
-        void setColour(core::Colour colour);
         void setString(const std::string& text);
+        const std::string& getString() const;
+
+        void setColour(core::Colour colour);
+        core::Colour getColour() const;
+
         void setFont(const std::string& font);
+        const std::string& getFont() const;
 };
 
 typedef std::shared_ptr <Label>  LabelComponent;

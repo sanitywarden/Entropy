@@ -473,7 +473,7 @@ void Worldmap::centreOnPlayerCapital() {
 
 void Worldmap::gamestateClose() {
     for(auto& pair : this->interface)
-        pair.second.get()->setVisible(false);
+        this->setVisibilityFalse(pair.first);
 }
 
 void Worldmap::updateScheduler() {

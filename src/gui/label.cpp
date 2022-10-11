@@ -49,6 +49,10 @@ void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                 
                 break;
             }
+
+            case Alignment::ALIGNMENT_LEFT: {
+                break;
+            }
         }
     };
 
@@ -63,15 +67,27 @@ void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     target.draw(text, states);
 } 
 
-void Label::setColour(core::Colour colour) {
-    this->colour = colour;
-}
-
 void Label::setString(const std::string& text) {
     this->text = text;
 }
 
+const std::string& Label::getString() const {
+    return this->text;
+}
+
+void Label::setColour(core::Colour colour) {
+    this->colour = colour;
+}
+
+core::Colour Label::getColour() const {
+    return this->colour;
+}
+
 void Label::setFont(const std::string& font_name) {
     this->font_name = font_name;
+}
+
+const std::string& Label::getFont() const {
+    return this->font_name;
 }
 }
