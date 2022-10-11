@@ -24,7 +24,6 @@
 namespace iso {
 class SimulationManager {
     private:
-        void registerLua();
         void loadApplicationConfig();
         void loadGameData();
         void emitEvents();
@@ -74,19 +73,6 @@ class SimulationManager {
 };
 
 void exitApplication(int code);
-
-void L_loadTexture(const std::string& filename, const std::string& id, core::Vector2i position, core::Vector2i size);
-void L_loadFont(const std::string& filename, const std::string& id);
-void L_loadEvent(const std::string& id, float required_time, bool speed_dependant);
-void L_createIcon(const std::string& id);
-
-void L_setGamestate(const std::string& id);
-void L_showInterface(const std::string& id);
-void L_hideInterface(const std::string& id);
-bool L_isInterfaceVisible(const std::string& id);
-
-bool L_isKeyPressed(const std::string& key_id);
-
 }
 
 namespace lua {
