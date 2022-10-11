@@ -56,6 +56,8 @@ class InterfacePage : public AbstractWidget {
         void createUI();
 
         void handleGUIEvent(const std::string& event_name) const;
+        void checkShouldOpen() const;
+        void checkShouldClose() const;
         bool intersectsUI(core::Vector2i point) const;
         void addComponent(AbstractComponent component);
         void deleteComponent(const std::string& id);

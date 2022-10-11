@@ -29,7 +29,7 @@ void InterfacePage::createUI() {
         this->data.widget_id = lua::readString(definition["id"], true);
         this->closable  = lua::readBoolean(definition["closeable"], true);
         this->movable   = lua::readBoolean(definition["movable"], true);
-        this->resizable = lua::readBoolean(definition["resizable"], true); 
+        this->resizable = lua::readBoolean(definition["resizable"], true);
 
         auto components = definition["components"];
         auto list_length = components.length();
@@ -292,6 +292,38 @@ void InterfacePage::handleGUIEvent(const std::string& event_name) const {
     }
 
     
+}
+
+void InterfacePage::checkShouldClose() const {
+    if(this->isVisible()) {
+        lua::runLuaFile(this->functionality_filename);
+        auto functionality = luabridge::getGlobal(game_manager.lua(), "Functionality");
+        auto should_close = functionality["shouldClose"];
+
+        if(should_close.isNil()) {
+            iso::printError("InterfacePage::checkShouldClose()", "Unimplemented mandatory function 'shouldClose' in '" + this->definition_filename + "'");
+            return;
+        }
+        
+        if(!should_close.isNil())
+            should_close();
+    }
+}
+
+void InterfacePage::checkShouldOpen() const {
+    if(!this->isVisible()) {
+        lua::runLuaFile(this->functionality_filename);
+        auto functionality = luabridge::getGlobal(game_manager.lua(), "Functionality");
+        auto should_open = functionality["shouldOpen"];
+
+        if(should_open.isNil()) {
+            iso::printError("InterfacePage::checkShouldOpen()", "Unimplemented mandatory function 'shouldOpen' in '" + this->definition_filename + "'");
+            return;
+        }
+        
+        if(!should_open.isNil())
+            should_open();
+    }
 }
 
 AbstractComponent InterfacePage::getCurrentComponent() const {
