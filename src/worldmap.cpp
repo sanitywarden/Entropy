@@ -110,9 +110,7 @@ void Worldmap::update(float delta_time) {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();   
-
-    game_manager.window.getWindow()->setView(this->view_interface);
-    this->updateUI();
+    this->redrawUI();
 }
 
 void Worldmap::render(float delta_time) {
@@ -142,11 +140,7 @@ void Worldmap::handleInput() {
             this->resizeViews();
         }
 
-        if(event_name == "BUTTON_PRESSED") {
-            if(this->controls.isKeyPressed("F3")) {
-                this->toggleComponentVisibility("component_debug_info");
-            }
-
+        if(event_name == "BUTTON_PRESSED" && !this->controls.isInputBlocked()) {
             if(this->controls.isKeyPressed("SPACEBAR")) {
                 if(game_manager.getHumanPlayer()->hasCapital())
                     this->centreOnPlayerCapital();
@@ -357,7 +351,10 @@ void Worldmap::renderWorld() {
 void Worldmap::selectPanel() {
     auto* human_player = game_manager.getHumanPlayer();
     if(!this->mouseIntersectsUI() && (human_player->discoveredRegion(this->current_index) || !world_data.fog_of_war_enabled)) {
-        const auto& region = game_manager.world_map[this->current_index];
+        if(!inWorldBounds(this->current_index))
+            return;
+        
+        const auto& region = game_manager.world_map.at(this->current_index);
         if(region.regiontype.is_ocean()) {
             this->setVisibilityFalse("component_widget_region");
             return;
@@ -475,7 +472,8 @@ void Worldmap::centreOnPlayerCapital() {
 }
 
 void Worldmap::gamestateClose() {
-    
+    for(auto& pair : this->interface)
+        pair.second.get()->setVisible(false);
 }
 
 void Worldmap::updateScheduler() {

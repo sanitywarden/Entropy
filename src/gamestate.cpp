@@ -75,7 +75,7 @@ bool Gamestate::isComponentVisible(const std::string& interface_id) const {
         return component.get()->isVisible();
     }
     
-    printError("Gamestate::isComponentVisible()", "Interface with id '" + interface_id + "' does not exist");
+    printError(this->state_id + "::isComponentVisible()", "Interface with id '" + interface_id + "' does not exist");
     return false;
 }
 
@@ -96,7 +96,7 @@ void Gamestate::toggleComponentVisibility(const std::string& interface_id) {
         return;
     }
 
-    printError("Gamestate::toggleComponentVisibility()", "Interface with id '" + interface_id + "' does not exist");
+    printError(this->state_id + "::toggleComponentVisibility()", "Interface with id '" + interface_id + "' does not exist");
 }
 
 void Gamestate::setVisibilityTrue(const std::string& interface_id) {
@@ -111,7 +111,7 @@ void Gamestate::setVisibilityTrue(const std::string& interface_id) {
         return;
     }
 
-    printError("Gamestate::setVisibilityTrue()", "Interface with id '" + interface_id + "' does not exist");
+    printError(this->state_id + "::setVisibilityTrue()", "Interface with id '" + interface_id + "' does not exist");
 }
 
 void Gamestate::setVisibilityFalse(const std::string& interface_id) {
@@ -126,7 +126,7 @@ void Gamestate::setVisibilityFalse(const std::string& interface_id) {
         return;
     }
 
-    printError("Gamestate::setVisibilityFalse()", "Interface with id '" + interface_id + "' does not exist");
+    printError(this->state_id + "::setVisibilityFalse()", "Interface with id '" + interface_id + "' does not exist");
 }
 
 void Gamestate::renderUI() const {
@@ -159,8 +159,28 @@ void Gamestate::renderUI() const {
     }
 }
 
-void Gamestate::updateUI() {
+void Gamestate::redrawUI() const {
+    for(auto& pair : this->interface) {
+        auto& interface_page = pair.second;
+        
+        if(interface_page.get()->isVisible())
+            interface_page.get()->handleGUIEvent("update");
+    }
+}
 
+void Gamestate::updateUI() const {
+    for(auto& pair : this->interface) {
+        auto& interface_page = pair.second;
+        auto visibility = interface_page.get()->isVisible();
+
+        visibility == true
+            ? interface_page.get()->checkShouldClose()
+            : interface_page.get()->checkShouldOpen();
+        
+        // Trigger update function
+        if(interface_page.get()->isVisible())
+            interface_page.get()->handleGUIEvent("update");
+    }
 }   
 
 void Gamestate::resizeUI() {

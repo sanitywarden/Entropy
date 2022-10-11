@@ -66,8 +66,9 @@ class Gamestate {
         bool shouldCameraZoom()         const;
 
         void renderUI() const;
+        void redrawUI() const;
         void resizeUI();
-        void updateUI();
+        void updateUI() const;
         bool mouseIntersectsUI() const;
         bool pointIntersectsUI(core::Vector2i point) const;
         bool mouseIntersectsUI(const std::string& component_name) const;

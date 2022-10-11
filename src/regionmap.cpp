@@ -59,8 +59,7 @@ void Regionmap::update(float delta_time) {
     this->updateMousePosition();
     this->handleInput();
     this->updateCamera();
-
-    this->updateUI();
+    this->redrawUI();
 }
 
 void Regionmap::render(float delta_time) {
@@ -83,30 +82,13 @@ void Regionmap::handleInput() {
     if(event_queue.size()) {
         const auto& event_name = event_queue.at(0);
 
-        if(event_name == "BUTTON_PRESSED") {
-            if(this->controls.isKeyPressed("F3")) {
-                this->toggleComponentVisibility("component_debug_info");
-            }
-
+        if(event_name == "BUTTON_PRESSED" && !this->controls.isInputBlocked()) {
             if(this->controls.isKeyPressed("F12")) {
                 game_manager.window.takeScreenshot();
             }
 
             if(this->controls.isKeyPressed("ESCAPE")) {
                 game_manager.gamestate.setGamestate("Worldmap");
-            }
-
-            if(this->controls.isKeyPressed("I")) {
-                this->toggleComponentVisibility("component_widget_region_storage");
-                this->setVisibilityFalse("component_widget_building_menu");
-            }
-            
-            if(this->controls.isKeyPressed("B")) {
-                this->toggleComponentVisibility("component_widget_menu_building");
-                this->setVisibilityFalse("component_widget_region_storage");
-
-                // auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-                // building_menu->resetBuilding();
             }
 
             const auto& tile_top    = this->region->map[0];
@@ -624,9 +606,7 @@ void Regionmap::gamestateLoad() {
     auto current_index = worldmap->selected_index;
     this->region_index = current_index;
 
-    // Region's index was set upon entering the region.
-    // It's set in widgetRegion.cpp
-    this->region = &game_manager.world_map[current_index];
+    this->region = &game_manager.world_map.at(current_index);
 
     if(!this->region->visited)
         game_manager.world_generator.generateRegion(this->region_index);
@@ -638,7 +618,7 @@ void Regionmap::gamestateLoad() {
     this->resizeViews();
     this->resizeUI();
     game_manager.window.setView(this->view_game);
-    
+
     int side_vector_size = 0;
     for(int i = 0; i < this->region->sides.size(); i++)
         side_vector_size += this->region->sides[i].size();
@@ -670,6 +650,9 @@ void Regionmap::gamestateClose() {
     this->recalculate_mesh      = false;
     this->recalculate_tree_mesh = false;
     regionmap_mesh_tile.create(0);
+
+    for(auto& pair : this->interface)
+        pair.second.get()->setVisible(false);
 }
 
 void Regionmap::recalculateMesh() {
