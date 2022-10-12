@@ -27,7 +27,7 @@ bool Player::canAffordBuilding(const Region& region, const Building& building) c
     return can_afford == building.getBuildingCost().size();
 }
 
-bool Player::placeBuildingCheck(Region& region, Building building, core::Vector2i grid) const {
+bool Player::placeBuildingCheck(Region& region, Building building, core::Vector2i grid) {
     if(region.isBuildingPositionValid(building, grid) && this->canAffordBuilding(region, building)) {
         this->placeBuilding(region, building, grid);
 
@@ -40,7 +40,7 @@ bool Player::placeBuildingCheck(Region& region, Building building, core::Vector2
     return false;
 }
 
-void Player::placeBuilding(Region& region, Building building, core::Vector2i grid) const {
+void Player::placeBuilding(Region& region, Building building, core::Vector2i grid) {
     auto index = calculateRegionIndex(grid);
     const auto& tile = region.getTileAtIndex(index);  
     building.object_position = tile.getPosition();
@@ -78,7 +78,7 @@ void Player::placeBuilding(Region& region, Building building, core::Vector2i gri
     region.buildings[index] = building;
 }
 
-void Player::destroyBuilding(Region& region, core::Vector2i grid) const {
+void Player::destroyBuilding(Region& region, core::Vector2i grid) {
     auto index = calculateRegionIndex(grid);
 
     if(!region.buildingExistsAtIndex(index))

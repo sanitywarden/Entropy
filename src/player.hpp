@@ -34,9 +34,9 @@ class Player {
         ~Player();
 
         bool canAffordBuilding(const Region& region, const Building& building) const;
-        bool placeBuildingCheck(Region& region, Building building, core::Vector2i grid) const;
-        void placeBuilding(Region& region, Building building, core::Vector2i grid) const;
-        void destroyBuilding(Region& region, core::Vector2i grid) const;
+        bool placeBuildingCheck(Region& region, Building building, core::Vector2i grid);
+        void placeBuilding(Region& region, Building building, core::Vector2i grid);
+        void destroyBuilding(Region& region, core::Vector2i grid);
         void addOwnedRegion(int index);
         void removeOwnedRegion(int index);
         bool ownsRegion(int index) const;

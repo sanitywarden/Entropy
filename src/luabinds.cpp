@@ -1,7 +1,13 @@
 #include "luabinds.hpp"
 #include "simulationManager.hpp"
 #include "globalutilities.hpp"
+#include "region.hpp"
 #include "gamestate.hpp"
+#include "worldmap.hpp"
+#include "regionmap.hpp"
+
+#include <LuaBridge/Vector.h>
+#include <LuaBridge/Map.h>
 
 using namespace iso;
 
@@ -43,7 +49,6 @@ void registerLua() {
             .addConstructor <void (*) (std::string, std::string)> ()
         .endClass()
         .beginClass <Building> ("Building")
-            .addConstructor <void (*) ()> ()
             .addProperty("name"       , Building::getBuildingName       , Building::setBuildingName)
             .addProperty("description", Building::getBuildingDescription, Building::setBuildingDescription)
             .addProperty("area"       , Building::getBuildingArea       , Building::setBuildingArea)
@@ -57,7 +62,6 @@ void registerLua() {
             .addProperty("removable"  , Building::isRemovable           , Building::setRemovable)
         .endClass()
         .beginClass <Biome> ("Biome")
-            .addConstructor <void (*) ()> ()
             .addProperty("name"               , Biome::getBiomeName            , Biome::setBiomeName)
             .addProperty("id"                 , Biome::getBiomeId              , Biome::setBiomeId)
             .addProperty("description"        , Biome::getBiomeDescription     , Biome::setBiomeDescription)
@@ -68,21 +72,41 @@ void registerLua() {
             .addProperty("tile_list"          , Biome::getBiomeTileList        , Biome::setBiomeTileList)
             .addProperty("tree_list"          , Biome::getBiomeTreeList        , Biome::setBiomeTreeList)
         .endClass()
-        .beginClass <Region> ("Region")
-            .addFunction("getTileAtIndex", &Region::getTileAtIndex)
-            .addFunction("isBiome"       , &Region::isBiome)
-        .endClass()
         .beginClass <Tile> ("Tile")
-            .addFunction("isTerrain", &Tile::isTerrain)
-            .addFunction("isWater"  , &Tile::isWater)
-            .addFunction("isOcean"  , &Tile::isOcean)
-            .addFunction("isRiver"  , &Tile::isRiver)
-            .addFunction("isCoast"  , &Tile::isCoast)
+            .addFunction("isTerrain", Tile::isTerrain)
+            .addFunction("isWater"  , Tile::isWater)
+            .addFunction("isOcean"  , Tile::isOcean)
+            .addFunction("isRiver"  , Tile::isRiver)
+            .addFunction("isCoast"  , Tile::isCoast)
+        .endClass()
+        .beginClass <Region> ("Region")
+            .addFunction("hasBiome"            , Region::L_hasBiome)
+            .addFunction("isTerrain"           , Region::L_isTerrain)
+            .addFunction("isOcean"             , Region::L_isOcean)
+            .addFunction("isRiver"             , Region::L_isRiver)
+            .addFunction("isCoast"             , Region::L_isCoast)
+            .addFunction("isLake"              , Region::L_isLake)
+            .addFunction("isWater"             , Region::L_isWater)
+            .addFunction("isForest"            , Region::L_isForest)
+            .addFunction("getTileAt"           , Region::L_getTileAt)
+            .addFunction("isTileOccupied"      , Region::L_isTileOccupied)
+            .addFunction("treeExistsAt"        , Region::L_treeExistsAt)
+            .addFunction("getTreeAt"           , Region::L_getTreeAt)
+            .addFunction("buildingExsitsAt"    , Region::L_buildingExistsAt)
+            .addFunction("getBuildingAt"       , Region::L_getBuildingAt)
+            .addFunction("resourceExistsAt"    , Region::L_resourceExistsAt)
+            .addFunction("getResourceAt"       , Region::L_getResourceAt)
+            .addFunction("getMoistureString"   , Region::L_getMoistureString)
+            .addFunction("getMoistureNumber"   , Region::L_getMoistureNumber)
+            .addFunction("getTemperatureString", Region::L_getTemperatureString)
+            .addFunction("getTemperatureNumber", Region::L_getTemperatureNumber)
+            .addFunction("constructBuilding"   , Region::L_constructBuilding)
+            .addFunction("demolishBuilding"    , Region::L_demolishBuilding)
         .endClass()
         .beginClass <gui::Label> ("Label")
-            .addProperty("text"  , &gui::Label::getString, &gui::Label::setString)
-            .addProperty("colour", &gui::Label::getColour, &gui::Label::setColour)
-            .addProperty("font"  , &gui::Label::getFont  , &gui::Label::setFont)
+            .addProperty("text"  , gui::Label::getString, gui::Label::setString)
+            .addProperty("colour", gui::Label::getColour, gui::Label::setColour)
+            .addProperty("font"  , gui::Label::getFont  , gui::Label::setFont)
         .endClass()
         .addFunction("loadTexture"           , &lua::L_loadTexture)
         .addFunction("loadFont"              , &lua::L_loadFont)
@@ -96,6 +120,7 @@ void registerLua() {
         .addFunction("getComponentLabel"     , &lua::L_getComponentLabel)
         .addFunction("getFPS"                , &lua::L_getFPS)
         .addFunction("getFrameTime"          , &lua::L_getFrameTime)
+        .addFunction("getRegionIndex"        , &lua::L_getRegionIndex)
     ;
 }
 
@@ -176,5 +201,18 @@ int L_getFPS() {
 
 float L_getFrameTime() {
     return game_manager.time_per_frame;
+}
+
+int L_getRegionIndex() {
+    auto* gamestate = game_manager.gamestate.getGamestate();
+    if(gamestate->state_id == "Worldmap") {
+        auto worldmap = (Worldmap*)gamestate;
+        return worldmap->getCurrentIndex();
+    } 
+
+    else {
+        auto regionmap = (Regionmap*)gamestate;
+        return regionmap->region_index;
+    }
 }
 }

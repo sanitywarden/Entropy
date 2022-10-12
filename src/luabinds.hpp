@@ -1,6 +1,10 @@
 #pragma once
 
 #include "types.hpp"
+
+#include "building.hpp"
+#include "player.hpp"
+
 #include "gui/label.hpp"
 
 namespace lua {
@@ -10,15 +14,32 @@ void L_loadTexture(const std::string& filename, const std::string& id, core::Vec
 void L_loadFont(const std::string& filename, const std::string& id);
 void L_loadEvent(const std::string& id, float required_time, bool speed_dependant);
 void L_createIcon(const std::string& id);
-
+int L_getFPS();
+float L_getFrameTime();
 void L_setGamestate(const std::string& id);
 void L_showInterface(const std::string& id);
 void L_hideInterface(const std::string& id);
 bool L_isInterfaceVisible(const std::string& id);
-
-int L_getFPS();
-float L_getFrameTime();
-
 bool L_isKeyPressed(const std::string& key_id);
 gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& label_id);
+
+int L_getRegionIndex();
+
+/*
+int L_getTileIndex();
+bool L_isBuildingTile(int tile_index);
+bool L_canAffordBuilding(int player_id, const Building& building);
+bool L_canRegionBeColonised(int region_index);
+Region* L_getRegion(int region_index);
+bool L_isRegionOwned(int region_index);
+std::vector <int> L_astar(int start_index, int end_index);
+Player* L_getRegionOwner(int region_index);
+Player* L_getPlayer(int player_id);
+Player* L_getHumanPlayer();
+bool L_isHumanPlayer(int player_id);
+core::Vector2i L_getMousePosition();
+core::Vector2i L_getMousePositionInterface();
+void L_exitApplication(int code);
+*/
+
 }

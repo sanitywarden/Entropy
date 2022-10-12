@@ -1,12 +1,12 @@
 #include "region.hpp"
 #include "globalutilities.hpp"
 #include "worldData.hpp"
+#include "simulationManager.hpp"
 
 #include <iostream>
 #include <string>
 
-using namespace iso;
-
+namespace iso {
 Region::Region() 
     : GameObject(core::Vector3f(0, 0, 0), core::Vector3f(0, 0, 0), core::Vector2i(0, 0), "*", "Region") 
 {
@@ -101,37 +101,6 @@ bool Region::isPassableRegionmap(int index) const {
 bool Region::isPassableRegionmap(core::Vector2i grid) const {
     return false;
 }
-
-// int Region::getFoodQuantity() const {
-//     int quantity = 0;
-//     for(const auto& item : ITEM_LOOKUP_TABLE) {
-//         if(this->checkItemExists(item) && item.item_type == ItemType::TYPE_FOOD) {
-//             quantity += this->getItemQuantity(item);
-//         }
-//     }  
-
-//     return quantity;
-// }
-
-// int Region::getDrinkableLiquidQuantity() const {
-//     int quantity = 0;
-//     for(const auto& item : ITEM_LOOKUP_TABLE) {
-//         if(this->checkItemExists(item) && item.item_type == ItemType::TYPE_DRINKABLE_LIQUID) {
-//             quantity += this->getItemQuantity(item);
-//         }
-//     }  
-
-//     return quantity;
-// }
-
-// bool Region::isBuildingAffordable(const Building& building) const {
-//  return (this->resources >= building.getBuildingCost());
-// }
-
-/* Remove the resources needed to construct provided building from region's resource pool. */
-// void Region::removeBuildingCost(const Building& building) {
-    // this->resources -= building.getBuildingCost();
-// }
 
 bool Region::isBuildingPositionValid(const Building& building, core::Vector2i grid) const {
     auto index = calculateRegionIndex(grid);
@@ -376,4 +345,123 @@ Tile& Region::getTileAtIndex(int index) {
 
 bool Region::isBiome(const Biome& biome) const {
     return this->biome == biome;
+}
+
+bool Region::L_hasBiome() const {
+    // There are many ways you could check if a region has a assigned biome,
+    // and one of them is to check for the biome's definition filename's length. 
+    return this->biome.getDefinitionFilename().length() != 0;
+}
+
+bool Region::L_isTerrain() const {
+    return this->regiontype.is_terrain();
+}
+
+bool Region::L_isOcean() const {
+    return this->regiontype.is_ocean();
+}
+
+bool Region::L_isRiver() const {
+    return this->regiontype.is_river();
+}
+
+bool Region::L_isCoast() const {
+    return this->regiontype.is_coast();
+}
+
+bool Region::L_isLake() const {
+    return this->regiontype.is_lake();
+}
+
+bool Region::L_isWater() const {
+    return this->regiontype.is_water();
+}
+
+bool Region::L_isForest() const {
+    return this->regiontype.is_forest();
+}
+
+Tile* Region::L_getTileAt(int tile_index) {
+    if(!inRegionBounds(tile_index))
+        printError("L_getTileAt()", "Tile index out of bounds");
+    return &this->map.at(tile_index);
+}
+
+bool Region::L_isTileOccupied(int tile_index) const {
+    if(!inRegionBounds(tile_index))
+        printError("L_isTileOccupied()", "Tile index out of bounds");
+    return this->isSpotOccupied(tile_index);
+}
+
+bool Region::L_treeExistsAt(int tile_index) const {
+    if(!inRegionBounds(tile_index))
+        printError("L_treeExistsAt()", "Tile index out of bounds");
+    return this->treeExistsAt(tile_index);
+}
+
+GameObject* Region::L_getTreeAt(int tile_index) {
+    if(!inRegionBounds(tile_index))
+        printError("L_getTreeAt()", "Tile index out of bounds");
+    if(!this->treeExistsAt(tile_index))
+        printError("L_getTreeAt()", "Requested non existing tree");
+    return &this->trees.at(tile_index);
+}
+
+bool Region::L_buildingExistsAt(int tile_index) const {
+    if(!inRegionBounds(tile_index))
+        printError("L_buildingExistsAt()", "Tile index out of bounds");
+    return this->buildingExistsAtIndex(tile_index);
+}
+
+Building* Region::L_getBuildingAt(int tile_index) {
+    if(!inRegionBounds(tile_index))
+        printError("L_getBuildingAt()", "Tile index out of bounds");
+    if(!this->buildingExistsAtIndex(tile_index))
+        printError("L_getBuildingAt()", "Requested non existing building");
+    return &this->buildings.at(tile_index);
+}
+
+bool Region::L_resourceExistsAt(int tile_index) const {
+    if(!inRegionBounds(tile_index))
+        printError("L_resourceExistsAt()", "Tile index out of bounds");
+    return this->resourceExistsAt(tile_index);
+}   
+
+Resource* Region::L_getResourceAt(int tile_index) {
+    if(!inRegionBounds(tile_index))
+        printError("L_getTreeAt()", "Tile index out of bounds");
+    if(!this->resourceExistsAt(tile_index))
+        printError("L_getResourceAt()", "Requested non existing resource");
+    return &this->resources.at(tile_index);
+}
+
+const std::string& Region::L_getMoistureString() const {
+    return this->moisture_text;
+}
+
+float Region::L_getMoistureNumber() const {
+    return this->moisture;
+}
+
+const std::string& Region::L_getTemperatureString() const {
+    return this->temperature_text;
+}
+
+float Region::L_getTemperatureNumber() const {
+    return this->temperature;
+}
+
+void Region::L_constructBuilding(const Building& building, int tile_index) {
+    auto player_id = this->getOwnerId();
+    auto player = game_manager.getPlayer(player_id);
+    auto grid = tileGridPosition(tile_index);
+    player->placeBuildingCheck(*this, building, grid);
+}
+
+void Region::L_demolishBuilding(int tile_index) {
+    auto player_id = this->getOwnerId();
+    auto player = game_manager.getPlayer(player_id);
+    auto grid = tileGridPosition(tile_index);
+    player->destroyBuilding(*this, grid);
+}
 }

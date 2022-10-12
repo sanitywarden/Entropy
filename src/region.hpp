@@ -70,8 +70,30 @@ class Region : public GameObject {
         const Building& getBuildingAtGrid(core::Vector2i grid) const;
 
         Tile& getTileAtIndex(int index);
-
         bool isBiome(const Biome& biome) const;
+
+        bool L_hasBiome() const;
+        bool L_isTerrain() const;
+        bool L_isOcean() const;
+        bool L_isRiver() const;
+        bool L_isCoast() const;
+        bool L_isLake() const;
+        bool L_isWater() const;
+        bool L_isForest() const;
+        Tile* L_getTileAt(int index);
+        bool L_isTileOccupied(int index) const;
+        bool L_treeExistsAt(int index) const;
+        GameObject* L_getTreeAt(int index);
+        bool L_buildingExistsAt(int index) const;
+        Building* L_getBuildingAt(int index);
+        bool L_resourceExistsAt(int index) const;
+        Resource* L_getResourceAt(int index);
+        const std::string& L_getMoistureString() const;
+        float L_getMoistureNumber() const;
+        const std::string& L_getTemperatureString() const;
+        float L_getTemperatureNumber() const;
+        void L_constructBuilding(const Building& building, int tile_index);
+        void L_demolishBuilding(int tile_index);         
 
     public:
         RegionType regiontype;
@@ -97,7 +119,7 @@ class Region : public GameObject {
         // std::vector <Unit> worldmap_units;   // Worldmap units that station in the region. 
         // std::vector <Unit> regionmap_units;  // Regionmap units.
         
-        std::map <int, GameObject>                trees;
-        std::map <int, std::vector<GameObject>>   sides;
+        std::map <int, GameObject>              trees;
+        std::map <int, std::vector<GameObject>> sides;
 }; 
 }
