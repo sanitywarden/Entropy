@@ -389,11 +389,13 @@ void Worldmap::highlightPanel() {
         this->mouse_position_window.y / panelSize()
     );
     
+    if(!inWorldBounds(tile_grid)) {
+        this->current_index = -1;
+        return;
+    }
+
     this->current_index = calculateWorldIndex(tile_grid);
     if(this->mouse_drag)
-        return;
-    
-    if(!inWorldBounds(tile_grid))
         return;
 
     auto panel_grid_position = sf::Vector2i(
