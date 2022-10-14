@@ -11,13 +11,14 @@ Widget::~Widget()
 
 void Widget::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     auto widget_position = this->getWidgetPosition();
-    
+    auto block_size = game_manager.resource.getTextureSize(this->base_texture + "_single").x;
+
     for(int x = 0; x < this->getDimensions().x; x++) {
         for(int y = 0; y < this->getDimensions().y; y++) {
             auto index = y * this->getDimensions().x + x;
             auto block = this->tiles.at(index);
 
-            block.size = core::Vector2i(64, 64);
+            block.size = core::Vector2i(block_size, block_size);
             block.texture = this->getBlockTexture(x, y);
 
             auto offset = core::Vector2i(x * block.size.x, y * block.size.y);

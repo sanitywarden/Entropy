@@ -7,9 +7,13 @@ core::Vector2i calculateTileableDimensions(core::Vector2i tl_corner_position, co
     if(distance.x < 0) distance.x = -distance.x;
     if(distance.y < 0) distance.y = -distance.y;
 
+    auto ratio = (float)game_manager.window.getWindowWidth() / (float)game_manager.window.getWindowHeight();
+    auto block_x = std::ceil(block_size * ratio);
+    auto block_y = block_size;
+
     auto dimensions = core::Vector2i(
-        std::ceil(distance.x / block_size) + 1,
-        std::ceil(distance.y / block_size) + 1
+        std::ceil(distance.x / block_x) + 1,
+        std::ceil(distance.y / block_y) + 1
     );
 
     return dimensions;
