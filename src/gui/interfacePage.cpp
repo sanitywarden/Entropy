@@ -156,6 +156,25 @@ void InterfacePage::createUI() {
                     this->addComponent(label);
                     break;
                 }
+            
+                case GUIObject::IMAGE: {
+                    int draw_priority = this->getComponent(parent_id) == nullptr
+                        ? 1
+                        : this->getComponent(parent_id).get()->getDrawPriority() + 1;
+
+                    WidgetData data;
+                    data.parent        = this->getComponent(parent_id);
+                    data.draw_priority = draw_priority;
+                    data.draw          = true;
+                    data.widget_id     = id;
+
+                    auto position = calculateRelativeWidgetPosition(position_tl_ratio, data.parent);
+                    data.position = position;
+
+                    auto image = ImageComponent(new Image(data, texture_base));
+                    this->addComponent(image);
+                    break;
+                }
             }
         }   
     }

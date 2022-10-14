@@ -4,6 +4,7 @@
 #include "gui/widget.hpp"
 #include "gui/button.hpp"
 #include "gui/label.hpp"
+#include "gui/image.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <map>
@@ -12,11 +13,6 @@
 #include <memory>
 
 namespace gui {
-/*
-typedef std::shared_ptr <ImageHolder>    ImageComponent;
-typedef std::shared_ptr <InputBox>       InputBoxComponent;
-*/
-
 enum class GUIObject {
     WIDGET,
     BUTTON,
