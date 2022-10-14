@@ -41,7 +41,6 @@ class Worldmap : public Gamestate {
         void gamestateLoad()   override;
         void gamestateClose()  override;
         void updateScheduler() override;
-        void createUI()        override;
 
         void selectPanel();
         void unselectPanel();

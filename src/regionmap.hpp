@@ -37,7 +37,6 @@ class Regionmap : public Gamestate {
         void gamestateLoad()   override;
         void gamestateClose()  override;
         void updateScheduler() override;
-        void createUI()        override;
 
         void renderRegion();
         void higlightTile();

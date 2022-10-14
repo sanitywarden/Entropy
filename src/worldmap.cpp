@@ -12,8 +12,6 @@ Worldmap::Worldmap() : Gamestate("Worldmap") {
     
     this->initialise();
     this->loadResources();   
-    this->createUI();
-    std::cout << "[] Loaded " << this->interface.size() << " interface page(s) for Worldmap.\n";
 }        
 
 Worldmap::~Worldmap() 
@@ -421,19 +419,6 @@ void Worldmap::highlightPanel() {
     highlight[3].color = COLOUR_WHITE_TRANSPARENT_QUARTER.asSFMLColour();
 
     game_manager.window.draw(highlight);
-}
-
-void Worldmap::createUI() {
-    namespace fs = std::filesystem;
-    for(const auto& file : fs::directory_iterator("./data/interface/worldmap/")) {
-        const auto& filename = readBefore(file.path().string(), ".lua");
-        const auto& extension = file.path().extension();
-
-        if(extension == ".luagui") {
-            auto interface_page = gui::InterfaceComponent(new gui::InterfacePage(filename + ".luagui", filename + ".luafun"));   
-            this->addInterfaceComponent(interface_page);
-        }
-    }
 }
 
 void Worldmap::gamestateLoad() {

@@ -2,10 +2,15 @@
 #include "simulationManager.hpp"
 #include "globalutilities.hpp"
 
+#include <filesystem>
+
 namespace iso {
 Gamestate::Gamestate(const std::string& state_id) 
     : state_id(state_id), move_camera(false), zoom_camera(false), default_zoom(0), current_zoom(0), max_zoom_in(0), max_zoom_out(0)
-{}
+{
+    this->createUI();
+    std::cout << "[] Loaded " << this->interface.size() << " interface page(s) for " << this->state_id << ".\n";
+}
 
 Gamestate::~Gamestate() 
 {}
@@ -127,6 +132,44 @@ void Gamestate::setVisibilityFalse(const std::string& interface_id) {
     }
 
     printError(this->state_id + "::setVisibilityFalse()", "Interface with id '" + interface_id + "' does not exist");
+}
+
+void Gamestate::createUI() {
+    namespace fs = std::filesystem;
+    
+    auto file_exists = [](const std::string& directory) {
+        auto path = fs::path(directory);
+        return fs::is_directory(path);
+    };
+
+    std::string path = "./data/interface/";
+    auto directory_name = toLower(this->state_id);
+    auto gamestate_dir = path + directory_name + "/";
+    auto all_dir = path + "all/"; 
+
+    if(file_exists(gamestate_dir)) {
+        for(const auto& file : fs::directory_iterator("./data/interface/" + directory_name + "/")) {
+            const auto& filename = readBefore(file.path().string(), ".lua");
+            const auto& extension = file.path().extension();
+
+            if(extension == ".luagui") {
+                auto interface_page = gui::InterfaceComponent(new gui::InterfacePage(filename + ".luagui", filename + ".luafun"));   
+                this->addInterfaceComponent(interface_page);
+            }
+        }
+    }
+
+    if(file_exists(all_dir)) {
+        for(const auto& file : fs::directory_iterator("./data/interface/all/")) {
+            const auto& filename = readBefore(file.path().string(), ".lua");
+            const auto& extension = file.path().extension();
+    
+            if(extension == ".luagui") {
+                auto interface_page = gui::InterfaceComponent(new gui::InterfacePage(filename + ".luagui", filename + ".luafun"));   
+                this->addInterfaceComponent(interface_page);
+            }
+        }
+    }
 }
 
 void Gamestate::renderUI() const {

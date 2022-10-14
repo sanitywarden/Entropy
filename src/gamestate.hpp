@@ -55,7 +55,6 @@ class Gamestate {
         virtual void zoomCamera()           { return; }
         virtual void updateCamera()         { return; }
         virtual void updateScheduler()      { return; }
-        virtual void createUI()             { return; } 
         virtual void resizeViews();
 
         const std::string& getStateId() const;
@@ -65,6 +64,7 @@ class Gamestate {
         bool shouldCameraMove()         const;
         bool shouldCameraZoom()         const;
 
+        void createUI(); 
         void renderUI() const;
         void redrawUI() const;
         void resizeUI();

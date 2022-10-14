@@ -14,8 +14,6 @@ Regionmap::Regionmap() : Gamestate("Regionmap") {
 
     this->initialise();
     this->loadResources();
-    this->createUI();
-    std::cout << "[] Loaded " << this->interface.size() << " interface page(s) for Regionmap.\n";
 }
 
 Regionmap::~Regionmap() 
@@ -513,19 +511,6 @@ void Regionmap::updatePaths(int index) {
         }
     }
     */
-}
-
-void Regionmap::createUI() {
-    namespace fs = std::filesystem;
-    for(const auto& file : fs::directory_iterator("./data/interface/regionmap/")) {
-        const auto& filename = readBefore(file.path().string(), ".lua");
-        const auto& extension = file.path().extension();
-
-        if(extension == ".luagui") {
-            auto interface_page = gui::InterfaceComponent(new gui::InterfacePage(filename + ".luagui", filename + ".luafun"));   
-            this->addInterfaceComponent(interface_page);
-        }
-    }
 }
 
 void Regionmap::updateScheduler() {    
