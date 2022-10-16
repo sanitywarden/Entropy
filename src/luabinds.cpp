@@ -5,6 +5,7 @@
 #include "gamestate.hpp"
 #include "worldmap.hpp"
 #include "regionmap.hpp"
+#include "worldData.hpp"
 
 #include <LuaBridge/Vector.h>
 #include <LuaBridge/Map.h>
@@ -48,6 +49,9 @@ void registerLua() {
         .beginClass <core::Ratio> ("Ratio")
             .addConstructor <void (*) (std::string, std::string)> ()
         .endClass()
+        .beginClass <Gamestate> ("Gamestate")
+            .addFunction("getID", Gamestate::getStateId)
+        .endClass()
         .beginClass <Building> ("Building")
             .addProperty("name"       , Building::getBuildingName       , Building::setBuildingName)
             .addProperty("description", Building::getBuildingDescription, Building::setBuildingDescription)
@@ -81,6 +85,7 @@ void registerLua() {
         .endClass()
         .beginClass <Region> ("Region")
             .addFunction("hasBiome"            , Region::L_hasBiome)
+            .addFunction("getBiome"            , Region::L_getBiome)
             .addFunction("isTerrain"           , Region::L_isTerrain)
             .addFunction("isOcean"             , Region::L_isOcean)
             .addFunction("isRiver"             , Region::L_isRiver)
@@ -121,6 +126,16 @@ void registerLua() {
         .addFunction("getFPS"                , &lua::L_getFPS)
         .addFunction("getFrameTime"          , &lua::L_getFrameTime)
         .addFunction("getRegionIndex"        , &lua::L_getRegionIndex)
+        .addFunction("getTileIndex"          , &lua::L_getTileIndex)
+        .addFunction("isBuildingTile"        , &lua::L_isBuildingTile)
+        .addFunction("getMousePosition"      , &lua::L_getMousePositionInterface)
+        .addFunction("exitApplication"       , &lua::L_exitApplication)
+        .addFunction("getRegion"             , &lua::L_getRegion)
+        .addFunction("getCurrentGamestate"   , &lua::L_getCurrentGamestate)
+        .addFunction("getGamestate"          , &lua::L_getGamestate)
+        .addFunction("inWorldBounds"         , &lua::L_inWorldBounds)
+        .addFunction("inRegionBounds"        , &lua::L_inRegionBounds)
+        .addFunction("tileGridPosition"      , &lua::L_tileGridPosition)
     ;
 }
 
@@ -214,5 +229,77 @@ int L_getRegionIndex() {
         auto regionmap = (Regionmap*)gamestate;
         return regionmap->region_index;
     }
+}
+
+int L_getTileIndex() {
+    auto* gamestate = game_manager.gamestate.getGamestate();
+    if(gamestate->state_id != "Regionmap") {
+        printError("L_getTileIndex()", "Current gamestate is not Regionmap");
+        return -1;
+    }
+
+    auto regionmap = (Regionmap*)gamestate;
+    return regionmap->current_index;
+}
+
+bool L_isBuildingTile(int tile_index) {
+    auto* gamestate = game_manager.gamestate.getGamestate();
+    if(gamestate->state_id != "Regionmap") {
+        printError("L_isBuildingTile()", "Current gamestate is not Regionmap");
+        return false;
+    }
+    
+    auto index  = L_getRegionIndex();
+    if(!inRegionBounds(index))
+        return false;
+
+    auto region = game_manager.world_map.at(index);
+    return region.L_isTileOccupied(tile_index);
+}
+
+core::Vector2i L_getMousePosition() {
+    auto* gamestate = game_manager.gamestate.getGamestate();
+    return gamestate->mouse_position_window;
+}
+
+core::Vector2i L_getMousePositionInterface() {
+    auto* gamestate = game_manager.gamestate.getGamestate();
+    return gamestate->mouse_position_interface;
+}
+
+void L_exitApplication(int code) {
+    exitApplication(code);
+}
+
+Region* L_getRegion(int region_index) {
+    if(!inWorldBounds(region_index)) {
+        printError("L_getRegionIndex()", "Region index out of bounds");
+        return nullptr;
+    }
+
+    return &game_manager.world_map.at(region_index);
+}
+
+Gamestate* L_getCurrentGamestate() {
+    auto* gamestate = game_manager.gamestate.getGamestate();
+    return gamestate;
+}
+
+Gamestate* L_getGamestate(const std::string& state_id) {
+    auto* gamestate = game_manager.gamestate.getGamestateByName(state_id);
+    return gamestate;
+} 
+
+bool L_inWorldBounds(int region_index) {
+    return inWorldBounds(region_index);
+}
+
+bool L_inRegionBounds(int tile_index) {
+    return inRegionBounds(tile_index);
+}
+
+core::Vector2i L_tileGridPosition(int tile_index) {
+    auto grid = tileGridPosition(tile_index);
+    return grid;
 }
 }

@@ -353,6 +353,15 @@ bool Region::L_hasBiome() const {
     return this->biome.getDefinitionFilename().length() != 0;
 }
 
+Biome* Region::L_getBiome() {
+    if(!this->L_hasBiome()) {
+        printError("Region::L_getBiome()", "Region does not have a biome assigned");
+        return nullptr;
+    }
+    
+    return &this->biome;
+}
+
 bool Region::L_isTerrain() const {
     return this->regiontype.is_terrain();
 }

@@ -4,6 +4,8 @@
 
 #include "building.hpp"
 #include "player.hpp"
+#include "gamestate.hpp"
+#include "region.hpp"
 
 #include "gui/label.hpp"
 
@@ -22,24 +24,28 @@ void L_hideInterface(const std::string& id);
 bool L_isInterfaceVisible(const std::string& id);
 bool L_isKeyPressed(const std::string& key_id);
 gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& label_id);
-
 int L_getRegionIndex();
-
-/*
 int L_getTileIndex();
 bool L_isBuildingTile(int tile_index);
-bool L_canAffordBuilding(int player_id, const Building& building);
+core::Vector2i L_getMousePosition();
+core::Vector2i L_getMousePositionInterface();
+void L_exitApplication(int code);
+iso::Region* L_getRegion(int region_index);
+iso::Gamestate* L_getCurrentGamestate();
+iso::Gamestate* L_getGamestate(const std::string& state_id);
+bool L_inWorldBounds(int region_index);
+bool L_inRegionBounds(int tile_index);
+core::Vector2i L_tileGridPosition(int tile_index);
+
+/*
 bool L_canRegionBeColonised(int region_index);
-Region* L_getRegion(int region_index);
+bool L_canAffordBuilding(int player_id, const Building& building);
 bool L_isRegionOwned(int region_index);
 std::vector <int> L_astar(int start_index, int end_index);
 Player* L_getRegionOwner(int region_index);
 Player* L_getPlayer(int player_id);
 Player* L_getHumanPlayer();
 bool L_isHumanPlayer(int player_id);
-core::Vector2i L_getMousePosition();
-core::Vector2i L_getMousePositionInterface();
-void L_exitApplication(int code);
 */
 
 }

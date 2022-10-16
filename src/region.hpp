@@ -73,6 +73,7 @@ class Region : public GameObject {
         bool isBiome(const Biome& biome) const;
 
         bool L_hasBiome() const;
+        Biome* L_getBiome();
         bool L_isTerrain() const;
         bool L_isOcean() const;
         bool L_isRiver() const;
