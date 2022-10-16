@@ -65,9 +65,9 @@ namespace iso {
             void generateNoise(NoiseSettings& settings, NoiseContainer& container);
             void generateChunkNoise(NoiseContainer& container, sf::Vector2i chunk_grid);
 
-            core::Vector3f tilePositionScreen(int x, int y);
-            core::Vector3f tilePositionScreen(core::Vector2i grid_position);
-            core::Vector3f tilePositionScreen(core::Vector2f grid_position);
+            core::Vector3i tilePositionScreen(int x, int y);
+            core::Vector3i tilePositionScreen(core::Vector2i grid_position);
+            core::Vector3i tilePositionScreen(core::Vector2f grid_position);
             
             bool is_ocean        (int index) const;
             bool is_tropical     (int index) const;

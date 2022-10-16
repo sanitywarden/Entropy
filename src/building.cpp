@@ -7,7 +7,7 @@
 using namespace iso;
 
 Building::Building() 
-    : GameObject(core::Vector3f(0, 0, 0), core::Vector3f(0, 0, 0), core::Vector2i(0, 0), "default", "Building")
+    : GameObject(core::Vector3i(0, 0, 0), core::Vector3i(0, 0, 0), core::Vector2i(0, 0), "default", "Building")
 {
     this->data.name = "Empty";
 }
@@ -19,7 +19,7 @@ Building::Building(const Building& building)
 }
 
 Building::Building(const BuildingData& data)
-    : GameObject(core::Vector3f(0, 0, 0), core::Vector3f(0, 0, 0), data.texture_size, data.texture)
+    : GameObject(core::Vector3i(0, 0, 0), core::Vector3i(0, 0, 0), data.texture_size, data.texture)
 {
     this->data = data;
 }

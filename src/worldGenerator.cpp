@@ -249,7 +249,7 @@ void WorldGenerator::generateWorld() {
             region = game_manager.world_map[index];
 
             if(!region.regiontype.is_ocean() && !region.regiontype.is_forest() && !region.regiontype.is_river() && !this->is_lake(index) && !region.regiontype.is_coast()) {
-                game_manager.lakes[index] = GameObject(region.getPosition(), core::Vector3f(), region.getSize(), this->getTileVariation("panel_lake"), "Lake");
+                game_manager.lakes[index] = GameObject(region.getPosition(), core::Vector3i(0, 0, 0), region.getSize(), this->getTileVariation("panel_lake"), "Lake");
                 region.regiontype.set_lake();
                 conditions_met = true;
             }
@@ -660,7 +660,7 @@ void WorldGenerator::worldmapGenerateRivers() {
 
             Region& start_panel = game_manager.world_map[river_index_start];
             if(last_direction == RiverDirection::RIVER_ORIGIN) {
-                GameObject river_node(start_panel.getPosition(), core::Vector3f(), start_panel.getSize(), "*", "River");
+                GameObject river_node(start_panel.getPosition(), core::Vector3i(0, 0, 0), start_panel.getSize(), "*", "River");
 
                 if(river_index_current - 1 > 0)
                     if(game_manager.world_map[river_index_current - 1].regiontype.is_river()) {
@@ -688,7 +688,7 @@ void WorldGenerator::worldmapGenerateRivers() {
             }
 
             if(panel.regiontype.is_coast()) {
-                GameObject river_estuary(start_panel.getPosition(), core::Vector3f(), start_panel.getSize(), "*", "River");
+                GameObject river_estuary(start_panel.getPosition(), core::Vector3i(0, 0, 0), start_panel.getSize(), "*", "River");
                 
                 if(river_index_current - 1 > 0)
                     if(game_manager.world_map[river_index_current - 1].regiontype.is_river()) {
@@ -799,7 +799,7 @@ void WorldGenerator::worldmapGenerateForests() {
         if(!is_ocean && !is_coast && !is_river && region.biome.canBeForest() && noise > world_data.w_forest_from) {
             region.regiontype.set_forest();            
             const std::string texture_name = region.biome.getWorldmapForestTexture();
-            game_manager.forests[index] = GameObject(region.getPosition(), core::Vector3f(), region.getSize(), texture_name, "Forest");
+            game_manager.forests[index] = GameObject(region.getPosition(), core::Vector3i(0, 0, 0), region.getSize(), texture_name, "Forest");
         }
     }
 }
@@ -896,19 +896,19 @@ void WorldGenerator::generateChunkNoise(NoiseContainer& storage, sf::Vector2i ch
 
 // This function accepts coordinates of the tile in a grid - not the tile position.
 // The first tile's coordinates in a grid are (0,0), but the position might be (128, 128) or some other point based on the offset. 
-core::Vector3f WorldGenerator::tilePositionScreen(int x, int y) {
-    return core::Vector3f(
+core::Vector3i WorldGenerator::tilePositionScreen(int x, int y) {
+    return core::Vector3i(
         (tileOffset().x * tileSize().x) + (x - y) * (tileSize().x / 2),
         (tileOffset().y * tileSize().y) + (x + y) * (tileSize().y / 2),
         0
     );
 }
 
-core::Vector3f WorldGenerator::tilePositionScreen(core::Vector2i grid_position) {
+core::Vector3i WorldGenerator::tilePositionScreen(core::Vector2i grid_position) {
     return this->tilePositionScreen(grid_position.x, grid_position.y);
 }
 
-core::Vector3f WorldGenerator::tilePositionScreen(core::Vector2f grid_position) {
+core::Vector3i WorldGenerator::tilePositionScreen(core::Vector2f grid_position) {
     return this->tilePositionScreen(grid_position.x, grid_position.y);
 }
 
@@ -1335,7 +1335,7 @@ void WorldGenerator::generateRegion(int region_index) {
                 region.sides[index].resize(biggest_difference);
 
                 const auto side_offset = [](int index) {
-                    auto offset = core::Vector3f();
+                    auto offset = core::Vector3i(0, 0, 0);
                     offset.z = (index + 1) * tileSize().y / 2;
                     return offset;
                 };
@@ -1397,7 +1397,7 @@ void WorldGenerator::generateRegion(int region_index) {
                     );
                     
                     // Offset is for trees that are bigger than tile size.
-                    auto tree_offset = core::Vector3f(0, 0, 0);
+                    auto tree_offset = core::Vector3i(0, 0, 0);
                     if(texture_size.y > tileSize().y)
                         tree_offset.y = -texture_size.y + tileSize().y;
 

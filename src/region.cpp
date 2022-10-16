@@ -8,7 +8,7 @@
 
 namespace iso {
 Region::Region() 
-    : GameObject(core::Vector3f(0, 0, 0), core::Vector3f(0, 0, 0), core::Vector2i(0, 0), "*", "Region") 
+    : GameObject(core::Vector3i(0, 0, 0), core::Vector3i(0, 0, 0), core::Vector2i(0, 0), "*", "Region") 
 {
     this->_marked    = false;
     this->_direction = RiverDirection::RIVER_NONE;

@@ -6,18 +6,18 @@
 namespace iso {
 int GameObject::instance_id = 0;
 GameObject::GameObject() 
-    : object_name("*"), object_position(core::Vector3f(0, 0, 0)), object_size(core::Vector2i(0, 0)), object_texture_name("*"), object_colour(COLOUR_BLACK)
+    : object_name("*"), object_position(core::Vector3i(0, 0, 0)), object_size(core::Vector2i(0, 0)), object_texture_name("*"), object_colour(COLOUR_BLACK)
 {}
 
 GameObject::GameObject(const GameObject& object) 
     : object_name(object.getName()), object_position(object.getPosition()), object_size(object.getSize()), object_texture_name(object.getTextureName()), object_colour(object.getColour())
 {}
 
-GameObject::GameObject(core::Vector3f position, core::Vector3f relative_position, core::Vector2i size, const std::string& texture_name) 
+GameObject::GameObject(core::Vector3i position, core::Vector3i relative_position, core::Vector2i size, const std::string& texture_name) 
     : object_name("*"), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
 {}
 
-GameObject::GameObject(core::Vector3f position, core::Vector3f relative_position, core::Vector2i size, const std::string& texture_name, const std::string& object_name) 
+GameObject::GameObject(core::Vector3i position, core::Vector3i relative_position, core::Vector2i size, const std::string& texture_name, const std::string& object_name) 
     : object_name(object_name), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
 {}
 
@@ -32,23 +32,23 @@ bool GameObject::hasName() const {
     return this->object_name[0] != '*';
 }
 
-bool GameObject::contains(core::Vector2f point) const {
+bool GameObject::contains(core::Vector2i point) const {
     auto position2d = this->getPosition2D();    
-    sf::FloatRect object_rectangle(position2d.asSFMLVector2f(), this->getSize().asSFMLVector2f());
-    return object_rectangle.contains(point.asSFMLVector2f());
+    sf::IntRect object_rectangle(position2d.asSFMLVector2i(), this->getSize().asSFMLVector2i());
+    return object_rectangle.contains(point.asSFMLVector2i());
 }
 
 const std::string& GameObject::getName() const {
     return this->object_name;
 }
 
-core::Vector3f GameObject::getPosition() const {
+core::Vector3i GameObject::getPosition() const {
     return this->object_position;
 }
 
 // When you represent a 3D object as a 2D isometric object, you just subtract the Z axis from the Y axis.
-core::Vector2f GameObject::getPosition2D() const {
-    return core::Vector2f(this->object_position.x, this->object_position.y + this->object_position.z);
+core::Vector2i GameObject::getPosition2D() const {
+    return core::Vector2i(this->object_position.x, this->object_position.y + this->object_position.z);
 }
 
 core::Vector2i GameObject::getSize() const {

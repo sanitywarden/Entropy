@@ -374,7 +374,7 @@ void Worldmap::selectPanel() {
 void Worldmap::unselectPanel() {
     if(inWorldBounds(this->selected_index)) {
         const auto& region = game_manager.world_map[this->selected_index];
-        if(!region.contains(core::Vector2f(this->mouse_position_window.x, this->mouse_position_window.y))) {
+        if(!region.contains(core::Vector2i(this->mouse_position_window.x, this->mouse_position_window.y))) {
             this->selected_index = -1;
             this->setVisibilityFalse("component_widget_region");
         }

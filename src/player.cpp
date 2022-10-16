@@ -56,9 +56,9 @@ void Player::placeBuilding(Region& region, Building building, core::Vector2i gri
     
     // Here you adjust the origin of buildings with sizes of n > 0.
     // Texture size scale are arithmetic series.
-    auto offset = core::Vector3f(0, 0, 0);  
+    auto offset = core::Vector3i(0, 0, 0);  
     if(n > 0) {
-        offset = core::Vector3f(
+        offset = core::Vector3i(
             -(a1_w + (n - 1) * r_w),
             -(a1_h + (n - 1) * r_h),
             0
