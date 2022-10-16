@@ -166,7 +166,6 @@ void L_createIcon(const std::string& id) {
         return;
     }
 
-    const auto& texture = game_manager.resource.getTexture(id);
     auto save_as = "icon_" + readAfter(id, "icon_template_");
     auto base    = "icon_default";
     game_manager.resource.blendTextures(save_as, base, id); 

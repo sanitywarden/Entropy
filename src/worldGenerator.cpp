@@ -763,7 +763,6 @@ void WorldGenerator::spawnPlayers() {
         cdata.country_name = generateName(GenerationType::COUNTRY, 3);
 
         auto player = Player(pdata, cdata);
-        auto& spawn_region = game_manager.world_map.at(spot_index);
 
         if(world_data.fog_of_war_enabled) {
             for(int y = -2; y <= 2; y++) {
@@ -943,12 +942,9 @@ bool WorldGenerator::is_river(int region_index) const {
 
 std::string WorldGenerator::getWorldmapTile(int index) const {
     auto& region    = game_manager.world_map[index];
-    auto is_terrain = region.regiontype.is_terrain();
-    auto is_ocean   = region.regiontype.is_ocean();
-    auto is_coast   = region.regiontype.is_coast();
     const Biome& biome = game_manager.world_map[index].biome;
 
-    if(!is_coast && is_terrain) {
+    if(!region.regiontype.is_coast() && region.regiontype.is_terrain()) {
         auto base_name = "panel_full";
         auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
         return biome_specific_name;    
@@ -962,8 +958,6 @@ std::string WorldGenerator::getWorldmapTile(int index) const {
     bool BOTTOMLEFT  = false;
     bool BOTTOM      = false;
     bool BOTTOMRIGHT = false;
-
-    auto world_size = getWorldSize();
 
     // LEFT
     if(inWorldBounds(index - 1)) {
@@ -1021,7 +1015,7 @@ std::string WorldGenerator::getWorldmapTile(int index) const {
         }
     }
 
-    if(is_coast) {
+    if(region.regiontype.is_coast()) {
         if(!LEFT && !TOP && !BOTTOM && !RIGHT && !TOPLEFT && !TOPRIGHT && !BOTTOMLEFT && !BOTTOMRIGHT) {
             auto base_name = this->getTileVariation("panel_island");;
             auto biome_specific_name = this->createBiomeSpecificTexture(base_name, biome);
@@ -1312,9 +1306,7 @@ void WorldGenerator::generateRegion(int region_index) {
                 if(current_tile.getElevation() == 0)
                     continue;
                 
-                const int index_left   = index - 1;
                 const int index_right  = index + 1;
-                const int index_top    = index - world_data.r_width;  
                 const int index_bottom = index + world_data.r_width;  
 
                 // Check only for the tile to the right tile and the bottom tile, since the left and top elevation would not be visible.

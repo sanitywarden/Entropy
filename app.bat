@@ -1,1 +1,1 @@
-g++ ./src/*.cpp ./src/gui/*.cpp -o ./bin/entropy.exe -std=c++20 -fpermissive -Wl,--stack,4194304 -L./lib/Lua/ -L./lib/SFML/ -llua54 -DSFML_STATIC -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lgdi32 -lwinmm -lopengl32 -lfreetype -I./src -I./src/gui 
+g++ ./src/*.cpp ./src/gui/*.cpp -o ./bin/entropy.exe -std=c++20 -fpermissive -Wunused -Wl,--stack,4194304 -L./lib/Lua/ -L./lib/SFML/ -llua54 -DSFML_STATIC -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lgdi32 -lwinmm -lopengl32 -lfreetype -I./src -I./src/gui 

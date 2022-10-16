@@ -655,7 +655,6 @@ void SimulationManager::emitEvents() {
             case sf::Event::Resized: {
                 gamestate->controls.resized = sf::Vector2f(gamestate->event.size.width, gamestate->event.size.height);
                 
-                auto new_window_size = this->window.getWindowSize();
                 this->font_size = (this->window.getWindowWidth() + this->window.getWindowHeight()) / 160;
                 event_queue.push_back("WINDOW_RESIZE");
                 

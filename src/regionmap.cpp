@@ -41,7 +41,6 @@ void Regionmap::loadResources() {
     // Automatically generate icon names.
     for(const auto& texture_pair : game_manager.resource.getTextureCollection()) {
         const auto& texture_name = texture_pair.first;
-        const auto& texture      = texture_pair.second;
 
         // Generate icons.
         if(startsWith(texture_name, "icon_template_")) {
@@ -333,9 +332,7 @@ void Regionmap::renderRegion() {
 }
 
 void Regionmap::higlightTile() {
-    auto tile_size   = tileSize().asSFMLVector2f();
-    auto tile_offset = tileOffset().asSFMLVector2f();
-    auto region_size = getRegionSize();
+    auto tile_size = tileSize().asSFMLVector2f();
 
     auto mouse_position = core::Vector2f(
         this->mouse_position_window.x,
@@ -379,28 +376,6 @@ void Regionmap::higlightTile() {
     sf::RenderStates states;
     states.texture = &game_manager.resource.getTexture("tile_highlight_1x1");
     game_manager.window.draw(highlight, states);
-
-    const auto& current_tile = this->region->map[this->current_index];
-    
-    std::string tile_data;
-    tile_data += this->region->biome.getBiomeName() + " " + current_tile.getName() + " | #" + std::to_string(this->current_index) + "\n";
-
-    if(this->region->resourceExistsAt(this->current_index))
-        tile_data += this->region->getResourceAt(this->current_index).getResourceName() + "\n";
-
-    auto cursor_offset = sf::Vector2f(
-        tileSize().x / 2,
-        tileSize().y / 2
-    );
-
-    // gui::Label tile_information(tile_data);
-    // tile_information.setWidgetPosition(this->mouse_position_interface + cursor_offset);
-
-    // auto current_view = game_manager.window.getWindow()->getView();
-     
-    // game_manager.window.getWindow()->setView(this->view_interface);
-    // game_manager.window.draw(tile_information);
-    // game_manager.window.getWindow()->setView(current_view);
 }
 
 Region* Regionmap::getCurrentRegion() {
