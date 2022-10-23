@@ -7,11 +7,10 @@
 
 #include <filesystem>
 
-using namespace iso;
-
-Regionmap::Regionmap() : Gamestate("Regionmap") {
-    this->region  = nullptr;
-
+namespace iso {
+Regionmap::Regionmap() : Gamestate("Regionmap") 
+    , tile_index(-1), region_index(-1), region(nullptr), recalculate_tile_mesh(false), recalculate_tree_mesh(false)
+{
     this->initialise();
     this->loadResources();
 }
@@ -20,11 +19,6 @@ Regionmap::~Regionmap()
 {}
 
 void Regionmap::initialise() {
-    this->mouse_moved = false;
-    this->mouse_drag  = false;
-
-    this->current_index = -1;
-
     this->default_zoom  = 0;
     this->current_zoom  = this->default_zoom;
     this->max_zoom_in   = 0; 
@@ -79,6 +73,11 @@ void Regionmap::handleInput() {
     if(event_queue.size()) {
         const auto& event_name = event_queue.at(0);
 
+        if(event_name == "WINDOW_RESIZE") {
+            this->resizeUI();
+            this->resizeViews();
+        }
+
         if(event_name == "BUTTON_PRESSED" && !this->controls.isInputBlocked()) {
             if(this->controls.isKeyPressed("F12")) {
                 game_manager.window.takeScreenshot();
@@ -116,7 +115,7 @@ void Regionmap::handleInput() {
         }
 
         if(event_name == "LMB_PRESSED") {
-            this->updateTile();
+        
         }
 
         if(event_name == "RMB_PRESSED") {
@@ -208,7 +207,7 @@ void Regionmap::renderRegion() {
     const sf::Rect     camera_screen_area(camera_centre - 0.5f * camera_size, camera_size);
     const sf::Vector2f tile_size = tileSize().asSFMLVector2f();
 
-    if(this->recalculate_mesh) {
+    if(this->recalculate_tile_mesh) {
         int verticies_index  = 0;
         int side_vector_size = 0;
         for(int i = 0; i < this->region->sides.size(); i++)
@@ -268,7 +267,7 @@ void Regionmap::renderRegion() {
         }
 
         regionmap_mesh_tile.update(verticies_tiles);
-        this->recalculate_mesh = false;
+        this->recalculate_tile_mesh = false;
     }
 
     if(this->recalculate_tree_mesh) {
@@ -341,14 +340,14 @@ void Regionmap::higlightTile() {
 
     auto selected = tileGridPosition(mouse_position);
     if(!inRegionBounds(selected)) {
-        this->current_index = -1;
+        this->tile_index = -1;
         return;
     }
 
     int index = calculateRegionIndex(selected.x, selected.y);
-    this->current_index = index;
+    this->tile_index = index;
     
-    if(this->mouse_drag)
+    if(this->controls.mouse_dragged)
         return;
 
     if(!this->controls.mouseRightPressed())
@@ -378,201 +377,36 @@ void Regionmap::higlightTile() {
     game_manager.window.draw(highlight, states);
 }
 
-Region* Regionmap::getCurrentRegion() {
-    return this->region;
-}
-
-int Regionmap::getRegionIndex() const {
+int Regionmap::L_getRegionIndex() const {
     return this->region_index;
 }
 
-int Regionmap::getCurrentIndex() const {
-    return this->current_index;
-}
-
-void Regionmap::updateTile() {
-    // auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-    // if(building_menu->getBuilding() != BUILDING_EMPTY && this->controls.mouseLeftPressed() && building_menu->isVisible() && !this->mouseIntersectsUI() && !this->mouse_drag) {
-    //     auto building = building_menu->getBuilding();
-    //     auto grid_position = tileGridPosition(this->current_index);
-    //     auto* human = game_manager.getHumanPlayer();
-        
-    //     human->placeBuildingCheck(*this->region, building, grid_position);
-    //     this->updatePaths(this->current_index);
-    //     this->recalculate_tree_mesh = true;
-    // }
-}
-
-void Regionmap::updatePaths(int index) {
-    /*
-    if(!this->region->getBuildingAt(index) || *this->region->getBuildingAt(index) == BUILDING_EMPTY)
+void Regionmap::L_setRegionIndex(int index) {
+    if(!inWorldBounds(index)) {
+        printError("Regionmap::L_setRegionIndex()", "Region index out of bounds");
         return;
-
-    // Assigns appropriate path texture based on the path tile's surroundings.
-    // Only update the paths if they are adjacent to other paths.
-    const auto directions = [this](bool LEFT, bool RIGHT, bool TOP, bool DOWN, int index) -> void {
-        auto building = this->region->getBuildingAt(index);
-        const std::string path_type = (*building == BUILDING_PATH_DIRT) ? "dirt" : "stone"; 
-
-        if(LEFT && RIGHT && !TOP && !DOWN)
-            building->object_texture_name = "path_" + path_type + "_horizontal";
-
-        else if(!LEFT && !RIGHT && TOP && DOWN)
-            building->object_texture_name = "path_" + path_type + "_vertical";
-
-        else if(LEFT && RIGHT && TOP && DOWN)
-            building->object_texture_name = "path_" + path_type + "_cross";
-
-        else if(LEFT && !RIGHT && TOP && !DOWN)
-            building->object_texture_name = "path_" + path_type + "_turn_up";
-    
-        else if(!LEFT && RIGHT && !TOP && DOWN)
-            building->object_texture_name = "path_" + path_type + "_turn_down";
-
-        else if(!LEFT && RIGHT && TOP && !DOWN)
-            building->object_texture_name = "path_" + path_type + "_turn_right";
-
-        else if(LEFT && !RIGHT && !TOP && DOWN)
-            building->object_texture_name = "path_" + path_type + "_turn_left";
-
-        else if(LEFT && RIGHT && TOP && !DOWN)
-            building->object_texture_name = "path_" + path_type + "_without_down";
-
-        else if(LEFT && RIGHT && !TOP && DOWN)
-            building->object_texture_name = "path_" + path_type + "_without_top";
-
-        else if(LEFT && !RIGHT && TOP && DOWN)
-            building->object_texture_name = "path_" + path_type + "_without_right";
-
-        else if(!LEFT && RIGHT && TOP && DOWN)
-            building->object_texture_name = "path_" + path_type + "_without_left";
-    
-        else if((LEFT && !RIGHT && !TOP && !DOWN) || (!LEFT && RIGHT && !TOP && !DOWN))
-            building->object_texture_name = "path_" + path_type + "_horizontal";
-
-        else if((!LEFT && !RIGHT && !TOP && DOWN) || (!LEFT && !RIGHT && TOP && !DOWN))
-            building->object_texture_name = "path_" + path_type + "_vertical";
-        
-        else building->object_texture_name = "path_" + path_type + "_point";
-    };
-
-    // Update the singular tile.
-    auto building_at_index = this->region->getBuildingAt(index);
-    
-    // Check if the pointer exists.
-    // It might be a nullptr, and you do not want to derefence that.
-    if(building_at_index) {
-        if(*building_at_index == BUILDING_PATH_DIRT || *building_at_index == BUILDING_PATH_STONE) {
-            bool LEFT  = this->region->isPath(index - 1);
-            bool RIGHT = this->region->isPath(index + 1);
-            bool TOP   = this->region->isPath(index - world_data.getRegionWidth());
-            bool DOWN  = this->region->isPath(index + world_data.getRegionWidth());
-            
-            directions(LEFT, RIGHT, TOP, DOWN, index);
-        }
     }
 
-    // Update the tiles that might have been affected by the previous change.
-    for(auto& pair : this->region->buildings) {
-        int i = pair.first;
-
-        if(this->region->isPath(i)) {
-            bool LEFT  = this->region->isPath(i - 1);
-            bool RIGHT = this->region->isPath(i + 1);
-            bool TOP   = this->region->isPath(i - world_data.getRegionWidth());
-            bool DOWN  = this->region->isPath(i + world_data.getRegionWidth());
-            
-            directions(LEFT, RIGHT, TOP, DOWN, i);
-        }
-    }
-    */
+    this->region_index = index;
+    this->region = &game_manager.world_map.at(index);
 }
 
-void Regionmap::updateScheduler() {    
-    // if(world_data.astarEnabled()) {
-    //     auto& update_population_path = this->scheduler.at("update_path");
-    //     if(update_population_path.first != update_population_path.second)
-    //         update_population_path.first++;
-
-    //     if(update_population_path.first == update_population_path.second) {
-    //         for(auto& unit : this->region->population) {
-    //             if(!unit.hasPath()) {
-    //                 auto random_index = rand() % world_data.getRegionSize();
-    //                 auto found = false;
-    //                 while(!found) {
-    //                     random_index = rand() % world_data.getRegionSize();
-    //                     if(this->region->map[random_index].tiletype.is_terrain() && !this->region->isTree(random_index) && !this->region->getBuildingAt(region_index)) {
-    //                         found = true;
-    //                         break;
-    //                     }
-    //                 } 
-
-    //                 auto path = game_manager.r_astar(unit.current_index, random_index);
-    //                 unit.setNewPath(path);
-                    
-    //                 this->recalculate_mesh = true;
-    //             }
-    //         }
-
-    //         update_population_path.first = 0;
-    //     }
-
-    //     auto& update_population_movement = this->scheduler.at("update_movement");
-    //     if(update_population_movement.first != update_population_movement.second)
-    //         update_population_movement.first++;
-        
-    //     if(update_population_movement.first == update_population_movement.second) {
-    //         for(auto& unit : this->region->population) {
-    //             if(unit.hasPath()) {
-    //                 auto current = unit.current_index;
-    //                 auto next    = unit.getNextMove();
-                
-    //                 const auto& tile  = this->region->map[next];
-    //                 auto new_position = tile.getPosition();
-
-    //                 unit.object_position = new_position + sf::Vector3f(0, -(unit.object_size.y - world_data.tileSize().y), 0);
-    //                 unit.current_index   = next;
-
-    //                 // Assign texture.
-                    
-    //                 std::string texture_base = tile.tiletype.is_river()
-    //                     ? "unit_transport_arrow"
-    //                     : "unit_classic_arrow";
-
-    //                 auto index_difference = next - current;
-                    
-    //                 if(index_difference == 1)
-    //                     unit.object_texture_name = texture_base + "_br";
-
-    //                 else if(index_difference == -1)
-    //                     unit.object_texture_name = texture_base + "_tl";
-
-    //                 else if(index_difference == world_data.getRegionWidth())
-    //                     unit.object_texture_name = texture_base + "_bl";
-
-    //                 else if(index_difference == -world_data.getRegionWidth())
-    //                     unit.object_texture_name = texture_base + "_tr";
-    //             }
-    //         }
-            
-    //         this->recalculate_tree_mesh = true;
-    //         update_population_movement.first = 0;
-    //     }
-    // }
+int Regionmap::L_getTileIndex() const {
+    return this->tile_index;
 }
 
 void Regionmap::gamestateLoad() {
-    auto worldmap = (Worldmap*)game_manager.gamestate.getGamestateByName("Worldmap");
-    auto current_index = worldmap->selected_index;
-    this->region_index = current_index;
+    if(!inWorldBounds(this->region_index)) {
+        printError("Regionmap::gamestateLoad()", "Requested load of region out of world bounds");
+        return;
+    }
 
-    this->region = &game_manager.world_map.at(current_index);
+    this->region = &game_manager.world_map.at(this->region_index);
 
     if(!this->region->visited)
         game_manager.world_generator.generateRegion(this->region_index);
 
-    this->recalculate_mesh      = true;
-    this->recalculate_tree_mesh = true;
+    this->recalculateMesh();
 
     game_manager.window.setView(this->view_interface);
     this->resizeViews();
@@ -607,7 +441,7 @@ void Regionmap::gamestateLoad() {
 }
 
 void Regionmap::gamestateClose() {
-    this->recalculate_mesh      = false;
+    this->recalculate_tile_mesh = false;
     this->recalculate_tree_mesh = false;
     regionmap_mesh_tile.create(0);
 
@@ -616,7 +450,7 @@ void Regionmap::gamestateClose() {
 }
 
 void Regionmap::recalculateMesh() {
-    this->recalculate_mesh      = true;
+    this->recalculate_tile_mesh = true;
     this->recalculate_tree_mesh = true;
 }
 
@@ -774,4 +608,5 @@ void Regionmap::renderSelectedBuilding() {
         }
     }
     */
+}
 }

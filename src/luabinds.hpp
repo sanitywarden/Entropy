@@ -6,6 +6,8 @@
 #include "player.hpp"
 #include "gamestate.hpp"
 #include "region.hpp"
+#include "worldmap.hpp"
+#include "regionmap.hpp"
 
 #include "gui/label.hpp"
 
@@ -23,6 +25,9 @@ void L_showInterface(const std::string& id);
 void L_hideInterface(const std::string& id);
 bool L_isInterfaceVisible(const std::string& id);
 bool L_isKeyPressed(const std::string& key_id);
+bool L_isLeftMouseButtonPressed();
+bool L_isRightMouseButtonPressed();
+bool L_isMiddleMouseButtonPressed();
 gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& label_id);
 int L_getRegionIndex();
 int L_getTileIndex();
@@ -36,6 +41,11 @@ iso::Gamestate* L_getGamestate(const std::string& state_id);
 bool L_inWorldBounds(int region_index);
 bool L_inRegionBounds(int tile_index);
 core::Vector2i L_tileGridPosition(int tile_index);
+void L_generateRegion(int region_index);
+void L_generateWorld();
+bool L_mouseIntersectsUI();
+iso::Regionmap* L_getRegionmap();
+iso::Worldmap* L_getWorldmap();
 
 /*
 bool L_canRegionBeColonised(int region_index);

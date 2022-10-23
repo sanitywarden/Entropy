@@ -7,7 +7,9 @@
 #include <filesystem>
 
 namespace iso {
-Worldmap::Worldmap() : Gamestate("Worldmap") {
+Worldmap::Worldmap() : Gamestate("Worldmap") 
+    , current_index(-1), selected_index(-1), lens("NORMAL")
+{
     std::srand(time(0));
     
     this->initialise();
@@ -18,23 +20,10 @@ Worldmap::~Worldmap()
 {}
 
 void Worldmap::initialise() {
-    this->mouse_drag     = false;
-    this->mouse_moved    = false;
-    this->move_camera    = false;
-    this->zoom_camera    = false;
-
-    this->current_index    = -1;
-    this->selected_index   = -1;
-    this->selected_unit_id = -1;
-
     this->default_zoom = 0;
     this->current_zoom = this->default_zoom;
     this->max_zoom_in  = 0; 
     this->max_zoom_out = 2;
-
-    this->lens = "NORMAL";
-
-    this->resizeViews();
 
     this->view_interface.setCenter(game_manager.window.getWindowWidth() / 2, game_manager.window.getWindowHeight() / 2);
     this->view_game.setCenter(sf::Vector2f(
@@ -131,19 +120,11 @@ void Worldmap::handleInput() {
         const auto& event_name = event_queue.at(0);
 
         if(event_name == "WINDOW_RESIZE") {
-            auto cwr = this->getInterfaceComponent("component_widget_region");
-            auto wr = cwr->getComponent("widget_region");
-
             this->resizeUI();
             this->resizeViews();
         }
 
         if(event_name == "BUTTON_PRESSED" && !this->controls.isInputBlocked()) {
-            if(this->controls.isKeyPressed("SPACEBAR")) {
-                if(game_manager.getHumanPlayer()->hasCapital())
-                    this->centreOnPlayerCapital();
-            }
-
             if(this->controls.isKeyPressed("ESCAPE")) {
                 exitApplication(0);
             }
@@ -194,14 +175,6 @@ void Worldmap::handleInput() {
             if(this->controls.isKeyPressed("ARROW_UP"))
                 if(this->view_game.getCenter().x + (panelSize()) <= top_bound)
                     this->view_game.move(0, -panelSize());
-        }
-
-        if(event_name == "LMB_PRESSED") {
-            this->selectPanel();
-        }
-
-        if(event_name == "RMB_PRESSED") {
-            this->unselectPanel();
         }
 
         if(event_name == "MMB_PRESSED") {
@@ -346,41 +319,6 @@ void Worldmap::renderWorld() {
     }
 }
 
-void Worldmap::selectPanel() {
-    auto* human_player = game_manager.getHumanPlayer();
-    if(!this->mouseIntersectsUI() && (human_player->discoveredRegion(this->current_index) || !world_data.fog_of_war_enabled)) {
-        if(!inWorldBounds(this->current_index))
-            return;
-        
-        const auto& region = game_manager.world_map.at(this->current_index);
-        if(region.regiontype.is_ocean()) {
-            this->setVisibilityFalse("component_widget_region");
-            return;
-        }
-
-        sf::Vector2i panel_grid_position = sf::Vector2i(
-            this->mouse_position_window.x / panelSize(),
-            this->mouse_position_window.y / panelSize()
-        );
-
-        const int index = panel_grid_position.y * world_data.w_width + panel_grid_position.x;
-        this->selected_index = index;
-
-        this->setVisibilityTrue("component_widget_region");
-        this->selected_unit_id = -1;
-    }
-}
-
-void Worldmap::unselectPanel() {
-    if(inWorldBounds(this->selected_index)) {
-        const auto& region = game_manager.world_map[this->selected_index];
-        if(!region.contains(core::Vector2i(this->mouse_position_window.x, this->mouse_position_window.y))) {
-            this->selected_index = -1;
-            this->setVisibilityFalse("component_widget_region");
-        }
-    }
-}
-
 void Worldmap::highlightPanel() {
     auto tile_grid = core::Vector2i(
         this->mouse_position_window.x / panelSize(),
@@ -393,7 +331,7 @@ void Worldmap::highlightPanel() {
     }
 
     this->current_index = calculateWorldIndex(tile_grid);
-    if(this->mouse_drag)
+    if(this->controls.mouse_dragged)
         return;
 
     auto panel_grid_position = sf::Vector2i(
@@ -426,9 +364,6 @@ void Worldmap::gamestateLoad() {
     this->resizeViews();
     this->resizeUI();
     game_manager.window.getWindow()->setView(this->view_game);
-
-    this->mouse_moved = false;
-    this->mouse_drag  = false;
 
     this->selected_index = -1;
     this->current_index  = -1;
@@ -463,76 +398,15 @@ void Worldmap::gamestateClose() {
         this->setVisibilityFalse(pair.first);
 }
 
-void Worldmap::updateScheduler() {
-
-}
-
-// void Worldmap::selectUnit() {
-    // const auto& region = game_manager.world_map[this->current_index];
-    // auto* unit = region.unit;
-    // auto* human_player = game_manager.player_manager.getHumanPlayer();
-
-    // if(unit) {
-    //     if(this->controls.mouseLeftPressed() && unit->contains(this->mouse_position_window) && human_player->hasUnit(unit->getID()) && human_player->discoveredRegion(unit->current_index)) {
-    //         this->selected_unit_id = unit->getID();
-    //         this->setVisibilityTrue("component_widget_unit");
-    //         this->setVisibilityFalse("component_widget_region");
-    //     }
-    // }
-// }
-
-// void Worldmap::unselectUnit() {
-//     Unit* pawn = nullptr;
-//     for(const auto& player : game_manager.players) {
-//         for(auto& unit : player.units) {
-//             if(unit.get()->getID() == this->selected_unit_id) {
-//                 pawn = unit.get();
-//                 break;
-//             }
-//         }
-//     }
-
-//     if(pawn) {
-//         if(this->controls.mouseLeftPressed() && !this->mouseIntersectsUI() && !pawn->contains(this->mouse_position_window)) {
-//             this->selected_unit_id = -1;
-//         }
-//     }
-
-//     if(this->controls.mouseLeftPressed() && this->selected_unit_id == -1) {
-//         this->setVisibilityFalse("component_widget_unit");
-//     }
-// }
-
-// void Worldmap::selectUnitGoal() {
-//     if(this->controls.mouseRightPressed() && this->selected_unit_id != -1) {
-//         auto* pawn = game_manager.getUnit(this->selected_unit_id);
-//         if(pawn) {
-//             auto goal = this->current_index; 
-//             auto path = game_manager.astar(pawn->current_index, goal);
-//             pawn->goal = goal;
-//             pawn->setNewPath(path);
-//         }           
-//     }
-// }
-
-GameObject* Worldmap::getSelectedObject() {
-    return nullptr;
-    // Region* region = &game_manager.world_map[this->current_index];
-    // if(region->isUnitPresent())
-    //     if(region->unit->contains(this->mouse_position_window))
-    //         return region->unit;
-    // return region;
-}
-
-int Worldmap::getSelectedUnitID() {
-    return this->selected_unit_id;
-}
-
-int Worldmap::getCurrentIndex() {
+int Worldmap::L_getCurrentIndex() const {
     return this->current_index;
 }
 
-int Worldmap::getSelectedIndex() { 
+int Worldmap::L_getSelectedIndex() const { 
     return this->selected_index;
+}
+
+void Worldmap::L_setSelectedIndex(int index) {
+    this->selected_index = index;
 }
 }

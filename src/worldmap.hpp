@@ -16,19 +16,8 @@ class Worldmap : public Gamestate {
     friend class SimulationManager;
 
     public:
-        Region             region;
-        // std::vector <Unit> units;
-
-        bool mouse_moved;
-        bool mouse_drag;
-        
-        sf::Vector2f position_pressed;
-        sf::Vector2f position_released;
-
-        int selected_unit_id;
         int current_index;
         int selected_index;
-
         std::string lens;
 
     private:
@@ -40,22 +29,10 @@ class Worldmap : public Gamestate {
         void updateCamera()    override;
         void gamestateLoad()   override;
         void gamestateClose()  override;
-        void updateScheduler() override;
 
-        void selectPanel();
-        void unselectPanel();
         void highlightPanel();
 
         void renderWorld();
-
-        // void selectUnit();
-        // void unselectUnit();
-        // void selectUnitGoal();
-
-        // Unit's and region's hitbox may be on top of each other, making it difficult to distinguish between each other.
-        // This function returns a pointer to the object which is being clicked on.
-        GameObject* getSelectedObject();
-
     public:
         Worldmap();
         ~Worldmap();
@@ -63,9 +40,9 @@ class Worldmap : public Gamestate {
         void update(float delta_time) override;
         void render(float delta_time) override;
         
-        int getCurrentIndex();
-        int getSelectedIndex();
-        int getSelectedUnitID();
+        int L_getCurrentIndex() const;
+        int L_getSelectedIndex() const; 
+        void L_setSelectedIndex(int index);
 
         void centreWorldmap();
         void centreOnPlayerCapital();

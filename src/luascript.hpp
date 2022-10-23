@@ -6,7 +6,7 @@
 
 namespace lua {
 class LuaScript { 
-    private:
+    public:
         std::string filename;
 
     public:

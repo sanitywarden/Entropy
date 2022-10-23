@@ -242,7 +242,7 @@ std::vector <int> SimulationManager::wAstar(int start, int end) const {
 
 std::vector <int> SimulationManager::rAstar(int start, int end) const {
     auto* regionmap = (Regionmap*)this->gamestate.getGamestateByName("Regionmap");
-    const auto& region = this->world_map[regionmap->getRegionIndex()];
+    const auto& region = this->world_map[regionmap->L_getRegionIndex()];
 
     const auto H = [](const aNode& node, const aNode& end) -> int {
         // Euclidean distance.
@@ -637,8 +637,11 @@ void SimulationManager::emitEvents() {
 
     for(auto& event : this->schedule) {
         if(event.getCurrentTime() == event.getRequiredTime()) {
-            for(auto& script : SCRIPT_TABLE)
+            for(auto& script : SCRIPT_TABLE) {
                 script.onEvent(event.getEventName());
+
+                lua::runLuaFile(script.filename);
+            }
 
             event.resetTime();
         }
@@ -746,6 +749,10 @@ void SimulationManager::emitEvents() {
                     gamestate->runGUIEventHandle("onMiddleMouseButtonPress");
                     event_queue.push_back("MMB_PRESSED");   
                 }
+
+                game_manager.window.getWindow()->setView(gamestate->view_interface);
+                gamestate->updateUI();
+                game_manager.window.getWindow()->setView(gamestate->view_game);
 
                 break;
             }

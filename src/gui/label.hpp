@@ -42,5 +42,5 @@ class Label : public AbstractWidget {
         const std::string& getFont() const;
 };
 
-typedef std::shared_ptr <Label>  LabelComponent;
+typedef std::shared_ptr <Label> LabelComponent;
 }

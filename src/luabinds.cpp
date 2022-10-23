@@ -1,10 +1,6 @@
 #include "luabinds.hpp"
 #include "simulationManager.hpp"
 #include "globalutilities.hpp"
-#include "region.hpp"
-#include "gamestate.hpp"
-#include "worldmap.hpp"
-#include "regionmap.hpp"
 #include "worldData.hpp"
 
 #include <LuaBridge/Vector.h>
@@ -51,6 +47,14 @@ void registerLua() {
         .endClass()
         .beginClass <Gamestate> ("Gamestate")
             .addFunction("getID", Gamestate::getStateId)
+        .endClass()
+        .beginClass <Worldmap> ("Worldmap")
+            .addProperty("current_index" , Worldmap::L_getCurrentIndex)
+            .addProperty("selected_index", Worldmap::L_getSelectedIndex, Worldmap::L_setSelectedIndex)
+        .endClass()
+        .beginClass <Regionmap> ("Regionmap")
+            .addProperty("current_tile_index", Regionmap::L_getTileIndex)
+            .addProperty("region_index"      , Regionmap::L_getRegionIndex, Regionmap::L_setRegionIndex)
         .endClass()
         .beginClass <Building> ("Building")
             .addProperty("name"       , Building::getBuildingName       , Building::setBuildingName)
@@ -113,29 +117,47 @@ void registerLua() {
             .addProperty("colour", gui::Label::getColour, gui::Label::setColour)
             .addProperty("font"  , gui::Label::getFont  , gui::Label::setFont)
         .endClass()
-        .addFunction("loadTexture"           , &lua::L_loadTexture)
-        .addFunction("loadFont"              , &lua::L_loadFont)
-        .addFunction("loadScheduledEvent"    , &lua::L_loadEvent)
-        .addFunction("createIcon"            , &lua::L_createIcon)
-        .addFunction("setGamestate"          , &lua::L_setGamestate)
-        .addFunction("isKeyPressed"          , &lua::L_isKeyPressed)
-        .addFunction("showInterface"         , &lua::L_showInterface)
-        .addFunction("hideInterface"         , &lua::L_hideInterface)
-        .addFunction("isInterfaceVisible"    , &lua::L_isInterfaceVisible)
-        .addFunction("getComponentLabel"     , &lua::L_getComponentLabel)
-        .addFunction("getFPS"                , &lua::L_getFPS)
-        .addFunction("getFrameTime"          , &lua::L_getFrameTime)
-        .addFunction("getRegionIndex"        , &lua::L_getRegionIndex)
-        .addFunction("getTileIndex"          , &lua::L_getTileIndex)
-        .addFunction("isBuildingTile"        , &lua::L_isBuildingTile)
-        .addFunction("getMousePosition"      , &lua::L_getMousePositionInterface)
-        .addFunction("exitApplication"       , &lua::L_exitApplication)
-        .addFunction("getRegion"             , &lua::L_getRegion)
-        .addFunction("getCurrentGamestate"   , &lua::L_getCurrentGamestate)
-        .addFunction("getGamestate"          , &lua::L_getGamestate)
-        .addFunction("inWorldBounds"         , &lua::L_inWorldBounds)
-        .addFunction("inRegionBounds"        , &lua::L_inRegionBounds)
-        .addFunction("tileGridPosition"      , &lua::L_tileGridPosition)
+        
+        // Resources
+        .addFunction("loadTexture"               , &lua::L_loadTexture)
+        .addFunction("loadFont"                  , &lua::L_loadFont)
+        .addFunction("loadScheduledEvent"        , &lua::L_loadEvent)
+        .addFunction("createIcon"                , &lua::L_createIcon)
+        
+        // Gamestate
+        .addFunction("setGamestate"              , &lua::L_setGamestate)
+        .addFunction("getCurrentGamestate"       , &lua::L_getCurrentGamestate)
+        .addFunction("getGamestate"              , &lua::L_getGamestate)
+        .addFunction("getWorldmap"               , &lua::L_getWorldmap)
+        .addFunction("getRegionmap"              , &lua::L_getRegionmap)
+        .addFunction("mouseIntersectsUI"         , &lua::L_mouseIntersectsUI)
+        .addFunction("showInterface"             , &lua::L_showInterface)
+        .addFunction("hideInterface"             , &lua::L_hideInterface)
+        .addFunction("isInterfaceVisible"        , &lua::L_isInterfaceVisible)
+        .addFunction("getFPS"                    , &lua::L_getFPS)
+        .addFunction("getFrameTime"              , &lua::L_getFrameTime)
+        
+        // Controls
+        .addFunction("isKeyPressed"              , &lua::L_isKeyPressed)
+        .addFunction("isLeftMouseButtonPressed"  , &lua::L_isLeftMouseButtonPressed)
+        .addFunction("isRightMouseButtonPressed" , &lua::L_isRightMouseButtonPressed)
+        .addFunction("isMiddleMouseButtonPressed", &lua::L_isMiddleMouseButtonPressed)
+
+        // Miscellaneous    
+        .addFunction("getComponentLabel"         , &lua::L_getComponentLabel)
+        .addFunction("getRegionIndex"            , &lua::L_getRegionIndex)
+        .addFunction("getTileIndex"              , &lua::L_getTileIndex)
+        .addFunction("isBuildingTile"            , &lua::L_isBuildingTile)
+        .addFunction("getMousePosition"          , &lua::L_getMousePositionInterface)
+        .addFunction("exitApplication"           , &lua::L_exitApplication)
+        .addFunction("getRegion"                 , &lua::L_getRegion)
+        .addFunction("inWorldBounds"             , &lua::L_inWorldBounds)
+        .addFunction("inRegionBounds"            , &lua::L_inRegionBounds)
+        .addFunction("tileGridPosition"          , &lua::L_tileGridPosition)
+
+        // World generation
+        .addFunction("generateRegion"            , &lua::L_generateRegion)
+        .addFunction("generateWorld"             , &lua::L_generateWorld)
     ;
 }
 
@@ -195,6 +217,22 @@ bool L_isKeyPressed(const std::string& key_id) {
     return current_gamestate->controls.isKeyPressed(key_id);
 }
 
+bool L_isLeftMouseButtonPressed() {
+    auto current_gamestate = game_manager.gamestate.getGamestate();
+    return current_gamestate->controls.mouse_left;
+}
+
+bool L_isRightMouseButtonPressed() {
+    auto current_gamestate = game_manager.gamestate.getGamestate();
+    return current_gamestate->controls.mouse_right;
+}
+
+bool L_isMiddleMouseButtonPressed() {
+    auto current_gamestate = game_manager.gamestate.getGamestate();
+    return current_gamestate->controls.mouse_middle;
+}
+
+
 gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& label_id) {
     auto current_gamestate = game_manager.gamestate.getGamestate();
     auto page = current_gamestate->getInterfaceComponent(page_id);
@@ -221,12 +259,12 @@ int L_getRegionIndex() {
     auto* gamestate = game_manager.gamestate.getGamestate();
     if(gamestate->state_id == "Worldmap") {
         auto worldmap = (Worldmap*)gamestate;
-        return worldmap->getCurrentIndex();
+        return worldmap->L_getCurrentIndex();
     } 
 
     else {
         auto regionmap = (Regionmap*)gamestate;
-        return regionmap->region_index;
+        return regionmap->L_getRegionIndex();
     }
 }
 
@@ -238,7 +276,7 @@ int L_getTileIndex() {
     }
 
     auto regionmap = (Regionmap*)gamestate;
-    return regionmap->current_index;
+    return regionmap->L_getTileIndex();
 }
 
 bool L_isBuildingTile(int tile_index) {
@@ -300,5 +338,28 @@ bool L_inRegionBounds(int tile_index) {
 core::Vector2i L_tileGridPosition(int tile_index) {
     auto grid = tileGridPosition(tile_index);
     return grid;
+}
+
+void L_generateRegion(int region_index) {
+    game_manager.world_generator.generateRegion(region_index);
+}
+
+void L_generateWorld() {
+    game_manager.world_generator.generate();
+}
+
+bool L_mouseIntersectsUI() {
+    auto gamestate = game_manager.gamestate.getGamestate();
+    return gamestate->mouseIntersectsUI();
+}
+
+Regionmap* L_getRegionmap() {
+    auto regionmap = (Regionmap*)game_manager.gamestate.getGamestateByName("Regionmap");
+    return regionmap;
+}
+
+Worldmap* L_getWorldmap() {
+    auto worldmap = (Worldmap*)game_manager.gamestate.getGamestateByName("Worldmap");
+    return worldmap;
 }
 }

@@ -51,6 +51,11 @@ void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
             }
 
             case Alignment::ALIGNMENT_LEFT: {
+                if(is_x)
+                    final_position.x = this->getWidgetPosition().x;
+                else
+                    final_position.y = this->getWidgetPosition().y;
+
                 break;
             }
         }
