@@ -37,8 +37,8 @@ sf::RenderWindow* WindowManager::getWindow() {
     return this->window.get();
 }
 
-sf::Vector2f WindowManager::getWindowSize() const {
-    return sf::Vector2f(
+core::Vector2i WindowManager::getWindowSize() const {
+    return core::Vector2i(
         this->window.get()->getSize().x,
         this->window.get()->getSize().y
     );

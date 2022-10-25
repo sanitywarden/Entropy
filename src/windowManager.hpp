@@ -22,7 +22,7 @@ class WindowManager {
         void createWindow(const ApplicationSettings& settings, const std::string& title);
 
         sf::RenderWindow* getWindow();
-        sf::Vector2f getWindowSize()   const;
+        core::Vector2i getWindowSize() const;
         unsigned int getWindowWidth()  const;
         unsigned int getWindowHeight() const;
         

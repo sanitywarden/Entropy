@@ -266,7 +266,7 @@ bool Gamestate::pointIntersectsUI(core::Vector2i point, const std::string& compo
 }
 
 void Gamestate::resizeViews() {
-    auto window_size = game_manager.window.getWindowSize();
+    auto window_size = game_manager.window.getWindowSize().asSFMLVector2f();
     auto scaled_size = sf::Vector2f(
         window_size.x * (this->current_zoom + 1),
         window_size.y * (this->current_zoom + 1)

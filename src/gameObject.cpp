@@ -7,19 +7,19 @@ namespace iso {
 int GameObject::instance_id = 0;
 GameObject::GameObject() 
     : object_name("*"), object_position(core::Vector3i(0, 0, 0)), object_size(core::Vector2i(0, 0)), object_texture_name("*"), object_colour(COLOUR_BLACK)
-{}
+{ instance_id++; }
 
 GameObject::GameObject(const GameObject& object) 
     : object_name(object.getName()), object_position(object.getPosition()), object_size(object.getSize()), object_texture_name(object.getTextureName()), object_colour(object.getColour())
-{}
+{ instance_id++; }
 
 GameObject::GameObject(core::Vector3i position, core::Vector3i relative_position, core::Vector2i size, const std::string& texture_name) 
     : object_name("*"), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
-{}
+{ instance_id++; }
 
 GameObject::GameObject(core::Vector3i position, core::Vector3i relative_position, core::Vector2i size, const std::string& texture_name, const std::string& object_name) 
     : object_name(object_name), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
-{}
+{ instance_id++; }
 
 GameObject::~GameObject() 
 {}
@@ -92,5 +92,25 @@ void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
 
     target.draw(game_object, states);
+}
+
+void GameObject::setName(const std::string& name) {
+    this->object_name = name; 
+}
+
+void GameObject::setPosition(core::Vector3i position) {
+    this->object_position = position; 
+}
+
+void GameObject::setSize(core::Vector2i size) {
+    this->object_size =  size;
+}
+
+void GameObject::setTextureName(const std::string& texture_name) {
+    this->object_texture_name = texture_name; 
+}
+
+void GameObject::setColour(core::Colour colour) {
+    this->object_colour = colour;
 }
 }

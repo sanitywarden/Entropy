@@ -38,5 +38,11 @@ namespace iso {
             const std::string& getTextureName() const;
             core::Colour       getColour()      const;
             int                getInstanceId()  const;
+
+            void setName(const std::string& name);
+            void setPosition(core::Vector3i position);
+            void setSize(core::Vector2i size);
+            void setTextureName(const std::string& texture_name);
+            void setColour(core::Colour colour);
     };
 }

@@ -42,6 +42,19 @@ void registerLua() {
             .addProperty("y", core::Vector3i::getY, core::Vector3i::setY) 
             .addProperty("y", core::Vector3i::getZ, core::Vector3i::setZ) 
         .endClass()
+        .beginClass <iso::GameObject> ("GameObject")
+            .addConstructor <void (*) ()> ()
+            .addProperty("name"       , iso::GameObject::getName       , iso::GameObject::setName)
+            .addProperty("position"   , iso::GameObject::getPosition   , iso::GameObject::setPosition)
+            .addProperty("size"       , iso::GameObject::getSize       , iso::GameObject::setSize)
+            .addProperty("texture"    , iso::GameObject::getTextureName, iso::GameObject::setTextureName)
+            .addProperty("colour"     , iso::GameObject::getColour     , iso::GameObject::setColour)
+            .addProperty("instance_id", iso::GameObject::getInstanceId)
+            .addProperty("position2d" , iso::GameObject::getPosition2D)
+            .addFunction("exists"     , iso::GameObject::exists)
+            .addFunction("contains"   , iso::GameObject::contains)
+            .addFunction("hasName"    , iso::GameObject::hasName)
+        .endClass()
         .beginClass <core::Ratio> ("Ratio")
             .addConstructor <void (*) (std::string, std::string)> ()
         .endClass()
@@ -135,28 +148,42 @@ void registerLua() {
         .addFunction("getRegionmap"              , &lua::L_getRegionmap)
         .addFunction("mouseIntersectsUI"         , &lua::L_mouseIntersectsUI)
         .addFunction("getInterfaceUnderMouse"    , &lua::L_getInterfacePageUnderMouse)
-        .addFunction("getInterfaceItemUnderMouse", &lua::L_getItemInterfacePageUnderMouse)
+        .addFunction("getInterfaceItemUnderMouse", &lua::L_getInterfaceItemUnderMouse)
         .addFunction("showInterface"             , &lua::L_showInterface)
         .addFunction("hideInterface"             , &lua::L_hideInterface)
         .addFunction("isInterfaceVisible"        , &lua::L_isInterfaceVisible)
+        .addFunction("getMousePosition"          , &lua::L_getMousePosition)
+        .addFunction("getMousePositionInterface" , &lua::L_getMousePositionInterface)
+
+        // Engine
         .addFunction("getFPS"                    , &lua::L_getFPS)
         .addFunction("getFrameTime"              , &lua::L_getFrameTime)
+        .addFunction("exitApplication"           , &lua::L_exitApplication)
         
+        // Window
+        .addFunction("getWindowSize"   , &lua::L_getWindowSize)
+        .addFunction("getWindowHeight" , &lua::L_getWindowHeight)
+        .addFunction("getWindowWidth"  , &lua::L_getWindowWidth)
+        .addFunction("inScreenSpace"   , &lua::L_inScreenSpace)
+        .addFunction("draw"            , &lua::L_draw)
+        .addFunction("setVSync"        , &lua::L_setVSync)
+        .addFunction("setMaxFramerate" , &lua::L_setMaxFramerate)
+        .addFunction("takeScreenshot"  , &lua::L_takeScreenshot)
+
         // Controls
         .addFunction("isKeyPressed"              , &lua::L_isKeyPressed)
         .addFunction("isLeftMouseButtonPressed"  , &lua::L_isLeftMouseButtonPressed)
         .addFunction("isRightMouseButtonPressed" , &lua::L_isRightMouseButtonPressed)
         .addFunction("isMiddleMouseButtonPressed", &lua::L_isMiddleMouseButtonPressed)
 
-        // Miscellaneous    
+        // GUI
         .addFunction("getComponentLabel"         , &lua::L_getComponentLabel)
         .addFunction("getComponentImageList"     , &lua::L_getComponentImageList)
+        
+        // Miscellaneous    
         .addFunction("getRegionIndex"            , &lua::L_getRegionIndex)
         .addFunction("getTileIndex"              , &lua::L_getTileIndex)
         .addFunction("isBuildingTile"            , &lua::L_isBuildingTile)
-        .addFunction("getMousePosition"          , &lua::L_getMousePosition)
-        .addFunction("getMousePositionInterface" , &lua::L_getMousePositionInterface)
-        .addFunction("exitApplication"           , &lua::L_exitApplication)
         .addFunction("getRegion"                 , &lua::L_getRegion)
         .addFunction("inWorldBounds"             , &lua::L_inWorldBounds)
         .addFunction("inRegionBounds"            , &lua::L_inRegionBounds)
@@ -396,7 +423,7 @@ std::string L_getInterfacePageUnderMouse() {
     return "";
 }
 
-std::string L_getItemInterfacePageUnderMouse(const std::string& page_id) {
+std::string L_getInterfaceItemUnderMouse(const std::string& page_id) {
     auto gamestate = game_manager.gamestate.getGamestate();
     if(!gamestate->checkComponentExist(page_id))
         return "";
@@ -416,5 +443,40 @@ Regionmap* L_getRegionmap() {
 Worldmap* L_getWorldmap() {
     auto worldmap = (Worldmap*)game_manager.gamestate.getGamestateByName("Worldmap");
     return worldmap;
+}
+
+core::Vector2i L_getWindowSize() {
+    return game_manager.window.getWindowSize();
+}
+
+int L_getWindowWidth() {
+    return game_manager.window.getWindowWidth();
+}
+
+int L_getWindowHeight() {
+    return game_manager.window.getWindowHeight();
+}
+
+bool L_inScreenSpace(const iso::GameObject& gameobject) {
+    return game_manager.window.inScreenSpace(gameobject);
+}
+
+void L_draw(const iso::GameObject& gameobject) {
+    game_manager.window.draw(gameobject);
+}
+
+void L_setVSync(bool on) {
+    game_manager.window.setVsync(on);
+}
+
+void L_setMaxFramerate(int framerate) {
+    if(framerate < 0)
+        iso::printError("L_setMaxFramerate", "Maximum FPS can't be negative");
+
+    game_manager.window.setMaxFramerate(framerate);
+}
+
+void L_takeScreenshot() {
+    game_manager.window.takeScreenshot();
 }
 }
