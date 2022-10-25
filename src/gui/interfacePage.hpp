@@ -5,6 +5,7 @@
 #include "gui/button.hpp"
 #include "gui/label.hpp"
 #include "gui/image.hpp"
+#include "gui/imageList.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <map>

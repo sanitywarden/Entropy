@@ -76,6 +76,7 @@ class AbstractWidget : public sf::Drawable {
         AbstractWidget* const getParent() const;
         bool hasParent() const;
 
+
         void setVisible(bool visible);
         bool isVisible() const;
         void toggleVisibile();
@@ -87,5 +88,11 @@ class AbstractWidget : public sf::Drawable {
 
         void addEventOverride(const std::string& event_name);
         bool hasEventOverride(const std::string& event_name) const;
+
+        void addComponent(AbstractComponent component);
+        void removeComponent(const std::string& id);
+        bool hasChildren() const;
+
+        const WidgetData& getWidgetData() const;
 };
 }

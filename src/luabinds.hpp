@@ -10,6 +10,7 @@
 #include "regionmap.hpp"
 
 #include "gui/label.hpp"
+#include "gui/imageList.hpp"
 
 namespace lua {
 void registerLua();
@@ -29,6 +30,7 @@ bool L_isLeftMouseButtonPressed();
 bool L_isRightMouseButtonPressed();
 bool L_isMiddleMouseButtonPressed();
 gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& label_id);
+gui::ImageList* L_getComponentImageList(const std::string& page_id, const std::string& list_id);
 int L_getRegionIndex();
 int L_getTileIndex();
 bool L_isBuildingTile(int tile_index);
@@ -44,6 +46,10 @@ core::Vector2i L_tileGridPosition(int tile_index);
 void L_generateRegion(int region_index);
 void L_generateWorld();
 bool L_mouseIntersectsUI();
+
+std::string L_getInterfacePageUnderMouse();
+std::string L_getItemInterfacePageUnderMouse(const std::string& page_id);
+
 iso::Regionmap* L_getRegionmap();
 iso::Worldmap* L_getWorldmap();
 

@@ -17,7 +17,7 @@ class Image : public AbstractWidget {
         const std::string& getImageTexture() const;
         void setImageTexture(const std::string& texture_id);
 
-        core::Vector2f getImageSize() const;
+        core::Vector2i getImageSize() const;
 };
 
 typedef std::shared_ptr <Image> ImageComponent;

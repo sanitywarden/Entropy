@@ -37,7 +37,8 @@ void Image::setImageTexture(const std::string& texture_id) {
     this->texture = texture_id;
 }
 
-core::Vector2f Image::getImageSize() const {
-    return game_manager.resource.getTextureSize(this->texture);
+core::Vector2i Image::getImageSize() const {
+    auto image_size = core::Vector2i(game_manager.resource.getTextureSize(this->texture).x, game_manager.resource.getTextureSize(this->texture).y);
+    return image_size;
 }
 }

@@ -117,6 +117,9 @@ void registerLua() {
             .addProperty("colour", gui::Label::getColour, gui::Label::setColour)
             .addProperty("font"  , gui::Label::getFont  , gui::Label::setFont)
         .endClass()
+        .beginClass <gui::ImageList> ("ImageList")
+            .addFunction("setImageList", gui::ImageList::L_setImageList)
+        .endClass()
         
         // Resources
         .addFunction("loadTexture"               , &lua::L_loadTexture)
@@ -131,6 +134,8 @@ void registerLua() {
         .addFunction("getWorldmap"               , &lua::L_getWorldmap)
         .addFunction("getRegionmap"              , &lua::L_getRegionmap)
         .addFunction("mouseIntersectsUI"         , &lua::L_mouseIntersectsUI)
+        .addFunction("getInterfaceUnderMouse"    , &lua::L_getInterfacePageUnderMouse)
+        .addFunction("getInterfaceItemUnderMouse", &lua::L_getItemInterfacePageUnderMouse)
         .addFunction("showInterface"             , &lua::L_showInterface)
         .addFunction("hideInterface"             , &lua::L_hideInterface)
         .addFunction("isInterfaceVisible"        , &lua::L_isInterfaceVisible)
@@ -145,10 +150,12 @@ void registerLua() {
 
         // Miscellaneous    
         .addFunction("getComponentLabel"         , &lua::L_getComponentLabel)
+        .addFunction("getComponentImageList"     , &lua::L_getComponentImageList)
         .addFunction("getRegionIndex"            , &lua::L_getRegionIndex)
         .addFunction("getTileIndex"              , &lua::L_getTileIndex)
         .addFunction("isBuildingTile"            , &lua::L_isBuildingTile)
-        .addFunction("getMousePosition"          , &lua::L_getMousePositionInterface)
+        .addFunction("getMousePosition"          , &lua::L_getMousePosition)
+        .addFunction("getMousePositionInterface" , &lua::L_getMousePositionInterface)
         .addFunction("exitApplication"           , &lua::L_exitApplication)
         .addFunction("getRegion"                 , &lua::L_getRegion)
         .addFunction("inWorldBounds"             , &lua::L_inWorldBounds)
@@ -158,6 +165,14 @@ void registerLua() {
         // World generation
         .addFunction("generateRegion"            , &lua::L_generateRegion)
         .addFunction("generateWorld"             , &lua::L_generateWorld)
+
+        // Game data
+        .beginNamespace("gamedata")
+            .addVariable("BUILDING_TABLE", &BUILDING_TABLE, false)
+            .addVariable("BIOME_TABLE"   , &BIOME_TABLE   , false)
+            .addVariable("ITEM_TABLE"    , &ITEM_TABLE    , false)
+            .addVariable("RESOURCE_TABLE", &RESOURCE_TABLE, false)
+        .endNamespace()
     ;
 }
 
@@ -232,7 +247,6 @@ bool L_isMiddleMouseButtonPressed() {
     return current_gamestate->controls.mouse_middle;
 }
 
-
 gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& label_id) {
     auto current_gamestate = game_manager.gamestate.getGamestate();
     auto page = current_gamestate->getInterfaceComponent(page_id);
@@ -245,6 +259,20 @@ gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& l
 
     auto label = (gui::Label*)(component.get());
     return label;
+}
+
+gui::ImageList* L_getComponentImageList(const std::string& page_id, const std::string& list_id) {
+    auto current_gamestate = game_manager.gamestate.getGamestate();
+    auto page = current_gamestate->getInterfaceComponent(page_id);
+    auto component = page->getComponent(list_id);
+
+    if(component == nullptr) {
+        printError("L_getComponentImageList()", "There is no component '" + list_id + "' in interface page '" + page_id + "'");
+        return nullptr;
+    }
+
+    auto list = (gui::ImageList*)(component.get());
+    return list;
 }
 
 int L_getFPS() {
@@ -351,6 +379,33 @@ void L_generateWorld() {
 bool L_mouseIntersectsUI() {
     auto gamestate = game_manager.gamestate.getGamestate();
     return gamestate->mouseIntersectsUI();
+}
+
+std::string L_getInterfacePageUnderMouse() {
+    auto gamestate = game_manager.gamestate.getGamestate();
+    if(!gamestate->mouseIntersectsUI())
+        return "";
+
+    auto mouse_position = gamestate->mouse_position_interface;
+    for(const auto& pair : gamestate->interface) {
+        const auto& component = pair.second;
+        if(component.get()->intersectsUI(mouse_position) && component.get()->isVisible()) 
+            return component.get()->getWidgetID();
+    }
+
+    return "";
+}
+
+std::string L_getItemInterfacePageUnderMouse(const std::string& page_id) {
+    auto gamestate = game_manager.gamestate.getGamestate();
+    if(!gamestate->checkComponentExist(page_id))
+        return "";
+
+    auto page = gamestate->getInterfaceComponent(page_id);
+    auto current_component = page->getCurrentComponent();
+    return current_component.get() == nullptr
+        ? ""
+        : current_component.get()->getWidgetID();
 }
 
 Regionmap* L_getRegionmap() {

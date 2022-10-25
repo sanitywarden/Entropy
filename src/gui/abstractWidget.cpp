@@ -97,4 +97,22 @@ void AbstractWidget::addEventOverride(const std::string& event_name) {
 bool AbstractWidget::hasEventOverride(const std::string& event_name) const {
     return std::find(this->data.event_overrides.begin(), this->data.event_overrides.end(), event_name) != this->data.event_overrides.end();
 }
+
+void AbstractWidget::addComponent(AbstractComponent component) {
+    auto id = component.get()->getWidgetID();
+    this->data.components[id] = component;
+}
+
+void AbstractWidget::removeComponent(const std::string& id) {
+    this->data.components.erase(id);
+}
+
+bool AbstractWidget::hasChildren() const {
+    return this->data.components.size() > 0;
+}
+
+const WidgetData& AbstractWidget::getWidgetData() const {
+    return this->data;
+}
+
 }

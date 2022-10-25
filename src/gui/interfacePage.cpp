@@ -175,6 +175,44 @@ void InterfacePage::createUI() {
                     this->addComponent(image);
                     break;
                 }
+
+                case GUIObject::IMAGE_LIST: {
+                    int draw_priority = this->getComponent(parent_id) == nullptr
+                        ? 1
+                        : this->getComponent(parent_id).get()->getDrawPriority() + 1;
+
+                    WidgetData data;
+                    data.parent = this->getComponent(parent_id);
+                    data.draw_priority = draw_priority;
+                    data.draw = true;
+                    data.widget_id = id;
+
+                    if(data.parent == nullptr) {
+                        iso::printError("InterfacePage::createUI()", "ImageList must have a parent");
+                        return;
+                    }
+
+                    auto position = calculateRelativeWidgetPosition(position_tl_ratio, data.parent);
+                    data.position = position;
+
+                    auto size_ratio = position_br_ratio - position_tl_ratio;
+                    auto size = core::Vector2i(
+                        size_ratio.x * data.parent.get()->getWidgetSize().x,
+                        size_ratio.y * data.parent.get()->getWidgetSize().y
+                    );
+
+                    data.size = size;
+
+                    auto corner_ratio = lua::readScreenRatio(table["separator"]["corner"]);
+                    auto image_ratio  = lua::readScreenRatio(table["separator"]["image"]);
+
+                    auto corner = core::Vector2f(corner_ratio.x, corner_ratio.y);
+                    auto image  = core::Vector2f(image_ratio.x, image_ratio.y);
+
+                    auto image_list = ImageListComponent(new ImageList(data, corner, image));
+                    this->addComponent(image_list);
+                    break;
+                }
             }
         }   
     }
@@ -309,8 +347,6 @@ void InterfacePage::handleGUIEvent(const std::string& event_name) const {
             break;
         }
     }
-
-    
 }
 
 void InterfacePage::checkShouldClose() const {
@@ -350,19 +386,27 @@ AbstractComponent InterfacePage::getCurrentComponent() const {
 
     std::vector <AbstractComponent> possible;
 
-    for(const auto& component : this->interface) {
-        if(component.get()->containsPoint(gamestate->mouse_position_interface))
+    for(const AbstractComponent& component : this->interface) {
+        if(component.get()->containsPoint(gamestate->mouse_position_interface)) {
             possible.push_back(component);
-    }   
+            if(component.get()->hasChildren()) {
+                for(const auto& pair : component.get()->getWidgetData().components) {
+                    const auto& child = pair.second;
+                    if(child.get()->containsPoint(gamestate->mouse_position_interface))
+                        possible.push_back(child);
+                }
+            }
+        }
+    }
+
+    if(!possible.size())
+        return nullptr;
 
     auto compare = [](AbstractComponent component1, AbstractComponent component2) {
         return component1.get()->getDrawPriority() < component2.get()->getDrawPriority();
     };
 
     std::sort(possible.begin(), possible.end(), compare);
-
-    if(possible.size())
-        return this->getComponent(possible.back().get()->getWidgetID());
-    return nullptr;
+    return possible.back();
 }
 }
