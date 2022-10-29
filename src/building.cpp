@@ -13,7 +13,7 @@ Building::Building()
     this->data.name = "Empty";
 }
 
-Building::Building(const Building& building) 
+Building::Building(const Building& building)
     : GameObject(building) 
 {
     this->data = building.data;

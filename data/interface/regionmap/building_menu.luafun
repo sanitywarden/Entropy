@@ -16,7 +16,7 @@ Functionality = {
             selected_building = nil
         end
     end,
-    onMouseButtonPress = function ()
+    onMouseButtonPress = function()
         if isRightMouseButtonPressed() then
             selected_building = nil
         end
@@ -30,6 +30,16 @@ Functionality = {
                     selected_building.object_colour = COLOUR_BLACK
                     region:constructBuilding(selected_building, regionmap.current_tile_index)
                 end
+            end
+        end
+    end,
+    onKeyPress = function(key_name)
+        if key_name == "D" then
+            regionmap = getRegionmap()
+            region = getRegion(regionmap.region_index)
+
+            if inRegionBounds(regionmap.current_tile_index) and region:buildingExistsAt(regionmap.current_tile_index) then
+                region:demolishBuilding(regionmap.current_tile_index)
             end
         end
     end,

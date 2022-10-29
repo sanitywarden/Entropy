@@ -94,7 +94,7 @@ class Region : public GameObject {
         float L_getMoistureNumber() const;
         const std::string& L_getTemperatureString() const;
         float L_getTemperatureNumber() const;
-        void L_constructBuilding(const Building& building, int tile_index);
+        void L_constructBuilding(Building* building, int tile_index);
         void L_demolishBuilding(int tile_index);         
         bool L_hasOwner() const;
         int  L_getOwnerId() const;

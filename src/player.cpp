@@ -41,7 +41,7 @@ bool Player::placeBuildingCheck(Region& region, Building building, core::Vector2
     return false;
 }
 
-void Player::placeBuilding(Region& region, Building building, core::Vector2i grid) {
+void Player::placeBuilding(Region& region, Building building, core::Vector2i grid) {    
     if(building == BUILDING_EMPTY) {
         printError("Player::placeBuilding()", "Placed empty building");
         return;
@@ -92,14 +92,16 @@ void Player::destroyBuilding(Region& region, core::Vector2i grid) {
     if(!region.buildingExistsAtIndex(index))
         return;
 
-    auto building = region.getBuildingAtIndex(index);
-    for(int y = 0; building.getBuildingArea().y; y++) {
+    const auto& building = region.getBuildingAtIndex(index);
+    for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             auto loop_index = index + calculateRegionIndex(x, y);
-            if(region.buildingExistsAtIndex(loop_index))
-                region.buildings.erase(loop_index);
+            region.buildings.erase(loop_index);
         }
     }
+
+    auto regionmap = (Regionmap*)game_manager.gamestate.getGamestate();
+    regionmap->recalculate_tree_mesh = true;
 }
 
 void Player::addOwnedRegion(int index) {

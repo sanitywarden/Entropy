@@ -470,13 +470,13 @@ float Region::L_getTemperatureNumber() const {
     return this->temperature;
 }
 
-void Region::L_constructBuilding(const Building& building, int tile_index) {
+void Region::L_constructBuilding(Building* building, int tile_index) {
     auto player_id = this->getOwnerId();
     auto player = game_manager.getPlayer(player_id);
     auto grid = tileGridPosition(tile_index);
     auto regionmap = (Regionmap*)game_manager.gamestate.getGamestate();
     auto& region = game_manager.world_map.at(regionmap->region_index);
-    player->placeBuildingCheck(region, building, grid);
+    player->placeBuildingCheck(region, *building, grid);
 }
 
 void Region::L_demolishBuilding(int tile_index) {
