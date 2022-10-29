@@ -22,6 +22,10 @@ GameObject::GameObject(core::Vector3i position, core::Vector3i relative_position
     : object_name(object_name), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
 { instance_id++; }
 
+GameObject::GameObject(core::Vector3i position, core::Vector2i size, const std::string& texture_name)
+    : object_name("*"), object_position(position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
+{ instance_id++; }
+
 GameObject::~GameObject() 
 {}
 

@@ -2,6 +2,7 @@
 #include "worldData.hpp"
 #include "globalutilities.hpp"
 #include "simulationManager.hpp"
+#include "regionmap.hpp"
 
 #include <iostream>
 
@@ -81,11 +82,13 @@ void Player::placeBuilding(Region& region, Building building, core::Vector2i gri
     }
 
     region.buildings[index] = building;
+
+    auto regionmap = (Regionmap*)game_manager.gamestate.getGamestate();
+    regionmap->recalculate_tree_mesh = true;
 }
 
 void Player::destroyBuilding(Region& region, core::Vector2i grid) {
     auto index = calculateRegionIndex(grid);
-
     if(!region.buildingExistsAtIndex(index))
         return;
 
@@ -93,7 +96,8 @@ void Player::destroyBuilding(Region& region, core::Vector2i grid) {
     for(int y = 0; building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             auto loop_index = index + calculateRegionIndex(x, y);
-            region.buildings.erase(loop_index);
+            if(region.buildingExistsAtIndex(loop_index))
+                region.buildings.erase(loop_index);
         }
     }
 }

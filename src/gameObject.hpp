@@ -25,6 +25,7 @@ namespace iso {
             GameObject(const GameObject& object);
             GameObject(core::Vector3i position, core::Vector3i relative_position, core::Vector2i size, const std::string& texture_name);
             GameObject(core::Vector3i position, core::Vector3i relative_position, core::Vector2i size, const std::string& texture_name, const std::string& object_name);
+            GameObject(core::Vector3i position, core::Vector2i size, const std::string& texture_name);
             ~GameObject();
             
             bool exists() const;

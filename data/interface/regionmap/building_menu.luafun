@@ -3,7 +3,7 @@ require "src.scripts.data.colours"
 
 Functionality = {
     selected_building, -- Selected building from menu
-    
+
     shouldOpen = function()
         if isKeyPressed("B") and not isInterfaceVisible("component_building_menu") then
             showInterface("component_building_menu")
@@ -16,7 +16,7 @@ Functionality = {
             selected_building = nil
         end
     end,
-    update = function()
+    onMouseButtonPress = function ()
         if isRightMouseButtonPressed() then
             selected_building = nil
         end
@@ -27,11 +27,11 @@ Functionality = {
                 region = getRegion(regionmap.region_index)
                 
                 if inRegionBounds(regionmap.current_tile_index) and not mouseIntersectsUI() then 
+                    selected_building.object_colour = COLOUR_BLACK
                     region:constructBuilding(selected_building, regionmap.current_tile_index)
                 end
             end
         end
-
     end,
     render = function()
         if selected_building ~= nil then    
@@ -86,7 +86,7 @@ Functionality = {
             
                 list_component:setImageList(list)
             end,
-            
+
             update = function()
                 page_id = getInterfaceUnderMouse()
                 component_id = getInterfaceItemUnderMouse(page_id)

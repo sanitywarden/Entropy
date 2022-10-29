@@ -238,6 +238,9 @@ void InterfacePage::createUI() {
 
                 if(!event_reference.isNil() && !component.get()->hasEventOverride(event_name))
                     component.get()->addEventOverride(event_name);
+            
+                if(!definition[event_name].isNil())
+                    this->addEventOverride(event_name);
             }
         }
     }
@@ -300,6 +303,8 @@ void InterfacePage::handleGUIEvent(const std::string& event_name) const {
     auto functionality = luabridge::getGlobal(game_manager.lua(), "Functionality");
     auto components = functionality["components"];
     auto length = components.length();
+    auto gamestate = game_manager.gamestate.getGamestate();
+    auto main_override = functionality[event_name];  
 
     auto trigger_type = GUI_EVENT_LIST.at(event_name);
     switch(trigger_type) {
@@ -309,15 +314,8 @@ void InterfacePage::handleGUIEvent(const std::string& event_name) const {
         }
 
         case TriggerType::WIDGET_ALL: {
-            // A interface page may have a global update function in the likes of shouldOpen() or shouldClose().
-            auto update_interface_page = functionality["update"];
-            if(!update_interface_page.isNil())
-                update_interface_page();
-
-            // A interface page may have a global render function in the likes of shouldOpen() or shouldClose().
-            auto render_interface_page = functionality["render"];
-            if(!render_interface_page.isNil())
-                render_interface_page();
+            if(this->hasEventOverride(event_name))
+                main_override();
 
             for(int i = 1; i <= length; i++) {
                 auto table = components[i];
@@ -335,9 +333,13 @@ void InterfacePage::handleGUIEvent(const std::string& event_name) const {
 
         case TriggerType::WIDGET_SELECTED: {
             auto current_component = this->getCurrentComponent();
-            if(current_component && current_component.get()->hasEventOverride(event_name)) {
-                auto gamestate = game_manager.gamestate.getGamestate();
+            
+            if(event_name == "onKeyPress" && this->hasEventOverride(event_name))
+                main_override(gamestate->controls.last_key_name);
+            else if(this->hasEventOverride(event_name))
+                main_override();
 
+            if(current_component && current_component.get()->hasEventOverride(event_name)) {
                 for(int i = 1; i <= length; i++) {
                     auto table = components[i];
                     auto id = lua::readString(table["id"], true);

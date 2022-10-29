@@ -43,7 +43,7 @@ void registerLua() {
             .addProperty("z", core::Vector3i::getZ, core::Vector3i::setZ) 
         .endClass()
         .beginClass <iso::GameObject> ("GameObject")
-            .addConstructor <void (*) ()> ()
+            .addConstructor <void (*) (core::Vector3i, core::Vector2i, const std::string&)> ()
             .addProperty("object_name"       , iso::GameObject::getName       , iso::GameObject::setName)
             .addProperty("object_position"   , iso::GameObject::getPosition   , iso::GameObject::setPosition)
             .addProperty("object_size"       , iso::GameObject::getSize       , iso::GameObject::setSize)
@@ -115,7 +115,7 @@ void registerLua() {
             .addFunction("isBuildingPositionValid", Region::L_isBuildingPositionValid)
             .addFunction("treeExistsAt"           , Region::L_treeExistsAt)
             .addFunction("getTreeAt"              , Region::L_getTreeAt)
-            .addFunction("buildingExsitsAt"       , Region::L_buildingExistsAt)
+            .addFunction("buildingExistsAt"       , Region::L_buildingExistsAt)
             .addFunction("getBuildingAt"          , Region::L_getBuildingAt)
             .addFunction("resourceExistsAt"       , Region::L_resourceExistsAt)
             .addFunction("getResourceAt"          , Region::L_getResourceAt)
@@ -469,7 +469,12 @@ bool L_inScreenSpace(const iso::GameObject& gameobject) {
 void L_drawGameObject(iso::GameObject& gameobject) {
     sf::RenderStates states;
     states.texture = &game_manager.resource.getTexture(gameobject.getTextureName());
+    
+    auto gamestate = game_manager.gamestate.getGamestate();
+    auto view = game_manager.window.getView();
+    game_manager.window.setView(gamestate->view_game);
     game_manager.window.draw(gameobject, states);
+    game_manager.window.setView(view);
 }
 
 void L_drawBuilding(iso::Building& building) {

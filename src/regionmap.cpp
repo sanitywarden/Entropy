@@ -31,7 +31,15 @@ void Regionmap::initialise() {
 void Regionmap::loadResources() {
     game_manager.resource.paintTexture("template_highlight_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     game_manager.resource.paintTexture("template_highlight_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    
+    game_manager.resource.paintTexture("template_highlight_1x1", "building_highlight_1x1_red", COLOUR_RED_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    game_manager.resource.paintTexture("template_highlight_2x2", "building_highlight_2x2_red", COLOUR_RED_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    game_manager.resource.paintTexture("template_highlight_3x3", "building_highlight_3x3_red", COLOUR_RED_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
 
+    game_manager.resource.paintTexture("template_highlight_1x1", "building_highlight_1x1", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    game_manager.resource.paintTexture("template_highlight_2x2", "building_highlight_2x2", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    game_manager.resource.paintTexture("template_highlight_3x3", "building_highlight_3x3", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
+    
     // Automatically generate icon names.
     for(const auto& texture_pair : game_manager.resource.getTextureCollection()) {
         const auto& texture_name = texture_pair.first;
@@ -276,15 +284,11 @@ void Regionmap::renderRegion() {
             if(this->region->trees.count(i))
                 draw_order.push_back(this->region->trees[i]);
             
-            // if(this->region->buildingExistsAtIndex(i)) {
-            //     if(this->region->buildings[i] != BUILDING_EMPTY)
-            //         draw_order.push_back(this->region->getBuildingAtIndex(i));
-            // }
+            if(this->region->buildingExistsAtIndex(i)) {
+                if(this->region->buildings[i] != BUILDING_EMPTY)
+                    draw_order.push_back(this->region->getBuildingAtIndex(i));
+            }
         }
-
-        // for(int i = 0; i < this->region->getPopulation(); i++) {
-        //     draw_order.push_back(this->region->population[i]);
-        // }
 
         const auto compare = [](const GameObject& o1, const GameObject& o2) {
             auto o1_y = o1.getPosition2D().y + o1.getSize().y;
@@ -328,11 +332,11 @@ void Regionmap::renderRegion() {
         game_manager.window.draw(game_object, states);
     }
 
-    for(const auto& pair : this->region->buildings) {
-        sf::RenderStates states;
-        states.texture = &game_manager.resource.getTexture(pair.second.getTextureName());
-        game_manager.window.draw(pair.second, states);
-    }
+    // for(const auto& pair : this->region->buildings) {
+    //     sf::RenderStates states;
+    //     states.texture = &game_manager.resource.getTexture(pair.second.getTextureName());
+    //     game_manager.window.draw(pair.second, states);
+    // }
 }
 
 void Regionmap::higlightTile() {
