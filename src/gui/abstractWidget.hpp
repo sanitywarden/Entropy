@@ -21,6 +21,7 @@ enum class TriggerType {
 
 static std::map <std::string, TriggerType> GUI_EVENT_LIST = {
     { "update",             TriggerType::WIDGET_ALL },
+    { "render",             TriggerType::WIDGET_ALL },
     { "onVisibilityToggle", TriggerType::WIDGET_ALL },
     { "onShow",             TriggerType::WIDGET_ALL },
     { "onHide",             TriggerType::WIDGET_ALL },
@@ -34,7 +35,8 @@ static std::map <std::string, TriggerType> GUI_EVENT_LIST = {
     { "onKeyRelease",             TriggerType::WIDGET_SELECTED },
     { "onScroll",                 TriggerType::WIDGET_SELECTED },
     { "onScrollUp",               TriggerType::WIDGET_SELECTED },
-    { "onScrollDown",             TriggerType::WIDGET_SELECTED }
+    { "onScrollDown",             TriggerType::WIDGET_SELECTED },
+    { "onMouseMove",              TriggerType::WIDGET_SELECTED },
 };
 
 struct WidgetData {
@@ -50,6 +52,8 @@ struct WidgetData {
 };
 
 class AbstractWidget : public sf::Drawable {
+    friend class InterfacePage;
+
     protected:
         virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const { return; };
 

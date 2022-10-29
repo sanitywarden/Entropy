@@ -1,5 +1,6 @@
 #include "gameObject.hpp"
 #include "colours.hpp"
+#include "globalutilities.hpp"
 
 #include <iostream>
 
@@ -68,6 +69,11 @@ int GameObject::getInstanceId() const {
 }
 
 void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if(states.texture == nullptr) {
+        printError("GameObject::draw()", "Texture is nullptr");
+        return;
+    }
+
     sf::VertexArray game_object(sf::Quads, 4);
 
     auto position2d = this->getPosition2D().asSFMLVector2f();

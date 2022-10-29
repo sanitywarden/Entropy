@@ -83,6 +83,7 @@ class Region : public GameObject {
         bool L_isForest() const;
         Tile* L_getTileAt(int index);
         bool L_isTileOccupied(int index) const;
+        bool L_isBuildingPositionValid(const Building& building, int index) const;
         bool L_treeExistsAt(int index) const;
         GameObject* L_getTreeAt(int index);
         bool L_buildingExistsAt(int index) const;
@@ -95,10 +96,14 @@ class Region : public GameObject {
         float L_getTemperatureNumber() const;
         void L_constructBuilding(const Building& building, int tile_index);
         void L_demolishBuilding(int tile_index);         
+        bool L_hasOwner() const;
+        int  L_getOwnerId() const;
 
     public:
         RegionType regiontype;
         Biome      biome;
+
+        int owner_id;
 
         float moisture;
         std::string moisture_text;

@@ -33,7 +33,7 @@ class Regionmap : public Gamestate {
 
         void renderRegion();
         void higlightTile();
-        void renderSelectedBuilding();
+        // void renderSelectedBuilding();
         
     public: 
         Regionmap();

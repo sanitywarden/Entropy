@@ -173,6 +173,13 @@ void Gamestate::createUI() {
 }
 
 void Gamestate::renderUI() const {
+    for(const auto& pair : this->interface) {
+        auto page = pair.second;
+        if(page.get()->isVisible()) {
+            page.get()->handleGUIEvent("render");
+        }
+    }
+    
     // Pages with lower priority end up first in the vector.
     const auto compare = [](
         const std::pair<std::string, std::shared_ptr<gui::InterfacePage>> pair1, 

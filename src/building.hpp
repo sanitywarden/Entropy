@@ -57,9 +57,9 @@ class Building : public GameObject {
         const std::string&    getDefinitionFilename()  const;
         const std::string&    getBuildingName()        const;
         const std::string&    getBuildingDescription() const;
-        const core::Vector2i  getBuildingArea()        const;
+        core::Vector2i        getBuildingArea()        const;
         const std::string&    getBuildingTexture()     const;
-        const core::Vector2i  getBuildingScanArea()    const;
+        core::Vector2i        getBuildingScanArea()    const;
         const ResourceList&   getBuildingCost()        const;
         const ResourceList&   getBuildingRefund()      const;
         const std::string&    getBuildingIcon()        const;

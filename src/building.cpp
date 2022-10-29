@@ -1,6 +1,7 @@
 #include "building.hpp"
 #include "region.hpp"
 #include "globalutilities.hpp"
+#include "colours.hpp"
 
 #include <iostream>
 
@@ -16,22 +17,30 @@ Building::Building(const Building& building)
     : GameObject(building) 
 {
     this->data = building.data;
+    this->data.name = "Building";
 }
 
 Building::Building(const BuildingData& data)
     : GameObject(core::Vector3i(0, 0, 0), core::Vector3i(0, 0, 0), data.texture_size, data.texture)
 {
     this->data = data;
+    this->data.name = "Building";
 }
 
 Building::~Building()
 {}
 
 void Building::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if(states.texture == nullptr) {
+        printError("Building::draw()", "Texture is nullptr");
+        return;
+    }
+
     sf::VertexArray game_object(sf::Quads, 4);
 
     auto position2d = this->getPosition2D().asSFMLVector2f();
     auto size       = this->getSize().asSFMLVector2f();
+    auto colour     = this->getColour();
 
     game_object[0].position = position2d;    
     game_object[1].position = position2d + sf::Vector2f(size.x, 0);
@@ -42,7 +51,14 @@ void Building::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     game_object[1].texCoords = sf::Vector2f(size.x, 0);
     game_object[2].texCoords = sf::Vector2f(size.x, size.y);
     game_object[3].texCoords = sf::Vector2f(0, size.y);
-    
+
+    if(colour != COLOUR_BLACK) {
+        game_object[0].color = colour.asSFMLColour();
+        game_object[1].color = colour.asSFMLColour();
+        game_object[2].color = colour.asSFMLColour();
+        game_object[3].color = colour.asSFMLColour();
+    }
+
     target.draw(game_object, states);
 }
 
@@ -58,7 +74,7 @@ const std::string& Building::getBuildingDescription() const {
     return this->data.description;
 }
 
-const core::Vector2i Building::getBuildingArea() const {
+core::Vector2i Building::getBuildingArea() const {
     return this->data.size;
 }
 
@@ -66,7 +82,7 @@ const std::string& Building::getBuildingTexture() const {
     return this->data.texture;
 }
 
-const core::Vector2i Building::getBuildingScanArea() const {
+core::Vector2i Building::getBuildingScanArea() const {
     return this->data.scan_area;
 }
 

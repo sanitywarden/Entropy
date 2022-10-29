@@ -41,6 +41,11 @@ bool Player::placeBuildingCheck(Region& region, Building building, core::Vector2
 }
 
 void Player::placeBuilding(Region& region, Building building, core::Vector2i grid) {
+    if(building == BUILDING_EMPTY) {
+        printError("Player::placeBuilding()", "Placed empty building");
+        return;
+    }
+
     auto index = calculateRegionIndex(grid);
     const auto& tile = region.getTileAtIndex(index);  
     building.object_position = tile.getPosition();

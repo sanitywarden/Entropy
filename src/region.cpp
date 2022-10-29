@@ -21,6 +21,8 @@ Region::Region()
     this->temperature = 0.0f;
     this->visited     = false;
     
+    this->owner_id = -1;
+
     this->map.resize(0);
     this->stockpile.resize(0);
 }
@@ -37,7 +39,7 @@ bool Region::isOwned() const {
 }
 
 int Region::getOwnerId() const {
-    return -1;
+    return this->owner_id;
 }
 
 void Region::stockpileAdd(StorageItem item) {
@@ -402,6 +404,13 @@ bool Region::L_isTileOccupied(int tile_index) const {
     return this->isSpotOccupied(tile_index);
 }
 
+bool Region::L_isBuildingPositionValid(const Building& building, int tile_index) const {
+    if(!inRegionBounds(tile_index))
+        printError("L_isBuildingPositionValid()", "Tile index out of bounds");
+    auto grid = tileGridPosition(tile_index);
+    return this->isBuildingPositionValid(building, grid);
+}
+
 bool Region::L_treeExistsAt(int tile_index) const {
     if(!inRegionBounds(tile_index))
         printError("L_treeExistsAt()", "Tile index out of bounds");
@@ -472,5 +481,13 @@ void Region::L_demolishBuilding(int tile_index) {
     auto player = game_manager.getPlayer(player_id);
     auto grid = tileGridPosition(tile_index);
     player->destroyBuilding(*this, grid);
+}
+
+bool Region::L_hasOwner() const {
+    return this->getOwnerId() >= 0;
+}
+
+int Region::L_getOwnerId() const {
+    return this->getOwnerId();
 }
 }

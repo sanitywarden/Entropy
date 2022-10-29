@@ -781,7 +781,9 @@ void SimulationManager::emitEvents() {
                 if(gamestate->controls.mouse_dragged)
                     gamestate->controls.button_position_released = gamestate->mouse_position_window;
 
+                gamestate->runGUIEventHandle("onMouseMove");
                 event_queue.push_back("MOUSE_MOVED");
+
                 break;
             }
 

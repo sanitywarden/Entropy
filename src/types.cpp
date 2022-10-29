@@ -434,6 +434,7 @@ Colour& Colour::operator= (const Colour& colour) {
     this->r = colour.r;
     this->g = colour.g;
     this->b = colour.b;
+    this->a = colour.a;
     return *this;
 }
 
@@ -441,7 +442,8 @@ bool Colour::operator== (const Colour& colour) const {
     return (
         this->r == colour.r &&
         this->g == colour.g &&
-        this->b == colour.b
+        this->b == colour.b &&
+        this->a == colour.a
     );
 }
 
@@ -449,7 +451,8 @@ bool Colour::operator== (const sf::Color& colour) const {
     return (
         this->r == colour.r &&
         this->g == colour.g &&
-        this->b == colour.b
+        this->b == colour.b &&
+        this->a == colour.a
     );
 }
 

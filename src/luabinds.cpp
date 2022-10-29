@@ -18,7 +18,7 @@ void registerLua() {
             .addProperty("r", core::Colour::getR, core::Colour::setR)
             .addProperty("g", core::Colour::getG, core::Colour::setG)
             .addProperty("b", core::Colour::getB, core::Colour::setB)
-            .addProperty("a", core::Colour::getA, core::Colour::setR)
+            .addProperty("a", core::Colour::getA, core::Colour::setA)
         .endClass()
         .beginClass <core::Vector2f> ("Vector2f")
             .addConstructor <void (*) (float, float)> ()
@@ -34,23 +34,23 @@ void registerLua() {
             .addConstructor <void (*) (float, float, float)> ()
             .addProperty("x", core::Vector3f::getX, core::Vector3f::setX) 
             .addProperty("y", core::Vector3f::getY, core::Vector3f::setY) 
-            .addProperty("y", core::Vector3f::getZ, core::Vector3f::setZ) 
+            .addProperty("z", core::Vector3f::getZ, core::Vector3f::setZ) 
         .endClass()
         .beginClass <core::Vector3i> ("Vector3i")
-            .addConstructor <void (*) (float, float, float)> ()
+            .addConstructor <void (*) (int, int, int)> ()
             .addProperty("x", core::Vector3i::getX, core::Vector3i::setX) 
             .addProperty("y", core::Vector3i::getY, core::Vector3i::setY) 
-            .addProperty("y", core::Vector3i::getZ, core::Vector3i::setZ) 
+            .addProperty("z", core::Vector3i::getZ, core::Vector3i::setZ) 
         .endClass()
         .beginClass <iso::GameObject> ("GameObject")
             .addConstructor <void (*) ()> ()
-            .addProperty("name"       , iso::GameObject::getName       , iso::GameObject::setName)
-            .addProperty("position"   , iso::GameObject::getPosition   , iso::GameObject::setPosition)
-            .addProperty("size"       , iso::GameObject::getSize       , iso::GameObject::setSize)
-            .addProperty("texture"    , iso::GameObject::getTextureName, iso::GameObject::setTextureName)
-            .addProperty("colour"     , iso::GameObject::getColour     , iso::GameObject::setColour)
-            .addProperty("instance_id", iso::GameObject::getInstanceId)
-            .addProperty("position2d" , iso::GameObject::getPosition2D)
+            .addProperty("object_name"       , iso::GameObject::getName       , iso::GameObject::setName)
+            .addProperty("object_position"   , iso::GameObject::getPosition   , iso::GameObject::setPosition)
+            .addProperty("object_size"       , iso::GameObject::getSize       , iso::GameObject::setSize)
+            .addProperty("object_texture"    , iso::GameObject::getTextureName, iso::GameObject::setTextureName)
+            .addProperty("object_colour"     , iso::GameObject::getColour     , iso::GameObject::setColour)
+            .addProperty("object_instance_id", iso::GameObject::getInstanceId)
+            .addProperty("object_position2d" , iso::GameObject::getPosition2D)
             .addFunction("exists"     , iso::GameObject::exists)
             .addFunction("contains"   , iso::GameObject::contains)
             .addFunction("hasName"    , iso::GameObject::hasName)
@@ -69,7 +69,7 @@ void registerLua() {
             .addProperty("current_tile_index", Regionmap::L_getTileIndex)
             .addProperty("region_index"      , Regionmap::L_getRegionIndex, Regionmap::L_setRegionIndex)
         .endClass()
-        .beginClass <Building> ("Building")
+        .deriveClass <Building, GameObject> ("Building")
             .addProperty("name"       , Building::getBuildingName       , Building::setBuildingName)
             .addProperty("description", Building::getBuildingDescription, Building::setBuildingDescription)
             .addProperty("area"       , Building::getBuildingArea       , Building::setBuildingArea)
@@ -93,7 +93,7 @@ void registerLua() {
             .addProperty("tile_list"          , Biome::getBiomeTileList        , Biome::setBiomeTileList)
             .addProperty("tree_list"          , Biome::getBiomeTreeList        , Biome::setBiomeTreeList)
         .endClass()
-        .beginClass <Tile> ("Tile")
+        .deriveClass <Tile, GameObject> ("Tile")
             .addFunction("isTerrain", Tile::isTerrain)
             .addFunction("isWater"  , Tile::isWater)
             .addFunction("isOcean"  , Tile::isOcean)
@@ -101,29 +101,32 @@ void registerLua() {
             .addFunction("isCoast"  , Tile::isCoast)
         .endClass()
         .beginClass <Region> ("Region")
-            .addFunction("hasBiome"            , Region::L_hasBiome)
-            .addFunction("getBiome"            , Region::L_getBiome)
-            .addFunction("isTerrain"           , Region::L_isTerrain)
-            .addFunction("isOcean"             , Region::L_isOcean)
-            .addFunction("isRiver"             , Region::L_isRiver)
-            .addFunction("isCoast"             , Region::L_isCoast)
-            .addFunction("isLake"              , Region::L_isLake)
-            .addFunction("isWater"             , Region::L_isWater)
-            .addFunction("isForest"            , Region::L_isForest)
-            .addFunction("getTileAt"           , Region::L_getTileAt)
-            .addFunction("isTileOccupied"      , Region::L_isTileOccupied)
-            .addFunction("treeExistsAt"        , Region::L_treeExistsAt)
-            .addFunction("getTreeAt"           , Region::L_getTreeAt)
-            .addFunction("buildingExsitsAt"    , Region::L_buildingExistsAt)
-            .addFunction("getBuildingAt"       , Region::L_getBuildingAt)
-            .addFunction("resourceExistsAt"    , Region::L_resourceExistsAt)
-            .addFunction("getResourceAt"       , Region::L_getResourceAt)
-            .addFunction("getMoistureString"   , Region::L_getMoistureString)
-            .addFunction("getMoistureNumber"   , Region::L_getMoistureNumber)
-            .addFunction("getTemperatureString", Region::L_getTemperatureString)
-            .addFunction("getTemperatureNumber", Region::L_getTemperatureNumber)
-            .addFunction("constructBuilding"   , Region::L_constructBuilding)
-            .addFunction("demolishBuilding"    , Region::L_demolishBuilding)
+            .addFunction("hasBiome"               , Region::L_hasBiome)
+            .addFunction("getBiome"               , Region::L_getBiome)
+            .addFunction("isTerrain"              , Region::L_isTerrain)
+            .addFunction("isOcean"                , Region::L_isOcean)
+            .addFunction("isRiver"                , Region::L_isRiver)
+            .addFunction("isCoast"                , Region::L_isCoast)
+            .addFunction("isLake"                 , Region::L_isLake)
+            .addFunction("isWater"                , Region::L_isWater)
+            .addFunction("isForest"               , Region::L_isForest)
+            .addFunction("getTileAt"              , Region::L_getTileAt)
+            .addFunction("isTileOccupied"         , Region::L_isTileOccupied)
+            .addFunction("isBuildingPositionValid", Region::L_isBuildingPositionValid)
+            .addFunction("treeExistsAt"           , Region::L_treeExistsAt)
+            .addFunction("getTreeAt"              , Region::L_getTreeAt)
+            .addFunction("buildingExsitsAt"       , Region::L_buildingExistsAt)
+            .addFunction("getBuildingAt"          , Region::L_getBuildingAt)
+            .addFunction("resourceExistsAt"       , Region::L_resourceExistsAt)
+            .addFunction("getResourceAt"          , Region::L_getResourceAt)
+            .addFunction("getMoistureString"      , Region::L_getMoistureString)
+            .addFunction("getMoistureNumber"      , Region::L_getMoistureNumber)
+            .addFunction("getTemperatureString"   , Region::L_getTemperatureString)
+            .addFunction("getTemperatureNumber"   , Region::L_getTemperatureNumber)
+            .addFunction("constructBuilding"      , Region::L_constructBuilding)
+            .addFunction("demolishBuilding"       , Region::L_demolishBuilding)
+            .addFunction("hasOwner"               , Region::L_hasOwner)
+            .addFunction("getOwnerId"             , Region::L_getOwnerId)
         .endClass()
         .beginClass <gui::Label> ("Label")
             .addProperty("text"  , gui::Label::getString, gui::Label::setString)
@@ -165,7 +168,8 @@ void registerLua() {
         .addFunction("getWindowHeight" , &lua::L_getWindowHeight)
         .addFunction("getWindowWidth"  , &lua::L_getWindowWidth)
         .addFunction("inScreenSpace"   , &lua::L_inScreenSpace)
-        .addFunction("draw"            , &lua::L_draw)
+        .addFunction("drawGameObject"  , &lua::L_drawGameObject)
+        .addFunction("drawBuilding"    , &lua::L_drawBuilding)
         .addFunction("setVSync"        , &lua::L_setVSync)
         .addFunction("setMaxFramerate" , &lua::L_setMaxFramerate)
         .addFunction("takeScreenshot"  , &lua::L_takeScreenshot)
@@ -183,11 +187,11 @@ void registerLua() {
         // Miscellaneous    
         .addFunction("getRegionIndex"            , &lua::L_getRegionIndex)
         .addFunction("getTileIndex"              , &lua::L_getTileIndex)
-        .addFunction("isBuildingTile"            , &lua::L_isBuildingTile)
         .addFunction("getRegion"                 , &lua::L_getRegion)
         .addFunction("inWorldBounds"             , &lua::L_inWorldBounds)
         .addFunction("inRegionBounds"            , &lua::L_inRegionBounds)
         .addFunction("tileGridPosition"          , &lua::L_tileGridPosition)
+        .addFunction("tileSize"                  , &iso::tileSize)
 
         // World generation
         .addFunction("generateRegion"            , &lua::L_generateRegion)
@@ -195,10 +199,11 @@ void registerLua() {
 
         // Game data
         .beginNamespace("gamedata")
-            .addVariable("BUILDING_TABLE", &BUILDING_TABLE, false)
-            .addVariable("BIOME_TABLE"   , &BIOME_TABLE   , false)
-            .addVariable("ITEM_TABLE"    , &ITEM_TABLE    , false)
-            .addVariable("RESOURCE_TABLE", &RESOURCE_TABLE, false)
+            .addVariable("BUILDING_TABLE", &BUILDING_TABLE        , false)
+            .addVariable("BIOME_TABLE"   , &BIOME_TABLE           , false)
+            .addVariable("ITEM_TABLE"    , &ITEM_TABLE            , false)
+            .addVariable("RESOURCE_TABLE", &RESOURCE_TABLE        , false)
+            .addVariable("WORLD_MAP"     , &game_manager.world_map, false)
         .endNamespace()
     ;
 }
@@ -461,8 +466,21 @@ bool L_inScreenSpace(const iso::GameObject& gameobject) {
     return game_manager.window.inScreenSpace(gameobject);
 }
 
-void L_draw(const iso::GameObject& gameobject) {
-    game_manager.window.draw(gameobject);
+void L_drawGameObject(iso::GameObject& gameobject) {
+    sf::RenderStates states;
+    states.texture = &game_manager.resource.getTexture(gameobject.getTextureName());
+    game_manager.window.draw(gameobject, states);
+}
+
+void L_drawBuilding(iso::Building& building) {
+    sf::RenderStates states;
+    states.texture = &game_manager.resource.getTexture(building.getTextureName());
+    
+    auto gamestate = game_manager.gamestate.getGamestate();
+    auto view = game_manager.window.getView();
+    game_manager.window.setView(gamestate->view_game);
+    game_manager.window.draw(building, states);
+    game_manager.window.setView(view);
 }
 
 void L_setVSync(bool on) {

@@ -309,6 +309,16 @@ void InterfacePage::handleGUIEvent(const std::string& event_name) const {
         }
 
         case TriggerType::WIDGET_ALL: {
+            // A interface page may have a global update function in the likes of shouldOpen() or shouldClose().
+            auto update_interface_page = functionality["update"];
+            if(!update_interface_page.isNil())
+                update_interface_page();
+
+            // A interface page may have a global render function in the likes of shouldOpen() or shouldClose().
+            auto render_interface_page = functionality["render"];
+            if(!render_interface_page.isNil())
+                render_interface_page();
+
             for(int i = 1; i <= length; i++) {
                 auto table = components[i];
                 auto id = lua::readString(table["id"], true);

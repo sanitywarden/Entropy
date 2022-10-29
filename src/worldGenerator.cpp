@@ -773,6 +773,9 @@ void WorldGenerator::spawnPlayers() {
             }
         }
 
+        auto& region = game_manager.world_map.at(spot_index);
+        region.owner_id = pdata.id;
+
         game_manager.addPlayer(player);    
     } 
 }

@@ -59,7 +59,6 @@ void Regionmap::render(float delta_time) {
     game_manager.window.setView(this->view_game);
 
     this->renderRegion();
-    this->renderSelectedBuilding();
     this->higlightTile();
 
     game_manager.window.setView(this->view_interface);
@@ -277,10 +276,10 @@ void Regionmap::renderRegion() {
             if(this->region->trees.count(i))
                 draw_order.push_back(this->region->trees[i]);
             
-            if(this->region->buildingExistsAtIndex(i)) {
-                if(this->region->buildings[i] != BUILDING_EMPTY)
-                    draw_order.push_back(this->region->getBuildingAtIndex(i));
-            }
+            // if(this->region->buildingExistsAtIndex(i)) {
+            //     if(this->region->buildings[i] != BUILDING_EMPTY)
+            //         draw_order.push_back(this->region->getBuildingAtIndex(i));
+            // }
         }
 
         // for(int i = 0; i < this->region->getPopulation(); i++) {
@@ -328,6 +327,12 @@ void Regionmap::renderRegion() {
         
         game_manager.window.draw(game_object, states);
     }
+
+    for(const auto& pair : this->region->buildings) {
+        sf::RenderStates states;
+        states.texture = &game_manager.resource.getTexture(pair.second.getTextureName());
+        game_manager.window.draw(pair.second, states);
+    }
 }
 
 void Regionmap::higlightTile() {
@@ -352,10 +357,6 @@ void Regionmap::higlightTile() {
 
     if(!this->controls.mouseRightPressed())
         return;
-
-    // auto building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
-    // if(building_menu->getBuilding() != BUILDING_EMPTY)
-    //     return;
 
     const auto& tile   = this->region->map[index];
     auto tile_position = tile.getPosition2D().asSFMLVector2f();
@@ -454,7 +455,7 @@ void Regionmap::recalculateMesh() {
     this->recalculate_tree_mesh = true;
 }
 
-void Regionmap::renderSelectedBuilding() {
+// void Regionmap::renderSelectedBuilding() {
     /*
     auto* building_menu = static_cast<gui::WidgetMenuBuilding*>(this->getInterfaceComponent("component_widget_menu_building"));
     auto  building      = building_menu->getBuilding();
@@ -608,5 +609,5 @@ void Regionmap::renderSelectedBuilding() {
         }
     }
     */
-}
+// }
 }
