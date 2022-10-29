@@ -1,0 +1,40 @@
+Resource file has the following properties:
+name         - Name of the resource.
+description  - Description of the resource. Used in GUIs.
+texture      - Name of the resource's texture.
+texture_size - Size of the loaded texture. 
+icon_texture - Icon texture. Used in GUIs.
+icon_size    - Icon size.
+type         - Type of the resource. See RESOURCE_TYPE below.
+minimum_occurence - Minimum amount of patches that should generate.
+maximum_occurence - Maximum amount of patches that should generate.
+generation_chance - Generation chance (0.0 - 1.0).
+singular          - Only one instance will be generated per generation.
+patch_size        - Size of the patch.
+region            - Properties required from a region in order to generate this resource. See REGION_REQUIREMENT below.
+tiles             - Properties required from a tile in order to generate this resource. See TILE_REQUIREMENT below.
+
+RESOURCE_TYPE may be one of the following:
+Base Material
+Raw Material
+
+REGION_REQUIREMENT can be a set of the folowing properties:
+ALL 
+WATER
+DRY
+LAKE
+RIVER
+COAST
+FOREST
+COLD
+WARM
+TROPICAL
+HOT
+
+TILE_REQUIREMENT can be a set of the following properties:
+TERRAIN
+WATER
+UNOCCUPIED
+RIVER
+OCEAN
+COAST

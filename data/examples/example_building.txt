@@ -1,0 +1,14 @@
+Building file has the following properties:
+name         - Name of the building.
+description  - Description of the building. Used in GUIs.
+size         - Size of the building in tiles. Currently only square buildings are supported.
+texture      - Name of the building's texture.
+texture_size - Size of the loaded texture.
+icon_texture - Icon texture. Used in GUIs.
+icon_size    - Icon size.
+removable    - Is the building removable after placing.
+cost         - Cost of the building.
+refund       - List of resources returned after demolition.
+scan_area    - Distance from the building in which it scans for resources to harvest.
+harvests     - Resources this building collects.
+produces     - Items this building produces.

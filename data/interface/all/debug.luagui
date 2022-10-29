@@ -1,0 +1,25 @@
+UI = {
+    id = "component_debug_tab",
+    closeable = false,
+    movable = false,
+    resizable = false,
+
+    components = {
+        {
+            component_type = "Label",
+            parent_id = "*",
+            id = "debug_info",
+            position = {
+                corner_tl = Ratio("0%", "0%"),
+                corner_br = Ratio("0%", "0%")
+            },
+            alignment = {
+                x = "Left",
+                y = "Left"
+            },
+
+            font = "proggy",
+            colour = Colour(255, 255, 255, 255)
+        }
+    }
+}

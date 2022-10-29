@@ -1,0 +1,11 @@
+Biome file has the following properties:
+name                    - Name of the biome.
+id                      - Code ID of the biome.
+description             - Description of the biome. Used in GUIs.
+colour_wmap             - RGB colour of the biome in worldmap view.
+temperature             - Temperature the biome requires to generate.
+moisture                - Moisture the biome requires to generate.
+can_be_forest           - Can a forest generate in this biome.
+forest_texture_worldmap - Texture of the forest in worldmap view.
+tiles                   - Tiles from which the terrain is made.
+trees                   - Trees from which the forest is generated.

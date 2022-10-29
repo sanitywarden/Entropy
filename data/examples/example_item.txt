@@ -1,0 +1,13 @@
+Item file has the following properties:
+name         - Name of the item.
+description  - Description of the item. Used in GUIs.
+icon_texture - Icon texture. Used in GUIs.
+icon_size    - Icon size.
+type         - Type of the item. See ITEM_TYPE below.  
+
+ITEM_TYPE may be one of the following:
+Base Material
+Raw Material
+Animal Food
+Plant Food
+Drinkable Liquid

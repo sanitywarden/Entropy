@@ -1,0 +1,68 @@
+Functionality = {
+    current_region_index,
+
+    shouldOpen = function()
+        if isLeftMouseButtonPressed() and not isInterfaceVisible("component_widget_region") then
+            current_index = getRegionIndex()
+            current_region_index = current_index
+
+            if inWorldBounds(current_region_index) then
+                region = getRegion(current_region_index)
+
+                if region:isTerrain() then
+                    showInterface("component_widget_region")
+                end
+            end
+        end
+    end,
+    shouldClose = function()
+        if (isKeyPressed("B") or isRightMouseButtonPressed()) and isInterfaceVisible("component_widget_region") then
+            hideInterface("component_widget_region")
+        end
+    end,
+
+    components = {
+        {
+            id = "button_travel",
+
+            onLeftMouseButtonPress = function() 
+                regionmap = getRegionmap()
+                regionmap.region_index = current_region_index
+                setGamestate("Regionmap")
+            end,
+            onKeyPress = function(key_name)
+                if isKeyPressed("ENTER") or isKeyPressed("T") then
+                    regionmap = getRegionmap()
+                    regionmap.region_index = current_region_index
+                    setGamestate("Regionmap")
+                end
+            end
+        },
+        {
+            id = "label_region_basic_info",
+
+            update = function()
+                if isLeftMouseButtonPressed() and not mouseIntersectsUI() then
+                    current_index = getRegionIndex()
+                    current_region_index = current_index
+                end
+
+                if not inWorldBounds(current_region_index) then
+                    return
+                end
+
+                region = getRegion(current_region_index)
+                if not region:hasBiome() then
+                    return
+                end
+
+                self = getComponentLabel("component_widget_region", "label_region_basic_info")
+                
+                text = ""
+                text = text .. "#" .. current_region_index .. " | " .. region:getBiome().name .. "\n" 
+
+                self.text = text 
+            end
+        }
+    }
+}

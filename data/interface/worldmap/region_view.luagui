@@ -1,0 +1,59 @@
+UI = {
+    id = "component_widget_region",
+    closeable = true,
+    movable = false,
+    resizable = false,
+
+    components = {
+        {
+            component_type = "Widget",
+            parent_id = "*",
+            id = "main_widget",
+            texture = "ui_base",
+            position = {
+                corner_tl = Ratio("0%", "55%"),
+                corner_br = Ratio("20%", "100%")
+            }          
+        },
+        {
+            component_type = "Button",
+            parent_id = "main_widget",
+            id = "button_travel",
+            texture = "button_ui_base",
+            position = {
+                corner_tl = Ratio("2.5%", "15%"),
+                corner_br = Ratio("30.5%", "10%")
+            },
+
+            text = "Visit"
+        },
+        {
+            component_type = "Button",
+            parent_id = "main_widget",
+            id = "button_colonise",
+            texture = "button_ui_base",
+            position = {
+                corner_tl = Ratio("2.5%", "22.5%"),
+                corner_br = Ratio("30.5%", "17.5%")
+            },
+
+            text = "Colonise"
+        },
+        {
+            component_type = "Label",
+            parent_id = "main_widget",
+            id = "label_region_basic_info",
+            position = {
+                corner_tl = Ratio("2.5%", "1.5%"),
+                corner_br = Ratio("0%", "0%")
+            },
+            alignment = {
+                x = "Left",
+                y = "Left"
+            },
+
+            font = "garamond",
+            colour = Colour(0, 0, 0, 255)
+        }
+    }
+}

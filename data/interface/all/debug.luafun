@@ -1,0 +1,85 @@
+require "src.scripts.data.globalutilities"
+
+Functionality = {
+    shouldOpen = function()
+        if isKeyPressed("F3") and not isInterfaceVisible("component_debug_tab") then
+            showInterface("component_debug_tab")    
+        end
+    end,
+    shouldClose = function()
+        if isKeyPressed("F3") and isInterfaceVisible("component_debug_tab") then
+            hideInterface("component_debug_tab")
+        end
+    end,
+    
+    components = {
+        {
+            id = "debug_info",
+
+            update = function()
+                label = getComponentLabel("component_debug_tab", "debug_info")
+                
+                gamestate = getCurrentGamestate()
+                id = gamestate:getID()
+                
+                fps   = getFPS()
+                ms    = round(getFrameTime(), 3) .. " ms"
+                mp    = getMousePosition()
+
+                text = "" 
+                    .. "FPS: "        .. fps .. " fps\n"
+                    .. "Frame time: " .. ms  .. "\n"
+                    .. "Gamestate: "  .. id  .. "\n\n"
+
+                page_id = getInterfaceUnderMouse()
+                component_id = getInterfaceItemUnderMouse(page_id)
+
+                if page_id ~= "" then
+                    text = text
+                        .. "Page ID: " .. page_id .. "\n"
+                end
+                if component_id ~= "" then
+                    text = text
+                        .. "Item ID: " .. component_id .. "\n"
+                end
+                
+                if id == "Regionmap" then
+                    index_region = getRegionIndex()
+                    region = getRegion(index_region)
+
+                    if not mouseIntersectsUI() then
+                        index_tile = getTileIndex()
+                            
+                        if inRegionBounds(index_tile) then 
+                            tile = region:getTileAt(index_tile)
+                            grid = tileGridPosition(index_tile)
+                            
+                            text = text .. "Index: " .. index_tile .. "\n"
+                            text = text .. "Grid: " .. grid.x .. " " .. grid.y  .. "\n"
+                            text = text .. "Occupied: " .. tostring(region:isTileOccupied(index_tile)) .. "\n"
+                        end
+                    end
+                end
+
+                if id == "Worldmap" then
+                    worldmap = getWorldmap()
+
+                    if not mouseIntersectsUI() then
+                        index_region = worldmap.current_index
+                        selected_index = worldmap.selected_index
+                        region = getRegion(index_region)
+
+                        text = text .. "Index: " .. index_region .. "\n" 
+                        text = text .. "Selected: " .. selected_index .. "\n"
+                        
+                        if region:hasOwner() then
+                            text = text .. "Owner: " .. region:getOwnerId() .. "\n" 
+                        end
+                    end
+                end 
+
+                label.text = text
+            end
+        }
+    }
+}
