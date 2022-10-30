@@ -81,7 +81,7 @@ void WindowManager::display() {
     this->window.get()->display();
 }
 
-void WindowManager::draw(const sf::Drawable& drawable, sf::RenderStates states) {
+void WindowManager::draw(const sf::Drawable& drawable, sf::RenderStates states) {    
     this->window.get()->draw(drawable, states);
 }
 

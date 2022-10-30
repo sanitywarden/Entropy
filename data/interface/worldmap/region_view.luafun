@@ -31,7 +31,7 @@ Functionality = {
                 setGamestate("Regionmap")
             end,
             onKeyPress = function(key_name)
-                if isKeyPressed("ENTER") or isKeyPressed("T") then
+                if key_name == "ENTER" or key_name == "T" then
                     regionmap = getRegionmap()
                     regionmap.region_index = current_region_index
                     setGamestate("Regionmap")

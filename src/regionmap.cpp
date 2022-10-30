@@ -32,14 +32,6 @@ void Regionmap::loadResources() {
     game_manager.resource.paintTexture("template_highlight_1x1", "tile_highlight_1x1"    , COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     game_manager.resource.paintTexture("template_highlight_1x1", "tile_transparent_white", COLOUR_WHITE_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
     
-    game_manager.resource.paintTexture("template_highlight_1x1", "building_highlight_1x1_red", COLOUR_RED_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    game_manager.resource.paintTexture("template_highlight_2x2", "building_highlight_2x2_red", COLOUR_RED_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    game_manager.resource.paintTexture("template_highlight_3x3", "building_highlight_3x3_red", COLOUR_RED_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-
-    game_manager.resource.paintTexture("template_highlight_1x1", "building_highlight_1x1", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    game_manager.resource.paintTexture("template_highlight_2x2", "building_highlight_2x2", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    game_manager.resource.paintTexture("template_highlight_3x3", "building_highlight_3x3", COLOUR_GREEN_TRANSPARENT_HALF, COLOUR_TRANSPARENT);
-    
     // Automatically generate icon names.
     for(const auto& texture_pair : game_manager.resource.getTextureCollection()) {
         const auto& texture_name = texture_pair.first;

@@ -82,15 +82,18 @@ core::Vector2i L_tileGridPosition(int tile_index);
 void L_generateRegion(int region_index);
 void L_generateWorld();
 
+// Player
+
+iso::Player* L_getHumanPlayer();
+iso::Player* L_getPlayer(int player_id);
+bool L_isHumanPlayer(int player_id);
+
 /*
 bool L_canRegionBeColonised(int region_index);
 bool L_canAffordBuilding(int player_id, const Building& building);
 bool L_isRegionOwned(int region_index);
 std::vector <int> L_astar(int start_index, int end_index);
 Player* L_getRegionOwner(int region_index);
-Player* L_getPlayer(int player_id);
-Player* L_getHumanPlayer();
-bool L_isHumanPlayer(int player_id);
 */
 
 }

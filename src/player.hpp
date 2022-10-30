@@ -6,7 +6,7 @@
 
 namespace iso {
 struct PlayerData {
-    int id;            // Numerial id of a country and a player.
+    int id; // Numerial id of a country and a player.
     bool is_human;
     std::string username;
 };
@@ -17,8 +17,9 @@ struct CountryData {
     int initial_spawn;  // Region index the player will spawn in first time he loads the game.
     std::vector <int> owned_regions; // Indexes of the country owned regions.
     std::vector <int> known_regions; // Indexes of the country discovered regions.
-
-    std::string  country_name;
+    std::string culture_name;
+    std::string culture_filename;    // Filename of the country's culture group.
+    std::string country_name;
     core::Colour map_colour;
 };
 
@@ -54,6 +55,9 @@ class Player {
         void setCountryColour(core::Colour team_colour);
         void setCountryName(const std::string& name);
         const std::string& getCountryName();
+        void setCultureGroup(const std::string& culture_file);
+        const std::string& getCultureGroup() const;
         int getID() const;
+        int getInitialSpawn() const;
 };
 }

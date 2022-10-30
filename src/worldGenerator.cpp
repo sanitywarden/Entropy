@@ -3,7 +3,9 @@
 #include "worldData.hpp"
 #include "simulationManager.hpp"
 #include "colours.hpp"
-#include "nameGenerator.hpp"
+#include "player.hpp"
+
+#include <filesystem>
 
 namespace iso {
 WorldGenerator::WorldGenerator() {
@@ -21,11 +23,10 @@ WorldGenerator::~WorldGenerator()
 
 void WorldGenerator::generate() {
     game_manager.world_generator = WorldGenerator();
-    game_manager.world_map     = std::vector <Region> (getWorldSize());
+    game_manager.world_map = std::vector <Region> (getWorldSize());
     game_manager.forests = std::map <int, GameObject> ();
     game_manager.rivers  = std::map <int, GameObject> ();
     game_manager.lakes   = std::map <int, GameObject> ();
-    // game_manager.player_manager = PlayerManager();
 
     this->generateWorld();
 }
@@ -735,6 +736,17 @@ void WorldGenerator::spawnPlayers() {
     int number_of_players = world_data.w_width / 10;
     std::vector <int> spawn_spots;
 
+    std::vector <std::string> culture_files;
+
+    namespace fs = std::filesystem;
+    for(const auto& file : fs::directory_iterator("./data/name_generation/")) {
+        const auto& file_path = file.path().string();
+        const auto& file_path_extension = file.path().extension();
+
+        if(file_path_extension == ".lua")
+            culture_files.push_back(file_path);
+    }
+
     for(int i = 0; i < number_of_players; i++) {
         auto found = false;
         auto spot_index = -1;
@@ -760,9 +772,14 @@ void WorldGenerator::spawnPlayers() {
         cdata.initial_spawn = spot_index;
         cdata.capital = -1;
         cdata.map_colour = getRandomColour();
-        cdata.country_name = generateName(GenerationType::COUNTRY, 3);
+
+        auto culture_file = culture_files.at(randomInclusiveBetween(0, culture_files.size()));
+        cdata.culture_name = getCultureName(culture_file);
+        cdata.culture_filename = culture_file;
+        cdata.country_name = generateCountryName(culture_file);
 
         auto player = Player(pdata, cdata);
+        player.addOwnedRegion(cdata.initial_spawn);
 
         if(world_data.fog_of_war_enabled) {
             for(int y = -2; y <= 2; y++) {

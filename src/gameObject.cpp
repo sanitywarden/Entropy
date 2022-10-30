@@ -1,6 +1,7 @@
 #include "gameObject.hpp"
 #include "colours.hpp"
 #include "globalutilities.hpp"
+#include "simulationManager.hpp"
 
 #include <iostream>
 

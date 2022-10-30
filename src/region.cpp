@@ -43,6 +43,10 @@ int Region::getOwnerId() const {
     return this->owner_id;
 }
 
+void Region::setOwner(int player_id) {
+    this->owner_id = player_id;
+}
+
 void Region::stockpileAdd(StorageItem item) {
     if(this->itemExists(item)) {
         for(auto it = this->stockpile.begin(); it != this->stockpile.end(); ++it) {
@@ -493,4 +497,8 @@ bool Region::L_hasOwner() const {
 int Region::L_getOwnerId() const {
     return this->getOwnerId();
 }
+
+void Region::L_setOwner(int player_id) {
+    this->setOwner(player_id);
 }
+}   

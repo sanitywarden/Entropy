@@ -67,10 +67,16 @@ Functionality = {
                     if not mouseIntersectsUI() then
                         index_region = worldmap.current_index
                         selected_index = worldmap.selected_index
-                        region = getRegion(index_region)
-
+                                                
                         text = text .. "Index: " .. index_region .. "\n" 
                         text = text .. "Selected: " .. selected_index .. "\n"
+                        
+                        if inWorldBounds(index_region) then
+                            region = getRegion(index_region)
+                            
+                            text = text .. region.object_texture .. "\n"
+                            text = text .. region.object_colour.r .. " " .. region.object_colour.g .. " " .. region.object_colour.b .. " " .. region.object_colour.a .. "\n" 
+                        end
                         
                         if region:hasOwner() then
                             text = text .. "Owner: " .. region:getOwnerId() .. "\n" 

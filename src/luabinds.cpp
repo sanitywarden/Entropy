@@ -100,7 +100,7 @@ void registerLua() {
             .addFunction("isRiver"  , Tile::isRiver)
             .addFunction("isCoast"  , Tile::isCoast)
         .endClass()
-        .beginClass <Region> ("Region")
+        .deriveClass <Region, GameObject> ("Region")
             .addFunction("hasBiome"               , Region::L_hasBiome)
             .addFunction("getBiome"               , Region::L_getBiome)
             .addFunction("isTerrain"              , Region::L_isTerrain)
@@ -127,6 +127,18 @@ void registerLua() {
             .addFunction("demolishBuilding"       , Region::L_demolishBuilding)
             .addFunction("hasOwner"               , Region::L_hasOwner)
             .addFunction("getOwnerId"             , Region::L_getOwnerId)
+        .endClass()
+        .beginClass <Player> ("Player") 
+            .addProperty("id"        , Player::getID)
+            .addProperty("is_human"  , Player::isHuman)
+            .addProperty("capital"   , Player::getCapital)
+            .addProperty("origin"    , Player::getInitialSpawn)
+            .addProperty("culture"   , Player::getCultureGroup)
+            .addProperty("colour"    , Player::getCountryColourFull)
+            .addProperty("map_colour", Player::getCountryColourTransparent)            
+            .addFunction("canAffordBuilding"  , Player::canAffordBuilding)
+            .addFunction("hasDiscoveredRegion", Player::discoveredRegion)
+            .addFunction("addKnownRegion"     , Player::addKnownRegion)
         .endClass()
         .beginClass <gui::Label> ("Label")
             .addProperty("text"  , gui::Label::getString, gui::Label::setString)
@@ -196,6 +208,11 @@ void registerLua() {
         // World generation
         .addFunction("generateRegion"            , &lua::L_generateRegion)
         .addFunction("generateWorld"             , &lua::L_generateWorld)
+
+        // Player
+        .addFunction("getPlayer"                 , &lua::L_getPlayer)
+        .addFunction("getHumanPlayer"            , &lua::L_getHumanPlayer)
+        .addFunction("isHumanPlayer"             , &lua::L_isHumanPlayer)
 
         // Game data
         .beginNamespace("gamedata")
@@ -501,5 +518,17 @@ void L_setMaxFramerate(int framerate) {
 
 void L_takeScreenshot() {
     game_manager.window.takeScreenshot();
+}
+
+Player* L_getHumanPlayer() {
+    return game_manager.getHumanPlayer();
+}
+
+Player* L_getPlayer(int player_id) {
+    return game_manager.getPlayer(player_id);
+}
+
+bool L_isHumanPlayer(int player_id) {
+    return game_manager.isHumanPlayer(player_id);
 }
 }

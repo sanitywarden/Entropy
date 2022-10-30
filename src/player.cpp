@@ -6,8 +6,7 @@
 
 #include <iostream>
 
-using namespace iso;
-
+namespace iso {
 Player::Player(PlayerData pdata, CountryData cdata)
     : player_data(pdata), country_data(cdata)
 {}
@@ -109,6 +108,9 @@ void Player::addOwnedRegion(int index) {
         printError("Player::addOwnedRegion()", "Region index out of bounds");
         return;
     }
+
+    auto& region = game_manager.world_map.at(index);
+    region.setOwner(this->getID());
     this->country_data.owned_regions.push_back(index);
 }
 
@@ -119,6 +121,9 @@ void Player::removeOwnedRegion(int index) {
             break;
         }
     }
+
+    auto& region = game_manager.world_map.at(index);
+    region.setOwner(-1);
 }
 
 bool Player::ownsRegion(int index) const {
@@ -195,7 +200,19 @@ const std::string& Player::getCountryName() {
     return this->country_data.country_name;
 }
 
+void Player::setCultureGroup(const std::string& culture_file) {
+    this->country_data.culture_filename = culture_file;
+}
+
+const std::string& Player::getCultureGroup() const {
+    return this->country_data.culture_name;
+}
+
 int Player::getID() const {
     return this->player_data.id;
 }
 
+int Player::getInitialSpawn() const {
+    return this->country_data.initial_spawn;
+}
+}

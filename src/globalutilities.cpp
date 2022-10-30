@@ -285,4 +285,34 @@ core::Colour getRandomColour() {
     colour.a = 255;
     return colour;
 }
+
+std::string getCultureName(const std::string& culture_file) {
+    lua::runLuaFile(culture_file);
+    auto culture = luabridge::getGlobal(game_manager.lua(), "Culture");
+    return lua::readString(culture["name"], true);
+}
+
+std::string generateCountryName(const std::string& culture_file) {
+    lua::runLuaFile(culture_file);
+    auto list = lua::readVectorString(luabridge::getGlobal(game_manager.lua(), "Countries"), true);
+    return list.at(randomInclusiveBetween(0, list.size())); 
+}
+
+std::string generateCityName(const std::string& culture_file) {
+    lua::runLuaFile(culture_file);
+    auto list = lua::readVectorString(luabridge::getGlobal(game_manager.lua(), "Cities"), true);
+    return list.at(randomInclusiveBetween(0, list.size())); 
+}
+
+std::string generateHumanName(const std::string& culture_file) {
+    lua::runLuaFile(culture_file);
+    
+    std::string gender = "Male";
+    if(randomInclusiveBetween(0, 1))
+        gender = "Female";
+
+    auto list = lua::readVectorString(luabridge::getGlobal(game_manager.lua(), gender.c_str()), true);
+    return list.at(randomInclusiveBetween(0, list.size())); 
+}
+
 }

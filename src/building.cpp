@@ -17,14 +17,12 @@ Building::Building(const Building& building)
     : GameObject(building) 
 {
     this->data = building.data;
-    this->data.name = "Building";
 }
 
 Building::Building(const BuildingData& data)
-    : GameObject(core::Vector3i(0, 0, 0), core::Vector3i(0, 0, 0), data.texture_size, data.texture)
+    : GameObject(core::Vector3i(0, 0, 0), core::Vector3i(0, 0, 0), data.texture_size, data.texture, "Building")
 {
     this->data = data;
-    this->data.name = "Building";
 }
 
 Building::~Building()

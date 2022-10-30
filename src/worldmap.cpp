@@ -206,92 +206,35 @@ void Worldmap::renderWorld() {
     auto* human_player = game_manager.getHumanPlayer();
 
     for(int i = 0; i < game_manager.world_map.size(); i++) {
-        const auto& region = game_manager.world_map[i];
+        auto& region = game_manager.world_map[i];
+        region.setColour(COLOUR_BLACK);
         sf::Rect region_screen_space(region.getPosition2D().asSFMLVector2f(), region.getSize().asSFMLVector2f());
 
-        if(camera_screen_area.intersects(region_screen_space)) {
-            if(human_player->discoveredRegion(i) || !world_data.fog_of_war_enabled && !region.regiontype.is_ocean()) {
+        if(game_manager.window.inScreenSpace(region)) {
+            if((human_player->discoveredRegion(i) || !world_data.fog_of_war_enabled) && !region.regiontype.is_ocean()) {
                 // Draw panel.
 
-                if(this->lens == "NORMAL") {
-                    sf::RenderStates panel_states;
-                    panel_states.texture = &game_manager.resource.getTexture(region.getTextureName());
-                    game_manager.window.draw(region, panel_states);
-                }
+                sf::RenderStates panel_states;
+                panel_states.texture = &game_manager.resource.getTexture(region.getTextureName());
+                game_manager.window.draw(region, panel_states);                
 
-                else if(this->lens == "LATITUDE") {
-                    auto colour = sf::Color(0, 0, region.latitude * 255);
-                    sf::VertexArray r(sf::Quads, 4);
-    
-                    r[0].position = region.getPosition2D().asSFMLVector2f();
-                    r[1].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(region.getSize().x, 0); 
-                    r[2].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(region.getSize().x, region.getSize().y); 
-                    r[3].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(0, region.getSize().y);
-    
-                    r[0].color = colour;
-                    r[1].color = colour;
-                    r[2].color = colour;
-                    r[3].color = colour;
-    
-                    game_manager.window.draw(r);
-                }
+                if(region.isOwned()) {
+                    GameObject highlight;
+                    highlight.setPosition(region.getPosition());
+                    highlight.setSize(region.getSize());
 
-                else if(this->lens == "TEMPERATURE") {
-                    auto colour = sf::Color(region.temperature * 255, 0, 0);
-                    sf::VertexArray r(sf::Quads, 4);
-    
-                    r[0].position = region.getPosition2D().asSFMLVector2f();
-                    r[1].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(region.getSize().x, 0); 
-                    r[2].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(region.getSize().x, region.getSize().y); 
-                    r[3].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(0, region.getSize().y);
-    
-                    r[0].color = colour;
-                    r[1].color = colour;
-                    r[2].color = colour;
-                    r[3].color = colour;
-    
-                    game_manager.window.draw(r);
-                }
-
-                else if(this->lens == "MOISTURE") {
-                    auto colour = sf::Color(0, 0, region.moisture * 255);
-                    sf::VertexArray r(sf::Quads, 4);
-    
-                    r[0].position = region.getPosition2D().asSFMLVector2f();
-                    r[1].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(region.getSize().x, 0); 
-                    r[2].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(region.getSize().x, region.getSize().y); 
-                    r[3].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(0, region.getSize().y);
-    
-                    r[0].color = colour;
-                    r[1].color = colour;
-                    r[2].color = colour;
-                    r[3].color = colour;
-    
-                    game_manager.window.draw(r);
-                }
-
-                else if(this->lens == "HEIGHT") {
-                    auto colour = sf::Color(region.height * 255, region.height * 255, region.height * 255);
-                    sf::VertexArray r(sf::Quads, 4);
-    
-                    r[0].position = region.getPosition2D().asSFMLVector2f();
-                    r[1].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(region.getSize().x, 0); 
-                    r[2].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(region.getSize().x, region.getSize().y); 
-                    r[3].position = region.getPosition2D().asSFMLVector2f() + sf::Vector2f(0, region.getSize().y);
-    
-                    r[0].color = colour;
-                    r[1].color = colour;
-                    r[2].color = colour;
-                    r[3].color = colour;
-    
-                    game_manager.window.draw(r);
+                    auto player = game_manager.getPlayer(region.getOwnerId());
+                    highlight.setColour(player->getCountryColourTransparent());
+                    game_manager.window.draw(highlight);
                 }
 
                 // Draw panel details.
                 // Draw forest.
 
                 if(game_manager.forests.count(i)) {
-                    const auto& forest = game_manager.forests[i];
+                    auto& forest = game_manager.forests[i];
+                    forest.setColour(COLOUR_BLACK);
+
                     sf::RenderStates forest_states;
                     forest_states.texture = &game_manager.resource.getTexture(forest.getTextureName());
                     game_manager.window.draw(forest, forest_states);
@@ -300,7 +243,8 @@ void Worldmap::renderWorld() {
                 // Draw rivers.
 
                 if(game_manager.rivers.count(i)) {
-                    const auto& river = game_manager.rivers[i];
+                    auto& river = game_manager.rivers[i];
+                    river.setColour(COLOUR_BLACK);
 
                     sf::RenderStates river_states;
                     river_states.texture = &game_manager.resource.getTexture(river.getTextureName());
@@ -308,7 +252,8 @@ void Worldmap::renderWorld() {
                 }
 
                 if(game_manager.lakes.count(i)) {
-                    const auto& lake = game_manager.lakes[i];
+                    auto& lake = game_manager.lakes[i];
+                    lake.setColour(COLOUR_BLACK);
 
                     sf::RenderStates lake_states;
                     lake_states.texture = &game_manager.resource.getTexture(lake.getTextureName());

@@ -594,6 +594,8 @@ void SimulationManager::loadGameData() {
                 data.produces     = lua::getBuildingProduction(buildingdata["produces"]);
 
                 iso::Building building(data);
+                building.setName("Building");
+
                 BUILDING_TABLE.push_back(building);
             }
         }

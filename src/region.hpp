@@ -44,6 +44,7 @@ class Region : public GameObject {
 
         bool isOwned() const;
         int  getOwnerId() const;
+        void setOwner(int player_id);
 
         bool isPassableWorldmap() const;
         bool isSpotOccupied(int index) const;
@@ -98,6 +99,7 @@ class Region : public GameObject {
         void L_demolishBuilding(int tile_index);         
         bool L_hasOwner() const;
         int  L_getOwnerId() const;
+        void L_setOwner(int player_id);
 
     public:
         RegionType regiontype;
