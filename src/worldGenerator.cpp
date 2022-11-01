@@ -781,6 +781,8 @@ void WorldGenerator::spawnPlayers() {
         auto player = Player(pdata, cdata);
         player.addOwnedRegion(cdata.initial_spawn);
 
+        std::cout << "      [] Player spawned at: " << player.getInitialSpawn() << "\n"; 
+
         if(world_data.fog_of_war_enabled) {
             for(int y = -2; y <= 2; y++) {
                 for(int x = -2; x <= 2; x++) {
@@ -789,9 +791,6 @@ void WorldGenerator::spawnPlayers() {
                 }
             }
         }
-
-        auto& region = game_manager.world_map.at(spot_index);
-        region.owner_id = pdata.id;
 
         game_manager.addPlayer(player);    
     } 

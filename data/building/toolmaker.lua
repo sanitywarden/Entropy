@@ -22,5 +22,5 @@ Building = {
                 Stone = 1
             }
         }
-    }
+    },
 }

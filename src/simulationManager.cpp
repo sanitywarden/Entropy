@@ -91,8 +91,13 @@ void SimulationManager::loop() {
             this->time_s++;
 
             for(auto& event : this->schedule) {
-                if(event.getCurrentTime() != event.getRequiredTime() && !event.isSpeedDependant())
+                if(event.getCurrentTime() < event.getRequiredTime() && !event.isSpeedDependant()) {
                     event.progressEvent();
+                }
+                else if(!event.isSpeedDependant()) {
+                    handleScriptableEvent(event.getEventName());
+                    event.resetTime();
+                }
             }
 
             updates = 0;
@@ -113,8 +118,13 @@ void SimulationManager::loop() {
                 gamestate->updateScheduler();
 
             for(auto& event : this->schedule) {
-                if(event.getCurrentTime() != event.getRequiredTime() && event.isSpeedDependant())
+                if(event.getCurrentTime() < event.getRequiredTime() && event.isSpeedDependant()) {
                     event.progressEvent();
+                }   
+                else if(event.isSpeedDependant()) {
+                    handleScriptableEvent(event.getEventName());
+                    event.resetTime();
+                }
             }
         }
     }
@@ -419,6 +429,17 @@ void exitApplication(int code) {
     exit(code);
 }
 
+void handleScriptableEvent(const std::string& event_name) {
+    auto event_exists = std::find(lua::SCRIPTABLE_OBJECT_EVENTS.begin(), lua::SCRIPTABLE_OBJECT_EVENTS.end(), event_name) != lua::SCRIPTABLE_OBJECT_EVENTS.end();
+    if(!event_exists) {
+        printError("handleScriptableEvent()", "Event with id '" + event_name + "' does not exist");
+        return;
+    }
+
+    for(const auto& script : SCRIPT_TABLE)
+        script.handleEvent(event_name);
+}
+
 void SimulationManager::loadApplicationConfig() {
     std::cout << "[] Reading application config.\n";
     {
@@ -460,10 +481,10 @@ void SimulationManager::loadApplicationConfig() {
 }
 
 void SimulationManager::loadGameData() {
-    lua::runLuaFile("./src/scripts/resource/load_ui.lua");
-    lua::runLuaFile("./src/scripts/resource/load_scheduled_events.lua");
-    lua::runLuaFile("./src/scripts/resource/load_worldmap.lua");
-    lua::runLuaFile("./src/scripts/resource/load_regionmap.lua");
+    lua::runLuaFile("./src/lua/resource/load_ui.lua");
+    lua::runLuaFile("./src/lua/resource/load_worldmap.lua");
+    lua::runLuaFile("./src/lua/resource/load_regionmap.lua");
+    lua::runLuaFile("./src/lua/resource/load_scheduled_events.lua");
 
     namespace fs = std::filesystem;
 
@@ -601,22 +622,43 @@ void SimulationManager::loadGameData() {
         }
     }
 
+    
+
     // SCRIPTS
     {
-        std::string scripts_path = "./src/scripts/";
-        std::cout << "[] Loading scripts.\n";
-        for(const auto& file : fs::directory_iterator(scripts_path)) {
-            const auto& file_path = file.path().string();
+        lua::runLuaFile("./src/lua/resource/load_scripts.lua");
 
-            if(!containsWord(file_path, "game_"))
-                continue;
+        for(const auto& scheduled_event : this->schedule)
+            lua::SCRIPTABLE_OBJECT_EVENTS.push_back(scheduled_event.getEventName());
 
-            for(const auto& nested_file : fs::directory_iterator(file_path)) {
-                const auto& nested_file_extension = nested_file.path().extension();
+        auto directories = lua::readVectorString(luabridge::getGlobal(this->lua(), "Directories"));
+        for(const auto& directory : directories) {
+            for(const auto& file : fs::directory_iterator(directory)) {
+                const auto& filename = file.path().string();
+                const auto& file_path_extension = file.path().extension().string();
 
-                if(nested_file_extension == ".lua") {
-                    lua::LuaScript script(nested_file.path().string());
-                    SCRIPT_TABLE.push_back(script);
+                luabridge::setGlobal(this->lua(), luabridge::LuaRef(this->lua()), "Script");
+
+                if(file_path_extension == ".lua") {
+                    lua::runLuaFile(filename);
+
+                    lua::ScriptData data;
+                    data.filename = filename;
+                    auto script = luabridge::getGlobal(this->lua(), "Script");
+                    if(script.isNil())
+                        continue;
+
+                    for(const auto& event_override : lua::SCRIPTABLE_OBJECT_EVENTS) {
+                        auto event = script[event_override];
+                        if(!event.isNil())
+                            data.event_overrides.push_back(event_override);
+                        luabridge::setGlobal(this->lua(), luabridge::LuaRef(this->lua()), event_override.c_str());
+                    }
+
+                    if(data.event_overrides.size()) {
+                        lua::ScriptableObject scriptable_object(data);
+                        SCRIPT_TABLE.push_back(scriptable_object);
+                    }
                 }
             }
         }
@@ -637,18 +679,6 @@ void SimulationManager::emitEvents() {
             gamestate->controls.addKeyMapping(pair.first, pair.second);
     }
 
-    for(auto& event : this->schedule) {
-        if(event.getCurrentTime() == event.getRequiredTime()) {
-            for(auto& script : SCRIPT_TABLE) {
-                script.onEvent(event.getEventName());
-
-                lua::runLuaFile(script.filename);
-            }
-
-            event.resetTime();
-        }
-    }
-
     gamestate->controls.mouse_dragged = gamestate->controls.mouse_moved && gamestate->controls.mouse_middle;
     while(this->window.getWindow()->pollEvent(gamestate->event)) {
         switch(gamestate->event.type) {
@@ -662,7 +692,7 @@ void SimulationManager::emitEvents() {
                 
                 this->font_size = (this->window.getWindowWidth() + this->window.getWindowHeight()) / 160;
                 event_queue.push_back("WINDOW_RESIZE");
-                
+                handleScriptableEvent("windowResize");
                 break;
             }
 
@@ -700,6 +730,7 @@ void SimulationManager::emitEvents() {
                 gamestate->controls.blockKeyboardInput(gamestate->mouseIntersectsUI());
 
                 gamestate->runGUIEventHandle("onKeyPress");
+                handleScriptableEvent("onKeyPress");
                 event_queue.push_back("BUTTON_PRESSED");
 
                 gamestate->controls.last_key_name = "";
@@ -722,6 +753,7 @@ void SimulationManager::emitEvents() {
                 game_manager.window.getWindow()->setView(gamestate->view_game);
 
                 gamestate->runGUIEventHandle("onKeyRelease");
+                handleScriptableEvent("onKeyRelease");
                 event_queue.push_back("BUTTON_RELEASED");
                 
                 break;
@@ -736,19 +768,23 @@ void SimulationManager::emitEvents() {
                     gamestate->controls.button_position_pressed = gamestate->mouse_position_window;
 
                 gamestate->runGUIEventHandle("onMouseButtonPress");
+                handleScriptableEvent("onMouseButtonPress");
 
                 if(gamestate->controls.mouse_left) {
                     gamestate->runGUIEventHandle("onLeftMouseButtonPress");
+                    handleScriptableEvent("onLeftMouseButtonPress");
                     event_queue.push_back("LMB_PRESSED");
                 }
                 
                 if(gamestate->controls.mouse_right) {
                     gamestate->runGUIEventHandle("onRightMouseButtonPress");
+                    handleScriptableEvent("onRightMouseButtonPress");
                     event_queue.push_back("RMB_PRESSED");
                 }
 
                 if(gamestate->controls.mouse_middle) {
                     gamestate->runGUIEventHandle("onMiddleMouseButtonPress");
+                    handleScriptableEvent("onMiddleMouseButtonPress");
                     event_queue.push_back("MMB_PRESSED");   
                 }
 
@@ -772,6 +808,7 @@ void SimulationManager::emitEvents() {
                     gamestate->controls.button_position_released = gamestate->mouse_position_window;
 
                 gamestate->runGUIEventHandle("onMouseButtonRelease");
+                handleScriptableEvent("onMouseButtonRelease");
                 event_queue.push_back("MOUSE_BUTTON_RELEASED");
 
                 break;
@@ -784,6 +821,7 @@ void SimulationManager::emitEvents() {
                     gamestate->controls.button_position_released = gamestate->mouse_position_window;
 
                 gamestate->runGUIEventHandle("onMouseMove");
+                handleScriptableEvent("onMouseMove");
                 event_queue.push_back("MOUSE_MOVED");
 
                 break;
@@ -794,13 +832,18 @@ void SimulationManager::emitEvents() {
                 gamestate->controls.mouse_middle_up   = gamestate->event.mouseWheelScroll.delta == 1;
                 
                 gamestate->runGUIEventHandle("onScroll");
+                handleScriptableEvent("onScroll");
                 event_queue.push_back("MOUSE_WHEEL_SCROLLED");
 
-                if(gamestate->controls.mouseMiddleUp())
+                if(gamestate->controls.mouseMiddleUp()) {
                     gamestate->runGUIEventHandle("onScrollUp");
+                    handleScriptableEvent("onScrollUp");
+                }
 
-                if(gamestate->controls.mouseMiddleDown())
+                if(gamestate->controls.mouseMiddleDown()) {
                     gamestate->runGUIEventHandle("onScrollDown");
+                    handleScriptableEvent("onScrollDown");
+                }
 
                 break;
             }

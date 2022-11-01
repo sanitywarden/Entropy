@@ -1,5 +1,5 @@
-require "src.scripts.data.stringutil"
-require "src.scripts.data.colours"
+require "src.lua.data.stringutil"
+require "src.lua.data.colours" 
 
 Functionality = {
     selected_building, -- Selected building from menu

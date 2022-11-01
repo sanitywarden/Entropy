@@ -1,32 +1,29 @@
 #include "luascript.hpp"
+#include "simulationManager.hpp"
 
 #include <Lua/lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 
-#include "simulationManager.hpp"
 
-using namespace lua;
-
-LuaScript::LuaScript()
+namespace lua {
+ScriptableObject::ScriptableObject(const ScriptData& data)
+    : data(data)
 {}
 
-LuaScript::LuaScript(const std::string& filename)
-    : filename(filename)
+ScriptableObject::~ScriptableObject()
 {}
 
-LuaScript::~LuaScript()
-{}
+bool ScriptableObject::hasEventOverride(const std::string& event_name) const {
+    return std::find(this->data.event_overrides.begin(), this->data.event_overrides.end(), event_name) != this->data.event_overrides.end();
+}
 
-void LuaScript::onEvent(const std::string& event) const {
-    runLuaFile(this->filename);
+void ScriptableObject::handleEvent(const std::string& event_name) const {
+    if(!this->hasEventOverride(event_name))
+        return;
     
-    auto script_data = luabridge::getGlobal(game_manager.lua(), "Script");
-
-    const auto& name = script_data["on_event"];
-    if(name == event) {
-        auto execute = script_data["execute"];
-        
-        if(!execute.isNil())
-            execute();
-    }
+    runLuaFile(this->data.filename);
+    auto script = luabridge::getGlobal(game_manager.lua(), "Script");
+    auto event_override = script[event_name];
+    event_override();
+}
 }

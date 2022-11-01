@@ -1,0 +1,32 @@
+A GUI is described by 2 Lua files:
+
+First file is a .luagui file and it describes how a GUI looks.
+It's structure is:
+
+UI = {
+    id        - unique string
+    closeable - if the GUI should have a visible "close" button 
+    movable   - if the GUI can be dragged and moved
+    resizable - if the GUI can be manually resized
+
+    components = {} - list of components. See COMPONENTS below.
+}
+
+Second file is a .luafun file and it describes the behavior of components.
+It's structure is:
+
+functionality = {
+    id - unique string
+
+    components = {} - list of components. See COMPONENTS below.
+}
+
+Each component has unique properties which describe how it looks and how it behaves.
+COMPONENTS:
+Widget
+Button
+Label
+Image
+ImageList
+
+For examples of GUI see ~/data/interface/ folder. 

@@ -15,8 +15,8 @@ class AbstractWidget;
 typedef std::shared_ptr <AbstractWidget> AbstractComponent; 
 
 enum class TriggerType {
-    WIDGET_SELECTED,
-    WIDGET_ALL
+    WIDGET_SELECTED, 
+    WIDGET_ALL      
 };
 
 static std::map <std::string, TriggerType> GUI_EVENT_LIST = {

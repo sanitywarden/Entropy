@@ -2,20 +2,42 @@
 
 #include <string>
 #include <vector>
-#include <Lua/lua.hpp>
+#include <map>
 
 namespace lua {
-class LuaScript { 
-    public:
-        std::string filename;
+static std::vector <std::string> SCRIPTABLE_OBJECT_EVENTS = {
+    "onMouseButtonPress", 
+    "onMouseButtonRelease", 
+    "onLeftMouseButtonPress", 
+    "onRightMouseButtonPress", 
+    "onMiddleMouseButtonPress", 
+    "onKeyPress", 
+    "onKeyRelease", 
+    "onScroll", 
+    "onScrollUp", 
+    "onScrollDown", 
+    "onMouseMove", 
+    "onWindowResize", 
+    "onBuildingConstruct", 
+    "onBuildingDestroy", 
+};
+
+struct ScriptData {
+    std::string filename;
+    std::vector <std::string> event_overrides;
+};
+
+class ScriptableObject { 
+    protected:
+        ScriptData data;
 
     public:
-        LuaScript();
-        LuaScript(const std::string& filename);
-        ~LuaScript();
+        ScriptableObject(const ScriptData& data);
+        ~ScriptableObject();
 
-        void onEvent(const std::string& event) const;
+        bool hasEventOverride(const std::string& event_name) const;
+        void handleEvent(const std::string& event_name) const; 
 };
 }
 
-extern std::vector <lua::LuaScript> SCRIPT_TABLE;
+extern std::vector <lua::ScriptableObject> SCRIPT_TABLE;

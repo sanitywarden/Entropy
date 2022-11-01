@@ -1,9 +1,9 @@
-require "src.scripts.data.globalutilities"
+require "src.lua.data.globalutilities"
 
 Functionality = {
     shouldOpen = function()
         if isKeyPressed("F3") and not isInterfaceVisible("component_debug_tab") then
-            showInterface("component_debug_tab")    
+            showInterface("component_debug_tab")
         end
     end,
     shouldClose = function()
@@ -11,7 +11,6 @@ Functionality = {
             hideInterface("component_debug_tab")
         end
     end,
-    
     components = {
         {
             id = "debug_info",
@@ -44,19 +43,19 @@ Functionality = {
                 end
                 
                 if id == "Regionmap" then
-                    index_region = getRegionIndex()
-                    region = getRegion(index_region)
+                    region_index = getRegionIndex()
+                    region = getRegion(region_index)
 
                     if not mouseIntersectsUI() then
-                        index_tile = getTileIndex()
+                        tile_index = getTileIndex()
                             
-                        if inRegionBounds(index_tile) then 
-                            tile = region:getTileAt(index_tile)
-                            grid = tileGridPosition(index_tile)
+                        if inRegionBounds(tile_index) then 
+                            tile = region:getTileAt(tile_index)
+                            grid = tileGridPosition(tile_index)
                             
-                            text = text .. "Index: " .. index_tile .. "\n"
+                            text = text .. "Index: " .. tile_index .. "\n"
                             text = text .. "Grid: " .. grid.x .. " " .. grid.y  .. "\n"
-                            text = text .. "Occupied: " .. tostring(region:isTileOccupied(index_tile)) .. "\n"
+                            text = text .. "Occupied: " .. tostring(region:isTileOccupied(tile_index)) .. "\n"
                         end
                     end
                 end
@@ -65,21 +64,18 @@ Functionality = {
                     worldmap = getWorldmap()
 
                     if not mouseIntersectsUI() then
-                        index_region = worldmap.current_index
+                        region_index = worldmap.current_index
                         selected_index = worldmap.selected_index
                                                 
-                        text = text .. "Index: " .. index_region .. "\n" 
+                        text = text .. "Index: " .. region_index .. "\n" 
                         text = text .. "Selected: " .. selected_index .. "\n"
                         
-                        if inWorldBounds(index_region) then
-                            region = getRegion(index_region)
-                            
-                            text = text .. region.object_texture .. "\n"
-                            text = text .. region.object_colour.r .. " " .. region.object_colour.g .. " " .. region.object_colour.b .. " " .. region.object_colour.a .. "\n" 
-                        end
-                        
-                        if region:hasOwner() then
-                            text = text .. "Owner: " .. region:getOwnerId() .. "\n" 
+                        if inRegionBounds(region_index) then
+                            region = getRegion(region_index)
+
+                            if region:hasOwner() then
+                                text = text .. "Owner ID: " .. region:getOwnerId() .. "\n" 
+                            end
                         end
                     end
                 end 

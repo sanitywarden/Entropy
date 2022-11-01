@@ -73,6 +73,7 @@ class SimulationManager {
 };
 
 void exitApplication(int code);
+void handleScriptableEvent(const std::string& event_name);
 }
 
 namespace lua {

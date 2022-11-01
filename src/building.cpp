@@ -2,11 +2,11 @@
 #include "region.hpp"
 #include "globalutilities.hpp"
 #include "colours.hpp"
+#include "simulationManager.hpp"
 
 #include <iostream>
 
-using namespace iso;
-
+namespace iso {
 Building::Building() 
     : GameObject(core::Vector3i(0, 0, 0), core::Vector3i(0, 0, 0), core::Vector2i(0, 0), "default", "Building")
 {
@@ -212,4 +212,5 @@ void Building::setBuildingProduction(std::vector <BuildingProduction> production
 
 void Building::setRemovable(bool removable) {
     this->data.removable = removable;
+}
 }

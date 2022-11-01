@@ -501,4 +501,4 @@ int Region::L_getOwnerId() const {
 void Region::L_setOwner(int player_id) {
     this->setOwner(player_id);
 }
-}   
+}

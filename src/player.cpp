@@ -76,12 +76,12 @@ void Player::placeBuilding(Region& region, Building building, core::Vector2i gri
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             auto loop_index = index + calculateRegionIndex(x, y);
             region.buildings[loop_index] = BUILDING_EMPTY;
-            region.buildings[loop_index].setBuildingName(building.getBuildingName());
         }
     }
 
     region.buildings[index] = building;
 
+    handleScriptableEvent("onBuildingConstruct");
     auto regionmap = (Regionmap*)game_manager.gamestate.getGamestate();
     regionmap->recalculate_tree_mesh = true;
 }
@@ -92,6 +92,9 @@ void Player::destroyBuilding(Region& region, core::Vector2i grid) {
         return;
 
     const auto& building = region.getBuildingAtIndex(index);
+    if(building == BUILDING_EMPTY)
+        return;
+
     for(int y = 0; y < building.getBuildingArea().y; y++) {
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             auto loop_index = index + calculateRegionIndex(x, y);
@@ -99,6 +102,7 @@ void Player::destroyBuilding(Region& region, core::Vector2i grid) {
         }
     }
 
+    handleScriptableEvent("onBuildingDestroy");
     auto regionmap = (Regionmap*)game_manager.gamestate.getGamestate();
     regionmap->recalculate_tree_mesh = true;
 }

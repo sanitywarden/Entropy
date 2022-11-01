@@ -1,0 +1,104 @@
+This game supports scripting functionality in Lua.
+The engine exports a lot of functions, classes and properties as it's API. See ENGINE_API below.
+
+A file is treated as a script when:
+1. It's located in one of the paths declared in ~/src/lua/resource/load_scripts.lua
+2. Is a .lua file
+3. Has a table called "Script" with at least one override
+    3.1 The table can have one or more event overrides from EVENT_OVERRIDE_LIST below.
+
+ENGINE_API:
+    CLASSES:
+        Colour()
+        Vector2f()
+        Vector2i()
+        Vector3f()
+        Vector3i()
+        Ratio()
+        GameObject()
+        Gamestate()
+        Worldmap()
+        Regionmap()
+        Building()
+        Biome()
+        Tile()
+        Region()
+        Player()
+        Label()
+        ImageList()
+    FREE FUNCTIONS:
+        loadTexture()
+        loadFont()
+        loadScheduledEvent()
+        createIcon()
+
+        setGamestate()
+        getCurrentGamestate()
+        getGamestate()
+        getWorldmap()
+        getRegionmap()
+        mouseIntersectsUI()
+        getInterfaceUnderMouse()
+        getInterfaceItemUnderMouse()
+        showInterface()
+        hideInterface()
+        isInterfaceVisible()
+        getMousePosition()
+        getMousePositionInterface()
+
+        getFPS()
+        getFrameTime()
+        exitApplication()
+
+        getWindowSize()
+        getWindowHeight()
+        getWindowWidth()
+        inScreenSpace()
+        drawGameObject()
+        drawBuilding()
+        setVSync()
+        setMaxFramerate()
+        takeScreenshot()
+
+        isKeyPressed()
+        isLeftMouseButtonPressed()
+        isRightMouseButtonPressed()
+        isMiddleMouseButton()
+
+        getComponentLabel()
+        getComponentImageList()
+
+        getRegionIndex()
+        getTileIndex()
+        getRegion()
+        inWorldBounds()
+        inRegionBounds()
+        tileGridPosition()
+        tileSize()
+
+        generateRegion()
+        generateWorld()
+
+        getPlayer()
+        getHumanPlayer()
+        isHumanPlayer()
+    VARIABLES:
+        gamedata.BUILDING_TABLE
+        gamedata.BIOME_TABLE
+        gamedata.ITEM_TABLE
+        gamedata.RESOURCE_TABLE
+        gamedata.WORLD_MAP
+
+EVENT_OVERRIDE_LIST:
+    onMouseButtonPress()
+    onMouseButtonRelease()
+    onLeftMouseButtonPress()
+    onRightMouseButtonPress()
+    onMiddleMouseButtonPress()
+    onKeyPress()
+    onKeyRelease()
+    onScroll()
+    onScrollUp()
+    onScrollDown()
+    onMouseMove()
+    onWindowResize()
