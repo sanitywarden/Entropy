@@ -1,0 +1,34 @@
+UI = {
+    id = "component_stockpile",
+    closeable = true,
+    movable = false,
+    resizable = false,
+    
+    components = {
+        {
+            component_type = "Widget",
+            parent_id = "*",
+            id = "main_widget",
+            texture = "ui_base",
+            position = {
+                corner_tl = Ratio("0%", "45%"),
+                corner_br = Ratio("30%", "100%")
+            }
+        },
+        {
+            component_type = "ImageList",
+            parent_id = "main_widget",
+            id = "imagelist_item_icons",
+                
+            position = {
+                corner_tl = Ratio("0%", "0%"),
+                corner_br = Ratio("100%", "100%")
+            },
+
+            separator = {
+                corner = Ratio("5%", "5%"),
+                image = Ratio("2.5%", "2.5%")
+            }
+        }
+    }
+}

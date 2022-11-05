@@ -8,23 +8,23 @@
 namespace iso {
 int GameObject::instance_id = 0;
 GameObject::GameObject() 
-    : object_name("*"), object_position(core::Vector3i(0, 0, 0)), object_size(core::Vector2i(0, 0)), object_texture_name("*"), object_colour(COLOUR_BLACK)
+    : object_name("*"), object_position(core::Vector3i(0, 0, 0)), object_size(core::Vector2i(0, 0)), object_texture_name("*"), object_colour(COLOUR_BLACK), index(-1)
 { instance_id++; }
 
 GameObject::GameObject(const GameObject& object) 
-    : object_name(object.getName()), object_position(object.getPosition()), object_size(object.getSize()), object_texture_name(object.getTextureName()), object_colour(object.getColour())
+    : object_name(object.getName()), object_position(object.getPosition()), object_size(object.getSize()), object_texture_name(object.getTextureName()), object_colour(object.getColour()), index(object.getIndex())
 { instance_id++; }
 
 GameObject::GameObject(core::Vector3i position, core::Vector3i relative_position, core::Vector2i size, const std::string& texture_name) 
-    : object_name("*"), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
+    : object_name("*"), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK), index(-1)
 { instance_id++; }
 
 GameObject::GameObject(core::Vector3i position, core::Vector3i relative_position, core::Vector2i size, const std::string& texture_name, const std::string& object_name) 
-    : object_name(object_name), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
+    : object_name(object_name), object_position(position + relative_position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK), index(-1)
 { instance_id++; }
 
 GameObject::GameObject(core::Vector3i position, core::Vector2i size, const std::string& texture_name)
-    : object_name("*"), object_position(position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK)
+    : object_name("*"), object_position(position), object_size(size), object_texture_name(texture_name), object_colour(COLOUR_BLACK), index(-1)
 { instance_id++; }
 
 GameObject::~GameObject() 
@@ -73,12 +73,11 @@ int GameObject::getInstanceId() const {
     return instance_id;
 }
 
-void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    if(states.texture == nullptr) {
-        printError("GameObject::draw()", "Texture is nullptr");
-        return;
-    }
+int GameObject::getIndex() const {
+    return this->index;
+}
 
+void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     sf::VertexArray game_object(sf::Quads, 4);
 
     auto position2d = this->getPosition2D().asSFMLVector2f();

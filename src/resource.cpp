@@ -1,10 +1,12 @@
 #include "resource.hpp"
 #include "region.hpp"
+#include "simulationManager.hpp"
+#include "globalutilities.hpp"
+#include "item.hpp"
 
 #include <iostream>
 
-using namespace iso;
-
+namespace iso {
 Resource::Resource() 
 {}
 
@@ -67,9 +69,9 @@ int Resource::getPatchSize() const {
     return this->data.patch_size;
 }
 
-bool Resource::isTileValid(GameObject* object, int index) const {
-    const auto* region = (Region*)(object);
-    const auto& tile = region->map[index];
+bool Resource::isTileValid(int region_index, int tile_index) const {
+    const auto& region = game_manager.world_map.at(region_index);
+    const auto& tile = region.map.at(tile_index);
 
     int requirements_passed = 0;
     int requirements_all = this->data.tile_requirements.size();
@@ -84,7 +86,7 @@ bool Resource::isTileValid(GameObject* object, int index) const {
         if(property == "WATER" && tile.tiletype.is_water())
             requirements_passed++;
 
-        if(property == "UNOCCUPIED" && !region->isSpotOccupied(index))
+        if(property == "UNOCCUPIED" && !region.isSpotOccupied(region_index))
             requirements_passed++;
 
         if(property == "RIVER" && tile.tiletype.is_river())
@@ -100,8 +102,8 @@ bool Resource::isTileValid(GameObject* object, int index) const {
     return requirements_passed == requirements_all;
 }
 
-bool Resource::isRegionValid(GameObject* object) const {
-    const auto* region = (Region*)(object);
+bool Resource::isRegionValid(int region_index) const {
+    const auto& region = game_manager.world_map.at(region_index);
     
     int requirements_passed = 0;
     int requirements_all = this->data.region_requirements.size();
@@ -113,44 +115,44 @@ bool Resource::isRegionValid(GameObject* object) const {
         if(property == "ALL")
             return true;
         
-        if(property == "WATER" && region->regiontype.is_water())
+        if(property == "WATER" && region.regiontype.is_water())
             requirements_passed++;
         
-        if(property == "DRY" && !region->regiontype.is_water())
+        if(property == "DRY" && !region.regiontype.is_water())
             requirements_passed++;
         
-        if(property == "LAKE" && region->regiontype.is_lake())  
+        if(property == "LAKE" && region.regiontype.is_lake())  
             requirements_passed++;
         
-        if(property == "RIVER" && region->regiontype.is_river())
+        if(property == "RIVER" && region.regiontype.is_river())
             requirements_passed++;
 
-        if(property == "COAST" && region->regiontype.is_coast())
+        if(property == "COAST" && region.regiontype.is_coast())
             requirements_passed++;
 
-        if(property == "FOREST" && region->regiontype.is_forest())
+        if(property == "FOREST" && region.regiontype.is_forest())
             requirements_passed++;
 
-        if(property == "COLD" && region->temperature_text == "COLD")
+        if(property == "COLD" && region.temperature_text == "COLD")
             requirements_passed++;
         
-        if(property == "WARM" && region->temperature_text == "WARM")
+        if(property == "WARM" && region.temperature_text == "WARM")
             requirements_passed++;
         
-        if(property == "TROPICAL" && region->temperature_text == "TROPICAL")
+        if(property == "TROPICAL" && region.temperature_text == "TROPICAL")
             requirements_passed++;
         
-        if(property == "HOT" && region->temperature_text == "HOT")
+        if(property == "HOT" && region.temperature_text == "HOT")
             requirements_passed++;
     }
 
     return requirements_passed == requirements_all;
 }
 
-void Resource::placeResource(GameObject* object, int index) const {
-    auto* region = (Region*)(object);
-    region->map[index].object_texture_name = this->getResourceTexture();
-    region->resources[index] = *this;
+void Resource::placeResource(int region_index, int tile_index) const {
+    auto& region = game_manager.world_map.at(region_index);
+    region.map[tile_index].setTextureName(this->getResourceTexture());
+    region.resources[tile_index] = *this;
 }
 
 bool Resource::isSingleObject() const {
@@ -167,4 +169,35 @@ bool Resource::operator!= (const Resource& resource) const {
 
 bool Resource::canBeGenerated(GameObject* object) const {
     return true;
+}
+
+void Resource::setResourceName(const std::string& name) {
+    this->data.name = name;
+}
+
+void Resource::setResourceDescription(const std::string& description) {
+    this->data.description = description;
+}
+
+void Resource::setResourceTexture(const std::string& texture) {
+    this->data.texture = texture;
+}
+
+void Resource::setResourceIcon(const std::string& icon_texture) {
+    this->data.icon_texture = icon_texture;
+}
+
+void Resource::setResourceType(const std::string& resource_type) {
+    this->data.type = resource_type;
+}
+
+StorageItem Resource::asItem() const {
+    for(const auto& item : ITEM_TABLE) {
+        if(this->getResourceName() == item.getItemName())
+            return item;
+    }
+
+    printError("Resource::asItem()", "Resource '" + this->getResourceName() + "' does not have a corresponding item");
+    return StorageItem();
+}
 }

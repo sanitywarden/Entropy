@@ -19,6 +19,7 @@ namespace iso {
             core::Vector2i object_size;         // Object's size, equivalent of the texture size.
             std::string    object_texture_name; // Object's texture name.
             core::Colour   object_colour;
+            int            index;
 
         public:
             GameObject();
@@ -39,6 +40,7 @@ namespace iso {
             const std::string& getTextureName() const;
             core::Colour       getColour()      const;
             int                getInstanceId()  const;
+            int                getIndex()       const;
 
             void setName(const std::string& name);
             void setPosition(core::Vector3i position);

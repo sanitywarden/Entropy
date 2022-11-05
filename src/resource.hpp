@@ -24,6 +24,8 @@ struct ResourceData {
     std::vector <std::string> region_requirements; // Resource requires the region to have these properties.
 };
 
+class StorageItem;
+
 // Resource is a special commodity that may be generated in a region upon visiting.
 // They may be common or rare.
 // Certain resources exist only in specific areas of the world. 
@@ -51,12 +53,20 @@ class Resource {
         int   getPatchSize()        const;
         bool  canBeGenerated(GameObject* object) const;
 
+        void setResourceName(const std::string& name);
+        void setResourceDescription(const std::string& description);
+        void setResourceTexture(const std::string& texture);
+        void setResourceIcon(const std::string& icon_texture);
+        void setResourceType(const std::string& resource_type);
+
+        StorageItem asItem() const;
+
         // Is tile valid for resource placement.
-        bool isTileValid(GameObject* region, int index) const;
+        bool isTileValid(int region_index, int tile_index) const;
         
         // Is region valid for resource generation.
-        bool isRegionValid(GameObject* region) const;
-        void placeResource(GameObject* region, int index) const;
+        bool isRegionValid(int region_index) const;
+        void placeResource(int region_index, int tile_index) const;
         
         // The resource might not be a patch, such as stone or flint.
         // Perhaps it is a Animal Spot which is only a single resource.

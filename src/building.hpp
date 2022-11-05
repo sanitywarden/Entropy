@@ -69,7 +69,7 @@ class Building : public GameObject {
         bool isProductionBuilding() const;
         bool isHarvestBuilding()    const;
         bool isRemovable()          const;
-        bool isTileHarvestable(GameObject* region, int index) const;
+        bool isTileHarvestable(int region_index, int tile_index) const;
 
         void setBuildingName(const std::string& name);
         void setBuildingDescription(const std::string& description);

@@ -1,0 +1,49 @@
+Functionality = {
+    id = "component_stockpile",
+
+    shouldOpen = function()
+        if isKeyPressed("I") and not isInterfaceVisible("component_stockpile") then
+            showInterface("component_stockpile")
+        end
+    end,
+    shouldClose = function()
+        if isKeyPressed("I") and isInterfaceVisible("component_stockpile") then
+            hideInterface("component_stockpile")
+        end
+    end,
+    components = {
+        {
+            id = "imagelist_item_icons",
+            
+            onShow = function()
+                updateImageList()
+            end
+        }
+    }
+}
+
+Script = {
+    onHarvestTick = function()
+        gamestate = getCurrentGamestate()
+        if gamestate:getID() == "Regionmap" then
+            if isInterfaceVisible("component_stockpile") then
+                updateImageList()
+            end
+        end
+    end
+}
+
+function updateImageList() 
+    list_component = getComponentImageList("component_stockpile", "imagelist_item_icons")
+    list = {}
+    
+    regionmap = getRegionmap()
+    region = getRegion(regionmap.region_index)
+    stockpile = region:getStockpile()
+    
+    for i = 1, rawlen(stockpile), 1 do
+        table.insert(list, stockpile[i].icon)
+    end    
+    
+    list_component:setImageList(list)
+end 

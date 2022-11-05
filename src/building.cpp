@@ -34,6 +34,9 @@ void Building::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         return;
     }
 
+    if(this->getBuildingName() == "Empty")
+        return;
+
     sf::VertexArray game_object(sf::Quads, 4);
 
     auto position2d = this->getPosition2D().asSFMLVector2f();
@@ -128,14 +131,13 @@ bool Building::operator!= (const Building& building) const {
     return !(*this == building);  
 }
 
-bool Building::isTileHarvestable(GameObject* object, int index) const {
+bool Building::isTileHarvestable(int region_index, int tile_index) const {
     if(!this->isHarvestBuilding())
         return false;
 
-    auto* region = static_cast<Region*>(object); 
-    
-    if(region->resourceExistsAt(index)) {
-        const auto& resource = region->getResourceAt(index);
+    auto& region = game_manager.world_map.at(region_index); 
+    if(region.resourceExistsAt(tile_index)) {
+        const auto& resource = region.getResourceAt(tile_index);
         for(const auto& item : this->data.harvests) {
             if(item.name == resource.getResourceName())
                 return true;
@@ -145,7 +147,7 @@ bool Building::isTileHarvestable(GameObject* object, int index) const {
 
     else {
         for(const auto& item : this->data.harvests) {
-            if(item.name == "Tree" && region->treeExistsAt(index))
+            if(item.name == "Tree" && region.treeExistsAt(tile_index))
                 return true;
         }
     }
