@@ -1,13 +1,20 @@
 Script = {
-    onBuildingConstruct = function()
-        print("Building placed")
-    end,
+    onKeyPress = function()
+        gamestate = getCurrentGamestate()
+        if gamestate:getID() ~= "Worldmap" or isInputBlocked() then
+            return
+        end
 
-    onBuildingDestroy = function()
-        print("Building destroyed")
-    end,
+        if isKeyPressed("ESCAPE") then
+            exitApplication(0)
+        end
 
-    onProductionTick = function()
-        print("Production tick")
+        if isKeyPressed("R") then
+            generateWorld()
+        end
+
+        if isKeyPressed("F12") then
+            takeScreenshot()
+        end
     end
 }

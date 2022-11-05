@@ -11,6 +11,9 @@ loadTexture("./res/ui/buildings/icon_building_toolmaker.png"      , "icon_templa
 loadTexture("./res/ui/buildings/icon_building_well.png"           , "icon_template_building_well"           , Vector2i(0, 0), Vector2i(48, 48))
 loadTexture("./res/ui/buildings/icon_building_water_collector.png", "icon_template_building_water_collector", Vector2i(0, 0), Vector2i(48, 48))
 
+loadTexture("./res/ui/items/icon_item_clay.png"   , "icon_template_item_clay"   , Vector2i(0, 0), Vector2i(48, 48))
+loadTexture("./res/ui/items/icon_item_clay.png"   , "icon_template_item_copper" , Vector2i(0, 0), Vector2i(48, 48))
+loadTexture("./res/ui/items/icon_item_clay.png"   , "icon_template_item_tin" , Vector2i(0, 0), Vector2i(48, 48))
 loadTexture("./res/ui/items/icon_item_flint.png"  , "icon_template_item_flint"  , Vector2i(0, 0), Vector2i(48, 48))
 loadTexture("./res/ui/items/icon_item_stone.png"  , "icon_template_item_stone"  , Vector2i(0, 0), Vector2i(48, 48))
 loadTexture("./res/ui/items/icon_item_wood.png"   , "icon_template_item_wood"   , Vector2i(0, 0), Vector2i(48, 48))
@@ -105,6 +108,9 @@ createIcon("icon_template_building_well")
 createIcon("icon_template_building_water_collector")
 
 -- Item / resource icons
+createIcon("icon_template_item_clay")
+createIcon("icon_template_item_copper")
+createIcon("icon_template_item_tin")
 createIcon("icon_template_item_flint")
 createIcon("icon_template_item_stone")
 createIcon("icon_template_item_wood")

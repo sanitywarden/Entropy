@@ -2,6 +2,7 @@
 #include "globalutilities.hpp"
 #include "simulationManager.hpp"
 #include "image.hpp"
+#include "interfacePage.hpp"
 
 namespace gui {
 ImageList::ImageList(const WidgetData& data, core::Vector2f corner_ratio, core::Vector2f image_ratio) 
@@ -21,16 +22,18 @@ void ImageList::L_setImageList(luabridge::LuaRef reference) {
         return;
     }
 
+    if(!reference.length())
+        return;
+
     auto list = lua::readVectorString(reference);
     this->setImageList(list);
 }
 
 void ImageList::createUI(const std::vector <std::string>& texture_list) {
-    this->data.components.clear();
+    if(!texture_list.size())
+        return;
 
-    auto texture_name = texture_list.at(0);
-    auto texture_size = game_manager.resource.getTextureSize(texture_name);
-    
+    this->data.components = std::map <std::string, AbstractComponent> ();
     for(int i = 0; i < texture_list.size(); i++) {
         auto image_data = this->calculateItemData(texture_list, i);
         auto image = ImageComponent(new Image(image_data, texture_list.at(i)));
@@ -67,10 +70,11 @@ WidgetData ImageList::calculateItemData(const std::vector <std::string>& texture
             break; 
     }
 
-    if(!row)
-        iso::printError("ImageList::calculateItemData()", "Row size is 0");
+    if(row <= 0)
+        iso::printError("ImageList::calculateItemData()", "Row size is not a positive integer: " + std::to_string(row));
 
-    int space = (widget_size.x + -2 * offset.x + -row * image_size.x) / (row - 1);
+    int divisor = (row - 1) == 0 ? row : row - 1;
+    int space = (widget_size.x + -2 * offset.x + -row * image_size.x) / divisor;
     int x     = image_index % row;
     int y     = image_index / row;
     int ri    = image_index - (y * row); // Item index in the row.
@@ -111,6 +115,13 @@ WidgetData ImageList::calculateItemData(const std::vector <std::string>& texture
     data.size          = image_size;
     data.widget_id     = "image_" + texture_list.at(image_index); 
     data.parent        = nullptr;
+
+    // Assume that the parent of a gui::ImageList is always a gui::InterfacePage
+    if(this->hasParent()) {
+        auto* page = (InterfacePage*)this->getParent();
+        data.parent = page->getComponent(this->getWidgetID());
+    }
+
     data.draw_priority = this->getDrawPriority() + 1;
     data.draw          = true;
 
@@ -123,5 +134,4 @@ void ImageList::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         target.draw(*component);
     }
 }
-
 }

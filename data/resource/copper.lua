@@ -8,7 +8,7 @@ Resource = {
     type = "Raw Material",
     minimum_occurence = 0,
     maximum_occurence = 1,
-    generation_chance = 0.1,
+    generation_chance = 0.9,
     patch_size = 3,
     region = {
         "ALL",

@@ -80,7 +80,6 @@ class AbstractWidget : public sf::Drawable {
         AbstractWidget* const getParent() const;
         bool hasParent() const;
 
-
         void setVisible(bool visible);
         bool isVisible() const;
         void toggleVisibile();
@@ -96,6 +95,7 @@ class AbstractWidget : public sf::Drawable {
         void addComponent(AbstractComponent component);
         void removeComponent(const std::string& id);
         bool hasChildren() const;
+        std::map <std::string, AbstractComponent>& getChildren();
 
         const WidgetData& getWidgetData() const;
 };

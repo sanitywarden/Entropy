@@ -1,5 +1,6 @@
 #include "abstractWidget.hpp"
 #include "simulationManager.hpp"
+#include "globalutilities.hpp"
 
 #include <iostream>
 
@@ -100,6 +101,11 @@ bool AbstractWidget::hasEventOverride(const std::string& event_name) const {
 
 void AbstractWidget::addComponent(AbstractComponent component) {
     auto id = component.get()->getWidgetID();
+    
+    if(this->data.components.count(id)) {
+        iso::printWarning("AbstractWidget::addComponent()", "Component with id '" + id + "' already exists in '" + this->getWidgetID() + "' - Swapping components");
+    }
+
     this->data.components[id] = component;
 }
 
@@ -111,8 +117,11 @@ bool AbstractWidget::hasChildren() const {
     return this->data.components.size() > 0;
 }
 
+std::map <std::string, AbstractComponent>& AbstractWidget::getChildren() {
+    return this->data.components;
+}
+
 const WidgetData& AbstractWidget::getWidgetData() const {
     return this->data;
 }
-
 }

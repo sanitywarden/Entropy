@@ -28,6 +28,7 @@ Functionality = {
             onLeftMouseButtonPress = function() 
                 regionmap = getRegionmap()
                 regionmap.region_index = current_region_index
+
                 setGamestate("Regionmap")
             end,
             onKeyPress = function(key_name)
@@ -60,6 +61,11 @@ Functionality = {
                 
                 text = ""
                 text = text .. "#" .. current_region_index .. " | " .. region:getBiome().name .. "\n" 
+                
+                if region:hasOwner() then
+                    player = getPlayer(region:getOwnerId())
+                    text = text .. "Owner | " .. player.country .. "\n"
+                end
 
                 self.text = text 
             end

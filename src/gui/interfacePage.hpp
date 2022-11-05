@@ -51,7 +51,6 @@ class InterfacePage : public AbstractWidget {
         ~InterfacePage();
 
         void createUI();
-
         void handleGUIEvent(const std::string& event_name) const;
         void checkShouldOpen() const;
         void checkShouldClose() const;

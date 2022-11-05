@@ -79,7 +79,7 @@ Functionality = {
                         end
                     end
                 end 
-
+                
                 label.text = text
             end
         }
