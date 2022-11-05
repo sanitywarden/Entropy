@@ -100,10 +100,15 @@ class Region : public GameObject {
         bool L_hasOwner() const;
         int  L_getOwnerId() const;
         void L_setOwner(int player_id);
+        void L_stockpileAdd(StorageItem item);
+        void L_stockpileRemove(StorageItem item);
+        bool L_inStockpile(StorageItem item);
+        std::vector <Building> L_getBuildingList() const; 
+        std::vector <StorageItem> L_getStockpile() const;
 
     public:
         RegionType regiontype;
-        Biome      biome;
+        Biome biome;
 
         int owner_id;
 

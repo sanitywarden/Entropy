@@ -119,6 +119,7 @@ void WorldGenerator::generateWorld() {
             this->m_region.object_position.y = panelSize() * y;
             this->m_region.object_position.z = 0;
             this->m_region.object_size       = core::Vector2i(panelSize(), panelSize());
+            this->m_region.index = index;
 
             game_manager.world_map[index] = this->m_region;
         }
@@ -1233,6 +1234,7 @@ void WorldGenerator::generateRegion(int region_index) {
                 this->m_tile.object_texture_name = biome_tile;
             }
 
+            this->m_tile.index = index;
             region.map[index] = this->m_tile;
         }
     }
@@ -1424,7 +1426,7 @@ void WorldGenerator::generateRegion(int region_index) {
     // Generate region resources.
     std::cout << "[]: Generating resources.\n";
     for(const auto& resource: RESOURCE_TABLE) {
-        this->generateResourcePatch(region, resource);
+        this->generateResourcePatch(region_index, resource);
     }
 
     const float time_rounded = std::ceil(clock.getElapsedTime().asSeconds() * 100) / 100;
@@ -1445,11 +1447,12 @@ std::string WorldGenerator::extractBaseTexture(const std::string& id, const Biom
     return extract_string;
 }
 
-void WorldGenerator::generateResourcePatch(Region& region, const Resource& resource) {
+void WorldGenerator::generateResourcePatch(int region_index, const Resource& resource) {
     auto patch_size = resource.getPatchSize();
+    auto& region = game_manager.world_map.at(region_index);
 
     auto already_generated_patches = 0;
-    if(resource.isRegionValid(&region)) {
+    if(resource.isRegionValid(region_index)) {
         for(int patch_no = 0; patch_no < resource.getMaximumOccurence(); patch_no++) {
             auto base_generation_chance = resource.getGenerationChance();
             auto power = already_generated_patches > 0
@@ -1470,15 +1473,15 @@ void WorldGenerator::generateResourcePatch(Region& region, const Resource& resou
 
             while(!spot_is_valid) {
                 patch_tile_index = rand() % getRegionSize();
-                spot_is_valid = resource.isTileValid(&region, patch_tile_index);
+                spot_is_valid = resource.isTileValid(region_index, patch_tile_index);
             }
 
             already_generated_patches++;
             const auto& tile_selected = region.getTileAtIndex(patch_tile_index);
             const auto  tile_grid = tileGridPosition(patch_tile_index);
 
-            if(resource.isSingleObject() && resource.isTileValid(&region, patch_tile_index)) {
-                resource.placeResource(&region, patch_tile_index);
+            if(resource.isSingleObject() && resource.isTileValid(region_index, patch_tile_index)) {
+                resource.placeResource(region_index, patch_tile_index);
                 continue;
             }
 
@@ -1519,8 +1522,8 @@ void WorldGenerator::generateResourcePatch(Region& region, const Resource& resou
                         
                         const int radius_modified = patch_size * (1.00f + container[angle]);
                         const bool point_inside = inCircle(grid_point, grid_centre, radius_modified);
-                        if(point_inside && resource.isTileValid(&region, index)) {
-                            resource.placeResource(&region, index);
+                        if(point_inside && resource.isTileValid(region_index, index)) {
+                            resource.placeResource(region_index, index);
                             angle++;
                         }
                     }

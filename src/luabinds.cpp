@@ -3,6 +3,7 @@
 #include "globalutilities.hpp"
 #include "worldData.hpp"
 
+#include <map>
 #include <LuaBridge/Vector.h>
 #include <LuaBridge/Map.h>
 
@@ -54,6 +55,7 @@ void registerLua() {
             .addProperty("object_colour"     , iso::GameObject::getColour     , iso::GameObject::setColour)
             .addProperty("object_instance_id", iso::GameObject::getInstanceId)
             .addProperty("object_position2d" , iso::GameObject::getPosition2D)
+            .addProperty("index", iso::GameObject::getIndex)
             .addFunction("exists"     , iso::GameObject::exists)
             .addFunction("contains"   , iso::GameObject::contains)
             .addFunction("hasName"    , iso::GameObject::hasName)
@@ -81,6 +83,8 @@ void registerLua() {
             .addProperty("harvest"    , Building::getBuildingHarvests   , Building::setBuildingHarvests)
             .addProperty("production" , Building::getBuildingProduction , Building::setBuildingProduction)
             .addProperty("removable"  , Building::isRemovable           , Building::setRemovable)
+            .addFunction("isProductionBuilding", Building::isProductionBuilding)
+            .addFunction("isHarvestBuilding"   , Building::isHarvestBuilding)
         .endClass()
         .beginClass <Biome> ("Biome")
             .addProperty("name"               , Biome::getBiomeName            , Biome::setBiomeName)
@@ -92,6 +96,21 @@ void registerLua() {
             .addProperty("wmap_forest_texture", Biome::getWorldmapForestTexture, Biome::setWorldmapForestTexture)
             .addProperty("tile_list"          , Biome::getBiomeTileList        , Biome::setBiomeTileList)
             .addProperty("tree_list"          , Biome::getBiomeTreeList        , Biome::setBiomeTreeList)
+        .endClass()
+        .beginClass <Resource> ("Resource")
+            .addProperty("name"       , Resource::getResourceName       , Resource::setResourceName)
+            .addProperty("description", Resource::getResourceDescription, Resource::setResourceDescription)
+            .addProperty("texture"    , Resource::getResourceTexture    , Resource::setResourceTexture)
+            .addProperty("icon"       , Resource::getIconTexture        , Resource::setResourceIcon)
+            .addProperty("type"       , Resource::getResourceType       , Resource::setResourceType)
+            .addFunction("asItem"     , Resource::asItem)
+        .endClass()
+        .beginClass <StorageItem> ("Item")
+            .addProperty("name"       , StorageItem::getItemName)
+            .addProperty("description", StorageItem::getItemDescription)
+            .addProperty("icon"       , StorageItem::getIconTexture)
+            .addProperty("type"       , StorageItem::getItemType)
+            .addProperty("amount"     , StorageItem::getAmount)
         .endClass()
         .deriveClass <Tile, GameObject> ("Tile")
             .addFunction("isTerrain", Tile::isTerrain)
@@ -127,12 +146,18 @@ void registerLua() {
             .addFunction("demolishBuilding"       , Region::L_demolishBuilding)
             .addFunction("hasOwner"               , Region::L_hasOwner)
             .addFunction("getOwnerId"             , Region::L_getOwnerId)
+            .addFunction("stockpileAdd"           , Region::L_stockpileAdd)
+            .addFunction("stockpileRemove"        , Region::L_stockpileRemove)
+            .addFunction("inStockpile"            , Region::L_inStockpile)
+            .addFunction("getBuildingList"        , Region::L_getBuildingList)
+            .addFunction("getStockpile"           , Region::L_getStockpile)
         .endClass()
         .beginClass <Player> ("Player") 
             .addProperty("id"        , Player::getID)
             .addProperty("is_human"  , Player::isHuman)
             .addProperty("capital"   , Player::getCapital)
             .addProperty("origin"    , Player::getInitialSpawn)
+            .addProperty("country"   , Player::getCountryName)
             .addProperty("culture"   , Player::getCultureGroup)
             .addProperty("colour"    , Player::getCountryColourFull)
             .addProperty("map_colour", Player::getCountryColourTransparent)            
@@ -140,12 +165,25 @@ void registerLua() {
             .addFunction("hasDiscoveredRegion", Player::discoveredRegion)
             .addFunction("addKnownRegion"     , Player::addKnownRegion)
         .endClass()
-        .beginClass <gui::Label> ("Label")
+        .beginClass <gui::AbstractWidget> ("AbstractComponent")
+            .addProperty("id"              , gui::AbstractWidget::getWidgetID)
+            .addProperty("position"        , gui::AbstractWidget::getWidgetPosition)
+            .addProperty("size"            , gui::AbstractWidget::getWidgetSize)
+            .addProperty("draw_priority"   , gui::AbstractWidget::getDrawPriority)
+            .addProperty("should_draw"     , gui::AbstractWidget::isVisible, gui::AbstractWidget::setVisible)
+            .addFunction("hasParent"       , gui::AbstractWidget::hasParent)
+            .addFunction("getParent"       , gui::AbstractWidget::getParent)
+            .addFunction("hasChildren"     , gui::AbstractWidget::hasChildren)
+            .addFunction("getChildren"     , gui::AbstractWidget::getChildren)
+            .addFunction("hasEventOverride", gui::AbstractWidget::hasEventOverride)
+            .addFunction("containsPoint"   , gui::AbstractWidget::containsPoint)
+        .endClass()
+        .deriveClass <gui::Label, gui::AbstractWidget> ("Label")
             .addProperty("text"  , gui::Label::getString, gui::Label::setString)
             .addProperty("colour", gui::Label::getColour, gui::Label::setColour)
             .addProperty("font"  , gui::Label::getFont  , gui::Label::setFont)
         .endClass()
-        .beginClass <gui::ImageList> ("ImageList")
+        .deriveClass <gui::ImageList, gui::AbstractWidget> ("ImageList")
             .addFunction("setImageList", gui::ImageList::L_setImageList)
         .endClass()
         
@@ -191,6 +229,8 @@ void registerLua() {
         .addFunction("isLeftMouseButtonPressed"  , &lua::L_isLeftMouseButtonPressed)
         .addFunction("isRightMouseButtonPressed" , &lua::L_isRightMouseButtonPressed)
         .addFunction("isMiddleMouseButtonPressed", &lua::L_isMiddleMouseButtonPressed)
+        .addFunction("isInputBlocked"            , &lua::L_isInputBlocked)
+        .addFunction("blockInput"                , &lua::L_blockInput)
 
         // GUI
         .addFunction("getComponentLabel"         , &lua::L_getComponentLabel)
@@ -203,8 +243,8 @@ void registerLua() {
         .addFunction("inWorldBounds"             , &lua::L_inWorldBounds)
         .addFunction("inRegionBounds"            , &lua::L_inRegionBounds)
         .addFunction("tileGridPosition"          , &lua::L_tileGridPosition)
-        .addFunction("tileSize"                  , &iso::tileSize)
-
+        .addFunction("produce"                   , &lua::L_tickProduction)
+        .addFunction("harvest"                   , &lua::L_tickHarvest)
         // World generation
         .addFunction("generateRegion"            , &lua::L_generateRegion)
         .addFunction("generateWorld"             , &lua::L_generateWorld)
@@ -221,6 +261,9 @@ void registerLua() {
             .addVariable("ITEM_TABLE"    , &ITEM_TABLE            , false)
             .addVariable("RESOURCE_TABLE", &RESOURCE_TABLE        , false)
             .addVariable("WORLD_MAP"     , &game_manager.world_map, false)
+            .addVariable("WORLD_WIDTH"   , &world_data.w_width)
+            .addVariable("REGION_WIDTH"  , &world_data.r_width)
+            .addVariable("TILE_SIZE"     , &world_data.tile_size)
         .endNamespace()
     ;
 }
@@ -530,5 +573,74 @@ Player* L_getPlayer(int player_id) {
 
 bool L_isHumanPlayer(int player_id) {
     return game_manager.isHumanPlayer(player_id);
+}
+
+bool L_isInputBlocked() {
+    auto gamestate = game_manager.gamestate.getGamestate();
+    return gamestate->controls.isInputBlocked();
+}
+
+void L_blockInput(bool block) {
+    auto gamestate = game_manager.gamestate.getGamestate();
+    gamestate->controls.blockKeyboardInput(block);
+}
+
+void L_tickProduction(int region_index, int tile_index) {
+
+}
+
+void L_tickHarvest(int region_index, int tile_index) {
+    if(!inWorldBounds(region_index)) {
+        printError("L_tickHarvest()", "Region index out of bounds");
+        return;
+    }
+
+    if(!inRegionBounds(region_index)) {
+        printError("L_tickHarvest()", "Tile index out of bounds");
+        return;
+    }
+
+    auto& region = game_manager.world_map.at(region_index);
+    if(!region.buildingExistsAtIndex(tile_index)) {
+        printError("L_tickHarvest()", "There is no building at index '" + std::to_string(tile_index) + "'");
+        return;
+    }    
+
+    const auto& building = region.getBuildingAtIndex(tile_index);
+    if(!building.isHarvestBuilding())
+        return;
+    
+    std::map <std::string, int> harvested_items;
+    for(int y = -building.getBuildingArea().y; y <= building.getBuildingArea().y + 1; y++) {
+        for(int x = -building.getBuildingArea().x; x <= building.getBuildingArea().x + 1; x++) {
+            auto index = tile_index + calculateRegionIndex(x, y);
+            
+            if(building.isTileHarvestable(region_index, index)) {
+                for(const auto& harvested_resource : building.getBuildingHarvests()) {
+                    if(region.treeExistsAt(index) && harvested_resource.name == "Tree")
+                        harvested_items["Wood"]++;
+
+                    else if(region.getResourceAt(tile_index).getResourceName() == harvested_resource.name)
+                        harvested_items[harvested_resource.name]++;
+                }
+            }
+        }
+    }
+
+    std::vector <StorageItem> resources_as_items;
+    for(auto harvested_item : harvested_items) {
+        for(auto item : ITEM_TABLE) {
+            if(harvested_item.first == item.getItemName() && harvested_item.second ) {
+                item.setAmount(harvested_item.second);
+                resources_as_items.push_back(item);
+            }
+        }
+    }
+
+    for(auto item : resources_as_items)
+        region.stockpileAdd(item);
+
+    // Create the resource and add it to stockpile
+    // Make a interface where you display region's stockpile
 }
 }

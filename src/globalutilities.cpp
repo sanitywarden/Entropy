@@ -277,6 +277,10 @@ void printError(const std::string& where, const std::string& message) {
     exit(1);
 }
 
+void printWarning(const std::string& where, const std::string& message) {
+    std::cout << where << ": " << message << "\n"; 
+}
+
 core::Colour getRandomColour() {
     core::Colour colour;
     colour.r = randomInclusiveBetween(0, 255);

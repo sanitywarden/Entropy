@@ -125,33 +125,6 @@ void Worldmap::handleInput() {
         }
 
         if(event_name == "BUTTON_PRESSED" && !this->controls.isInputBlocked()) {
-            if(this->controls.isKeyPressed("ESCAPE")) {
-                exitApplication(0);
-            }
-
-            if(this->controls.isKeyPressed("R")) {
-                game_manager.world_generator.generate();
-            }
-
-            if(this->controls.isKeyPressed("F12")) {
-                game_manager.window.takeScreenshot();
-            }
-
-            if(this->controls.isKeyPressed("H"))
-                this->lens = "HEIGHT";
-
-            if(this->controls.isKeyPressed("L"))
-                this->lens = "LATITUDE";
-
-            if(this->controls.isKeyPressed("N"))
-                this->lens = "NORMAL";
-
-            if(this->controls.isKeyPressed("M"))
-                this->lens = "MOISTURE";
-
-            if(this->controls.isKeyPressed("T"))
-                this->lens = "TEMPERATURE";
-
             const auto tile_top_left     = game_manager.world_map[0];
             const auto tile_bottom_right = game_manager.world_map[getWorldSize() - 1];
             

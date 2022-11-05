@@ -76,10 +76,12 @@ void Player::placeBuilding(Region& region, Building building, core::Vector2i gri
         for(int x = 0; x < building.getBuildingArea().x; x++) {
             auto loop_index = index + calculateRegionIndex(x, y);
             region.buildings[loop_index] = BUILDING_EMPTY;
+            region.buildings[loop_index].index = loop_index;
         }
     }
 
     region.buildings[index] = building;
+    region.buildings[index].index = index;
 
     handleScriptableEvent("onBuildingConstruct");
     auto regionmap = (Regionmap*)game_manager.gamestate.getGamestate();
@@ -200,7 +202,7 @@ void Player::setCountryName(const std::string& name) {
     this->country_data.country_name = name;
 }
 
-const std::string& Player::getCountryName() {
+const std::string& Player::getCountryName() const {
     return this->country_data.country_name;
 }
 

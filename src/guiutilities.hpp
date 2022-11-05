@@ -2,6 +2,7 @@
 
 #include "types.hpp"
 #include "abstractWidget.hpp"
+#include "label.hpp"
 
 namespace gui {
 core::Vector2i calculateTileableDimensions(core::Vector2i tl_corner_position, core::Vector2i br_corner_position, int block_size);

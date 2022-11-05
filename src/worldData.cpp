@@ -4,6 +4,13 @@
 #include "simulationManager.hpp"
 
 namespace iso {
+WorldData::WorldData()
+    : tile_size(core::Vector2i(64, 32))
+{}
+
+WorldData::~WorldData()
+{}
+
 int getWorldSize() { 
     return world_data.w_width * world_data.w_width;
 }
@@ -95,5 +102,9 @@ core::Vector2i tileGridPosition(core::Vector2f tile_position) {
         selected += core::Vector2i(1, 0);
     
     return selected;
+}
+
+core::Vector2i tileSize() {
+    return world_data.tile_size;
 }
 }

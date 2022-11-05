@@ -632,6 +632,8 @@ void SimulationManager::loadGameData() {
             lua::SCRIPTABLE_OBJECT_EVENTS.push_back(scheduled_event.getEventName());
 
         auto directories = lua::readVectorString(luabridge::getGlobal(this->lua(), "Directories"));
+
+        std::cout << "[] Loading scripts.\n";
         for(const auto& directory : directories) {
             for(const auto& file : fs::directory_iterator(directory)) {
                 const auto& filename = file.path().string();
@@ -639,7 +641,7 @@ void SimulationManager::loadGameData() {
 
                 luabridge::setGlobal(this->lua(), luabridge::LuaRef(this->lua()), "Script");
 
-                if(file_path_extension == ".lua") {
+                if(containsWord(file_path_extension, ".lua")) {
                     lua::runLuaFile(filename);
 
                     lua::ScriptData data;
@@ -658,6 +660,8 @@ void SimulationManager::loadGameData() {
                     if(data.event_overrides.size()) {
                         lua::ScriptableObject scriptable_object(data);
                         SCRIPT_TABLE.push_back(scriptable_object);
+
+                        std::cout << "  [] Registering script '" << filename << "'.\n";
                     }
                 }
             }
@@ -692,7 +696,7 @@ void SimulationManager::emitEvents() {
                 
                 this->font_size = (this->window.getWindowWidth() + this->window.getWindowHeight()) / 160;
                 event_queue.push_back("WINDOW_RESIZE");
-                handleScriptableEvent("windowResize");
+                handleScriptableEvent("onWindowResize");
                 break;
             }
 
@@ -935,6 +939,9 @@ std::vector <std::string> readVectorString(luabridge::LuaRef reference, bool thr
             iso::printError("readVectorString()", "Reference is empty");
         return list;
     }
+
+    if(!reference.length())
+        return list;
 
     int length = reference.length();
     for(int i = 1; i <= length; i++) {

@@ -22,6 +22,7 @@ Region::Region()
     this->temperature = 0.0f;
     this->visited     = false;
     
+    this->index = -1;
     this->owner_id = -1;
 
     this->map.resize(0);
@@ -36,7 +37,7 @@ RiverDirection Region::riverDirection() {
 }
 
 bool Region::isOwned() const {
-    return false;
+    return this->owner_id >= 0;
 }
 
 int Region::getOwnerId() const {
@@ -49,11 +50,9 @@ void Region::setOwner(int player_id) {
 
 void Region::stockpileAdd(StorageItem item) {
     if(this->itemExists(item)) {
-        for(auto it = this->stockpile.begin(); it != this->stockpile.end(); ++it) {
-            auto storage_item = *it;
-
-            if(storage_item.getItemName() == item.getItemName()) {
-                storage_item.setAmount(storage_item.getAmount() + item.getAmount());
+        for(int i = 0; i < this->stockpile.size(); i++) {
+            if(this->stockpile.at(i).getItemName() == item.getItemName()) {
+                this->stockpile.at(i).setAmount(this->stockpile.at(i).getAmount() + item.getAmount());
                 return;
             }
         }
@@ -500,5 +499,28 @@ int Region::L_getOwnerId() const {
 
 void Region::L_setOwner(int player_id) {
     this->setOwner(player_id);
+}
+
+void Region::L_stockpileAdd(StorageItem item) {
+    stockpileAdd(item);
+}
+
+void Region::L_stockpileRemove(StorageItem item) {
+    stockpileRemove(item);
+}
+
+bool Region::L_inStockpile(StorageItem item) {
+    return this->itemExists(item);
+}
+
+std::vector <Building> Region::L_getBuildingList() const {
+    std::vector <Building> copy;
+    for(auto pair : this->buildings)
+        copy.push_back(pair.second);
+    return copy;
+}
+
+std::vector <StorageItem> Region::L_getStockpile() const {
+    return this->stockpile;
 }
 }

@@ -61,6 +61,8 @@ bool L_isKeyPressed(const std::string& key_id);
 bool L_isLeftMouseButtonPressed();
 bool L_isRightMouseButtonPressed();
 bool L_isMiddleMouseButtonPressed();
+bool L_isInputBlocked();
+void L_blockInput(bool block);
 
 // GUI
 
@@ -76,6 +78,8 @@ bool L_isBuildingTile(int tile_index);
 bool L_inWorldBounds(int region_index);
 bool L_inRegionBounds(int tile_index);
 core::Vector2i L_tileGridPosition(int tile_index);
+void L_tickProduction(int region_index, int tile_index);
+void L_tickHarvest(int region_index, int tile_index);
 
 // World generation
 

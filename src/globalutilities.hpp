@@ -27,6 +27,7 @@ namespace iso {
     int randomInclusiveBetween(int min, int max);
     core::Colour getRandomColour();
     void printError(const std::string& where, const std::string& message);
+    void printWarning(const std::string& where, const std::string& message);
     std::string getCultureName(const std::string& culture_file);
     std::string generateCountryName(const std::string& culture_file);
     std::string generateCityName(const std::string& culture_file);

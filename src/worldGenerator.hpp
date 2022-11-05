@@ -53,7 +53,7 @@ namespace iso {
 
             // Regionmap API.            
 
-            void generateResourcePatch(Region& region, const Resource& resource);
+            void generateResourcePatch(int region_index, const Resource& resource);
 
         public:
             WorldGenerator();

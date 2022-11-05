@@ -54,7 +54,7 @@ class Player {
         core::Colour getCountryColourTransparent() const;
         void setCountryColour(core::Colour team_colour);
         void setCountryName(const std::string& name);
-        const std::string& getCountryName();
+        const std::string& getCountryName() const;
         void setCultureGroup(const std::string& culture_file);
         const std::string& getCultureGroup() const;
         int getID() const;

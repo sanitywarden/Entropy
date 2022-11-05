@@ -17,8 +17,6 @@ iso::WorldData            world_data;
 std::vector <std::string> event_queue;
 iso::SimulationManager    game_manager;
 
-
-
 int main() {
     game_manager.loop();
     iso::exitApplication(0);

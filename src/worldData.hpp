@@ -20,11 +20,15 @@ struct WorldData {
     int r_persistence;
     int r_width;
     float r_forest_from;
+    
+    core::Vector2i tile_size;
 
     float simulation_speed;
     bool building_cost_enabled;
     bool fog_of_war_enabled;
 
+    WorldData();
+    ~WorldData();
 };
 
 int getWorldSize();
@@ -48,8 +52,9 @@ bool inSameColumn(int index1, int index2);
 core::Vector2i tileGridPosition(int index);
 core::Vector2i tileGridPosition(core::Vector2f tile_position); 
 
+core::Vector2i tileSize();
+
 inline int panelSize()             { return 128; }
-inline core::Vector2i tileSize()   { return core::Vector2i(64, 32); }
 inline core::Vector2i tileOffset() { return core::Vector2i(100, 100); }
 inline int getWorldMargin()        { return 3; }
 inline int getWorldMarginPolar()   { return 3; }
