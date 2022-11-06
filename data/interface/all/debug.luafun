@@ -39,7 +39,7 @@ Functionality = {
                 end
                 if component_id ~= "" then
                     text = text
-                        .. "Item ID: " .. component_id .. "\n"
+                    .. "Item ID: " .. component_id .. "\n"
                 end
                 
                 if id == "Regionmap" then

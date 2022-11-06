@@ -22,8 +22,10 @@ void ImageList::L_setImageList(luabridge::LuaRef reference) {
         return;
     }
 
-    if(!reference.length())
+    if(!reference.length()) {
+        iso::printWarning("ImageList::L_setImageList()", "Icon array is empty");
         return;
+    }
 
     auto list = lua::readVectorString(reference);
     this->setImageList(list);
@@ -33,7 +35,7 @@ void ImageList::createUI(const std::vector <std::string>& texture_list) {
     if(!texture_list.size())
         return;
 
-    this->data.components = std::map <std::string, AbstractComponent> ();
+    this->data.components.clear();
     for(int i = 0; i < texture_list.size(); i++) {
         auto image_data = this->calculateItemData(texture_list, i);
         auto image = ImageComponent(new Image(image_data, texture_list.at(i)));
@@ -114,14 +116,10 @@ WidgetData ImageList::calculateItemData(const std::vector <std::string>& texture
     data.position      = position;
     data.size          = image_size;
     data.widget_id     = "image_" + texture_list.at(image_index); 
-    data.parent        = nullptr;
-
-    // Assume that the parent of a gui::ImageList is always a gui::InterfacePage
-    if(this->hasParent()) {
-        auto* page = (InterfacePage*)this->getParent();
-        data.parent = page->getComponent(this->getWidgetID());
-    }
-
+    
+    // Well, this is not true, since 'this' should be the parent. 
+    // But it is difficult to assign the correct parent, so let it be.
+    data.parent        = nullptr; 
     data.draw_priority = this->getDrawPriority() + 1;
     data.draw          = true;
 

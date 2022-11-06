@@ -165,7 +165,7 @@ void registerLua() {
             .addFunction("hasDiscoveredRegion", Player::discoveredRegion)
             .addFunction("addKnownRegion"     , Player::addKnownRegion)
         .endClass()
-        .beginClass <gui::AbstractWidget> ("AbstractComponent")
+        .beginClass <gui::AbstractWidget> ("AbstractWidget")
             .addProperty("id"              , gui::AbstractWidget::getWidgetID)
             .addProperty("position"        , gui::AbstractWidget::getWidgetPosition)
             .addProperty("size"            , gui::AbstractWidget::getWidgetSize)
@@ -185,6 +185,9 @@ void registerLua() {
         .endClass()
         .deriveClass <gui::ImageList, gui::AbstractWidget> ("ImageList")
             .addFunction("setImageList", gui::ImageList::L_setImageList)
+        .endClass()
+        .deriveClass <gui::InterfacePage, gui::AbstractWidget> ("InterfacePage")
+
         .endClass()
         
         // Resources
@@ -233,6 +236,10 @@ void registerLua() {
         .addFunction("blockInput"                , &lua::L_blockInput)
 
         // GUI
+        .addFunction("getInterfacePage"          , &lua::L_getInterfacePage)
+        .addFunction("getComponentAbstract"      , &lua::L_getComponentAbstract)
+        .addFunction("getComponentWidget"        , &lua::L_getComponentWidget)
+        .addFunction("getComponentButton"        , &lua::L_getComponentButton)
         .addFunction("getComponentLabel"         , &lua::L_getComponentLabel)
         .addFunction("getComponentImageList"     , &lua::L_getComponentImageList)
         
@@ -337,6 +344,60 @@ bool L_isRightMouseButtonPressed() {
 bool L_isMiddleMouseButtonPressed() {
     auto current_gamestate = game_manager.gamestate.getGamestate();
     return current_gamestate->controls.mouse_middle;
+}
+
+gui::InterfacePage* L_getInterfacePage(const std::string& page_id) {
+    auto current_gamestate = game_manager.gamestate.getGamestate();
+    auto page = current_gamestate->getInterfaceComponent(page_id);
+    
+    if(page == nullptr) {
+        printError("L_getInterfacePage()", "There is no page '" + page_id + "'");
+        return nullptr;
+    }
+
+    return page;
+}
+
+gui::AbstractWidget* L_getComponentAbstract(const std::string& page_id, const std::string& widget_id) {
+    auto current_gamestate = game_manager.gamestate.getGamestate();
+    auto page = current_gamestate->getInterfaceComponent(page_id);
+    auto component = page->getComponent(widget_id);
+
+    if(component == nullptr) {
+        printError("L_getComponentAbstract()", "There is no component '" + widget_id + "' in interface page '" + page_id + "'");
+        return nullptr;
+    }
+
+    auto widget = (gui::AbstractWidget*)(component.get());
+    return widget;
+}
+
+gui::Widget* L_getComponentWidget(const std::string& page_id, const std::string& widget_id) {
+    auto current_gamestate = game_manager.gamestate.getGamestate();
+    auto page = current_gamestate->getInterfaceComponent(page_id);
+    auto component = page->getComponent(widget_id);
+
+    if(component == nullptr) {
+        printError("L_getComponentWidget()", "There is no component '" + widget_id + "' in interface page '" + page_id + "'");
+        return nullptr;
+    }
+
+    auto widget = (gui::Widget*)(component.get());
+    return widget;
+}
+
+gui::Button* L_getComponentButton(const std::string& page_id, const std::string& button_id) {
+    auto current_gamestate = game_manager.gamestate.getGamestate();
+    auto page = current_gamestate->getInterfaceComponent(page_id);
+    auto component = page->getComponent(button_id);
+
+    if(component == nullptr) {
+        printError("L_getComponentButton()", "There is no component '" + button_id + "' in interface page '" + page_id + "'");
+        return nullptr;
+    }
+
+    auto button = (gui::Button*)(component.get());
+    return button;
 }
 
 gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& label_id) {
@@ -586,7 +647,53 @@ void L_blockInput(bool block) {
 }
 
 void L_tickProduction(int region_index, int tile_index) {
+    if(!inWorldBounds(region_index)) {
+        printError("L_tickHarvest()", "Region index out of bounds");
+        return;
+    }
 
+    if(!inRegionBounds(region_index)) {
+        printError("L_tickHarvest()", "Tile index out of bounds");
+        return;
+    }
+
+    auto& region = game_manager.world_map.at(region_index);
+    if(!region.buildingExistsAtIndex(tile_index)) {
+        printError("L_tickHarvest()", "There is no building at index '" + std::to_string(tile_index) + "'");
+        return;
+    }  
+
+    const auto& building = region.getBuildingAtIndex(tile_index);
+    if(!building.isProductionBuilding())
+        return;
+
+    std::map <std::string, int> produced_items;
+    auto production = building.getBuildingProduction();
+    for(auto production_item : production) {
+        auto current_ticks = 0;
+        auto required_ticks = production_item.requirements.size();
+
+        // Check if the production requirements are met.
+        for(auto resource : production_item.requirements) {
+            if(region.itemExists(resource) && region.itemQuantity(resource) >= resource.getAmount())
+                current_ticks++;
+        }
+
+        // If production requirements are met, make the item.
+        if(current_ticks == required_ticks) {
+            for(auto resource : production_item.requirements)
+                region.stockpileRemove(resource);
+
+            for(auto item : ITEM_TABLE) {
+                if(production_item.name == item.getItemName()) {
+                    item.setAmount(production_item.amount);
+                    region.stockpileAdd(item);
+                    printWarning("production", "Produced: " + item.getItemName() + " " + std::to_string(item.getAmount()));
+                    break;
+                }
+            }   
+        }
+    }
 }
 
 void L_tickHarvest(int region_index, int tile_index) {
@@ -633,14 +740,12 @@ void L_tickHarvest(int region_index, int tile_index) {
             if(harvested_item.first == item.getItemName() && harvested_item.second ) {
                 item.setAmount(harvested_item.second);
                 resources_as_items.push_back(item);
+                printWarning("harvest", "Harvested: " + item.getItemName() + std::to_string(item.getAmount()));
             }
         }
     }
 
     for(auto item : resources_as_items)
         region.stockpileAdd(item);
-
-    // Create the resource and add it to stockpile
-    // Make a interface where you display region's stockpile
 }
 }

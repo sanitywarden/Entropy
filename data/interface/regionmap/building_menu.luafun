@@ -2,7 +2,7 @@ require "src.lua.data.stringutil"
 require "src.lua.data.colours" 
 
 Functionality = {
-    selected_building, -- Selected building from menu
+    selected_building = nil, -- Selected building from menu
 
     shouldOpen = function()
         region = getRegion(getRegionmap().region_index)
@@ -90,11 +90,11 @@ Functionality = {
                 list_component = getComponentImageList("component_building_menu", "imagelist_building_icons")
                 list = {}
                 buildings = gamedata.BUILDING_TABLE
-                for i = 1, #buildings, 1 do
+                for i = 1, rawlen(buildings), 1 do
                     building = buildings[i]
                     table.insert(list, building.icon)
                 end
-            
+                
                 list_component:setImageList(list)
             end,
 

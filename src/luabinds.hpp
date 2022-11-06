@@ -9,6 +9,8 @@
 #include "worldmap.hpp"
 #include "regionmap.hpp"
 
+#include "gui/interfacePage.hpp"
+#include "gui/abstractWidget.hpp"
 #include "gui/label.hpp"
 #include "gui/imageList.hpp"
 
@@ -66,6 +68,10 @@ void L_blockInput(bool block);
 
 // GUI
 
+gui::InterfacePage* L_getInterfacePage(const std::string& page_id);
+gui::AbstractWidget* L_getComponentAbstract(const std::string& page_id, const std::string& widget_id);
+gui::Widget* L_getComponentWidget(const std::string& page_id, const std::string& widget_id);
+gui::Button* L_getComponentButton(const std::string& page_id, const std::string& button_id);
 gui::Label* L_getComponentLabel(const std::string& page_id, const std::string& label_id);
 gui::ImageList* L_getComponentImageList(const std::string& page_id, const std::string& list_id);
 
