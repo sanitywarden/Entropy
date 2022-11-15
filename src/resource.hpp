@@ -20,8 +20,6 @@ struct ResourceData {
     int            max_occurence; // How many patches of this resource may be generated.
     float          chance;        // Generation chance (0.0 : 1.0).
     int            patch_size;    // Certain resources generate in patches.
-    std::vector <std::string> tile_requirements;   // Resource requires the tile to have these properties.
-    std::vector <std::string> region_requirements; // Resource requires the region to have these properties.
 };
 
 class StorageItem;

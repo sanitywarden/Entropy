@@ -5,6 +5,8 @@
 #include "item.hpp"
 
 #include <iostream>
+#include <lua/lua.hpp>
+#include <LuaBridge/LuaBridge.h>
 
 namespace iso {
 Resource::Resource() 
@@ -70,83 +72,17 @@ int Resource::getPatchSize() const {
 }
 
 bool Resource::isTileValid(int region_index, int tile_index) const {
-    const auto& region = game_manager.world_map.at(region_index);
-    const auto& tile = region.map.at(tile_index);
-
-    int requirements_passed = 0;
-    int requirements_all = this->data.tile_requirements.size();
-
-    if(requirements_passed == requirements_all)
-        return true;
-
-    for(const auto& property : this->data.tile_requirements) {        
-        if(property == "TERRAIN" && tile.tiletype.is_terrain())
-            requirements_passed++;
-
-        if(property == "WATER" && tile.tiletype.is_water())
-            requirements_passed++;
-
-        if(property == "UNOCCUPIED" && !region.isSpotOccupied(region_index))
-            requirements_passed++;
-
-        if(property == "RIVER" && tile.tiletype.is_river())
-            requirements_passed++;
-        
-        if(property == "OCEAN" && tile.tiletype.is_ocean())
-            requirements_passed++;
-        
-        if(property == "COAST" && tile.tiletype.is_coast())
-            requirements_passed++;
-    }
-
-    return requirements_passed == requirements_all;
+    lua::runLuaFile(this->getDefinitionFilename());
+    auto resource = luabridge::getGlobal(game_manager.lua(), "Resource");
+    auto is_tile_valid = resource["isTileValid"];
+    return is_tile_valid(region_index, tile_index);
 }
 
 bool Resource::isRegionValid(int region_index) const {
-    const auto& region = game_manager.world_map.at(region_index);
-    
-    int requirements_passed = 0;
-    int requirements_all = this->data.region_requirements.size();
-
-    if(requirements_passed == requirements_all) 
-        return true;
-
-    for(const auto& property : this->data.region_requirements) {
-        if(property == "ALL")
-            return true;
-        
-        if(property == "WATER" && region.regiontype.is_water())
-            requirements_passed++;
-        
-        if(property == "DRY" && !region.regiontype.is_water())
-            requirements_passed++;
-        
-        if(property == "LAKE" && region.regiontype.is_lake())  
-            requirements_passed++;
-        
-        if(property == "RIVER" && region.regiontype.is_river())
-            requirements_passed++;
-
-        if(property == "COAST" && region.regiontype.is_coast())
-            requirements_passed++;
-
-        if(property == "FOREST" && region.regiontype.is_forest())
-            requirements_passed++;
-
-        if(property == "COLD" && region.temperature_text == "COLD")
-            requirements_passed++;
-        
-        if(property == "WARM" && region.temperature_text == "WARM")
-            requirements_passed++;
-        
-        if(property == "TROPICAL" && region.temperature_text == "TROPICAL")
-            requirements_passed++;
-        
-        if(property == "HOT" && region.temperature_text == "HOT")
-            requirements_passed++;
-    }
-
-    return requirements_passed == requirements_all;
+    lua::runLuaFile(this->getDefinitionFilename());
+    auto resource = luabridge::getGlobal(game_manager.lua(), "Resource");
+    auto is_region_valid = resource["isRegionValid"];
+    return is_region_valid(region_index);
 }
 
 void Resource::placeResource(int region_index, int tile_index) const {

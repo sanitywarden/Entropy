@@ -577,8 +577,6 @@ void SimulationManager::loadGameData() {
                 data.max_occurence       = lua::readInteger(resourcedata["maximum_occurence"]);
                 data.chance              = lua::readNumber(resourcedata["generation_chance"]);
                 data.patch_size          = lua::readInteger(resourcedata["patch_size"]);
-                data.tile_requirements   = lua::readVectorString(resourcedata["tile"]);
-                data.region_requirements = lua::readVectorString(resourcedata["region"]); 
 
                 iso::Resource resource(data);
                 RESOURCE_TABLE.push_back(resource);   

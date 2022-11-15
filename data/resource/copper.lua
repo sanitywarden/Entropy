@@ -8,12 +8,15 @@ Resource = {
     type = "Raw Material",
     minimum_occurence = 0,
     maximum_occurence = 1,
-    generation_chance = 0.9,
+    generation_chance = 0.1,
     patch_size = 3,
-    region = {
-        "ALL",
-    },
-    tile = {
-        "TERRAIN", "UNOCCUPIED", 
-    }
+    isRegionValid = function(region_index)
+        region = getRegion(region_index)
+        return region:isTerrain()
+    end,
+    isTileValid = function(region_index, tile_index)
+        region = getRegion(region_index)
+        tile = region:getTileAt(tile_index)
+        return tile:isTerrain() and not region:isTileOccupied(tile_index) 
+    end
 }

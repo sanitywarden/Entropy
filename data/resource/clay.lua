@@ -10,10 +10,13 @@ Resource = {
     maximum_occurence = 1,
     generation_chance = 0.5,
     patch_size = 5,
-    region = {
-        "WATER"
-    },
-    tile = {
-        "TERRAIN", "UNOCCUPIED", "COAST",
-    }
+    isRegionValid = function(region_index)
+        region = getRegion(region_index)
+        return region:isTerrain() and region:isWater()
+    end,
+    isTileValid = function(region_index, tile_index)
+        region = getRegion(region_index)
+        tile = region:getTileAt(tile_index)
+        return tile:isTerrain() and tile:isCoast() and not region:isTileOccupied(tile_index) 
+    end
 }

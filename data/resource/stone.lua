@@ -10,10 +10,13 @@ Resource = {
     maximum_occurence = 1,
     generation_chance = 0.4, 
     patch_size = 4,
-    region = {
-        "ALL",
-    },
-    tile = {
-        "TERRAIN", "UNOCCUPIED",
-    }
+    isRegionValid = function(region_index)
+        region = getRegion(region_index)
+        return region:isTerrain()
+    end,
+    isTileValid = function(region_index, tile_index)
+        region = getRegion(region_index)
+        tile = region:getTileAt(tile_index)
+        return tile:isTerrain() and not region:isTileOccupied(tile_index) 
+    end
 }
