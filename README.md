@@ -1,5 +1,5 @@
 # Entropy
-## Overwiew
+## Overview
 
 Entropy is a isometric strategy game written in C++ and Lua.\
 It uses SFML as the framework for graphics and audio, Lua for scripting and LuaBridge for binding C++ code to Lua and vice versa.\
