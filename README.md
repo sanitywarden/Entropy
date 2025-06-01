@@ -2,16 +2,22 @@
 ## Overwiew
 
 Entropy is a isometric strategy game written in C++ and Lua.\
-It uses SFML as the framework for graphics and audio, Lua for scripting and LuaBridge for binding C++ code to Lua and vice versa.
+It uses SFML as the framework for graphics and audio, Lua for scripting and LuaBridge for binding C++ code to Lua and vice versa.\
+\
+As of ~2022 I'm not working on this project anymore.\
+In 2025 I decided to open source the project.\
+\
+Note: The project is useless without the sprites which I will upload here once I find them.
 
 ## Plans
+As of ~2022 I'm not working on this project anymore.\
 
-Keep in mind that Entropy is a passion project, so the speed of work varies.\
-Long term goals include:
-- Create a game loop with fun things to do.
-- Create AI opponents.
-- Polish existing content.
-- Make the game easily modifiable.
+~~Keep in mind that Entropy is a passion project, so the speed of work varies.~~\
+~~Long term goals include~~:
+- ~~Create a game loop with fun things to do.~~
+- ~~Create AI opponents.~~
+- ~~Polish existing content.~~
+- ~~Make the game easily modifiable.~~
 
 ## Setup
 ### Prerequisites
